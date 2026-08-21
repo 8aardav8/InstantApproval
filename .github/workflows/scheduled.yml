@@ -1,0 +1,13 @@
+name: Daily safety-net refresh
+
+# Real, known risk this covers: Apps Script installable trigger failures
+# surface only as an easy-to-miss notification email to the script owner --
+# this is the backstop in case the onChange webhook ever silently fails.
+on:
+  schedule:
+    - cron: "0 13 * * *"  # ~7am America/Chicago (adjust if the business timezone changes)
+  workflow_dispatch: {}
+
+jobs:
+  publish:
+    uses: ./.github/workflows/_publish.yml

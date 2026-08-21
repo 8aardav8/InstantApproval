@@ -1,0 +1,50 @@
+name: Publish listings data (reusable)
+
+on:
+  workflow_call: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false  # never cancel a run mid-commit/push
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Generate properties.json
+        env:
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: python3 scripts/generate_properties.py
+
+      # Fail-closed safety check -- runs BEFORE git commit, not after. This
+      # repo is public, so anything ever pushed is effectively permanent in
+      # git history even if reverted later.
+      - name: Verify no sensitive data leaked
+        env:
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}
+        run: python3 scripts/verify_no_sensitive_data.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "listings-bot"
+          git config user.email "listings-bot@users.noreply.github.com"
+          if git diff --quiet -- docs/data/properties.json; then
+            echo "No changes to properties.json -- skipping commit."
+          else
+            git add docs/data/properties.json
+            git commit -m "Auto-update listings data [skip ci]"
+            git push
+          fi

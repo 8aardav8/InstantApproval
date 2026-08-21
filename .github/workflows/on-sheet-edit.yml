@@ -1,0 +1,13 @@
+name: Refresh on Sheet edit
+
+# Triggered by the Google Apps Script installable onChange trigger (see
+# appsscript/dispatch.gs), via a repository_dispatch call. workflow_dispatch
+# is also included as a manual "force refresh" button for testing/ops.
+on:
+  repository_dispatch:
+    types: [sheet-updated]
+  workflow_dispatch: {}
+
+jobs:
+  publish:
+    uses: ./.github/workflows/_publish.yml

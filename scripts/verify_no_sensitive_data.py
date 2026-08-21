@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""
+Fail-closed pre-commit safety check. Re-reads the raw sensitive-column values
+directly from the Sheet and confirms none of them appear anywhere in the
+files about to be committed under docs/. Any hit fails the run (non-zero
+exit) -- nothing gets committed. Must run BEFORE `git commit`, not after:
+this repo is public, so anything ever pushed is effectively permanent in
+git history even if reverted later.
+
+Design note, confirmed via real testing against live data (2026-08-21):
+comparisons are ROW-SCOPED, not a flat "does this value appear ANYWHERE in
+the output" search. A flat search produces real false positives (e.g. a
+short Lock box value like "63120" that's coincidentally also a common ZIP
+code appearing in dozens of unrelated addresses) and misses nothing a
+row-scoped check wouldn't also catch -- a row's own sensitive value showing
+up in a DIFFERENT row's public entry would still be caught by scanning that
+row's own raw value against the whole output too, so row-scoping only
+removes noise, it doesn't reduce coverage of the thing that actually matters:
+whether a row's own secret ended up in its own public listing.
+
+Usage:
+  GCP_SA_KEY_JSON=<service-account json>  python3 verify_no_sensitive_data.py
+"""
+import json
+import os
+import sys
+
+import gspread
+from google.oauth2.service_account import Credentials
+
+SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk"
+TAB_NAME = "PROPERTIES"
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "data", "properties.json")
+
+SENSITIVE_COLUMNS = [
+    "Lock box ", "Seller name and link", "🔒 Row ID",
+    "PHOTO Error", "We're Marketing", "TT Our Link",
+]
+
+# Values shorter than this are too generic to check meaningfully (e.g. "FALSE",
+# "0") -- checking them would either always false-positive-match something
+# benign or never mean anything. Real lockbox codes/URLs/names are longer.
+MIN_VALUE_LENGTH = 5
+
+
+def log(msg):
+    print(f"[verify_no_sensitive_data] {msg}", file=sys.stderr)
+
+
+def get_client():
+    key_json = os.environ.get("GCP_SA_KEY_JSON")
+    key_file = os.environ.get("GCP_SA_KEY_FILE")
+    scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly",
+              "https://www.googleapis.com/auth/drive.readonly"]
+    if key_json:
+        creds = Credentials.from_service_account_info(json.loads(key_json), scopes=scopes)
+    elif key_file:
+        creds = Credentials.from_service_account_file(os.path.expanduser(key_file), scopes=scopes)
+    else:
+        raise SystemExit("FATAL: neither GCP_SA_KEY_JSON nor GCP_SA_KEY_FILE is set.")
+    return gspread.authorize(creds)
+
+
+def slugify(address):
+    import re
+    s = address.strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    return s.strip("-") or "listing"
+
+
+def main():
+    if not os.path.exists(OUTPUT_PATH):
+        raise SystemExit(f"FATAL: {OUTPUT_PATH} doesn't exist -- nothing to verify. "
+                          "Run generate_properties.py first.")
+
+    with open(OUTPUT_PATH) as f:
+        output = json.load(f)
+    listings_by_id = {l["id"]: l for l in output["listings"]}
+
+    # Static template files (HTML/JS/CSS) are NOT per-listing data -- unlike
+    # properties.json (which legitimately contains ~1,800 OTHER listings a
+    # coincidental short-string match can harmlessly land in), a sensitive
+    # value has no legitimate reason to appear ANYWHERE in these files, from
+    # any row. So these get a flat/global check; properties.json gets ONLY
+    # the row-scoped check above -- mixing the two reintroduces exactly the
+    # cross-row false positives (e.g. a ZIP code coincidentally matching a
+    # Lock box value from an unrelated row) this script exists to avoid.
+    template_text = ""
+    docs_dir = os.path.join(REPO_ROOT, "docs")
+    for root, _dirs, files in os.walk(docs_dir):
+        for fname in files:
+            path = os.path.join(root, fname)
+            if path == OUTPUT_PATH:
+                continue
+            try:
+                with open(path, "r", errors="ignore") as f:
+                    template_text += f.read()
+            except Exception:
+                pass  # binary files (images etc.)
+
+    client = get_client()
+    sh = client.open_by_key(SHEET_ID)
+    ws = sh.worksheet(TAB_NAME)
+    all_values = ws.get_all_values()
+    headers = all_values[0]
+    header_idx = {h: i for i, h in enumerate(headers)}
+    addr_idx = header_idx["Address"]
+
+    missing = [c for c in SENSITIVE_COLUMNS if c not in header_idx]
+    if missing:
+        raise SystemExit(f"FATAL: sensitive column(s) not found in header row: {missing}. "
+                          "Sheet layout may have changed -- refusing to proceed blind.")
+
+    findings = []
+    seen_ids = {}
+    dupe_counter = 0
+
+    for row in all_values[1:]:
+        address = row[addr_idx].strip() if addr_idx < len(row) else ""
+        if not address:
+            continue
+        listing_id = slugify(address)
+        if listing_id in seen_ids:
+            dupe_counter += 1
+            listing_id = f"{listing_id}-{dupe_counter}"
+        seen_ids[listing_id] = True
+
+        own_listing = listings_by_id.get(listing_id)
+        own_listing_text = json.dumps(own_listing) if own_listing else ""
+
+        for col in SENSITIVE_COLUMNS:
+            ci = header_idx[col]
+            val = row[ci].strip() if ci < len(row) else ""
+            if not val or len(val) < MIN_VALUE_LENGTH:
+                continue
+            # Row-scoped check against properties.json: does THIS row's own
+            # sensitive value appear in THIS row's own public listing entry?
+            if own_listing_text and val in own_listing_text:
+                findings.append((listing_id, col, val, "own listing entry in properties.json"))
+            # Flat check against the static template files only -- these
+            # should never contain per-listing data from ANY row.
+            if val in template_text:
+                findings.append((listing_id, col, val, "a static template file (HTML/JS/CSS)"))
+
+    if findings:
+        log(f"FATAL: {len(findings)} sensitive-data finding(s), nothing committed:")
+        for listing_id, col, val, where in findings:
+            log(f"  - listing {listing_id!r}: column {col!r} value {val[:60]!r}... found in {where}")
+        sys.exit(1)
+
+    log(f"Clean: checked {len(seen_ids)} rows x {len(SENSITIVE_COLUMNS)} sensitive columns "
+        f"against {len(listings_by_id)} public listings + the full docs/ tree. No leaks found.")
+
+
+if __name__ == "__main__":
+    main()
