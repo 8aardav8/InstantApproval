@@ -18,7 +18,7 @@ const BUYER_INFO_ENDPOINT = "";
 
 let ALL_LISTINGS = [];
 let GENERATED_AT = null;
-let filterState = { status: "Available", down: null, monthly: null, beds: null, area: "" };
+let filterState = { status: "Available", sort: "recent", down: null, monthly: null, beds: null, area: "" };
 
 // ---------- data load ----------
 async function loadData() {
@@ -26,7 +26,9 @@ async function loadData() {
   const data = await res.json();
   ALL_LISTINGS = data.listings;
   GENERATED_AT = data.generatedAt;
+  restoreFilterStateFromUrl();
   renderFreshness();
+  renderStatsStrip();
   renderCardGrid();
 }
 
@@ -37,6 +39,17 @@ function renderFreshness() {
   el.textContent = `Data last refreshed: ${d.toLocaleString()}`;
 }
 
+function renderStatsStrip() {
+  const el = document.getElementById("stats-strip");
+  const available = ALL_LISTINGS.filter((l) => l.status === "Available");
+  const areas = new Set(available.map((l) => l.area).filter(Boolean));
+  el.innerHTML = `
+    <div class="stat-pill"><strong>${available.length}</strong>Homes available</div>
+    <div class="stat-pill"><strong>${areas.size || "—"}</strong>Areas</div>
+    <div class="stat-pill"><strong>No</strong>Bank or credit check</div>
+  `;
+}
+
 // ---------- filtering ----------
 function matchesFilters(listing) {
   if (filterState.status !== "Any" && listing.status !== filterState.status) return false;
@@ -45,7 +58,7 @@ function matchesFilters(listing) {
   if (filterState.down && down !== null && down > filterState.down) return false;
   if (filterState.monthly && monthly !== null && monthly > filterState.monthly) return false;
   if (filterState.beds && (parseInt(listing.beds, 10) || 0) < filterState.beds) return false;
-  if (filterState.area && !listing.address.toLowerCase().includes(filterState.area.toLowerCase())) return false;
+  if (filterState.area && !(listing.area || "").toLowerCase().includes(filterState.area.toLowerCase())) return false;
   const q = document.getElementById("search-box").value.trim().toLowerCase();
   if (q && !listing.address.toLowerCase().includes(q)) return false;
   return true;
@@ -57,11 +70,46 @@ function parseMoney(str) {
   return isNaN(n) ? null : n;
 }
 
+// Sheet dates are stored as bare "M/D" with no year (confirmed against real
+// data). Assumed to mean the current year -- these are live/recently-touched
+// listings, not multi-year archival records, so year ambiguity in practice
+// isn't a real concern. Returns null (sorts last) if unparseable.
+function parseListingDate(str) {
+  if (!str) return null;
+  const m = str.trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+  if (!m) return null;
+  const [, month, day, year] = m;
+  const y = year ? (year.length === 2 ? 2000 + parseInt(year, 10) : parseInt(year, 10)) : new Date().getFullYear();
+  const d = new Date(y, parseInt(month, 10) - 1, parseInt(day, 10));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function sortListings(listings) {
+  const sorted = [...listings];
+  if (filterState.sort === "monthly-asc") {
+    sorted.sort((a, b) => (parseMoney(a.monthly) ?? Infinity) - (parseMoney(b.monthly) ?? Infinity));
+  } else if (filterState.sort === "down-asc") {
+    sorted.sort((a, b) => (parseMoney(a.down) ?? Infinity) - (parseMoney(b.down) ?? Infinity));
+  } else {
+    // Default: most recently updated first. Listings with an unparseable
+    // date sort to the end rather than silently to the top/bottom at random.
+    sorted.sort((a, b) => {
+      const da = parseListingDate(a.lastUpdate);
+      const db = parseListingDate(b.lastUpdate);
+      if (da && db) return db - da;
+      if (da) return -1;
+      if (db) return 1;
+      return 0;
+    });
+  }
+  return sorted;
+}
+
 // ---------- card grid ----------
 function renderCardGrid() {
   const grid = document.getElementById("card-grid");
   const empty = document.getElementById("empty-state");
-  const filtered = ALL_LISTINGS.filter(matchesFilters);
+  const filtered = sortListings(ALL_LISTINGS.filter(matchesFilters));
   grid.innerHTML = "";
   empty.classList.toggle("hidden", filtered.length > 0);
 
@@ -78,9 +126,14 @@ function renderCardGrid() {
 
     const body = document.createElement("div");
     body.className = "card-body";
+    // Card status line shows the LATEST UPDATE date, not first-available --
+    // per Aaron's explicit correction (default sort is also by this same
+    // field, so the visible date and the sort order agree with each other).
+    // Livability stays on the card only -- deliberately dropped from the
+    // detail view per Aaron's 2026-08-21 request.
     const livabilitySuffix = listing.livability !== null ? ` (${listing.livability})` : " ()";
     body.innerHTML = `
-      <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.onMarketDate)}${escapeHtml(livabilitySuffix)}</div>
+      <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
       <div class="card-address">${escapeHtml(listing.address)}</div>
       <div class="card-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
       <div class="card-money">${escapeHtml(listing.down)} down &middot; ${escapeHtml(listing.monthly)} a month</div>
@@ -147,10 +200,13 @@ function showDetail(id) {
   const availableOnly = listing.status === "Available";
   const inquireBtn = availableOnly
     ? `<a class="btn-primary" href="${inquireLink(listing)}">💬 Inquire</a>` : "";
+  // Fixed 2026-08-21: this used to be a <button onclick="window.location.href=...">,
+  // inconsistent with Inquire/Share (both plain <a href>) -- Aaron flagged it as
+  // "didn't work like the others did." Same <a> pattern now, all three.
   const photoBtn = availableOnly
-    ? `<button class="btn-outline btn-full" onclick="window.location.href='${photoNotWorkingLink(listing)}'">📷 Photo link not working?</button>` : "";
-  const livabilityRow = listing.livability !== null
-    ? `<div class="detail-field"><span>Livability</span><span class="value">${listing.livability}</span></div>` : "";
+    ? `<a class="btn-outline btn-full" href="${photoNotWorkingLink(listing)}">📷 Photo link not working?</a>` : "";
+  // Livability deliberately NOT shown here -- per Aaron's 2026-08-21 request,
+  // it stays on the card only, not on the detail/properties page.
 
   detail.innerHTML = `
     <button class="detail-back" onclick="backToList()">←</button>
@@ -171,7 +227,6 @@ function showDetail(id) {
       <div class="detail-field"><span>Beds</span><span class="value">${escapeHtml(listing.beds)}</span></div>
       <div class="detail-field"><span>Baths</span><span class="value">${escapeHtml(listing.baths)}</span></div>
       <div class="detail-field"><span>Sq Ft</span><span class="value">${escapeHtml(listing.sqft)}</span></div>
-      ${livabilityRow}
       <div class="detail-field"><span>Last Updated</span><span class="value">${escapeHtml(listing.lastUpdate)}</span></div>
     </div>
   `;
@@ -286,6 +341,59 @@ function initNav() {
   });
 }
 
+// ---------- shareable filter links ----------
+// Encodes filterState (+ the free-text search box) into the URL query string
+// so "Copy link to these results" produces a link that reproduces the same
+// view when opened fresh, without needing any backend/state storage.
+function applyFilterStateToControls() {
+  document.getElementById("f-status").value = filterState.status;
+  document.getElementById("f-sort").value = filterState.sort;
+  document.getElementById("f-down").value = filterState.down || "";
+  document.getElementById("f-monthly").value = filterState.monthly || "";
+  document.getElementById("f-beds").value = filterState.beds || "";
+  document.getElementById("f-area").value = filterState.area || "";
+}
+
+function restoreFilterStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if ([...params.keys()].length === 0) return;
+  filterState = {
+    status: params.get("status") || "Available",
+    sort: params.get("sort") || "recent",
+    down: parseFloat(params.get("down")) || null,
+    monthly: parseFloat(params.get("monthly")) || null,
+    beds: parseInt(params.get("beds"), 10) || null,
+    area: params.get("area") || "",
+  };
+  if (params.get("q")) document.getElementById("search-box").value = params.get("q");
+  applyFilterStateToControls();
+}
+
+function copyResultsLink() {
+  const params = new URLSearchParams();
+  if (filterState.status && filterState.status !== "Available") params.set("status", filterState.status);
+  if (filterState.sort && filterState.sort !== "recent") params.set("sort", filterState.sort);
+  if (filterState.down) params.set("down", filterState.down);
+  if (filterState.monthly) params.set("monthly", filterState.monthly);
+  if (filterState.beds) params.set("beds", filterState.beds);
+  if (filterState.area) params.set("area", filterState.area);
+  const q = document.getElementById("search-box").value.trim();
+  if (q) params.set("q", q);
+  const qs = params.toString();
+  const url = `${window.location.origin}${window.location.pathname}${qs ? "?" + qs : ""}`;
+  const btn = document.getElementById("copy-link-btn");
+  const done = () => {
+    const original = btn.textContent;
+    btn.textContent = "✅ Link copied!";
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done).catch(() => window.prompt("Copy this link:", url));
+  } else {
+    window.prompt("Copy this link:", url);
+  }
+}
+
 // ---------- wiring ----------
 document.getElementById("filter-toggle").addEventListener("click", () => {
   document.getElementById("filter-panel").classList.toggle("hidden");
@@ -293,6 +401,7 @@ document.getElementById("filter-toggle").addEventListener("click", () => {
 document.getElementById("filter-apply").addEventListener("click", () => {
   filterState = {
     status: document.getElementById("f-status").value,
+    sort: document.getElementById("f-sort").value,
     down: parseFloat(document.getElementById("f-down").value) || null,
     monthly: parseFloat(document.getElementById("f-monthly").value) || null,
     beds: parseInt(document.getElementById("f-beds").value, 10) || null,
@@ -301,6 +410,7 @@ document.getElementById("filter-apply").addEventListener("click", () => {
   document.getElementById("filter-panel").classList.add("hidden");
   renderCardGrid();
 });
+document.getElementById("copy-link-btn").addEventListener("click", copyResultsLink);
 document.getElementById("search-box").addEventListener("input", renderCardGrid);
 document.getElementById("show-map-btn").addEventListener("click", showMap);
 document.getElementById("map-back-btn").addEventListener("click", () => {

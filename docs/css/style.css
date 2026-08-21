@@ -45,6 +45,29 @@ body {
 main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .page-title { font-size: 26px; font-weight: 800; margin: 8px 0 16px; }
 
+/* ---------- rent-vs-own frame ---------- */
+.rent-frame {
+  background: #101a35; color: #fff; border-radius: 14px; padding: 20px; margin-bottom: 16px;
+}
+.rent-frame-headline { font-size: 16px; font-weight: 700; margin: 0 0 14px; }
+.rent-frame-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 480px) { .rent-frame-cols { grid-template-columns: 1fr; } }
+.rent-col-title { font-size: 13px; font-weight: 700; color: #93a3c9; text-transform: uppercase; margin-bottom: 8px; }
+.own-col .rent-col-title { color: #7ee0a8; }
+.rent-frame ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.rent-frame li { font-size: 13px; line-height: 1.4; color: #d7deed; }
+.own-col li { color: #eafff2; }
+
+/* ---------- stats strip ---------- */
+.stats-strip {
+  display: flex; gap: 10px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 2px;
+}
+.stat-pill {
+  flex: 0 0 auto; background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 14px; font-size: 12px; color: var(--gray-text); white-space: nowrap;
+}
+.stat-pill strong { display: block; font-size: 16px; color: #111827; }
+
 /* ---------- search + filters ---------- */
 .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .search-row input[type="search"] {
@@ -60,6 +83,8 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .filter-panel label { display: flex; flex-direction: column; font-size: 13px; color: var(--gray-text); gap: 4px; }
 .filter-panel input, .filter-panel select { padding: 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; }
+.filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-actions .btn-primary, .filter-actions .btn-outline { flex: 1; min-width: 140px; }
 
 .freshness { font-size: 12px; color: var(--gray-text); margin-bottom: 8px; }
 
@@ -69,6 +94,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .card {
   background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
   cursor: pointer; display: flex; flex-direction: column;
+  /* "jump from the page just a bit" -- a soft elevation shadow plus a slight
+     lift on hover/tap, kept subtle rather than a heavy animation. */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.card:hover, .card:active {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #ddd; }
 .card-body { padding: 10px 12px 14px; }

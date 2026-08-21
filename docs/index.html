@@ -30,6 +30,36 @@
   <section id="tab-properties" class="tab-panel">
 
     <div id="view-list">
+
+      <!-- Renting-vs-owning frame, minimal copy, every fact already
+           confirmed live on Approved!/5 Easy Steps -- sets the psychological
+           frame before anyone even sees a listing. -->
+      <div class="rent-frame">
+        <p class="rent-frame-headline">Every month, you're paying for a home. The question is whose.</p>
+        <div class="rent-frame-cols">
+          <div class="rent-col">
+            <div class="rent-col-title">When you rent</div>
+            <ul>
+              <li>✕ Your payment disappears on the 1st — you'll never see it again</li>
+              <li>✕ Rent can go up any time, and you can't stop it</li>
+              <li>✕ After years of payments, you own nothing</li>
+            </ul>
+          </div>
+          <div class="own-col">
+            <div class="rent-col-title">When you own with us</div>
+            <ul>
+              <li>✓ No bank, no credit check, no applications</li>
+              <li>✓ Your price and payment are locked in from day one</li>
+              <li>✓ Every payment builds toward a home that's actually yours</li>
+              <li>✓ Paint it, fix it, rent it out, sell it, or pass it down — it's yours</li>
+              <li>✓ Cancel anytime if you're paid current, no penalty</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="stats-strip" class="stats-strip"><!-- populated live from real data --></div>
+
       <h1 class="page-title">Property Search</h1>
 
       <div class="search-row">
@@ -48,11 +78,30 @@
             <option value="Any">Any</option>
           </select>
         </label>
+        <label>Sort by
+          <select id="f-sort">
+            <option value="recent" selected>Most recently updated</option>
+            <option value="monthly-asc">Lowest monthly payment</option>
+            <option value="down-asc">Lowest down payment</option>
+          </select>
+        </label>
         <label>Max Down Payment
-          <input id="f-down" type="number" placeholder="$ any">
+          <select id="f-down">
+            <option value="" selected>Any amount</option>
+            <option value="1500">Under $1,500</option>
+            <option value="2000">Under $2,000</option>
+            <option value="2500">Under $2,500</option>
+            <option value="3000">Under $3,000</option>
+          </select>
         </label>
         <label>Max Monthly Payment
-          <input id="f-monthly" type="number" placeholder="$ any">
+          <select id="f-monthly">
+            <option value="" selected>Any amount</option>
+            <option value="700">Under $700/mo</option>
+            <option value="800">Under $800/mo</option>
+            <option value="900">Under $900/mo</option>
+            <option value="1000">Under $1,000/mo</option>
+          </select>
         </label>
         <label>Min Bedrooms
           <input id="f-beds" type="number" placeholder="any">
@@ -60,7 +109,10 @@
         <label>Area
           <input id="f-area" type="text" placeholder="e.g. STL, ESTL, PA">
         </label>
-        <button id="filter-apply" class="btn-primary">Apply</button>
+        <div class="filter-actions">
+          <button id="filter-apply" class="btn-primary">Apply</button>
+          <button id="copy-link-btn" class="btn-outline" type="button">🔗 Copy link to these results</button>
+        </div>
       </div>
 
       <div id="freshness" class="freshness"></div>

@@ -48,7 +48,7 @@ INCLUDED_STATUSES = {"available", "pending", "sold"}
 
 # Confirmed-public columns (see the approved plan's "Public data" section).
 PUBLIC_COLUMNS = [
-    "Address", "On Market Date", "Last Update", "Down", "Monthly",
+    "Address", "On Market Date", "Last Update", "Area", "Down", "Monthly",
     "Pics 1", "Beds", "Baths", "Sq Ft", "Available?", "Livability",
 ]
 
@@ -232,6 +232,7 @@ def main():
             "address": address,
             "onMarketDate": cell("On Market Date").strip(),
             "lastUpdate": cell("Last Update").strip(),
+            "area": cell("Area").strip(),
             "down": cell("Down").strip(),
             "monthly": cell("Monthly").strip(),
             "picsLink": cell("Pics 1").strip(),
