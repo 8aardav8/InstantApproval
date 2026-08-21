@@ -11,3 +11,4 @@ on:
 jobs:
   publish:
     uses: ./.github/workflows/_publish.yml
+    secrets: inherit
