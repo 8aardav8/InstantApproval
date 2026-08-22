@@ -91,28 +91,12 @@
         <button id="sort-toggle" class="icon-btn-outline" aria-label="Sort"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="4" x2="7" y2="20"/><polyline points="4 7 7 4 10 7"/><line x1="17" y1="20" x2="17" y2="4"/><polyline points="20 17 17 20 14 17"/></svg></button>
       </div>
 
-      <!-- Map, 2026-08-22: an inline accordion within the home page itself
-           (not a separate page) -- toggled open/closed by the same button,
-           and its pins reflect whatever filters are currently applied to
-           the card grid below, per Aaron's explicit request (this
-           supersedes the original plan's "map always shows Available
-           only" rule). -->
-      <button id="show-map-btn" class="link-pill"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="show-map-btn-label">See homes matching these filters on the map</span></button>
-
-      <div id="map-accordion" class="map-accordion hidden">
-        <div class="search-row">
-          <div class="search-input-wrap">
-            <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-            <input id="map-search-box" type="search" placeholder="Search a town or address" aria-label="Search a town or address on the map">
-          </div>
-          <button id="map-search-btn" class="icon-btn-outline" aria-label="Go to location"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-        </div>
-        <div id="map-search-status" class="map-search-status hidden"></div>
-        <div id="map-canvas"></div>
-      </div>
-
-      <!-- Sort -- deliberately its own button/panel, separate from Filter,
-           per Aaron's explicit 2026-08-21 request. -->
+      <!-- Sort/Filter panels moved above the map, 2026-08-22 -- Aaron
+           reported the filter panel appearing to load "behind" the map
+           accordion (a DOM-order issue: these used to come after the map
+           in source order, so opening both put filters below the map
+           instead of above it). Now: opening filters pushes the map down;
+           opening the map with filters already open shows it below them. -->
       <div id="sort-panel" class="filter-panel hidden">
         <label>Sort by
           <select id="f-sort">
@@ -182,6 +166,19 @@
           <button id="filter-clear" class="btn-outline" type="button">Clear filters</button>
         </div>
         <button id="copy-link-btn" class="link-pill" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 1 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 1 0 5.66 5.66l1-1"/></svg>Copy link to these results</button>
+      </div>
+
+      <!-- Map, 2026-08-22: an inline accordion within the home page itself
+           (not a separate page) -- toggled open/closed by the same button,
+           and its pins reflect whatever filters are currently applied to
+           the card grid below, per Aaron's explicit request (this
+           supersedes the original plan's "map always shows Available
+           only" rule). Its own search bar was removed the same day --
+           redundant now that the map already mirrors the page's filters. -->
+      <button id="show-map-btn" class="link-pill"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="show-map-btn-label">View Available Homes Meeting Filter Criteria</span></button>
+
+      <div id="map-accordion" class="map-accordion hidden">
+        <div id="map-canvas"></div>
       </div>
 
       <div id="freshness" class="freshness"></div>

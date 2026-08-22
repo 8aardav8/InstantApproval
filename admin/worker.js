@@ -1,11 +1,13 @@
 // Instant-Approval Home Financing -- Admin API (Cloudflare Worker)
 //
-// Returns the 5 admin-only fields (Total Price, Additional Notes, Lock box,
-// Seller name and link, direct Sheet-row link) for one listing, ONLY after
-// verifying the caller is Aaron himself via a Google Sign-In ID token.
-// Never bundled into the public properties.json, never cached, read live
-// from the Sheet on every request using the same service-account credential
-// already used by generate_properties.py.
+// Returns EVERY column's value (as a raw header-name -> value map) for one
+// listing's Sheet row, ONLY after verifying the caller is Aaron himself via
+// a Google Sign-In ID token. The frontend decides which fields are already
+// shown elsewhere on the public page and skips those, generically
+// displaying whatever's left over that has a value -- see app.js's
+// ALREADY_SHOWN_HEADERS. Never bundled into the public properties.json,
+// never cached, read live from the Sheet on every request using the same
+// service-account credential already used by generate_properties.py.
 //
 // SETUP (fill these in / set as Worker secrets before this works):
 //   1. AARON_EMAIL below -- already filled in.
@@ -25,7 +27,6 @@ const OAUTH_CLIENT_ID = "74546128016-r0b13a553shc79gae1hf8r42nkd47t3i.apps.googl
 
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 const SHEET_TAB = "PROPERTIES";
-const SHEET_TAB_GID = "1440969658"; // confirmed live, for the direct row link
 
 const ALLOWED_ORIGIN = "https://8aardav8.github.io";
 
@@ -157,32 +158,27 @@ export default {
       const accessToken = await getSheetsAccessToken(env);
       const rows = await fetchSheetRows(accessToken);
       const headers = rows[0] || [];
-      const col = (name) => headers.indexOf(name);
-      const addressCol = col("Address");
-      const totalPriceCol = col("Total Price");
-      const notesCol = col("Additional Notes");
-      const lockboxCol = col("Lock box "); // real header has a trailing space
-      const sellerCol = col("Seller name and link");
+      const addressCol = headers.indexOf("Address");
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         const address = row[addressCol] || "";
         if (!address || slugify(address) !== listingId) continue;
 
-        const rowNum = i + 1; // 1-indexed, +1 for the header row already skipped
-        return jsonResponse({
-          totalPrice: row[totalPriceCol] || "",
-          additionalNotes: row[notesCol] || "",
-          lockbox: row[lockboxCol] || "",
-          sellerNameAndLink: row[sellerCol] || "",
-          // Whole-row A1 range ("5:5"), not a single cell ("A5") -- the
-          // single-cell form wasn't reliably jumping to/selecting the row
-          // in real testing. Recomputed fresh on every request (the row
-          // lookup above always re-reads the live sheet), so this stays
-          // correct even if rows get inserted/reordered later -- it's
-          // never a stale baked-in row number.
-          sheetRowLink: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${SHEET_TAB_GID}&range=${rowNum}:${rowNum}`,
-        });
+        // Fixed 2026-08-22: dropped the "link to this row" idea entirely
+        // (a docs.google.com link reliably opens the Sheets app on iOS
+        // instead of the browser, with no code-side fix -- confirmed via
+        // two different attempts). Per Aaron's direct request: just return
+        // EVERY column's value for this row, generically, rather than a
+        // hardcoded list of named fields. The frontend decides which of
+        // these are already shown elsewhere on the public page and skips
+        // those, showing everything else that has a value. This is also
+        // more forward-compatible than the old 4-named-field response --
+        // a new Sheet column just shows up automatically, no Worker
+        // redeploy needed.
+        const fields = {};
+        headers.forEach((h, idx) => { fields[h] = row[idx] || ""; });
+        return jsonResponse({ fields });
       }
       return jsonResponse({ error: "listing not found" }, 404);
     } catch (e) {

@@ -13,18 +13,6 @@
 // used from a server-to-server call (no browser, no Referer header).
 const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
-// TODO(kickoff): fill in once Aaron creates it -- a THIRD key, restricted
-// by the same website referrer as GOOGLE_MAPS_API_KEY above but scoped to
-// Geocoding API only. Kept deliberately separate from GOOGLE_MAPS_API_KEY:
-// google.maps.Geocoder (the JS class) is bound to whichever key loaded the
-// Maps script and can't use a different key per call, so the map-search
-// feature calls the Geocoding REST endpoint directly via fetch() with this
-// key instead -- same pattern the server-side pipeline already uses, just
-// from the browser. Never give GOOGLE_MAPS_API_KEY Geocoding permission
-// directly -- that would let a scraped copy of it rack up geocoding calls
-// too, on top of Maps JS/Street View.
-const GOOGLE_GEOCODING_SEARCH_KEY = "";
-
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
 // TODO(kickoff): once the small serverless backend is deployed, point this
@@ -375,7 +363,7 @@ async function toggleMapAccordion() {
 
   if (isOpen) {
     accordion.classList.add("hidden");
-    label.textContent = "See homes matching these filters on the map";
+    label.textContent = "View Available Homes Meeting Filter Criteria";
     return;
   }
 
@@ -450,47 +438,6 @@ function renderMapMarkers() {
 function isMapAccordionOpen() {
   const accordion = document.getElementById("map-accordion");
   return accordion && !accordion.classList.contains("hidden");
-}
-
-// ---------- map search (town/address -> pan+zoom) ----------
-// Deliberately calls the Geocoding REST endpoint directly via fetch(),
-// rather than google.maps.Geocoder -- see GOOGLE_GEOCODING_SEARCH_KEY's own
-// comment above for why (Geocoder is bound to whatever key loaded the Maps
-// script and can't be pointed at a different key per call).
-async function geocodeAndPanMap(query) {
-  const statusEl = document.getElementById("map-search-status");
-  const q = query.trim();
-  if (!q) return;
-
-  const showStatus = (text) => {
-    statusEl.textContent = text;
-    statusEl.classList.remove("hidden");
-  };
-
-  if (!GOOGLE_GEOCODING_SEARCH_KEY) {
-    showStatus("Map search isn't configured yet.");
-    return;
-  }
-  if (!mapInstance) return; // shouldn't happen -- search box only exists inside the map view
-
-  showStatus("Searching...");
-  try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${GOOGLE_GEOCODING_SEARCH_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status === "OK" && data.results && data.results.length > 0) {
-      const loc = data.results[0].geometry.location;
-      mapInstance.setCenter({ lat: loc.lat, lng: loc.lng });
-      mapInstance.setZoom(13); // roughly a town/neighborhood-level zoom
-      statusEl.classList.add("hidden");
-    } else if (data.status === "ZERO_RESULTS") {
-      showStatus("Couldn't find that place -- try a different search.");
-    } else {
-      showStatus("Search failed -- please try again.");
-    }
-  } catch (e) {
-    showStatus("Search failed -- please try again.");
-  }
 }
 
 function mapPopupContent(listing) {
@@ -712,12 +659,6 @@ document.getElementById("filter-clear").addEventListener("click", () => {
 document.getElementById("copy-link-btn").addEventListener("click", copyResultsLink);
 document.getElementById("search-box").addEventListener("input", refreshCardGridAndMap);
 document.getElementById("show-map-btn").addEventListener("click", toggleMapAccordion);
-document.getElementById("map-search-btn").addEventListener("click", () => {
-  geocodeAndPanMap(document.getElementById("map-search-box").value);
-});
-document.getElementById("map-search-box").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") geocodeAndPanMap(e.target.value);
-});
 
 // ---------- admin sign-in (Aaron only) ----------
 // A small, deliberately unbranded lock icon in the header, not a visible
@@ -777,19 +718,23 @@ function handleAdminCredentialResponse(response) {
   }
 }
 
-function copySheetRowLink(btn) {
-  const link = btn.dataset.link;
-  const done = (ok) => {
-    const original = btn.textContent;
-    btn.textContent = ok ? "Copied! Now paste into Safari's address bar" : "Copy failed -- long-press to copy manually";
-    setTimeout(() => { btn.textContent = original; }, 3000);
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(link).then(() => done(true)).catch(() => done(false));
-  } else {
-    done(false);
-  }
-}
+// Headers already shown somewhere on the public page (card/detail view) --
+// skipped when generically listing "everything else" below, so nothing
+// gets shown twice. Matches PUBLIC_COLUMNS in scripts/generate_properties.py.
+const ALREADY_SHOWN_HEADERS = new Set([
+  "Available?", "Livability", "Address", "On Market Date", "Last Update",
+  "Area", "Down", "Monthly", "Pics 1", "Beds", "Baths", "Sq Ft",
+]);
+// The 4 original named admin fields -- still rendered first, with their own
+// friendly labels, before the generic "everything else" list. Real header
+// names (note "Lock box " has a trailing space -- that's the actual Sheet
+// column name, confirmed against the live header row).
+const ADMIN_HEADLINE_FIELDS = [
+  ["Total Price", "Total Price"],
+  ["Additional Notes", "Additional Notes"],
+  ["Lock box ", "Lock Box"],
+  ["Seller name and link", "Seller Name/Link"],
+];
 
 async function renderAdminSection(listingId) {
   const container = document.getElementById("admin-info-section");
@@ -811,25 +756,25 @@ async function renderAdminSection(listingId) {
       return;
     }
     const data = await res.json();
-    // Fixed 2026-08-22: a plain <a href> to docs.google.com reliably opens
-    // the Google Sheets app on iOS instead of the browser (Universal Links
-    // -- confirmed no code-side way to prevent this for a domain we don't
-    // control), and the app has no way to jump to a specific cell at all.
-    // Confirmed workaround: pasting a URL directly into Safari's address
-    // bar does NOT trigger the app handoff (only tapping a link does) -- so
-    // this copies the link instead of navigating to it.
-    const sheetLinkBtn = data.sheetRowLink
-      ? `<button class="btn-outline btn-full" type="button" onclick="copySheetRowLink(this)" data-link="${escapeHtml(data.sheetRowLink)}">Copy Sheet Row Link</button>
-         <div class="admin-info-hint">Paste directly into Safari's address bar (not a new tab) -- pasting there skips the Google Sheets app.</div>`
-      : "";
-    container.innerHTML = `
-      <div class="admin-info-title">Admin Info (only visible to you)</div>
-      ${detailField("Total Price", data.totalPrice)}
-      ${detailField("Additional Notes", data.additionalNotes)}
-      ${detailField("Lock Box", data.lockbox)}
-      ${detailField("Seller Name/Link", data.sellerNameAndLink)}
-      ${sheetLinkBtn}
-    `;
+    const fields = data.fields || {};
+
+    // Fixed 2026-08-22: dropped the sheet-row-link idea entirely (a
+    // docs.google.com link reliably opens the Sheets app on iOS instead of
+    // the browser, with no code-side fix, confirmed via two attempts --
+    // and even the copy-to-clipboard workaround still didn't get Aaron to
+    // the right row). Per Aaron's direct request: just show every other
+    // column's value generically, instead of trying to link/navigate to
+    // the Sheet at all.
+    const handled = new Set([...ALREADY_SHOWN_HEADERS, ...ADMIN_HEADLINE_FIELDS.map((f) => f[0])]);
+    let html = `<div class="admin-info-title">Admin Info (only visible to you)</div>`;
+    for (const [header, label] of ADMIN_HEADLINE_FIELDS) {
+      html += detailField(label, fields[header]);
+    }
+    for (const [header, value] of Object.entries(fields)) {
+      if (handled.has(header)) continue;
+      html += detailField(header.trim(), value);
+    }
+    container.innerHTML = html;
   } catch (e) {
     container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Request failed.</div>`;
   }
