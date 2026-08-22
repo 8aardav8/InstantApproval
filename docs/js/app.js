@@ -173,7 +173,11 @@ function renderCardGrid() {
 
 function streetViewUrl(address, w, h) {
   if (!GOOGLE_MAPS_API_KEY) return "assets/placeholder-streetview.png";
-  return `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&location=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
+  // fov (field of view, degrees) defaults to 90 if unset -- a fairly wide,
+  // zoomed-out shot. 60 zooms in noticeably to better showcase the house
+  // itself, per Aaron's 2026-08-22 request, without going so tight that a
+  // wider home/lot risks getting cropped out of frame.
+  return `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&fov=60&location=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
 }
 
 function escapeHtml(s) {
