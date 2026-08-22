@@ -275,6 +275,8 @@ function backToList() {
 // ---------- map (Available-only, always, regardless of the list filter) ----------
 let mapInstance = null;
 let mapsScriptLoading = null;
+let mapMarkers = []; // tracked so re-entering the map view doesn't stack duplicate markers
+let mapInfoWindow = null;
 
 function loadMapsScript() {
   if (mapsScriptLoading) return mapsScriptLoading;
@@ -318,14 +320,48 @@ async function showMap() {
       center: { lat: 39.5, lng: -89.5 }, // rough Illinois-area default; auto-fits below anyway
     });
   }
+  if (!mapInfoWindow) {
+    mapInfoWindow = new google.maps.InfoWindow();
+  }
+
+  // Fixed 2026-08-22: markers were never cleared between visits to the map,
+  // so navigating away and back would silently stack duplicate markers on
+  // top of each other (same info, just wasted memory/render cost -- but
+  // real and worth fixing while touching this code for the popup feature).
+  for (const m of mapMarkers) m.setMap(null);
+  mapMarkers = [];
+
   const bounds = new google.maps.LatLngBounds();
   for (const listing of availableWithCoords) {
     const pos = { lat: listing.lat, lng: listing.lng };
     const marker = new google.maps.Marker({ position: pos, map: mapInstance, title: listing.address });
-    marker.addListener("click", () => showDetail(listing.id));
+    // Click opens a popup with a condensed property card + a button through
+    // to the full detail page, rather than jumping straight to the detail
+    // page -- per Aaron's explicit 2026-08-22 request.
+    marker.addListener("click", () => {
+      mapInfoWindow.setContent(mapPopupContent(listing));
+      mapInfoWindow.open({ anchor: marker, map: mapInstance });
+    });
+    mapMarkers.push(marker);
     bounds.extend(pos);
   }
   if (availableWithCoords.length > 0) mapInstance.fitBounds(bounds);
+}
+
+function mapPopupContent(listing) {
+  const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
+  return `
+    <div class="map-popup">
+      <img class="map-popup-photo" src="${streetViewUrl(listing.address, 240, 160)}" alt="${escapeHtml(listing.address)}">
+      <div class="map-popup-body">
+        <div class="map-popup-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()}${escapeHtml(livabilitySuffix)}</div>
+        <div class="map-popup-address">${escapeHtml(listing.address)}</div>
+        <div class="map-popup-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
+        <div class="map-popup-money">${escapeHtml(listing.down)} down &middot; ${escapeHtml(listing.monthly)} a month</div>
+        <button class="btn-primary map-popup-btn" onclick="showDetail('${listing.id}')">View Full Listing</button>
+      </div>
+    </div>
+  `;
 }
 
 // ---------- 5 Easy Steps ----------
