@@ -36,11 +36,6 @@ body {
 .hamburger-btn {
   display: none; background: none; border: none; color: #fff; font-size: 22px; padding: 4px 6px; cursor: pointer;
 }
-.avatar-badge {
-  /* Square (soft-rounded), matching .avatar's fix above -- same source photo,
-     same circular-crop-cuts-off-the-head problem. */
-  width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: #14b8a6; flex: 0 0 auto;
-}
 .admin-login-btn {
   /* Deliberately understated -- a plain outline icon, not a branded button,
      since this is an Aaron-only entry point, not something buyers should be
