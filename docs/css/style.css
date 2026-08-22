@@ -36,8 +36,7 @@ body {
   display: none; background: none; border: none; color: #fff; font-size: 22px; padding: 4px 6px; cursor: pointer;
 }
 .avatar-badge {
-  width: 34px; height: 34px; border-radius: 50%; background: #14b8a6; color: #fff;
-  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex: 0 0 auto;
+  width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #14b8a6; flex: 0 0 auto;
 }
 .top-tabs { display: flex; gap: 6px; margin-top: 10px; }
 .top-tabs .nav-btn {
