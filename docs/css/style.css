@@ -84,11 +84,17 @@ body {
   height: 40px; padding: 0 14px; border-radius: 20px;
   background: #eef2ff; color: var(--blue); text-decoration: none; font-size: 14px; font-weight: 700;
 }
-.icon-btn-icon { font-size: 16px; }
+.icon-btn-icon { display: inline-flex; }
 .icon-btn-outline {
+  position: relative;
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; border-radius: 50%;
   background: #fff; color: #111827; border: 1px solid var(--border); font-size: 16px;
+}
+.count-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 3px;
+  border-radius: 8px; background: var(--blue); color: #fff; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
 }
 
 @media (max-width: 700px) {
@@ -133,11 +139,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* ---------- search + filters ---------- */
 .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.search-input-wrap { position: relative; flex: 1; }
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-text);
+  display: flex; pointer-events: none;
+}
 .search-row input[type="search"] {
-  flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: #fff;
+  width: 100%; padding: 12px 14px 12px 36px; border-radius: 10px; border: 1px solid var(--border); background: #fff;
 }
 .link-pill {
-  display: block; width: 100%; text-align: left; background: #eef2ff; color: var(--blue);
+  display: flex; align-items: center; width: 100%; text-align: left; background: #eef2ff; color: var(--blue);
   border: none; border-radius: 20px; padding: 10px 16px; margin-bottom: 16px; font-size: 14px; cursor: pointer;
 }
 .filter-panel {
@@ -148,6 +159,23 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .filter-panel input, .filter-panel select { padding: 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; }
 .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .filter-actions .btn-primary, .filter-actions .btn-outline { flex: 1; min-width: 140px; }
+.filter-panel .link-pill { margin-bottom: 0; justify-content: center; }
+
+.area-filter { display: flex; flex-direction: column; gap: 6px; }
+.area-filter-label { font-size: 13px; color: var(--gray-text); }
+.area-checkboxes {
+  display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px;
+}
+/* .filter-panel label (a descendant selector, specificity 0,1,1) is more
+   specific than the bare .area-checkbox class (0,1,0) and would otherwise
+   override this back to column layout/13px gray text -- scope with
+   .filter-panel to win instead (0,2,0). */
+.filter-panel .area-checkbox {
+  flex-direction: row; display: flex; align-items: center; gap: 5px; background: var(--gray-bg);
+  border-radius: 14px; padding: 5px 10px; font-size: 12px; color: #111827; cursor: pointer;
+}
+.area-checkbox input { margin: 0; }
 
 .freshness { font-size: 12px; color: var(--gray-text); margin-bottom: 8px; }
 

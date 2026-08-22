@@ -18,7 +18,10 @@ const BUYER_INFO_ENDPOINT = "";
 
 let ALL_LISTINGS = [];
 let GENERATED_AT = null;
-let filterState = { status: "Available", sort: "recent", down: null, monthly: null, beds: null, area: "" };
+// Availability defaults to "Any", per Aaron's explicit 2026-08-21 request
+// (was "Available"). area is now an array (checkbox multi-select) rather
+// than a free-text substring match.
+let filterState = { status: "Any", sort: "recent", down: null, monthly: null, beds: null, area: [] };
 
 // ---------- data load ----------
 async function loadData() {
@@ -26,10 +29,27 @@ async function loadData() {
   const data = await res.json();
   ALL_LISTINGS = data.listings;
   GENERATED_AT = data.generatedAt;
+  renderAreaCheckboxes(); // must run before restoreFilterStateFromUrl(), which checks boxes by value
   restoreFilterStateFromUrl();
   renderFreshness();
   renderStatsStrip();
+  updateFilterBadge();
   renderCardGrid();
+}
+
+// Area is now a checkbox list, not free text -- populated live from the
+// real Area values in the data (never hardcoded, so it can't drift from
+// what's actually in the Sheet). All start unchecked; unchecked = no area
+// restriction, same meaning as the old blank text field.
+function renderAreaCheckboxes() {
+  const container = document.getElementById("area-checkboxes");
+  const areas = [...new Set(ALL_LISTINGS.map((l) => l.area).filter(Boolean))].sort();
+  container.innerHTML = areas.map((area) => `
+    <label class="area-checkbox">
+      <input type="checkbox" value="${escapeHtml(area)}">
+      <span>${escapeHtml(area)}</span>
+    </label>
+  `).join("");
 }
 
 function renderFreshness() {
@@ -58,7 +78,7 @@ function matchesFilters(listing) {
   if (filterState.down && down !== null && down > filterState.down) return false;
   if (filterState.monthly && monthly !== null && monthly > filterState.monthly) return false;
   if (filterState.beds && (parseInt(listing.beds, 10) || 0) < filterState.beds) return false;
-  if (filterState.area && !(listing.area || "").toLowerCase().includes(filterState.area.toLowerCase())) return false;
+  if (filterState.area.length > 0 && !filterState.area.includes(listing.area)) return false;
   const q = document.getElementById("search-box").value.trim().toLowerCase();
   if (q && !listing.address.toLowerCase().includes(q)) return false;
   return true;
@@ -202,28 +222,34 @@ function showDetail(id) {
   detail.classList.remove("hidden");
   window.location.hash = `listing/${id}`;
 
+  const ICON_CHAT = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4A9 9 0 0 1 4 18l-2 1 1-3.2A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+  const ICON_LINK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 1 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 1 0 5.66 5.66l1-1"/></svg>';
+  const ICON_CAMERA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  const ICON_DIRECTIONS = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>';
+  const ICON_BACK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>';
+
   const availableOnly = listing.status === "Available";
   const inquireBtn = availableOnly
-    ? `<a class="btn-primary" href="${inquireLink(listing)}">💬 Inquire</a>` : "";
+    ? `<a class="btn-primary" href="${inquireLink(listing)}">${ICON_CHAT}Inquire</a>` : "";
   // Fixed 2026-08-21: this used to be a <button onclick="window.location.href=...">,
   // inconsistent with Inquire/Share (both plain <a href>) -- Aaron flagged it as
   // "didn't work like the others did." Same <a> pattern now, all three.
   const photoBtn = availableOnly
-    ? `<a class="btn-outline btn-full" href="${photoNotWorkingLink(listing)}">📷 Photo link not working?</a>` : "";
+    ? `<a class="btn-outline btn-full" href="${photoNotWorkingLink(listing)}">${ICON_CAMERA}Photo link not working?</a>` : "";
   // Livability deliberately NOT shown here -- per Aaron's 2026-08-21 request,
   // it stays on the card only, not on the detail/properties page.
 
   detail.innerHTML = `
-    <button class="detail-back" onclick="backToList()">←</button>
+    <button class="detail-back" onclick="backToList()">${ICON_BACK}</button>
     <img class="detail-photo" src="${streetViewUrl(listing.address, 800, 500)}" alt="${escapeHtml(listing.address)}">
     <div class="detail-body">
       <div class="detail-status">${escapeHtml(listing.status)}</div>
       <div class="detail-address">${escapeHtml(listing.address)}</div>
       <div class="action-row">
         ${inquireBtn}
-        <a class="btn-outline" href="${shareLink(listing)}">🔗 Share</a>
+        <a class="btn-outline" href="${shareLink(listing)}">${ICON_LINK}Share</a>
       </div>
-      <a class="btn-outline btn-full" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">🚗 Get Directions</a>
+      <a class="btn-outline btn-full" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
       <div class="detail-field"><span>First Available</span><span class="value">${escapeHtml(listing.onMarketDate)}</span></div>
       <div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>
       ${photoBtn}
@@ -342,7 +368,7 @@ function initBuyerForm() {
 // physically clicked (otherwise e.g. a bottom-nav tap wouldn't be reflected
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
-  properties: "PROPERTIES", steps: "5 EASY STEPS", approved: "APPROVED!",
+  properties: "HOMES", steps: "5 EASY STEPS", approved: "APPROVED!",
   buyer: "BUYER INFO",
 };
 
@@ -378,6 +404,26 @@ function initDrawer() {
   document.getElementById("nav-drawer-backdrop").addEventListener("click", closeDrawer);
 }
 
+// ---------- filter count badge ----------
+// Counts active FILTER dimensions only (status/down/monthly/beds/area) --
+// sort is an ordering preference, not a filter, and deliberately excluded
+// per the same "sort is separate from filter" split as the UI itself.
+function activeFilterCount() {
+  let n = 0;
+  if (filterState.status !== "Any") n++;
+  if (filterState.down) n++;
+  if (filterState.monthly) n++;
+  if (filterState.beds) n++;
+  if (filterState.area.length > 0) n++;
+  return n;
+}
+function updateFilterBadge() {
+  const n = activeFilterCount();
+  const badge = document.getElementById("filter-badge");
+  badge.textContent = n;
+  badge.classList.toggle("hidden", n === 0);
+}
+
 // ---------- shareable filter links ----------
 // Encodes filterState (+ the free-text search box) into the URL query string
 // so "Copy link to these results" produces a link that reproduces the same
@@ -388,19 +434,21 @@ function applyFilterStateToControls() {
   document.getElementById("f-down").value = filterState.down || "";
   document.getElementById("f-monthly").value = filterState.monthly || "";
   document.getElementById("f-beds").value = filterState.beds || "";
-  document.getElementById("f-area").value = filterState.area || "";
+  document.querySelectorAll("#area-checkboxes input[type=checkbox]").forEach((cb) => {
+    cb.checked = filterState.area.includes(cb.value);
+  });
 }
 
 function restoreFilterStateFromUrl() {
   const params = new URLSearchParams(window.location.search);
   if ([...params.keys()].length === 0) return;
   filterState = {
-    status: params.get("status") || "Available",
+    status: params.get("status") || "Any",
     sort: params.get("sort") || "recent",
     down: parseFloat(params.get("down")) || null,
     monthly: parseFloat(params.get("monthly")) || null,
     beds: parseInt(params.get("beds"), 10) || null,
-    area: params.get("area") || "",
+    area: params.get("area") ? params.get("area").split(",") : [],
   };
   if (params.get("q")) document.getElementById("search-box").value = params.get("q");
   applyFilterStateToControls();
@@ -408,21 +456,21 @@ function restoreFilterStateFromUrl() {
 
 function copyResultsLink() {
   const params = new URLSearchParams();
-  if (filterState.status && filterState.status !== "Available") params.set("status", filterState.status);
+  if (filterState.status && filterState.status !== "Any") params.set("status", filterState.status);
   if (filterState.sort && filterState.sort !== "recent") params.set("sort", filterState.sort);
   if (filterState.down) params.set("down", filterState.down);
   if (filterState.monthly) params.set("monthly", filterState.monthly);
   if (filterState.beds) params.set("beds", filterState.beds);
-  if (filterState.area) params.set("area", filterState.area);
+  if (filterState.area.length > 0) params.set("area", filterState.area.join(","));
   const q = document.getElementById("search-box").value.trim();
   if (q) params.set("q", q);
   const qs = params.toString();
   const url = `${window.location.origin}${window.location.pathname}${qs ? "?" + qs : ""}`;
   const btn = document.getElementById("copy-link-btn");
   const done = () => {
-    const original = btn.textContent;
-    btn.textContent = "✅ Link copied!";
-    setTimeout(() => { btn.textContent = original; }, 2000);
+    const original = btn.innerHTML;
+    btn.textContent = "✓ Link copied!";
+    setTimeout(() => { btn.innerHTML = original; }, 2000);
   };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(done).catch(() => window.prompt("Copy this link:", url));
@@ -432,19 +480,41 @@ function copyResultsLink() {
 }
 
 // ---------- wiring ----------
+// Filter and Sort are deliberately separate buttons/panels, per Aaron's
+// explicit 2026-08-21 request -- opening one closes the other so only one
+// dropdown-style panel is ever open at a time.
 document.getElementById("filter-toggle").addEventListener("click", () => {
+  document.getElementById("sort-panel").classList.add("hidden");
   document.getElementById("filter-panel").classList.toggle("hidden");
 });
-document.getElementById("filter-apply").addEventListener("click", () => {
-  filterState = {
-    status: document.getElementById("f-status").value,
-    sort: document.getElementById("f-sort").value,
-    down: parseFloat(document.getElementById("f-down").value) || null,
-    monthly: parseFloat(document.getElementById("f-monthly").value) || null,
-    beds: parseInt(document.getElementById("f-beds").value, 10) || null,
-    area: document.getElementById("f-area").value,
-  };
+document.getElementById("sort-toggle").addEventListener("click", () => {
   document.getElementById("filter-panel").classList.add("hidden");
+  document.getElementById("sort-panel").classList.toggle("hidden");
+});
+document.getElementById("sort-apply").addEventListener("click", () => {
+  filterState.sort = document.getElementById("f-sort").value;
+  document.getElementById("sort-panel").classList.add("hidden");
+  renderCardGrid();
+});
+document.getElementById("filter-apply").addEventListener("click", () => {
+  filterState.status = document.getElementById("f-status").value;
+  filterState.down = parseFloat(document.getElementById("f-down").value) || null;
+  filterState.monthly = parseFloat(document.getElementById("f-monthly").value) || null;
+  filterState.beds = parseInt(document.getElementById("f-beds").value, 10) || null;
+  filterState.area = [...document.querySelectorAll("#area-checkboxes input[type=checkbox]:checked")].map((cb) => cb.value);
+  document.getElementById("filter-panel").classList.add("hidden");
+  updateFilterBadge();
+  renderCardGrid();
+});
+document.getElementById("filter-clear").addEventListener("click", () => {
+  filterState.status = "Any";
+  filterState.down = null;
+  filterState.monthly = null;
+  filterState.beds = null;
+  filterState.area = [];
+  applyFilterStateToControls();
+  document.getElementById("filter-panel").classList.add("hidden");
+  updateFilterBadge();
   renderCardGrid();
 });
 document.getElementById("copy-link-btn").addEventListener("click", copyResultsLink);
