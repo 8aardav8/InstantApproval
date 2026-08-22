@@ -21,10 +21,10 @@ const BUYER_INFO_ENDPOINT = "";
 
 let ALL_LISTINGS = [];
 let GENERATED_AT = null;
-// Availability defaults to "Any", per Aaron's explicit 2026-08-21 request
-// (was "Available"). area is now an array (checkbox multi-select) rather
-// than a free-text substring match.
-let filterState = { status: "Any", sort: "recent", down: null, monthly: null, beds: null, area: [] };
+// Availability defaults to "Available" again (2026-08-22) -- briefly
+// changed to "Any" on 2026-08-21, reverted per Aaron's direct request the
+// next day. area is a checkbox multi-select (array), not free-text.
+let filterState = { status: "Available", sort: "recent", down: null, monthly: null, beds: null, area: [] };
 
 // ---------- data load ----------
 async function loadData() {
@@ -164,7 +164,8 @@ function renderCardGrid() {
       <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
       <div class="card-address">${escapeHtml(listing.address)}</div>
       <div class="card-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
-      <div class="card-money">${escapeHtml(listing.down)} down &middot; ${escapeHtml(listing.monthly)} a month</div>
+      <div class="card-money">${escapeHtml(listing.down)} down</div>
+      <div class="card-money">${escapeHtml(listing.monthly)} a month</div>
     `;
     card.appendChild(body);
     grid.appendChild(card);
@@ -281,7 +282,7 @@ function showDetail(id) {
     </div>
   `;
 
-  renderAdminSection(listing.id);
+  renderAdminSection(listing);
 }
 
 function backToList() {
@@ -363,7 +364,7 @@ async function toggleMapAccordion() {
 
   if (isOpen) {
     accordion.classList.add("hidden");
-    label.textContent = "View Available Homes Meeting Filter Criteria";
+    label.textContent = "View Map of Homes Meeting Filter Criteria";
     return;
   }
 
@@ -541,7 +542,7 @@ function initDrawer() {
 // per the same "sort is separate from filter" split as the UI itself.
 function activeFilterCount() {
   let n = 0;
-  if (filterState.status !== "Any") n++;
+  if (filterState.status !== "Available") n++; // "Available" is the default/baseline again, not "Any"
   if (filterState.down) n++;
   if (filterState.monthly) n++;
   if (filterState.beds) n++;
@@ -574,7 +575,7 @@ function restoreFilterStateFromUrl() {
   const params = new URLSearchParams(window.location.search);
   if ([...params.keys()].length === 0) return;
   filterState = {
-    status: params.get("status") || "Any",
+    status: params.get("status") || "Available",
     sort: params.get("sort") || "recent",
     down: parseFloat(params.get("down")) || null,
     monthly: parseFloat(params.get("monthly")) || null,
@@ -587,7 +588,7 @@ function restoreFilterStateFromUrl() {
 
 function copyResultsLink() {
   const params = new URLSearchParams();
-  if (filterState.status && filterState.status !== "Any") params.set("status", filterState.status);
+  if (filterState.status && filterState.status !== "Available") params.set("status", filterState.status);
   if (filterState.sort && filterState.sort !== "recent") params.set("sort", filterState.sort);
   if (filterState.down) params.set("down", filterState.down);
   if (filterState.monthly) params.set("monthly", filterState.monthly);
@@ -635,24 +636,37 @@ document.getElementById("sort-apply").addEventListener("click", () => {
   document.getElementById("sort-panel").classList.add("hidden");
   refreshCardGridAndMap();
 });
-document.getElementById("filter-apply").addEventListener("click", () => {
+// Filters apply live as each control changes, per Aaron's 2026-08-22
+// request -- no separate Apply button/click anymore. Deliberately does NOT
+// close filter-panel on each change (unlike the old Apply flow), so
+// adjusting several filters in a row doesn't require reopening the panel
+// each time.
+function applyFiltersFromControls() {
   filterState.status = document.getElementById("f-status").value;
   filterState.down = parseFloat(document.getElementById("f-down").value) || null;
   filterState.monthly = parseFloat(document.getElementById("f-monthly").value) || null;
   filterState.beds = parseInt(document.getElementById("f-beds").value, 10) || null;
   filterState.area = [...document.querySelectorAll("#area-checkboxes input[type=checkbox]:checked")].map((cb) => cb.value);
-  document.getElementById("filter-panel").classList.add("hidden");
   updateFilterBadge();
   refreshCardGridAndMap();
-});
+}
+document.getElementById("f-status").addEventListener("change", applyFiltersFromControls);
+document.getElementById("f-down").addEventListener("change", applyFiltersFromControls);
+document.getElementById("f-monthly").addEventListener("change", applyFiltersFromControls);
+document.getElementById("f-beds").addEventListener("change", applyFiltersFromControls);
+// Event delegation -- area checkboxes are (re)created dynamically by
+// renderAreaCheckboxes(), so listening on the container itself (rather than
+// each checkbox individually) keeps working regardless of when they were
+// (re)generated.
+document.getElementById("area-checkboxes").addEventListener("change", applyFiltersFromControls);
+
 document.getElementById("filter-clear").addEventListener("click", () => {
-  filterState.status = "Any";
+  filterState.status = "Available"; // matches the real default again, per Aaron's 2026-08-22 request
   filterState.down = null;
   filterState.monthly = null;
   filterState.beds = null;
   filterState.area = [];
   applyFilterStateToControls();
-  document.getElementById("filter-panel").classList.add("hidden");
   updateFilterBadge();
   refreshCardGridAndMap();
 });
@@ -719,24 +733,39 @@ function handleAdminCredentialResponse(response) {
 }
 
 // Headers already shown somewhere on the public page (card/detail view) --
-// skipped when generically listing "everything else" below, so nothing
-// gets shown twice. Matches PUBLIC_COLUMNS in scripts/generate_properties.py.
-const ALREADY_SHOWN_HEADERS = new Set([
-  "Available?", "Livability", "Address", "On Market Date", "Last Update",
-  "Area", "Down", "Monthly", "Pics 1", "Beds", "Baths", "Sq Ft",
-]);
-// The 4 original named admin fields -- still rendered first, with their own
-// friendly labels, before the generic "everything else" list. Real header
-// names (note "Lock box " has a trailing space -- that's the actual Sheet
-// column name, confirmed against the live header row).
+// The 4 original named admin fields, with their own friendly labels. Real
+// header names (note "Lock box " has a trailing space -- that's the actual
+// Sheet column name, confirmed against the live header row).
+// 2026-08-22: reverted back to JUST these 4 -- a generic "show every other
+// column" version was tried the same day, but Aaron changed his mind and
+// wants only the original fields back.
 const ADMIN_HEADLINE_FIELDS = [
   ["Total Price", "Total Price"],
   ["Additional Notes", "Additional Notes"],
   ["Lock box ", "Lock Box"],
   ["Seller name and link", "Seller Name/Link"],
+  ["Quick Summary", "Quick Summary"], // added 2026-08-22, per Aaron's direct request
 ];
 
-async function renderAdminSection(listingId) {
+// Base Sheet URL for the "open the sheet" half of the copy-link-and-open
+// button below -- just the whole spreadsheet, landed on the PROPERTIES tab
+// (no attempt at a specific-row deep link; that was tried twice and
+// confirmed broken, see the button's own comment).
+const SHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk/edit#gid=1440969658";
+
+function copyPhotoLinkAndOpenSheet(btn) {
+  // Read the URL from a data attribute rather than inlining it into the
+  // onclick string directly -- a photo link containing a stray quote
+  // character could otherwise break out of the HTML attribute. Same
+  // pattern already proven safe elsewhere in this file (copyResultsLink).
+  const picsLink = btn.dataset.picsLink;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(picsLink).catch(() => {});
+  }
+  window.open(SHEET_BASE_URL, "_blank", "noopener");
+}
+
+async function renderAdminSection(listing) {
   const container = document.getElementById("admin-info-section");
   const token = getStoredAdminToken();
   if (!container) return;
@@ -748,7 +777,7 @@ async function renderAdminSection(listingId) {
   container.classList.remove("hidden");
   container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Loading...</div>`;
   try {
-    const res = await fetch(`${ADMIN_API_URL}/?id=${encodeURIComponent(listingId)}`, {
+    const res = await fetch(`${ADMIN_API_URL}/?id=${encodeURIComponent(listing.id)}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
@@ -758,21 +787,18 @@ async function renderAdminSection(listingId) {
     const data = await res.json();
     const fields = data.fields || {};
 
-    // Fixed 2026-08-22: dropped the sheet-row-link idea entirely (a
-    // docs.google.com link reliably opens the Sheets app on iOS instead of
-    // the browser, with no code-side fix, confirmed via two attempts --
-    // and even the copy-to-clipboard workaround still didn't get Aaron to
-    // the right row). Per Aaron's direct request: just show every other
-    // column's value generically, instead of trying to link/navigate to
-    // the Sheet at all.
-    const handled = new Set([...ALREADY_SHOWN_HEADERS, ...ADMIN_HEADLINE_FIELDS.map((f) => f[0])]);
     let html = `<div class="admin-info-title">Admin Info (only visible to you)</div>`;
     for (const [header, label] of ADMIN_HEADLINE_FIELDS) {
       html += detailField(label, fields[header]);
     }
-    for (const [header, value] of Object.entries(fields)) {
-      if (handled.has(header)) continue;
-      html += detailField(header.trim(), value);
+    // "Open the row" links/deep-links were confirmed broken twice (iOS app
+    // handoff, and the app has no way to jump to a cell at all). This
+    // instead copies the Photo Link -- already unique per listing, since
+    // it's a real per-property share URL -- to the clipboard and opens the
+    // whole Sheet, so Aaron can paste it into the Sheet's own in-app search
+    // and land on exactly one row himself.
+    if (listing.picsLink && listing.picsLink.trim()) {
+      html += `<button class="btn-outline btn-full" type="button" onclick="copyPhotoLinkAndOpenSheet(this)" data-pics-link="${escapeHtml(listing.picsLink)}">Copy Photo Link &amp; Open Sheet</button>`;
     }
     container.innerHTML = html;
   } catch (e) {

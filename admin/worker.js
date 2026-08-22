@@ -2,12 +2,14 @@
 //
 // Returns EVERY column's value (as a raw header-name -> value map) for one
 // listing's Sheet row, ONLY after verifying the caller is Aaron himself via
-// a Google Sign-In ID token. The frontend decides which fields are already
-// shown elsewhere on the public page and skips those, generically
-// displaying whatever's left over that has a value -- see app.js's
-// ALREADY_SHOWN_HEADERS. Never bundled into the public properties.json,
-// never cached, read live from the Sheet on every request using the same
-// service-account credential already used by generate_properties.py.
+// a Google Sign-In ID token. The frontend only actually displays a handful
+// of named fields from this map (see app.js's ADMIN_HEADLINE_FIELDS) --
+// returning the full row here anyway costs nothing and means adding a new
+// admin-visible field later (already done once, for Quick Summary) is a
+// frontend-only change, no Worker redeploy needed. Never bundled into the
+// public properties.json, never cached, read live from the Sheet on every
+// request using the same service-account credential already used by
+// generate_properties.py.
 //
 // SETUP (fill these in / set as Worker secrets before this works):
 //   1. AARON_EMAIL below -- already filled in.

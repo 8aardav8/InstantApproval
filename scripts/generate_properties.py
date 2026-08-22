@@ -249,13 +249,17 @@ def main():
             "livability": livability_to_number(cell("Livability")),
         }
 
-        if status_key == "available":
-            coords = geocode(address, api_key, geocode_cache)
-            listing["lat"] = coords["lat"] if coords else None
-            listing["lng"] = coords["lng"] if coords else None
-        else:
-            listing["lat"] = None
-            listing["lng"] = None
+        # Geocode every included listing (Available/Pending/Sold), not just
+        # Available -- fixed 2026-08-22. The map used to hard-code
+        # "Available only" so only those needed coordinates; now the map
+        # mirrors whatever status filter is active on the page (including
+        # Pending/Sold), so all of them need real lat/lng or those filters
+        # would show zero pins. Caching (see load_geocode_cache_from_previous)
+        # means this is a one-time cost for existing Pending/Sold rows -- new
+        # runs only geocode addresses that weren't already cached.
+        coords = geocode(address, api_key, geocode_cache)
+        listing["lat"] = coords["lat"] if coords else None
+        listing["lng"] = coords["lng"] if coords else None
 
         listings.append(listing)
 

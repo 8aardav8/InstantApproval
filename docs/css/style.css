@@ -273,7 +273,13 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .btn-outline { background: #fff; border: 1px solid var(--border); color: #111827; }
 .btn-full { display: block; width: 100%; margin-bottom: 10px; }
 .detail-field { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-.detail-field .value { text-align: right; word-break: break-all; max-width: 60%; }
+/* overflow-wrap (not word-break: break-all) -- per Aaron's 2026-08-22
+   request, prose like Additional Notes should wrap at word boundaries
+   normally, not split mid-word. overflow-wrap: break-word still forces a
+   break for a single unbreakable long string (e.g. the Photo Link URL)
+   when there's truly no other way to avoid overflowing the container, so
+   long URLs still don't spill out of their box either. */
+.detail-field .value { text-align: right; overflow-wrap: break-word; max-width: 60%; }
 .detail-field .value a { color: var(--blue); }
 
 .admin-info-section {

@@ -113,10 +113,10 @@
       <div id="filter-panel" class="filter-panel hidden">
         <label>Availability
           <select id="f-status">
-            <option value="Any" selected>Any</option>
-            <option value="Available">Available</option>
+            <option value="Available" selected>Available</option>
             <option value="Pending">Pending</option>
             <option value="Sold">Sold</option>
+            <option value="Any">Any</option>
           </select>
         </label>
         <label>Max Down Payment
@@ -161,8 +161,9 @@
                (unchecked = no area restriction, matches "Any"). -->
           <div id="area-checkboxes" class="area-checkboxes"></div>
         </div>
+        <!-- Filters apply live on change (2026-08-22, per Aaron's request)
+             -- no separate Apply button anymore, just Clear. -->
         <div class="filter-actions">
-          <button id="filter-apply" class="btn-primary">Apply</button>
           <button id="filter-clear" class="btn-outline" type="button">Clear filters</button>
         </div>
         <button id="copy-link-btn" class="link-pill" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 1 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 1 0 5.66 5.66l1-1"/></svg>Copy link to these results</button>
@@ -175,7 +176,7 @@
            supersedes the original plan's "map always shows Available
            only" rule). Its own search bar was removed the same day --
            redundant now that the map already mirrors the page's filters. -->
-      <button id="show-map-btn" class="link-pill"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="show-map-btn-label">View Available Homes Meeting Filter Criteria</span></button>
+      <button id="show-map-btn" class="link-pill"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="show-map-btn-label">View Map of Homes Meeting Filter Criteria</span></button>
 
       <div id="map-accordion" class="map-accordion hidden">
         <div id="map-canvas"></div>
