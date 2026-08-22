@@ -36,7 +36,9 @@ body {
   display: none; background: none; border: none; color: #fff; font-size: 22px; padding: 4px 6px; cursor: pointer;
 }
 .avatar-badge {
-  width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #14b8a6; flex: 0 0 auto;
+  /* Square (soft-rounded), matching .avatar's fix above -- same source photo,
+     same circular-crop-cuts-off-the-head problem. */
+  width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: #14b8a6; flex: 0 0 auto;
 }
 .top-tabs { display: flex; gap: 6px; margin-top: 10px; }
 .top-tabs .nav-btn {
@@ -70,14 +72,26 @@ body {
    masthead, not inside it). */
 .profile-bar {
   background: #fff; border-bottom: 1px solid var(--border);
-  padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
-  max-width: 640px; margin: 0 auto; gap: 12px; flex-wrap: wrap;
+  padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+  max-width: 640px; margin: 0 auto; gap: 10px;
+  /* Deliberately no flex-wrap -- per Aaron's 2026-08-21 reference screenshot,
+     the icons stay pinned to the right of the name/tagline in the same row
+     at every width (was wrapping onto its own line below on narrow screens,
+     costing extra vertical height). */
 }
-.profile { display: flex; align-items: center; gap: 12px; }
-.avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #333; }
-.profile-text .name { font-size: 15px; color: var(--gray-text); }
-.profile-text .tagline { font-size: 15px; font-weight: 600; color: #111827; }
-.profile-actions { display: flex; gap: 8px; }
+.profile { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+/* min-width: 0 above is required -- without it, a flex child won't let its
+   text content shrink/wrap and will instead push .profile-actions off to
+   the side or force the row to overflow. */
+.profile-text { min-width: 0; }
+.avatar {
+  width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #333; flex: 0 0 auto;
+  /* Square (soft-rounded), not circular -- per Aaron's explicit 2026-08-21
+     request: a circular crop was cutting off the top of his head. */
+}
+.profile-text .name { font-size: 14px; color: var(--gray-text); }
+.profile-text .tagline { font-size: 14px; font-weight: 600; color: #111827; line-height: 1.3; }
+.profile-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 40px; padding: 0 14px; border-radius: 20px;
