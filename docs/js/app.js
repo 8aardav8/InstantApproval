@@ -185,6 +185,14 @@ function escapeHtml(s) {
   }[c]));
 }
 
+// Detail-view field row -- skips rendering entirely when the value is blank
+// (e.g. a listing missing Sq Ft), per Aaron's explicit 2026-08-22 request,
+// rather than showing a row with an empty value.
+function detailField(label, value) {
+  if (!value || !String(value).trim()) return "";
+  return `<div class="detail-field"><span>${escapeHtml(label)}</span><span class="value">${escapeHtml(value)}</span></div>`;
+}
+
 // ---------- SMS deep links ----------
 // Real cross-platform wrinkle, confirmed in the approved plan: iOS wants
 // `sms:<number>&body=<text>`, Android traditionally wants
@@ -256,15 +264,17 @@ function showDetail(id) {
         <a class="btn-outline" href="${shareLink(listing)}">${ICON_LINK}Share</a>
       </div>
       <a class="btn-outline btn-full" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
-      <div class="detail-field"><span>First Available</span><span class="value">${escapeHtml(listing.onMarketDate)}</span></div>
-      <div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>
+      ${detailField("First Available", listing.onMarketDate)}
+      ${listing.picsLink && listing.picsLink.trim()
+        ? `<div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>`
+        : ""}
       ${photoBtn}
-      <div class="detail-field"><span>Down Payment</span><span class="value">${escapeHtml(listing.down)}</span></div>
-      <div class="detail-field"><span>Monthly Payment</span><span class="value">${escapeHtml(listing.monthly)}</span></div>
-      <div class="detail-field"><span>Beds</span><span class="value">${escapeHtml(listing.beds)}</span></div>
-      <div class="detail-field"><span>Baths</span><span class="value">${escapeHtml(listing.baths)}</span></div>
-      <div class="detail-field"><span>Sq Ft</span><span class="value">${escapeHtml(listing.sqft)}</span></div>
-      <div class="detail-field"><span>Last Updated</span><span class="value">${escapeHtml(listing.lastUpdate)}</span></div>
+      ${detailField("Down Payment", listing.down)}
+      ${detailField("Monthly Payment", listing.monthly)}
+      ${detailField("Beds", listing.beds)}
+      ${detailField("Baths", listing.baths)}
+      ${detailField("Sq Ft", listing.sqft)}
+      ${detailField("Last Updated", listing.lastUpdate)}
     </div>
   `;
 }
