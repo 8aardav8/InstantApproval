@@ -242,8 +242,10 @@ function shareLink(listing) {
 function showDetail(id) {
   const listing = ALL_LISTINGS.find((l) => l.id === id);
   if (!listing) return;
+  // Note: #map-accordion is a child of #view-list, so hiding view-list below
+  // already visually hides the map too if it was open -- no separate step
+  // needed (it was a sibling "page" before the 2026-08-22 accordion rework).
   document.getElementById("view-list").classList.add("hidden");
-  document.getElementById("view-map").classList.add("hidden");
   const detail = document.getElementById("view-detail");
   detail.classList.remove("hidden");
   window.location.hash = `listing/${id}`;
@@ -361,18 +363,25 @@ function houseIconWithPrice(downText) {
   };
 }
 
-async function showMap() {
-  document.getElementById("view-list").classList.add("hidden");
-  document.getElementById("view-detail").classList.add("hidden");
-  const mapView = document.getElementById("view-map");
-  mapView.classList.remove("hidden");
-  const canvas = document.getElementById("map-canvas");
+// Map accordion open/close, 2026-08-22 rework: the map now lives inline on
+// the home page (toggled by the same button, no separate page/back button
+// needed) and its pins reflect whatever filters are currently applied to
+// the card grid -- this deliberately supersedes the original plan's "map
+// always shows Available only" rule, per Aaron's explicit request.
+async function toggleMapAccordion() {
+  const accordion = document.getElementById("map-accordion");
+  const label = document.getElementById("show-map-btn-label");
+  const isOpen = !accordion.classList.contains("hidden");
 
-  // Hard rule from the approved plan: the map ALWAYS shows Available only,
-  // independent of whatever the Properties list filter is currently set to.
-  const availableWithCoords = ALL_LISTINGS.filter(
-    (l) => l.status === "Available" && l.lat != null && l.lng != null
-  );
+  if (isOpen) {
+    accordion.classList.add("hidden");
+    label.textContent = "See homes matching these filters on the map";
+    return;
+  }
+
+  accordion.classList.remove("hidden");
+  label.textContent = "Hide map";
+  const canvas = document.getElementById("map-canvas");
 
   try {
     await loadMapsScript();
@@ -386,6 +395,11 @@ async function showMap() {
       zoom: 6,
       center: { lat: 39.5, lng: -89.5 }, // rough Illinois-area default; auto-fits below anyway
     });
+  } else {
+    // Google Maps doesn't redraw correctly if its container was hidden
+    // (display:none) at the time it was sized -- nudge it once the
+    // accordion (and therefore the canvas) is actually visible again.
+    google.maps.event.trigger(mapInstance, "resize");
   }
   if (!mapInfoWindow) {
     // Fixed 2026-08-22: without an explicit maxWidth, Google's InfoWindow
@@ -395,15 +409,23 @@ async function showMap() {
     mapInfoWindow = new google.maps.InfoWindow({ maxWidth: 200 });
   }
 
-  // Fixed 2026-08-22: markers were never cleared between visits to the map,
-  // so navigating away and back would silently stack duplicate markers on
-  // top of each other (same info, just wasted memory/render cost -- but
-  // real and worth fixing while touching this code for the popup feature).
+  renderMapMarkers();
+}
+
+// Redraws markers from the CURRENT filter/search state (same matchesFilters
+// used by the card grid), restricted to listings that actually have
+// coordinates. Called on open, and again any time filters/search/sort
+// change while the accordion is already open, so the map always mirrors
+// what's showing in the card grid below it.
+function renderMapMarkers() {
+  if (!mapInstance) return; // map not initialized yet (accordion never opened) -- nothing to redraw
+  const filtered = ALL_LISTINGS.filter((l) => matchesFilters(l) && l.lat != null && l.lng != null);
+
   for (const m of mapMarkers) m.setMap(null);
   mapMarkers = [];
 
   const bounds = new google.maps.LatLngBounds();
-  for (const listing of availableWithCoords) {
+  for (const listing of filtered) {
     const pos = { lat: listing.lat, lng: listing.lng };
     const marker = new google.maps.Marker({
       position: pos, map: mapInstance, title: listing.address,
@@ -419,7 +441,15 @@ async function showMap() {
     mapMarkers.push(marker);
     bounds.extend(pos);
   }
-  if (availableWithCoords.length > 0) mapInstance.fitBounds(bounds);
+  if (filtered.length > 0) mapInstance.fitBounds(bounds);
+}
+
+// True only when the map accordion is both rendered and actually open --
+// used to decide whether a filter/search/sort change should bother
+// redrawing map markers at all.
+function isMapAccordionOpen() {
+  const accordion = document.getElementById("map-accordion");
+  return accordion && !accordion.classList.contains("hidden");
 }
 
 // ---------- map search (town/address -> pan+zoom) ----------
@@ -645,10 +675,18 @@ document.getElementById("sort-toggle").addEventListener("click", () => {
   document.getElementById("filter-panel").classList.add("hidden");
   document.getElementById("sort-panel").classList.toggle("hidden");
 });
+// Re-renders the card grid, and -- if the map accordion is currently open --
+// the map's markers too, so the two never show a different set of listings
+// from each other. Used everywhere filterState/search changes.
+function refreshCardGridAndMap() {
+  renderCardGrid();
+  if (isMapAccordionOpen()) renderMapMarkers();
+}
+
 document.getElementById("sort-apply").addEventListener("click", () => {
   filterState.sort = document.getElementById("f-sort").value;
   document.getElementById("sort-panel").classList.add("hidden");
-  renderCardGrid();
+  refreshCardGridAndMap();
 });
 document.getElementById("filter-apply").addEventListener("click", () => {
   filterState.status = document.getElementById("f-status").value;
@@ -658,7 +696,7 @@ document.getElementById("filter-apply").addEventListener("click", () => {
   filterState.area = [...document.querySelectorAll("#area-checkboxes input[type=checkbox]:checked")].map((cb) => cb.value);
   document.getElementById("filter-panel").classList.add("hidden");
   updateFilterBadge();
-  renderCardGrid();
+  refreshCardGridAndMap();
 });
 document.getElementById("filter-clear").addEventListener("click", () => {
   filterState.status = "Any";
@@ -669,15 +707,11 @@ document.getElementById("filter-clear").addEventListener("click", () => {
   applyFilterStateToControls();
   document.getElementById("filter-panel").classList.add("hidden");
   updateFilterBadge();
-  renderCardGrid();
+  refreshCardGridAndMap();
 });
 document.getElementById("copy-link-btn").addEventListener("click", copyResultsLink);
-document.getElementById("search-box").addEventListener("input", renderCardGrid);
-document.getElementById("show-map-btn").addEventListener("click", showMap);
-document.getElementById("map-back-btn").addEventListener("click", () => {
-  document.getElementById("view-map").classList.add("hidden");
-  document.getElementById("view-list").classList.remove("hidden");
-});
+document.getElementById("search-box").addEventListener("input", refreshCardGridAndMap);
+document.getElementById("show-map-btn").addEventListener("click", toggleMapAccordion);
 document.getElementById("map-search-btn").addEventListener("click", () => {
   geocodeAndPanMap(document.getElementById("map-search-box").value);
 });

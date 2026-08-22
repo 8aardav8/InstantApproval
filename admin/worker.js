@@ -175,7 +175,13 @@ export default {
           additionalNotes: row[notesCol] || "",
           lockbox: row[lockboxCol] || "",
           sellerNameAndLink: row[sellerCol] || "",
-          sheetRowLink: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${SHEET_TAB_GID}&range=A${rowNum}`,
+          // Whole-row A1 range ("5:5"), not a single cell ("A5") -- the
+          // single-cell form wasn't reliably jumping to/selecting the row
+          // in real testing. Recomputed fresh on every request (the row
+          // lookup above always re-reads the live sheet), so this stays
+          // correct even if rows get inserted/reordered later -- it's
+          // never a stale baked-in row number.
+          sheetRowLink: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${SHEET_TAB_GID}&range=${rowNum}:${rowNum}`,
         });
       }
       return jsonResponse({ error: "listing not found" }, 404);
