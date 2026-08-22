@@ -777,6 +777,20 @@ function handleAdminCredentialResponse(response) {
   }
 }
 
+function copySheetRowLink(btn) {
+  const link = btn.dataset.link;
+  const done = (ok) => {
+    const original = btn.textContent;
+    btn.textContent = ok ? "Copied! Now paste into Safari's address bar" : "Copy failed -- long-press to copy manually";
+    setTimeout(() => { btn.textContent = original; }, 3000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(() => done(true)).catch(() => done(false));
+  } else {
+    done(false);
+  }
+}
+
 async function renderAdminSection(listingId) {
   const container = document.getElementById("admin-info-section");
   const token = getStoredAdminToken();
@@ -797,13 +811,24 @@ async function renderAdminSection(listingId) {
       return;
     }
     const data = await res.json();
+    // Fixed 2026-08-22: a plain <a href> to docs.google.com reliably opens
+    // the Google Sheets app on iOS instead of the browser (Universal Links
+    // -- confirmed no code-side way to prevent this for a domain we don't
+    // control), and the app has no way to jump to a specific cell at all.
+    // Confirmed workaround: pasting a URL directly into Safari's address
+    // bar does NOT trigger the app handoff (only tapping a link does) -- so
+    // this copies the link instead of navigating to it.
+    const sheetLinkBtn = data.sheetRowLink
+      ? `<button class="btn-outline btn-full" type="button" onclick="copySheetRowLink(this)" data-link="${escapeHtml(data.sheetRowLink)}">Copy Sheet Row Link</button>
+         <div class="admin-info-hint">Paste directly into Safari's address bar (not a new tab) -- pasting there skips the Google Sheets app.</div>`
+      : "";
     container.innerHTML = `
       <div class="admin-info-title">Admin Info (only visible to you)</div>
       ${detailField("Total Price", data.totalPrice)}
       ${detailField("Additional Notes", data.additionalNotes)}
       ${detailField("Lock Box", data.lockbox)}
       ${detailField("Seller Name/Link", data.sellerNameAndLink)}
-      ${data.sheetRowLink ? `<a class="btn-outline btn-full" href="${escapeHtml(data.sheetRowLink)}" target="_blank" rel="noopener">Open Sheet Row</a>` : ""}
+      ${sheetLinkBtn}
     `;
   } catch (e) {
     container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Request failed.</div>`;

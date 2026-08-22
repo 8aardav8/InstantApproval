@@ -279,6 +279,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .admin-info-title { font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 6px; }
 .admin-info-status { font-size: 13px; color: #92400e; }
+.admin-info-hint { font-size: 11px; color: #92400e; margin-top: 6px; text-align: center; }
 .admin-info-section .detail-field { border-bottom-color: #fde68a; }
 
 /* ---------- map ---------- */
