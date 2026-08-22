@@ -174,10 +174,9 @@ function renderCardGrid() {
 function streetViewUrl(address, w, h) {
   if (!GOOGLE_MAPS_API_KEY) return "assets/placeholder-streetview.png";
   // fov (field of view, degrees) defaults to 90 if unset -- a fairly wide,
-  // zoomed-out shot. 60 zooms in noticeably to better showcase the house
-  // itself, per Aaron's 2026-08-22 request, without going so tight that a
-  // wider home/lot risks getting cropped out of frame.
-  return `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&fov=60&location=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
+  // zoomed-out shot. Tightened 90 -> 60 -> 50 (2026-08-22, second request)
+  // to better showcase the house itself.
+  return `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&fov=50&location=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
 }
 
 function escapeHtml(s) {
@@ -325,7 +324,11 @@ async function showMap() {
     });
   }
   if (!mapInfoWindow) {
-    mapInfoWindow = new google.maps.InfoWindow();
+    // Fixed 2026-08-22: without an explicit maxWidth, Google's InfoWindow
+    // auto-sizing could clip/scroll our content rather than sizing cleanly
+    // to it (Aaron reported real cutoff). 200 gives the 168px-wide
+    // .map-popup a little breathing room inside Google's own chrome/padding.
+    mapInfoWindow = new google.maps.InfoWindow({ maxWidth: 200 });
   }
 
   // Fixed 2026-08-22: markers were never cleared between visits to the map,
@@ -356,7 +359,7 @@ function mapPopupContent(listing) {
   const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
   return `
     <div class="map-popup">
-      <img class="map-popup-photo" src="${streetViewUrl(listing.address, 240, 160)}" alt="${escapeHtml(listing.address)}">
+      <img class="map-popup-photo" src="${streetViewUrl(listing.address, 168, 96)}" alt="${escapeHtml(listing.address)}">
       <div class="map-popup-body">
         <div class="map-popup-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()}${escapeHtml(livabilitySuffix)}</div>
         <div class="map-popup-address">${escapeHtml(listing.address)}</div>

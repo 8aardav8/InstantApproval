@@ -120,7 +120,14 @@ body {
 }
 @media (min-width: 701px) {
   .nav-drawer, .nav-drawer-backdrop { display: none !important; }
-  .bottom-nav { display: none; } /* redundant with the top-tabs row on wide screens */
+  /* Fixed 2026-08-22 (real bug, not just a design gap): the later,
+     unconditional ".bottom-nav { display: flex }" base rule further down
+     this file has equal specificity and was silently winning over this one
+     whenever both conditions were true (i.e. always, on any wide/landscape
+     screen) -- the footer was never actually being hidden here. !important
+     added to match the pattern already used one line above for this exact
+     reason. */
+  .bottom-nav { display: none !important; }
 }
 
 /* ---------- main / tabs ---------- */
@@ -252,16 +259,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    page-level CSS custom properties/box model assumptions -- kept simple and
    self-contained rather than reusing .card, since InfoWindow content has
    its own sizing quirks (no viewport units, limited width). */
-.map-popup { width: 220px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-.map-popup-photo { width: 100%; height: 130px; object-fit: cover; border-radius: 6px 6px 0 0; display: block; }
-.map-popup-body { padding: 8px 2px 2px; }
-.map-popup-status { font-size: 11px; font-weight: 700; color: #1a56db; text-transform: uppercase; }
+/* Slimmed 2026-08-22 (was 220px/130px photo -- Aaron reported content
+   getting cut off). Paired with an explicit maxWidth on the InfoWindow
+   itself in app.js, since Google's InfoWindow chrome can clip/scroll
+   content that doesn't fit its own auto-sized bounds otherwise. */
+.map-popup { width: 168px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.map-popup-photo { width: 100%; height: 96px; object-fit: cover; border-radius: 6px 6px 0 0; display: block; }
+.map-popup-body { padding: 6px 2px 2px; }
+.map-popup-status { font-size: 10px; font-weight: 700; color: #1a56db; text-transform: uppercase; }
 .map-popup-status.sold { color: #6b7280; }
 .map-popup-status.pending { color: #b45309; }
-.map-popup-address { font-weight: 700; font-size: 13px; margin: 2px 0; color: #111827; }
-.map-popup-meta { font-size: 12px; color: #6b7280; }
-.map-popup-money { font-size: 12px; color: #111827; margin-top: 2px; }
-.map-popup-btn { width: 100%; margin-top: 8px; padding: 8px; font-size: 13px; }
+.map-popup-address { font-weight: 700; font-size: 12px; margin: 2px 0; color: #111827; line-height: 1.25; }
+.map-popup-meta { font-size: 11px; color: #6b7280; }
+.map-popup-money { font-size: 11px; color: #111827; margin-top: 2px; }
+.map-popup-btn { width: 100%; margin-top: 6px; padding: 6px; font-size: 12px; }
 
 /* ---------- static pages ---------- */
 .static-page h1 { font-size: 22px; font-weight: 800; }
