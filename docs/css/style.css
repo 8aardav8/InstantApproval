@@ -25,6 +25,7 @@ body {
    layout. Breakpoint chosen to roughly track phone-portrait vs. everything
    wider (tablet landscape and up), not tied to any specific device. */
 .topbar {
+  position: relative; /* anchors .admin-login-popover's absolute positioning */
   background: var(--navy);
   color: #fff;
   padding: 10px 16px;
@@ -39,6 +40,25 @@ body {
   /* Square (soft-rounded), matching .avatar's fix above -- same source photo,
      same circular-crop-cuts-off-the-head problem. */
   width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: #14b8a6; flex: 0 0 auto;
+}
+.admin-login-btn {
+  /* Deliberately understated -- a plain outline icon, not a branded button,
+     since this is an Aaron-only entry point, not something buyers should be
+     drawn to. Turns solid/filled (.signed-in) once actually logged in, as a
+     quiet visual confirmation. */
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%; border: none; background: none;
+  color: rgba(255,255,255,0.55); cursor: pointer; flex: 0 0 auto;
+}
+.admin-login-btn.signed-in { color: #7ee0a8; }
+.admin-login-popover {
+  position: absolute; top: 52px; right: 16px; z-index: 30;
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.admin-logout-btn {
+  display: block; width: 100%; margin-top: 8px; padding: 6px; font-size: 12px;
+  background: none; border: 1px solid var(--border); border-radius: 8px; color: #6b7280; cursor: pointer;
 }
 .top-tabs { display: flex; gap: 6px; margin-top: 10px; }
 .top-tabs .nav-btn {
@@ -249,6 +269,13 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .detail-field { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
 .detail-field .value { text-align: right; word-break: break-all; max-width: 60%; }
 .detail-field .value a { color: var(--blue); }
+
+.admin-info-section {
+  margin-top: 16px; padding: 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+}
+.admin-info-title { font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 6px; }
+.admin-info-status { font-size: 13px; color: #92400e; }
+.admin-info-section .detail-field { border-bottom-color: #fde68a; }
 
 /* ---------- map ---------- */
 .map-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-weight: 700; }

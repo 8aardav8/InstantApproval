@@ -287,8 +287,11 @@ function showDetail(id) {
       ${detailField("Baths", listing.baths)}
       ${detailField("Sq Ft", listing.sqft)}
       ${detailField("Last Updated", listing.lastUpdate)}
+      <div id="admin-info-section" class="admin-info-section hidden"></div>
     </div>
   `;
+
+  renderAdminSection(listing.id);
 }
 
 function backToList() {
@@ -682,8 +685,124 @@ document.getElementById("map-search-box").addEventListener("keydown", (e) => {
   if (e.key === "Enter") geocodeAndPanMap(e.target.value);
 });
 
+// ---------- admin sign-in (Aaron only) ----------
+// A small, deliberately unbranded lock icon in the header, not a visible
+// "Sign in with Google" button on the public site. Real security is
+// enforced server-side (the Worker verifies the token itself on every
+// request) -- this is purely UI: whether to show the 5 admin-only fields
+// on a listing's detail page, and whether to bother calling the admin API
+// at all for a given visitor.
+const ADMIN_OAUTH_CLIENT_ID = "74546128016-r0b13a553shc79gae1hf8r42nkd47t3i.apps.googleusercontent.com";
+const ADMIN_API_URL = "https://super-frost-1dbb.notactuallyit.workers.dev";
+const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
+
+function decodeJwtPayload(token) {
+  try {
+    const b64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(b64).split("").map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")
+    );
+    return JSON.parse(json);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Client-side expiry check only -- purely for UI (don't bother calling the
+// admin API with a token we can already tell is stale). The Worker itself
+// re-verifies the token independently on every request regardless; this
+// check is never the actual security boundary.
+function getStoredAdminToken() {
+  const raw = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+  if (!raw) return null;
+  const payload = decodeJwtPayload(raw);
+  if (!payload || !payload.exp || payload.exp * 1000 < Date.now()) {
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    return null;
+  }
+  return raw;
+}
+
+function updateAdminButtonState() {
+  const btn = document.getElementById("admin-login-btn");
+  const logoutBtn = document.getElementById("admin-logout-btn");
+  const signedIn = !!getStoredAdminToken();
+  btn.classList.toggle("signed-in", signedIn);
+  logoutBtn.classList.toggle("hidden", !signedIn);
+}
+
+function handleAdminCredentialResponse(response) {
+  localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, response.credential);
+  updateAdminButtonState();
+  document.getElementById("admin-login-popover").classList.add("hidden");
+  // If a listing detail page is already open, refresh it so the admin
+  // fields appear immediately without needing to navigate away and back.
+  if (!document.getElementById("view-detail").classList.contains("hidden")) {
+    const match = window.location.hash.match(/^#listing\/(.+)$/);
+    if (match) showDetail(match[1]);
+  }
+}
+
+async function renderAdminSection(listingId) {
+  const container = document.getElementById("admin-info-section");
+  const token = getStoredAdminToken();
+  if (!container) return;
+  if (!token) {
+    container.classList.add("hidden");
+    container.innerHTML = "";
+    return;
+  }
+  container.classList.remove("hidden");
+  container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Loading...</div>`;
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/?id=${encodeURIComponent(listingId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Unavailable (${res.status}).</div>`;
+      return;
+    }
+    const data = await res.json();
+    container.innerHTML = `
+      <div class="admin-info-title">Admin Info (only visible to you)</div>
+      ${detailField("Total Price", data.totalPrice)}
+      ${detailField("Additional Notes", data.additionalNotes)}
+      ${detailField("Lock Box", data.lockbox)}
+      ${detailField("Seller Name/Link", data.sellerNameAndLink)}
+      ${data.sheetRowLink ? `<a class="btn-outline btn-full" href="${escapeHtml(data.sheetRowLink)}" target="_blank" rel="noopener">Open Sheet Row</a>` : ""}
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Request failed.</div>`;
+  }
+}
+
+function initAdminUI() {
+  document.getElementById("admin-login-btn").addEventListener("click", () => {
+    document.getElementById("admin-login-popover").classList.toggle("hidden");
+  });
+  document.getElementById("admin-logout-btn").addEventListener("click", () => {
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    updateAdminButtonState();
+    document.getElementById("admin-login-popover").classList.add("hidden");
+    if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+  });
+  // Google Identity Services' script loads async -- poll briefly rather
+  // than assume it's ready by the time this runs.
+  const tryInit = () => {
+    if (window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.initialize({ client_id: ADMIN_OAUTH_CLIENT_ID, callback: handleAdminCredentialResponse });
+      google.accounts.id.renderButton(document.getElementById("g_id_signin"), { theme: "outline", size: "medium" });
+      updateAdminButtonState();
+    } else {
+      setTimeout(tryInit, 200);
+    }
+  };
+  tryInit();
+}
+
 initNav();
 initDrawer();
 initStepTabs();
 initBuyerForm();
+initAdminUI();
 loadData();
