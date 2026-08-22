@@ -320,8 +320,19 @@ function loadMapsScript() {
 // -- so this builds one composite SVG (house glyph + a price pill) per
 // listing and uses it as a data-URI image icon instead. House path is a
 // standard 24x24 "home" glyph.
-function houseIconWithPrice(downText) {
+// Status -> color, per Aaron's 2026-08-22 request: blue for Available,
+// orange for Pending, gray for Sold. Applied to both the house glyph and
+// the price pill's border/text, so each marker reads as one consistent
+// color-coded unit rather than a colored house with an always-blue label.
+const MAP_STATUS_COLORS = {
+  available: { fill: "#7dd3fc", stroke: "#0369a1" },
+  pending: { fill: "#fdba74", stroke: "#c2410c" },
+  sold: { fill: "#d1d5db", stroke: "#4b5563" },
+};
+
+function houseIconWithPrice(downText, status) {
   const label = (downText || "").trim();
+  const colors = MAP_STATUS_COLORS[(status || "").toLowerCase()] || MAP_STATUS_COLORS.available;
   const houseW = 24, gap = 4, totalH = 24;
   // Real data check (2026-08-22): only 1 of 307 available listings has a
   // blank Down value -- skip the label pill entirely for those rather than
@@ -333,8 +344,8 @@ function houseIconWithPrice(downText) {
           width: labelWidth,
           markup: `
       <g transform="translate(${houseW + gap}, 2)">
-        <rect width="${labelWidth}" height="20" rx="10" fill="#ffffff" stroke="#0369a1" stroke-width="1"/>
-        <text x="${labelWidth / 2}" y="14" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#0369a1">${escapeHtml(label)}</text>
+        <rect width="${labelWidth}" height="20" rx="10" fill="#ffffff" stroke="${colors.stroke}" stroke-width="1"/>
+        <text x="${labelWidth / 2}" y="14" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="${colors.stroke}">${escapeHtml(label)}</text>
       </g>`,
         };
       })()
@@ -342,7 +353,7 @@ function houseIconWithPrice(downText) {
   const totalW = label ? houseW + gap + labelGroup.width : houseW;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">
-      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#7dd3fc" stroke="#0369a1" stroke-width="1"/>${labelGroup.markup}
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1"/>${labelGroup.markup}
     </svg>
   `.trim();
   return {
@@ -418,7 +429,7 @@ function renderMapMarkers() {
     const pos = { lat: listing.lat, lng: listing.lng };
     const marker = new google.maps.Marker({
       position: pos, map: mapInstance, title: listing.address,
-      icon: houseIconWithPrice(listing.down),
+      icon: houseIconWithPrice(listing.down, listing.status),
     });
     // Click opens a popup with a condensed property card + a button through
     // to the full detail page, rather than jumping straight to the detail
