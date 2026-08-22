@@ -3,12 +3,15 @@
 // source Sheet changes -- see scripts/generate_properties.py). No login,
 // no cookies, no tracking.
 
-// TODO(kickoff): fill in Aaron's existing Google Cloud API key here. It must
-// have Street View Static API, Maps JavaScript API, and Geocoding API
-// enabled, and this site's domain added to its HTTP referrer restrictions.
-// This is a publishable/browser key by design (restricted by referrer, not
-// a secret) -- same as any public site embedding Google Maps.
-const GOOGLE_MAPS_API_KEY = "";
+// Wired in 2026-08-21. This is Aaron's "browser key" -- restricted by HTTP
+// referrer (https://8aardav8.github.io/*) and by API (Maps JavaScript API +
+// Street View Static API only). Safe to be public/embedded by design, same
+// as any site that embeds Google Maps -- the referrer restriction, not
+// secrecy, is what keeps it from being usable elsewhere. A SEPARATE
+// Geocoding-only key (never embedded here) is used server-side in
+// .github/workflows/_publish.yml, since a referrer-restricted key can't be
+// used from a server-to-server call (no browser, no Referer header).
+const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
