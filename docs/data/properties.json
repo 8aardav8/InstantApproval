@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-22T00:27:14.046063+00:00",
+  "generatedAt": "2026-08-22T02:43:07.011783+00:00",
   "listings": [
     {
       "id": "5816-hodiamont-ave-st-louis-mo-63136",
@@ -15,8 +15,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7166599,
+      "lng": -90.25776619999999
     },
     {
       "id": "648-linden-ave-johnstown-pa-15902",
@@ -32,8 +32,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.29386179999999,
+      "lng": -78.90762579999999
     },
     {
       "id": "12094-littlefield-street-detroit-mi-48227",
@@ -49,8 +49,8 @@
       "sqft": "926",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 42.3768415,
+      "lng": -83.1754148
     },
     {
       "id": "127-elkan-ave-ferguson-mo-63135",
@@ -66,8 +66,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7338829,
+      "lng": -90.2984302
     },
     {
       "id": "740-n-22nd-street-east-st-louis-il-62205",
@@ -83,8 +83,8 @@
       "sqft": "800",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6203961,
+      "lng": -90.12868089999999
     },
     {
       "id": "225-n-63rd-st-east-st-louis-il-62203",
@@ -100,8 +100,8 @@
       "sqft": "1338",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.598555,
+      "lng": -90.0897786
     },
     {
       "id": "2810-norwood-ave-saint-louis-mo-63115",
@@ -117,8 +117,8 @@
       "sqft": "734",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6709878,
+      "lng": -90.25821839999999
     },
     {
       "id": "628-w-home-ave-flint-mi-48505",
@@ -134,8 +134,8 @@
       "sqft": "714",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.0673367,
+      "lng": -83.7133381
     },
     {
       "id": "1739-n-gulick-ave-decatur-il-62-526",
@@ -168,8 +168,8 @@
       "sqft": "1202",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7163489,
+      "lng": -89.6022211
     },
     {
       "id": "2236-king-st-saginaw-mi-48602-saginaw-mi-48602",
@@ -185,8 +185,8 @@
       "sqft": "806",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.4018186,
+      "lng": -83.9787974
     },
     {
       "id": "1303-e-hickory-st-decatur-il-62526",
@@ -202,8 +202,8 @@
       "sqft": "1064",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.857114,
+      "lng": -88.93905170000001
     },
     {
       "id": "2067-n-maple-ave-decatur-il-62526",
@@ -219,8 +219,8 @@
       "sqft": "840",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8629975,
+      "lng": -88.96711979999999
     },
     {
       "id": "905-n-wesley-st-springfield-il-62702",
@@ -236,8 +236,8 @@
       "sqft": "700",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8111481,
+      "lng": -89.61504579999999
     },
     {
       "id": "3210-brownell-blvd-flint-mi-48504",
@@ -270,8 +270,8 @@
       "sqft": "1030",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.6208572,
+      "lng": -89.0174219
     },
     {
       "id": "135-e-pine-st-albion-il-62806",
@@ -287,8 +287,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.3812346,
+      "lng": -88.05491769999999
     },
     {
       "id": "941-w-waggoner-st-decatur-il-62526",
@@ -304,8 +304,8 @@
       "sqft": "1400",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8554985,
+      "lng": -88.9696274
     },
     {
       "id": "1947-ellis-street-augusta-ga-30904",
@@ -321,8 +321,8 @@
       "sqft": "1364",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 33.4851381,
+      "lng": -81.9982612
     },
     {
       "id": "408-colorado-street-augusta-ga-30901",
@@ -338,8 +338,8 @@
       "sqft": "1036",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 33.4601575,
+      "lng": -81.94064259999999
     },
     {
       "id": "1903-heckle-street-augusta-ga-30904",
@@ -355,8 +355,8 @@
       "sqft": "1335",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 33.4760439,
+      "lng": -82.0006379
     },
     {
       "id": "3119-lens-ave-norfolk-va-23509",
@@ -372,8 +372,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 36.8750807,
+      "lng": -76.2572641
     },
     {
       "id": "17355-warwick-blvd-newport-news-va-23603",
@@ -389,8 +389,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.18924510000001,
+      "lng": -76.57211269999999
     },
     {
       "id": "314-clubview-dr-jackson-ms-39209",
@@ -406,8 +406,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.3372416,
+      "lng": -90.2575751
     },
     {
       "id": "1034-s-tonti-cir-peoria-il-61605",
@@ -423,8 +423,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.67725720000001,
+      "lng": -89.6441207
     },
     {
       "id": "1746-n-woodford-st-decatur-il-62526",
@@ -440,8 +440,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8601772,
+      "lng": -88.93607360000001
     },
     {
       "id": "945-w-packard-st-decatur-il-62522-usa",
@@ -457,8 +457,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8520681,
+      "lng": -88.969365
     },
     {
       "id": "2616-e-logan-st-decatur-il-62526",
@@ -508,8 +508,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.55819779999999,
+      "lng": -90.19784109999999
     },
     {
       "id": "809-s-don-ryan-street-hammond-il-61929",
@@ -542,8 +542,8 @@
       "sqft": "801",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.3455596,
+      "lng": -86.3298557
     },
     {
       "id": "1923-n-church-st-decatur-il-62526",
@@ -559,8 +559,8 @@
       "sqft": "624",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8615265,
+      "lng": -88.9579358
     },
     {
       "id": "726-s-10th-st-saginaw-mi-48601",
@@ -610,8 +610,8 @@
       "sqft": "1568",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.453287,
+      "lng": -85.3770273
     },
     {
       "id": "428-s-central-st-benton-il-62812",
@@ -678,8 +678,8 @@
       "sqft": "780",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8568278,
+      "lng": -88.9410643
     },
     {
       "id": "1828-e-main-st-decatur-il-62-521",
@@ -695,8 +695,8 @@
       "sqft": "1050",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8423253,
+      "lng": -88.9319474
     },
     {
       "id": "4146-labadie-ave-st-louis-mo-63-115",
@@ -746,8 +746,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.6816048,
+      "lng": -90.1559126
     },
     {
       "id": "1532-5th-st-madison-il-62060",
@@ -763,8 +763,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.6812525,
+      "lng": -90.1562988
     },
     {
       "id": "313-green-st-cahokia-il-62206",
@@ -797,8 +797,8 @@
       "sqft": "720",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8330426,
+      "lng": -88.9460955
     },
     {
       "id": "709-st-paul-dr-cahokia-il-62206",
@@ -814,8 +814,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5599019,
+      "lng": -90.1863692
     },
     {
       "id": "1180-n-summit-ave-decatur-il-62522",
@@ -933,8 +933,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.834522,
+      "lng": -88.946153
     },
     {
       "id": "227-midlothian-rd-st-louis-mo-63137",
@@ -1001,8 +1001,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7164221,
+      "lng": -89.5930115
     },
     {
       "id": "2072-coleridge-dr-saint-louis-mo-63136",
@@ -1035,8 +1035,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8633379,
+      "lng": -88.96252659999999
     },
     {
       "id": "8554-oriole-ave-st-louis-mo-63147",
@@ -1120,8 +1120,8 @@
       "sqft": "1124",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.70571,
+      "lng": -90.1407825
     },
     {
       "id": "2228-e-brown-st-springfield-il-62703",
@@ -1137,8 +1137,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.7882688,
+      "lng": -89.6237367
     },
     {
       "id": "1017-n-taylor-ave-decatur-il-62522",
@@ -1188,8 +1188,8 @@
       "sqft": "1066",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7088962,
+      "lng": -90.26280489999999
     },
     {
       "id": "501-e-marengo-ave-flint-mi-48505",
@@ -1222,8 +1222,8 @@
       "sqft": "950",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8376506,
+      "lng": -88.9374148
     },
     {
       "id": "1811-n-morgan-st-decatur-il-62526",
@@ -1239,8 +1239,8 @@
       "sqft": "882",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8605123,
+      "lng": -88.94880239999999
     },
     {
       "id": "1009-ernest-st-cahokia-il-62206",
@@ -1290,8 +1290,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.857606,
+      "lng": -88.9655088
     },
     {
       "id": "121-w-9th-st-mount-vernon-in-47-620",
@@ -1324,8 +1324,8 @@
       "sqft": "988",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8595062,
+      "lng": -88.9397336
     },
     {
       "id": "2034-switzer-ave-jennings-mo-63136",
@@ -1358,8 +1358,8 @@
       "sqft": "700",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6253761,
+      "lng": -90.09656509999999
     },
     {
       "id": "7000-florence-pl-saint-louis-mo-63136",
@@ -1375,8 +1375,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7101507,
+      "lng": -90.2670105
     },
     {
       "id": "610r-fremont-ave-saint-louis-mo-63147",
@@ -1392,8 +1392,8 @@
       "sqft": "1359",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.722861,
+      "lng": -90.22636589999999
     },
     {
       "id": "1908-n-union-st-decatur-il-62526",
@@ -1409,8 +1409,8 @@
       "sqft": "1302",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8614002,
+      "lng": -88.9590638
     },
     {
       "id": "2150-e-clay-decatur-il-62521",
@@ -1460,8 +1460,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8451058,
+      "lng": -88.9337689
     },
     {
       "id": "3114-lakeland-rd-decatur-il-62-521",
@@ -1494,8 +1494,8 @@
       "sqft": "775",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.6944976,
+      "lng": -90.244306
     },
     {
       "id": "838-n-23rd-st-east-saint-louis-il-62205",
@@ -1511,8 +1511,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 5,
-      "lat": null,
-      "lng": null
+      "lat": 38.6216138,
+      "lng": -90.1266737
     },
     {
       "id": "3596-windmill-drive-virginia-beach-va-23453",
@@ -1545,8 +1545,8 @@
       "sqft": "985",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6730929,
+      "lng": -89.62897129999999
     },
     {
       "id": "2148-n-church-st-decatur-il-62526",
@@ -1698,8 +1698,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8576243,
+      "lng": -88.9340902
     },
     {
       "id": "533-higgins-st-clinton-in-47842",
@@ -1732,8 +1732,8 @@
       "sqft": "861",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8354404,
+      "lng": -88.939149
     },
     {
       "id": "1180-e-mueller-ave-decatur-il-62526",
@@ -1749,8 +1749,8 @@
       "sqft": "768",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8652711,
+      "lng": -88.9413654
     },
     {
       "id": "5600-gatesworth-ave-st-louis-mo-63136",
@@ -1800,8 +1800,8 @@
       "sqft": "1592",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.4560661,
+      "lng": -85.3710071
     },
     {
       "id": "431-finch-st-johnstown-pa-15-905",
@@ -1834,8 +1834,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.293796,
+      "lng": -78.907532
     },
     {
       "id": "516-n-84th-street-east-st-louis-il-62203",
@@ -1851,8 +1851,8 @@
       "sqft": "800",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.58994060000001,
+      "lng": -90.0663019
     },
     {
       "id": "310-e-lyndon-ave-flint-mi-48-505",
@@ -1885,8 +1885,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.3674854,
+      "lng": -88.366821
     },
     {
       "id": "1007-n-oakley-st-saginaw-mi-48602",
@@ -1902,8 +1902,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.4281631,
+      "lng": -83.9607676
     },
     {
       "id": "943-elias-ave-saint-louis-mo-63147",
@@ -1936,8 +1936,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.7882688,
+      "lng": -89.6237367
     },
     {
       "id": "108-e-shipping-st-edwardsport-in-47-528",
@@ -1953,8 +1953,8 @@
       "sqft": "1235",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.8123019,
+      "lng": -87.24966599999999
     },
     {
       "id": "319-w-10th-st-muncie-in-47302",
@@ -2021,8 +2021,8 @@
       "sqft": "750",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.7790897,
+      "lng": -89.63112699999999
     },
     {
       "id": "2648-e-prairie-st-decatur-il-62521",
@@ -2038,8 +2038,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.84404019999999,
+      "lng": -88.91539639999999
     },
     {
       "id": "1334-n-martin-luther-king-jr-dr-decatur-il-62526",
@@ -2055,8 +2055,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8555472,
+      "lng": -88.9496858
     },
     {
       "id": "435-s-cedar-street-nokomis-il-62075",
@@ -2072,8 +2072,8 @@
       "sqft": "962",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.2965501,
+      "lng": -89.2836787
     },
     {
       "id": "1112-e-garfield-ave-decatur-il-62526",
@@ -2140,8 +2140,8 @@
       "sqft": "1575",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.92223440000001,
+      "lng": -90.18388089999999
     },
     {
       "id": "718-south-church-street-belleville-il-62220",
@@ -2157,8 +2157,8 @@
       "sqft": "850",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.5061825,
+      "lng": -89.9800862
     },
     {
       "id": "5051-thrush-ave-saint-louis-mo-63120",
@@ -2208,8 +2208,8 @@
       "sqft": "1318",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8573981,
+      "lng": -88.9529802
     },
     {
       "id": "1303-e-whitmer-st-decatur-il-62521",
@@ -2225,8 +2225,8 @@
       "sqft": "950",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8350416,
+      "lng": -88.93901369999999
     },
     {
       "id": "415-e-division-st-decatur-il-62-526",
@@ -2242,8 +2242,8 @@
       "sqft": "989",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8583345,
+      "lng": -88.95197259999999
     },
     {
       "id": "528-belvedere-dr-belleville-il-62223",
@@ -2293,8 +2293,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.2713698,
+      "lng": -90.2328734
     },
     {
       "id": "2021-edwardsville-rd-madison-il-62060",
@@ -2310,8 +2310,8 @@
       "sqft": "1053",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6866523,
+      "lng": -90.1466721
     },
     {
       "id": "4890-margaretta-ave-st-louis-mo-63115",
@@ -2429,8 +2429,8 @@
       "sqft": "884",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8613662,
+      "lng": -88.95850779999999
     },
     {
       "id": "1714-s-livingston-st-peoria-il-61605",
@@ -2446,8 +2446,8 @@
       "sqft": "1050",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6689733,
+      "lng": -89.62787259999999
     },
     {
       "id": "844-combs-street-jackson-ms-39204",
@@ -2463,8 +2463,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.2740408,
+      "lng": -90.23033219999999
     },
     {
       "id": "3251-meadow-lane-dr-jackson-ms-39212",
@@ -2480,8 +2480,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.2557297,
+      "lng": -90.2353547
     },
     {
       "id": "3511-converse-ave-east-st-louis-il-62207",
@@ -2497,8 +2497,8 @@
       "sqft": "698",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.5951921,
+      "lng": -90.131517
     },
     {
       "id": "1637-w-cushing-st-decatur-il-62526",
@@ -2514,8 +2514,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8569408,
+      "lng": -88.982933
     },
     {
       "id": "451-mason-blvd-jackson-ms-39212",
@@ -2565,8 +2565,8 @@
       "sqft": "776",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.856553,
+      "lng": -88.9872916
     },
     {
       "id": "7014-greenway-ave-saint-louis-mo-63121",
@@ -2582,8 +2582,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.6974075,
+      "lng": -90.2912623
     },
     {
       "id": "1220-w-john-h-gwynn-jr-ave-peoria-il-61-605",
@@ -2599,8 +2599,8 @@
       "sqft": "800",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.69010859999999,
+      "lng": -89.6133977
     },
     {
       "id": "329-park-ln-wood-river-il-62095",
@@ -2650,8 +2650,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6953609,
+      "lng": -90.2470508
     },
     {
       "id": "4521-oakwood-ave-saint-louis-mo-63121",
@@ -2684,8 +2684,8 @@
       "sqft": "816",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6253463,
+      "lng": -90.08895919999999
     },
     {
       "id": "4627-maffitt-ave-saint-louis-mo-63113",
@@ -2735,8 +2735,8 @@
       "sqft": "928",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6839298,
+      "lng": -89.6145215
     },
     {
       "id": "706-cedar-st-quincy-il-62301",
@@ -2752,8 +2752,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 39.94544670000001,
+      "lng": -91.4043315
     },
     {
       "id": "1829-s-stanley-st-peoria-il-61605",
@@ -2769,8 +2769,8 @@
       "sqft": "776",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6674076,
+      "lng": -89.6319576
     },
     {
       "id": "5346-janet-avenue-st-louis-mo-63136",
@@ -2786,8 +2786,8 @@
       "sqft": "720",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7076259,
+      "lng": -90.266977
     },
     {
       "id": "5605-wabada-ave-saint-louis-mo-63112",
@@ -2854,8 +2854,8 @@
       "sqft": "780",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6283928,
+      "lng": -90.0917846
     },
     {
       "id": "235-s-whitesboro-st-galesburg-il-61401",
@@ -2922,8 +2922,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7129597,
+      "lng": -90.2609465
     },
     {
       "id": "5468-gilmore-ave-saint-louis-mo-63120",
@@ -2973,8 +2973,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.71739720000001,
+      "lng": -90.2590575
     },
     {
       "id": "608-st-monica-dr-sauget-il-62206",
@@ -2990,8 +2990,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.5624514,
+      "lng": -90.1901927
     },
     {
       "id": "5657-roosevelt-pl-saint-louis-mo-63120",
@@ -3007,8 +3007,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6782772,
+      "lng": -90.27214389999999
     },
     {
       "id": "212-cameron-rd-saint-louis-mo-63137",
@@ -3041,8 +3041,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6833511,
+      "lng": -89.62134089999999
     },
     {
       "id": "246-e-york-ave-flint-mi-48505",
@@ -3092,8 +3092,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6744075,
+      "lng": -90.2369729
     },
     {
       "id": "4127-turner-ave-saint-louis-mo-63115",
@@ -3109,8 +3109,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.672864,
+      "lng": -90.230538
     },
     {
       "id": "4546-pope-ave-st-louis-mo-63115",
@@ -3126,8 +3126,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6783088,
+      "lng": -90.22924019999999
     },
     {
       "id": "304-n-spruce-st-nokomis-il-62075",
@@ -3143,8 +3143,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.3038809,
+      "lng": -89.287971
     },
     {
       "id": "529-n-2nd-st-witt-il-62094",
@@ -3160,8 +3160,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.2600152,
+      "lng": -89.3514962
     },
     {
       "id": "257-coburg-dr-st-louis-mo-63137",
@@ -3177,8 +3177,8 @@
       "sqft": "2300",
       "status": "Available",
       "livability": 1,
-      "lat": null,
-      "lng": null
+      "lat": 38.7504094,
+      "lng": -90.2069887
     },
     {
       "id": "5586-era-ave-st-louis-mo-63136",
@@ -3194,8 +3194,8 @@
       "sqft": "850",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7092708,
+      "lng": -90.2551117
     },
     {
       "id": "4424-marcus-ave-st-louis-mo-63115",
@@ -3211,8 +3211,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6813466,
+      "lng": -90.2371976
     },
     {
       "id": "6041-harney-ave-saint-louis-mo-63136",
@@ -3228,8 +3228,8 @@
       "sqft": "738",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7069186,
+      "lng": -90.25444569999999
     },
     {
       "id": "5619-janet-ave-saint-louis-mo-63136",
@@ -3262,8 +3262,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6596398,
+      "lng": -90.2563948
     },
     {
       "id": "3306-york-ct-saint-louis-mo-63115",
@@ -3296,8 +3296,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.7930566,
+      "lng": -89.0305554
     },
     {
       "id": "1802-woodlin-dr-flint-mi-48504",
@@ -3381,8 +3381,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.8956603,
+      "lng": -90.14076229999999
     },
     {
       "id": "8315-eton-pl-saint-louis-mo-63136",
@@ -3398,8 +3398,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.7206107,
+      "lng": -90.26508439999999
     },
     {
       "id": "416-griffin-st-nokomis-il-62075",
@@ -3449,8 +3449,8 @@
       "sqft": "950",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.3772649,
+      "lng": -87.66319
     },
     {
       "id": "205-east-st-louis-street-west-frankfort-il-62-896",
@@ -3466,8 +3466,8 @@
       "sqft": "1135",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.9002675,
+      "lng": -88.92614569999999
     },
     {
       "id": "722-saint-paul-dr-sauget-va-62206",
@@ -3534,8 +3534,8 @@
       "sqft": "780",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5828558,
+      "lng": -90.1149453
     },
     {
       "id": "1729-n-woodford-st-decatur-il-62526",
@@ -3568,8 +3568,8 @@
       "sqft": "1035",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.9892203,
+      "lng": -87.5523401
     },
     {
       "id": "1425-delmar-ave-evansville-in-47712",
@@ -3602,8 +3602,8 @@
       "sqft": "658",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.9991146,
+      "lng": -87.5836952
     },
     {
       "id": "5319-wilborn-dr-st-louis-mo-63136",
@@ -3721,8 +3721,8 @@
       "sqft": "752",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.0471532,
+      "lng": -83.71766889999999
     },
     {
       "id": "907-frontenac-street-cahokia-heights-il-62206",
@@ -3738,8 +3738,8 @@
       "sqft": "1092",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5672806,
+      "lng": -90.16648789999999
     },
     {
       "id": "11-delores-dr-cahokia-il-62206",
@@ -3755,8 +3755,8 @@
       "sqft": "864",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.5516431,
+      "lng": -90.134371
     },
     {
       "id": "254-w-peoria-ave-decatur-il-62526",
@@ -3840,8 +3840,8 @@
       "sqft": "800",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7083774,
+      "lng": -90.263762
     },
     {
       "id": "330-s-madison-st-westfield-il-62474",
@@ -3857,8 +3857,8 @@
       "sqft": "2849",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.4540763,
+      "lng": -87.99860029999999
     },
     {
       "id": "2601-w-latrobe-st-peoria-il-61605",
@@ -3925,8 +3925,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6961536,
+      "lng": -90.27947680000001
     },
     {
       "id": "767-e-whitmer-st-decatur-il-62521",
@@ -3976,8 +3976,8 @@
       "sqft": "804",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7152815,
+      "lng": -89.60433069999999
     },
     {
       "id": "113-s-poplar-st-assumption-il-62510",
@@ -4095,8 +4095,8 @@
       "sqft": "925",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.5611057,
+      "lng": -90.1855477
     },
     {
       "id": "1830-n-lowber-st-decatur-il-62526",
@@ -4112,8 +4112,8 @@
       "sqft": "864",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8608635,
+      "lng": -88.9391163
     },
     {
       "id": "1320-williams-st-cahokia-il-62206",
@@ -4129,8 +4129,8 @@
       "sqft": "936",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.560789,
+      "lng": -90.1658087
     },
     {
       "id": "17-cahokia-st-cahokia-il-62206",
@@ -4146,8 +4146,8 @@
       "sqft": "1187",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.5816217,
+      "lng": -90.17869879999999
     },
     {
       "id": "830-n-wood-river-ave-wood-river-il-62095",
@@ -4265,8 +4265,8 @@
       "sqft": "864",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5658151,
+      "lng": -90.18741089999999
     },
     {
       "id": "8709-state-st-east-saint-louis-il-62203",
@@ -4299,8 +4299,8 @@
       "sqft": "592",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6697479,
+      "lng": -89.6307025
     },
     {
       "id": "1365-e-walnut-st-decatur-il-62526",
@@ -4316,8 +4316,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8581681,
+      "lng": -88.93806459999999
     },
     {
       "id": "1818-e-clay-st-decatur-il-62521",
@@ -4333,8 +4333,8 @@
       "sqft": "1520",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8399585,
+      "lng": -88.93194079999999
     },
     {
       "id": "328-n-18th-st-decatur-il-62521",
@@ -4367,8 +4367,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.7337491,
+      "lng": -89.2239419
     },
     {
       "id": "3918-trumbull-ave-flint-mi-48504",
@@ -4503,8 +4503,8 @@
       "sqft": "804",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.852049,
+      "lng": -88.9722736
     },
     {
       "id": "1505-e-walnut-st-decatur-il-62526",
@@ -4520,8 +4520,8 @@
       "sqft": "768",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8582332,
+      "lng": -88.9361249
     },
     {
       "id": "347-n-stone-st-decatur-il-62521",
@@ -4537,8 +4537,8 @@
       "sqft": "850",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8448,
+      "lng": -88.9379902
     },
     {
       "id": "1975-e-north-st-decatur-il-62-521",
@@ -4554,8 +4554,8 @@
       "sqft": "1258",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8452707,
+      "lng": -88.9297564
     },
     {
       "id": "203-n-green-st-anna-il-62906",
@@ -4622,8 +4622,8 @@
       "sqft": "1690",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.5195657,
+      "lng": -89.1419509
     },
     {
       "id": "1104-w-smith-st-peoria-il-61605",
@@ -4639,8 +4639,8 @@
       "sqft": "2800",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6869288,
+      "lng": -89.6112122
     },
     {
       "id": "4221-dardenne-dr-saint-louis-mo-63120",
@@ -4707,8 +4707,8 @@
       "sqft": "672",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8572452,
+      "lng": -88.9351971
     },
     {
       "id": "342-s-dade-ave-saint-louis-mo-63135",
@@ -4775,8 +4775,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.9115903,
+      "lng": -90.0447164
     },
     {
       "id": "208-carol-drive-birmingham-al-35215",
@@ -4792,8 +4792,8 @@
       "sqft": "1335",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 33.5964156,
+      "lng": -86.70446749999999
     },
     {
       "id": "6069-harney-ave-saint-louis-mo-63136",
@@ -4860,8 +4860,8 @@
       "sqft": "858",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8442693,
+      "lng": -88.96855
     },
     {
       "id": "1522-w-widenham-st-peoria-il-61605",
@@ -4962,8 +4962,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6133316,
+      "lng": -90.1264183
     },
     {
       "id": "1286-e-vanderhoof-st-decatur-il-62521",
@@ -4979,8 +4979,8 @@
       "sqft": "871",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.829897,
+      "lng": -88.93851599999999
     },
     {
       "id": "2804-w-humboldt-st-peoria-il-peoria-il-61-605",
@@ -5013,8 +5013,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 41.8595236,
+      "lng": -90.16325959999999
     },
     {
       "id": "2028-e-prairie-ave-saint-louis-mo-63107",
@@ -5030,8 +5030,8 @@
       "sqft": "1297",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6726451,
+      "lng": -90.211823
     },
     {
       "id": "830-e-rogers-ave-decatur-il-62521",
@@ -5047,8 +5047,8 @@
       "sqft": "624",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8302504,
+      "lng": -88.9455479
     },
     {
       "id": "1002-upper-cahokia-rd-sauget-il-62206",
@@ -5115,8 +5115,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6698671,
+      "lng": -89.6266425
     },
     {
       "id": "462-w-leafland-ave-decatur-il-62522",
@@ -5132,8 +5132,8 @@
       "sqft": "942",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8537061,
+      "lng": -88.9615895
     },
     {
       "id": "1595-n-church-st-decatur-il-62526",
@@ -5319,8 +5319,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6257703,
+      "lng": -90.0894981
     },
     {
       "id": "1546-david-drive-jackson-ms-39-209",
@@ -5336,8 +5336,8 @@
       "sqft": "984",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.3059663,
+      "lng": -90.27105139999999
     },
     {
       "id": "2209-w-krause-ave-peoria-il-61605",
@@ -5370,8 +5370,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5660396,
+      "lng": -90.1955074
     },
     {
       "id": "905-s-23rd-st-mount-vernon-il-62864",
@@ -5404,8 +5404,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6881238,
+      "lng": -90.2721796
     },
     {
       "id": "618-w-monroe-st-belleville-il-62220",
@@ -5438,8 +5438,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.62721459999999,
+      "lng": -90.0956006
     },
     {
       "id": "101-n-main-st-chandlerville-il-62627",
@@ -5472,8 +5472,8 @@
       "sqft": "2300",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8426566,
+      "lng": -88.9414604
     },
     {
       "id": "155-woodland-rd-hampton-va-23663",
@@ -5557,8 +5557,8 @@
       "sqft": "704",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8432472,
+      "lng": -88.9222774
     },
     {
       "id": "3875-slayton-ave-jackson-ms-39-213",
@@ -5574,8 +5574,8 @@
       "sqft": "935",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.3475324,
+      "lng": -90.2150841
     },
     {
       "id": "5341-goodfellow-blvd-st-louis-mo-63136",
@@ -5625,8 +5625,8 @@
       "sqft": "890",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8350488,
+      "lng": -88.9391436
     },
     {
       "id": "1700-w-grand-ave-decatur-il-62522",
@@ -5642,8 +5642,8 @@
       "sqft": "416",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8545575,
+      "lng": -88.9841063
     },
     {
       "id": "4223-w-labadie-ave-saint-louis-mo-63115",
@@ -5744,8 +5744,8 @@
       "sqft": "960",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.8850519,
+      "lng": -90.1200767
     },
     {
       "id": "912-waldman-ave-flint-mi-48507",
@@ -5761,8 +5761,8 @@
       "sqft": "1223",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 42.9896343,
+      "lng": -83.6912091
     },
     {
       "id": "1283-s-illinois-st-decatur-il-62-521",
@@ -5897,8 +5897,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6891465,
+      "lng": -90.2800925
     },
     {
       "id": "1624-e-division-st-decatur-il-62526",
@@ -5931,8 +5931,8 @@
       "sqft": "733",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.2461934,
+      "lng": -90.2167358
     },
     {
       "id": "404-s-thomas-st-christopher-il-62822",
@@ -5982,8 +5982,8 @@
       "sqft": "693",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.0614421,
+      "lng": -83.713695
     },
     {
       "id": "4719-plover-ave-saint-louis-mo-63120",
@@ -6016,8 +6016,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6870575,
+      "lng": -90.23982699999999
     },
     {
       "id": "5510-avon-pl-east-saint-louis-il-62204",
@@ -6050,8 +6050,8 @@
       "sqft": "660",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 42.9850235,
+      "lng": -83.69472
     },
     {
       "id": "521-n-davis-street-carbondale-il-62-901",
@@ -6237,8 +6237,8 @@
       "sqft": "1131",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.4197734,
+      "lng": -86.28408139999999
     },
     {
       "id": "1525-st-louis-ave-east-st-louis-il-62201",
@@ -6254,8 +6254,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6171924,
+      "lng": -90.14469380000001
     },
     {
       "id": "935-w-marietta-st-decatur-il-62522",
@@ -6305,8 +6305,8 @@
       "sqft": "890",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8345226,
+      "lng": -88.9454624
     },
     {
       "id": "5051-maffitt-ave-st-louis-mo-63113",
@@ -6339,8 +6339,8 @@
       "sqft": "912",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6957825,
+      "lng": -90.2557523
     },
     {
       "id": "351-lagro-ave-st-louis-mo-63125",
@@ -6390,8 +6390,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6838985,
+      "lng": -89.61418069999999
     },
     {
       "id": "2615-w-hayes-st-peoria-il-61605",
@@ -6424,8 +6424,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 36.9871883,
+      "lng": -76.40608019999999
     },
     {
       "id": "821-n-oakland-ave-decatur-il-62-514",
@@ -6441,8 +6441,8 @@
       "sqft": "840",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8487762,
+      "lng": -88.9730515
     },
     {
       "id": "7585-blanding-dr-ferguson-mo-63135",
@@ -6475,8 +6475,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6081821,
+      "lng": -90.1325337
     },
     {
       "id": "721-s-matthew-st-peoria-il-61605",
@@ -6577,8 +6577,8 @@
       "sqft": "900",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5925977,
+      "lng": -90.125378
     },
     {
       "id": "329-mettler-st-toledo-oh-43-608",
@@ -7053,8 +7053,8 @@
       "sqft": "864",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7698729,
+      "lng": -90.31714269999999
     },
     {
       "id": "2332-renois-ln-east-st-louis-il-62206",
@@ -7155,8 +7155,8 @@
       "sqft": "1050",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.83511800000001,
+      "lng": -88.9368937
     },
     {
       "id": "21-agnes-dr-sauget-il-62206-sauget-il-62206",
@@ -7240,8 +7240,8 @@
       "sqft": "759",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6806824,
+      "lng": -89.6296938
     },
     {
       "id": "834-remington-ave-flint-mi-48507",
@@ -7342,8 +7342,8 @@
       "sqft": "1152",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8604614,
+      "lng": -88.9640599
     },
     {
       "id": "1662-hunter-st-norfolk-va-23504",
@@ -7410,8 +7410,8 @@
       "sqft": "1000",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6669568,
+      "lng": -89.62874509999999
     },
     {
       "id": "1337-n-maple-ave-decatur-il-62526",
@@ -7665,8 +7665,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6979936,
+      "lng": -90.3304388
     },
     {
       "id": "105-edison-ave-portsmouth-va-23702",
@@ -7716,8 +7716,8 @@
       "sqft": "1000",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.8946952,
+      "lng": -90.1365572
     },
     {
       "id": "298-broadway-street-montgomery-al-36110",
@@ -7801,8 +7801,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.3635829,
+      "lng": -79.8469748
     },
     {
       "id": "1315-poindexter-st-chesapeake-va-23324",
@@ -7835,8 +7835,8 @@
       "sqft": "969",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.0429033,
+      "lng": -83.7085626
     },
     {
       "id": "38-hobson-st-portsmouth-va-23704",
@@ -7971,8 +7971,8 @@
       "sqft": "1500",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7050995,
+      "lng": -89.58179489999999
     },
     {
       "id": "1926-rawood-dr-hampton-va-23663",
@@ -8141,8 +8141,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 36.8556797,
+      "lng": -76.1726936
     },
     {
       "id": "313-webb-st-suffolk-va-23434",
@@ -8362,8 +8362,8 @@
       "sqft": "884",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8483797,
+      "lng": -88.97252979999999
     },
     {
       "id": "2008-n-61st-st-east-st-louis-il-62204",
@@ -8379,8 +8379,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.63742999999999,
+      "lng": -90.0847525
     },
     {
       "id": "634-damon-st-flint-mi-49505",
@@ -8481,8 +8481,8 @@
       "sqft": "1264",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6883427,
+      "lng": -89.6086066
     },
     {
       "id": "800-s-greenlawn-ave-peoria-il-61605",
@@ -8498,8 +8498,8 @@
       "sqft": "944",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6802828,
+      "lng": -89.62165
     },
     {
       "id": "4129-turner-ave-saint-louis-mo-63115",
@@ -8549,8 +8549,8 @@
       "sqft": "787",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.7316079,
+      "lng": -90.2600586
     },
     {
       "id": "740-valencia-st-jackson-ms-39204",
@@ -8566,8 +8566,8 @@
       "sqft": "1333",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.2790072,
+      "lng": -90.2284294
     },
     {
       "id": "773-b-ave-norfolk-va-23504",
@@ -8787,8 +8787,8 @@
       "sqft": "844",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.4619643,
+      "lng": -90.6792239
     },
     {
       "id": "606-anderson-st-alton-il-62002",
@@ -8838,8 +8838,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.8908583,
+      "lng": -90.141294
     },
     {
       "id": "2407-roanoke-ave-newport-news-va-23607",
@@ -8889,8 +8889,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7011487,
+      "lng": -89.5788532
     },
     {
       "id": "501-lincoln-street-saint-david-il-61561",
@@ -8940,8 +8940,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.5149244,
+      "lng": -89.1480447
     },
     {
       "id": "542-s-wall-street-winchester-in-47394",
@@ -9093,8 +9093,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 36.5963677,
+      "lng": -76.673945
     },
     {
       "id": "2827-e-hickory-st-decatur-il-62526",
@@ -9110,8 +9110,8 @@
       "sqft": "528",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8583561,
+      "lng": -88.9153814
     },
     {
       "id": "longwood-dr-smithfield-va-23430-isle-of-wight-county",
@@ -9127,8 +9127,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.0911178,
+      "lng": -76.6636559
     },
     {
       "id": "5923-sherry-ave-saint-louis-mo-63136",
@@ -9212,8 +9212,8 @@
       "sqft": "882",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.753805,
+      "lng": -90.2490603
     },
     {
       "id": "5152-maffitt-ave-saint-louis-mo-63113",
@@ -9382,8 +9382,8 @@
       "sqft": "896",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.7630374,
+      "lng": -89.629381
     },
     {
       "id": "9145-loganberry-ln-saint-louis-mo-63121",
@@ -9501,8 +9501,8 @@
       "sqft": "1560",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8350634,
+      "lng": -88.9388685
     },
     {
       "id": "3115-n-sarah-st-st-louis-mo-63115",
@@ -9620,8 +9620,8 @@
       "sqft": "864",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7698729,
+      "lng": -90.31714269999999
     },
     {
       "id": "2271-e-hickory-st-decatur-il-62526",
@@ -9671,8 +9671,8 @@
       "sqft": "1400",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8542873,
+      "lng": -88.9594051
     },
     {
       "id": "1737-e-whitmer-st-decatur-il-62521",
@@ -9756,8 +9756,8 @@
       "sqft": "1064",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6282548,
+      "lng": -90.0950706
     },
     {
       "id": "1656-n-college-st-decatur-il-62526",
@@ -9858,8 +9858,8 @@
       "sqft": "728",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7225969,
+      "lng": -90.2570753
     },
     {
       "id": "2416-mary-st-cahokia-il-62206",
@@ -10096,8 +10096,8 @@
       "sqft": "1044",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8503509,
+      "lng": -88.9696865
     },
     {
       "id": "9831-ventura-dr-saint-louis-mo-63136",
@@ -10147,8 +10147,8 @@
       "sqft": "1094",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.851797,
+      "lng": -88.9639668
     },
     {
       "id": "1390-n-huron-street-decatur-il-62526",
@@ -10232,8 +10232,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.598754,
+      "lng": -90.1413682
     },
     {
       "id": "5241-s-hodiamont-ave-saint-louis-mo-63136",
@@ -10470,8 +10470,8 @@
       "sqft": "1049",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8410063,
+      "lng": -88.9341809
     },
     {
       "id": "2807-w-marquette-st-peoria-il-61605",
@@ -10572,8 +10572,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.5610729,
+      "lng": -90.1234523
     },
     {
       "id": "800-s-greenlawn-ave-peoria-il-61605-4",
@@ -10589,8 +10589,8 @@
       "sqft": "944",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6802828,
+      "lng": -89.62165
     },
     {
       "id": "219-eastern-ave-toledo-oh-43609",
@@ -10895,8 +10895,8 @@
       "sqft": "1352",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8399208,
+      "lng": -88.9394833
     },
     {
       "id": "61-jarvis-pl-east-saint-louis-il-62207",
@@ -10980,8 +10980,8 @@
       "sqft": "864",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5553426,
+      "lng": -90.1990838
     },
     {
       "id": "1008-wall-st-st-louis-mo-63147",
@@ -11031,8 +11031,8 @@
       "sqft": "890",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8520637,
+      "lng": -88.97021199999999
     },
     {
       "id": "1216-primrose-terrace-selma-al",
@@ -11286,8 +11286,8 @@
       "sqft": "798",
       "status": "Available",
       "livability": 1,
-      "lat": null,
-      "lng": null
+      "lat": 38.668965,
+      "lng": -90.24157819999999
     },
     {
       "id": "207-n-prairie-st-raymond-il-62560",
@@ -11490,8 +11490,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8624189,
+      "lng": -88.965603
     },
     {
       "id": "1531-s-lydia-ave-peoria-il-61605",
@@ -11507,8 +11507,8 @@
       "sqft": "1012",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6708976,
+      "lng": -89.6271041
     },
     {
       "id": "1534-n-55th-st-east-saint-louis-il-62204",
@@ -11524,8 +11524,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6299697,
+      "lng": -90.0939983
     },
     {
       "id": "2207-oakdale-ave-saint-louis-mo-63121",
@@ -11864,8 +11864,8 @@
       "sqft": "1200",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6314356,
+      "lng": -90.1038021
     },
     {
       "id": "3304-ne-madison-ave-peoria-il-61603",
@@ -12102,8 +12102,8 @@
       "sqft": "1400",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 41.453336,
+      "lng": -82.1742524
     },
     {
       "id": "3522-3524-martin-luther-king-jr-dr-jackson-ms-39213",
@@ -12119,8 +12119,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 32.3396414,
+      "lng": -90.2079499
     },
     {
       "id": "1409-knight-ave-flint-mi-48503",
@@ -12323,8 +12323,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8368055,
+      "lng": -88.93616240000001
     },
     {
       "id": "721-e-mcclure-ave-peoria-il-61603",
@@ -12374,8 +12374,8 @@
       "sqft": "1149",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 31.4567016,
+      "lng": -85.6305969
     },
     {
       "id": "1702-parklane-dr-cahokia-il-62206",
@@ -12544,8 +12544,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.843885,
+      "lng": -88.9361352
     },
     {
       "id": "126-stokesland-ave-danville-va-24542",
@@ -12663,8 +12663,8 @@
       "sqft": "780",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.573635,
+      "lng": -90.1750146
     },
     {
       "id": "343-pine-st-galesburg-il-61401",
@@ -12850,8 +12850,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7080074,
+      "lng": -90.2658862
     },
     {
       "id": "1971-e-cantrell-st-decatur-il-62521",
@@ -13071,8 +13071,8 @@
       "sqft": "1700",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.668541,
+      "lng": -90.23829669999999
     },
     {
       "id": "5621-hodiamont-ave-jennings-mo-63136",
@@ -13224,8 +13224,8 @@
       "sqft": "1453",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.5844363,
+      "lng": -90.1734345
     },
     {
       "id": "1234-25th-st-newport-news-va-23607",
@@ -13360,8 +13360,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.5253991,
+      "lng": -89.11892689999999
     },
     {
       "id": "111-s-elm-st-nokomis-il-62075",
@@ -13700,8 +13700,8 @@
       "sqft": "1000",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8582896,
+      "lng": -88.93425839999999
     },
     {
       "id": "6-amelia-dr-cahokia-il-62206",
@@ -13768,8 +13768,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.9015496,
+      "lng": -90.19869430000001
     },
     {
       "id": "845-mildred-ave-cahokia-il-62206",
@@ -13819,8 +13819,8 @@
       "sqft": "882",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.6954222,
+      "lng": -90.2501602
     },
     {
       "id": "1123-calhoun-st-madison-il-62060",
@@ -13921,8 +13921,8 @@
       "sqft": "1276",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 33.4570466,
+      "lng": -81.99503279999999
     },
     {
       "id": "5431-arlington-ave-st-louis-mo-63120",
@@ -14023,8 +14023,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 36.9911379,
+      "lng": -76.3956147
     },
     {
       "id": "715-17th-st-newport-news-va-23607",
@@ -14159,8 +14159,8 @@
       "sqft": "1300",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6049636,
+      "lng": -90.1511204
     },
     {
       "id": "10809-harper-ln-saint-louis-mo-63137",
@@ -14652,8 +14652,8 @@
       "sqft": "744",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.60813479999999,
+      "lng": -90.09857749999999
     },
     {
       "id": "1415-n-13th-street-esl-il-62205",
@@ -14720,8 +14720,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 1,
-      "lat": null,
-      "lng": null
+      "lat": 38.6600506,
+      "lng": -90.25028
     },
     {
       "id": "567-w-leafland-ave-decatur-il-62522",
@@ -14771,8 +14771,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8425777,
+      "lng": -88.9277225
     },
     {
       "id": "4721-margaretta-ave-saint-louis-mo-63115",
@@ -14822,8 +14822,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.85450950000001,
+      "lng": -88.9667116
     },
     {
       "id": "2116-crescent-ave-st-louis-mo-63121",
@@ -14907,8 +14907,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8411631,
+      "lng": -88.9293383
     },
     {
       "id": "311-n-elm-st-nokomis-il-62075",
@@ -14941,8 +14941,8 @@
       "sqft": "968",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6713065,
+      "lng": -89.6294824
     },
     {
       "id": "1201-williams-st-cahokia-il-62206",
@@ -15060,8 +15060,8 @@
       "sqft": "792",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8599289,
+      "lng": -88.9659784
     },
     {
       "id": "1224-26th-st-newport-news-va-23607",
@@ -15094,8 +15094,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 37.0313442,
+      "lng": -76.4691899
     },
     {
       "id": "4749-genevieve-ave-st-louis-mo-63120",
@@ -15179,8 +15179,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.05707930000001,
+      "lng": -83.7058978
     },
     {
       "id": "2423-cleveland-ave-east-saint-louis-il-62205",
@@ -15774,8 +15774,8 @@
       "sqft": "1745",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.3567343,
+      "lng": -89.5342265
     },
     {
       "id": "339-midridge-dr-saint-louis-mo-63137",
@@ -16046,8 +16046,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 36.8337638,
+      "lng": -76.3275652
     },
     {
       "id": "1023-29th-st-newport-news-va-23607",
@@ -16114,8 +16114,8 @@
       "sqft": "2926",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 41.4815157,
+      "lng": -81.61675500000001
     },
     {
       "id": "415-s-park-ave-springfield-il-62704",
@@ -16233,8 +16233,8 @@
       "sqft": "1384",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.9062662,
+      "lng": -90.1805349
     },
     {
       "id": "2525-e-garfield-ave-decatur-il-62526",
@@ -16284,8 +16284,8 @@
       "sqft": "725",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.84651240000001,
+      "lng": -88.9235255
     },
     {
       "id": "1617-parklane-dr-cahokia-il-62206",
@@ -16352,8 +16352,8 @@
       "sqft": "1000",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 37.4707681,
+      "lng": -88.1692092
     },
     {
       "id": "1482-ferguson-ave-st-louis-mo-63133",
@@ -16386,8 +16386,8 @@
       "sqft": "1400",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 42.4385665,
+      "lng": -82.9792906
     },
     {
       "id": "633-4th-st-carrollton-il-62016",
@@ -16488,8 +16488,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6874512,
+      "lng": -90.2718134
     },
     {
       "id": "1140-victory-blvd-portsmouth-va-23702",
@@ -16709,8 +16709,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 42.4307085,
+      "lng": -82.9770577
     },
     {
       "id": "4526-cote-brilliante-ave-saint-louis-mo-63113",
@@ -16879,8 +16879,8 @@
       "sqft": "729",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6321407,
+      "lng": -90.0968898
     },
     {
       "id": "1521-s-lydia-ave-peoria-il-61605",
@@ -17491,8 +17491,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.0089463,
+      "lng": -88.9073504
     },
     {
       "id": "1652-e-main-st-decatur-il-62526",
@@ -17508,8 +17508,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8421293,
+      "lng": -88.9343552
     },
     {
       "id": "1171-e-olive-st-decatur-il-62526",
@@ -17933,8 +17933,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6715022,
+      "lng": -89.6270679
     },
     {
       "id": "7-circle-dr-reidsville-nc-27320",
@@ -18018,8 +18018,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.5982619,
+      "lng": -90.0646772
     },
     {
       "id": "1925-e-main-st-decatur-il-62521",
@@ -18511,8 +18511,8 @@
       "sqft": "936",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.854116,
+      "lng": -88.9681042
     },
     {
       "id": "1307-quash-st-hampton-va-23669",
@@ -18783,8 +18783,8 @@
       "sqft": "1138",
       "status": "Available",
       "livability": 4,
-      "lat": null,
-      "lng": null
+      "lat": 38.6713277,
+      "lng": -90.23168539999999
     },
     {
       "id": "1110-bailey-ln-benton-il-62812-8",
@@ -18800,8 +18800,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.0089463,
+      "lng": -88.9073504
     },
     {
       "id": "5621-sunbury-ave-saint-louis-mo-63136",
@@ -18817,8 +18817,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7208018,
+      "lng": -90.2757568
     },
     {
       "id": "7447-jenwood-ave-st-louis-mo-63136",
@@ -18953,8 +18953,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.8732328,
+      "lng": -90.10064349999999
     },
     {
       "id": "70-sanlun-lakes-dr-hampton-va-23666",
@@ -19004,8 +19004,8 @@
       "sqft": "880",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7083929,
+      "lng": -90.2517809
     },
     {
       "id": "7619-chorman-ave-saint-louis-mo-63121",
@@ -19140,8 +19140,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.45788,
+      "lng": -90.67798770000002
     },
     {
       "id": "5639-wilborn-dr-saint-louis-mo-63136",
@@ -19582,8 +19582,8 @@
       "sqft": "672",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7119076,
+      "lng": -90.25906499999999
     },
     {
       "id": "1295-e-wood-st-decatur-il-62521",
@@ -19616,8 +19616,8 @@
       "sqft": "1088",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.18282,
+      "lng": -85.38907139999999
     },
     {
       "id": "1640-4th-st-madison-il-62060",
@@ -19650,8 +19650,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6112879,
+      "lng": -90.1562769
     },
     {
       "id": "1120-e-harrison-ave-decatur-il-62526",
@@ -20024,8 +20024,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 5,
-      "lat": null,
-      "lng": null
+      "lat": 38.668965,
+      "lng": -90.289278
     },
     {
       "id": "1266-hodiamont-ave-st-louis-mo-63112",
@@ -20177,8 +20177,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6761265,
+      "lng": -89.63206439999999
     },
     {
       "id": "725-n-39th-st-east-saint-louis-il-62205",
@@ -20313,8 +20313,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7149024,
+      "lng": -89.59150919999999
     },
     {
       "id": "4008-shelly-ln-montgomery-al-36110",
@@ -20517,8 +20517,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7213024,
+      "lng": -90.229665
     },
     {
       "id": "316-n-6th-st-mt-vernon-il-62864",
@@ -20772,8 +20772,8 @@
       "sqft": "1894",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6764361,
+      "lng": -89.6178484
     },
     {
       "id": "1625-n-folk-st-decatur-il-62526",
@@ -20908,8 +20908,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6911631,
+      "lng": -89.6086279
     },
     {
       "id": "346-n-18th-st-decatur-il-62521",
@@ -20959,8 +20959,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6946445,
+      "lng": -90.2480586
     },
     {
       "id": "927-e-union-st-nokomis-il-62075",
@@ -21061,8 +21061,8 @@
       "sqft": "504",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6714291,
+      "lng": -89.6290283
     },
     {
       "id": "1712-n-church-st-decatur-il-62526",
@@ -21197,8 +21197,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8595524,
+      "lng": -88.93898159999999
     },
     {
       "id": "2352-paul-ave-granite-city-il-62040",
@@ -21231,8 +21231,8 @@
       "sqft": "768",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6888155,
+      "lng": -89.61445040000001
     },
     {
       "id": "228-sycamore-ave-newport-news-va-23607",
@@ -21333,8 +21333,8 @@
       "sqft": "716",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6714099,
+      "lng": -89.6265794
     },
     {
       "id": "316-n-alexander-st-danville-il-61832",
@@ -21656,8 +21656,8 @@
       "sqft": "1056",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6724646,
+      "lng": -89.6223265
     },
     {
       "id": "305-hesler-st-georgetown-il-61846",
@@ -21928,8 +21928,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7086829,
+      "lng": -90.27332419999999
     },
     {
       "id": "1804-n-new-york-ave-peoria-il-61603",
@@ -22115,8 +22115,8 @@
       "sqft": "1296",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.6703652,
+      "lng": -90.2688325
     },
     {
       "id": "1145-e-main-st-decatur-il-62521",
@@ -22183,8 +22183,8 @@
       "sqft": "809",
       "status": "Available",
       "livability": 5,
-      "lat": null,
-      "lng": null
+      "lat": 38.7520889,
+      "lng": -90.2446855
     },
     {
       "id": "1278-s-illinois-st-decatur-il-62521",
@@ -22200,8 +22200,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8281531,
+      "lng": -88.9416037
     },
     {
       "id": "623-s-sycamore-ave-decatur-il-62522",
@@ -22540,8 +22540,8 @@
       "sqft": "708",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8639721,
+      "lng": -88.9574969
     },
     {
       "id": "6582-saint-louis-ave-saint-louis-mo-63121",
@@ -22693,8 +22693,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 5,
-      "lat": null,
-      "lng": null
+      "lat": 38.6802299,
+      "lng": -90.2755741
     },
     {
       "id": "464-w-sawyer-st-decatur-il-62526",
@@ -22710,8 +22710,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8610173,
+      "lng": -88.9620851
     },
     {
       "id": "2847-abner-pl-saint-louis-mo-63120",
@@ -22727,8 +22727,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6746373,
+      "lng": -90.26417900000001
     },
     {
       "id": "5602-jennings-station-rd-saint-louis-mo-63136",
@@ -22761,8 +22761,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.6904641,
+      "lng": -89.6142146
     },
     {
       "id": "300-park-ave-pekin-il-61554",
@@ -22795,8 +22795,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8570939,
+      "lng": -88.9393941
     },
     {
       "id": "1310-w-adrian-g-hinton-peoria-il-61605",
@@ -22829,8 +22829,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 39.858579,
+      "lng": -88.96162369999999
     },
     {
       "id": "1617-cedar-st-saginaw-mi-48601",
@@ -22846,8 +22846,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 43.4137356,
+      "lng": -83.9387344
     },
     {
       "id": "1143-e-cleveland-ave-decatur-il-62521",
@@ -22863,8 +22863,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8310797,
+      "lng": -88.94089029999999
     },
     {
       "id": "910-s-15th-st-saint-joseph-mo-64503",
@@ -22880,8 +22880,8 @@
       "sqft": "1600",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 39.75862679999999,
+      "lng": -94.84249969999999
     },
     {
       "id": "2132-n-church-st-decatur-il-62526",
@@ -22897,8 +22897,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8641892,
+      "lng": -88.9574978
     },
     {
       "id": "2815-residence-st-alton-il-62002",
@@ -22914,8 +22914,8 @@
       "sqft": "837",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.888061,
+      "lng": -90.1428679
     },
     {
       "id": "412-vine-st-harrisburg-il-62946",
@@ -22931,8 +22931,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 37.7325513,
+      "lng": -88.53932379999999
     },
     {
       "id": "3628-brown-rd-saint-louis-mo-63114",
@@ -22948,8 +22948,8 @@
       "sqft": "816",
       "status": "Available",
       "livability": 2,
-      "lat": null,
-      "lng": null
+      "lat": 38.7198818,
+      "lng": -90.348011
     },
     {
       "id": "1775-n-monroe-st-decatur-il-62526",
@@ -22965,8 +22965,8 @@
       "sqft": "819",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8606969,
+      "lng": -88.9640589
     },
     {
       "id": "13-n-bowman-danville-il-81632",
@@ -22982,8 +22982,8 @@
       "sqft": "1500",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 40.126556,
+      "lng": -87.6117562
     },
     {
       "id": "813-east-dr-alton-il-62002",
@@ -22999,8 +22999,8 @@
       "sqft": "650",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.8921192,
+      "lng": -90.1609456
     },
     {
       "id": "1523-n-morgan-st-decatur-il-62526",
@@ -23016,8 +23016,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.85725840000001,
+      "lng": -88.9486869
     },
     {
       "id": "10249-earl-dr-saint-louis-mo-63136",
@@ -23645,8 +23645,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7150243,
+      "lng": -90.1184261
     },
     {
       "id": "305-w-26th-ave-pine-bluff-ar-71601",
@@ -24104,8 +24104,8 @@
       "sqft": "960",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8582519,
+      "lng": -88.9352253
     },
     {
       "id": "1638-n-lowber-st-decatur-il-62526",
@@ -24835,8 +24835,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 39.8528945,
+      "lng": -88.9428011
     },
     {
       "id": "1302-e-north-st-decatur-il-62521",
@@ -26059,8 +26059,8 @@
       "sqft": "1337",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 40.7154853,
+      "lng": -89.562693
     },
     {
       "id": "1018-e-kansas-st-peoria-il-61603",
@@ -26807,8 +26807,8 @@
       "sqft": "",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.6734544,
+      "lng": -90.30699899999999
     },
     {
       "id": "604-edmond-st-alton-il-62002",
@@ -28065,8 +28065,8 @@
       "sqft": "990",
       "status": "Available",
       "livability": 3,
-      "lat": null,
-      "lng": null
+      "lat": 38.7073571,
+      "lng": -90.131417
     },
     {
       "id": "816-n-indiana-ave-springfield-il-62702",
@@ -28286,8 +28286,8 @@
       "sqft": "1639",
       "status": "Available",
       "livability": 0,
-      "lat": null,
-      "lng": null
+      "lat": 38.5180956,
+      "lng": -89.9965211
     },
     {
       "id": "301-plaza-ave-saint-louis-mo-63135",
