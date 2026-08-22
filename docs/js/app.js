@@ -297,6 +297,45 @@ function loadMapsScript() {
   return mapsScriptLoading;
 }
 
+// Custom light-blue house marker (instead of Google's default red pin) with
+// the down payment shown as a label right next to it, per Aaron's explicit
+// 2026-08-22 requests. Google Marker.label only centers text ON TOP of an
+// icon, not beside it, and Symbol paths are vector-only (no embedded text)
+// -- so this builds one composite SVG (house glyph + a price pill) per
+// listing and uses it as a data-URI image icon instead. House path is a
+// standard 24x24 "home" glyph.
+function houseIconWithPrice(downText) {
+  const label = (downText || "").trim();
+  const houseW = 24, gap = 4, totalH = 24;
+  // Real data check (2026-08-22): only 1 of 307 available listings has a
+  // blank Down value -- skip the label pill entirely for those rather than
+  // showing an empty tag next to the house.
+  const labelGroup = label
+    ? (() => {
+        const labelWidth = Math.max(30, label.length * 7 + 14); // rough char-width estimate + padding
+        return {
+          width: labelWidth,
+          markup: `
+      <g transform="translate(${houseW + gap}, 2)">
+        <rect width="${labelWidth}" height="20" rx="10" fill="#ffffff" stroke="#0369a1" stroke-width="1"/>
+        <text x="${labelWidth / 2}" y="14" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#0369a1">${escapeHtml(label)}</text>
+      </g>`,
+        };
+      })()
+    : { width: 0, markup: "" };
+  const totalW = label ? houseW + gap + labelGroup.width : houseW;
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#7dd3fc" stroke="#0369a1" stroke-width="1"/>${labelGroup.markup}
+    </svg>
+  `.trim();
+  return {
+    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(totalW, totalH),
+    anchor: new google.maps.Point(12, 20), // house's own bottom-center, matching where a pin's point would sit
+  };
+}
+
 async function showMap() {
   document.getElementById("view-list").classList.add("hidden");
   document.getElementById("view-detail").classList.add("hidden");
@@ -341,7 +380,10 @@ async function showMap() {
   const bounds = new google.maps.LatLngBounds();
   for (const listing of availableWithCoords) {
     const pos = { lat: listing.lat, lng: listing.lng };
-    const marker = new google.maps.Marker({ position: pos, map: mapInstance, title: listing.address });
+    const marker = new google.maps.Marker({
+      position: pos, map: mapInstance, title: listing.address,
+      icon: houseIconWithPrice(listing.down),
+    });
     // Click opens a popup with a condensed property card + a button through
     // to the full detail page, rather than jumping straight to the detail
     // page -- per Aaron's explicit 2026-08-22 request.
