@@ -96,15 +96,21 @@ def get_client():
 
 
 def livability_to_number(raw):
-    """Livability is stored as a star string (e.g. '★★☆☆☆'), not a
-    number. Confirmed empirically: 'all empty stars' (☆☆☆☆☆) is the
-    overwhelming majority (200/309 available listings) and represents
-    "unrated", not literally zero -- the real site shows empty parens '()'
-    for these, and a plain number '(N)' for anything with at least one
-    filled star. Returns None for unrated (front end renders as '()'),
-    otherwise the count of filled stars."""
-    filled = raw.count("★")
-    return filled if filled > 0 else None
+    """Livability is stored as a star string (e.g. '★★☆☆☆'), not a number.
+
+    CORRECTED 2026-08-21: an earlier pass here treated 'all empty stars'
+    (☆☆☆☆☆) as meaning "unrated" (rendered as blank parens '()'). That was
+    wrong -- confirmed two ways: (1) every single Available row actually has
+    a full 5-character star string, never a genuinely blank cell, so there's
+    no real "unrated" state in this data at all; (2) a direct screenshot of
+    the real live Glide site shows a literal '(0)' for exactly this
+    all-empty-stars case, not blank parens. So this just returns the raw
+    filled-star count (0-5) always. None is kept only for the genuinely
+    blank-cell case (empty string), which doesn't appear to occur in
+    practice today but is a reasonable fallback if it ever does."""
+    if not raw.strip():
+        return None
+    return raw.count("★")
 
 
 def slugify(address):
