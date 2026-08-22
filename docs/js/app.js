@@ -13,6 +13,18 @@
 // used from a server-to-server call (no browser, no Referer header).
 const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
+// TODO(kickoff): fill in once Aaron creates it -- a THIRD key, restricted
+// by the same website referrer as GOOGLE_MAPS_API_KEY above but scoped to
+// Geocoding API only. Kept deliberately separate from GOOGLE_MAPS_API_KEY:
+// google.maps.Geocoder (the JS class) is bound to whichever key loaded the
+// Maps script and can't use a different key per call, so the map-search
+// feature calls the Geocoding REST endpoint directly via fetch() with this
+// key instead -- same pattern the server-side pipeline already uses, just
+// from the browser. Never give GOOGLE_MAPS_API_KEY Geocoding permission
+// directly -- that would let a scraped copy of it rack up geocoding calls
+// too, on top of Maps JS/Street View.
+const GOOGLE_GEOCODING_SEARCH_KEY = "";
+
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
 // TODO(kickoff): once the small serverless backend is deployed, point this
@@ -407,6 +419,47 @@ async function showMap() {
   if (availableWithCoords.length > 0) mapInstance.fitBounds(bounds);
 }
 
+// ---------- map search (town/address -> pan+zoom) ----------
+// Deliberately calls the Geocoding REST endpoint directly via fetch(),
+// rather than google.maps.Geocoder -- see GOOGLE_GEOCODING_SEARCH_KEY's own
+// comment above for why (Geocoder is bound to whatever key loaded the Maps
+// script and can't be pointed at a different key per call).
+async function geocodeAndPanMap(query) {
+  const statusEl = document.getElementById("map-search-status");
+  const q = query.trim();
+  if (!q) return;
+
+  const showStatus = (text) => {
+    statusEl.textContent = text;
+    statusEl.classList.remove("hidden");
+  };
+
+  if (!GOOGLE_GEOCODING_SEARCH_KEY) {
+    showStatus("Map search isn't configured yet.");
+    return;
+  }
+  if (!mapInstance) return; // shouldn't happen -- search box only exists inside the map view
+
+  showStatus("Searching...");
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${GOOGLE_GEOCODING_SEARCH_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status === "OK" && data.results && data.results.length > 0) {
+      const loc = data.results[0].geometry.location;
+      mapInstance.setCenter({ lat: loc.lat, lng: loc.lng });
+      mapInstance.setZoom(13); // roughly a town/neighborhood-level zoom
+      statusEl.classList.add("hidden");
+    } else if (data.status === "ZERO_RESULTS") {
+      showStatus("Couldn't find that place -- try a different search.");
+    } else {
+      showStatus("Search failed -- please try again.");
+    }
+  } catch (e) {
+    showStatus("Search failed -- please try again.");
+  }
+}
+
 function mapPopupContent(listing) {
   const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
   return `
@@ -621,6 +674,12 @@ document.getElementById("show-map-btn").addEventListener("click", showMap);
 document.getElementById("map-back-btn").addEventListener("click", () => {
   document.getElementById("view-map").classList.add("hidden");
   document.getElementById("view-list").classList.remove("hidden");
+});
+document.getElementById("map-search-btn").addEventListener("click", () => {
+  geocodeAndPanMap(document.getElementById("map-search-box").value);
+});
+document.getElementById("map-search-box").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") geocodeAndPanMap(e.target.value);
 });
 
 initNav();
