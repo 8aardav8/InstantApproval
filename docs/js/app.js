@@ -131,7 +131,12 @@ function renderCardGrid() {
     // field, so the visible date and the sort order agree with each other).
     // Livability stays on the card only -- deliberately dropped from the
     // detail view per Aaron's 2026-08-21 request.
-    const livabilitySuffix = listing.livability !== null ? ` (${listing.livability})` : " ()";
+    // Livability display, per Aaron's explicit 2026-08-21 call: a 0 (or
+    // missing) rating shows NOTHING -- no "(0)", not even empty "()" --
+    // only a real 1-5 rating gets shown as "(N)". This is a deliberate
+    // product decision for the new site, distinct from what the live Glide
+    // app happens to render for the same data.
+    const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
     body.innerHTML = `
       <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
       <div class="card-address">${escapeHtml(listing.address)}</div>
@@ -329,16 +334,48 @@ function initBuyerForm() {
 }
 
 // ---------- tab nav ----------
+// Three separate nav instances now share the same tab set (top-tabs on wide
+// screens, bottom-nav always, drawer on narrow screens) -- see the
+// responsive-masthead rework, 2026-08-21. All three use the same .nav-btn
+// class/data-tab convention, so switching tabs has to sync "active" across
+// ALL instances with a matching data-tab, not just whichever one was
+// physically clicked (otherwise e.g. a bottom-nav tap wouldn't be reflected
+// if the viewport is later resized wide enough to show the top-tabs row).
+const TAB_LABELS = {
+  properties: "PROPERTIES", approved: "APPROVED!", steps: "5 EASY STEPS",
+  buyer: "BUYER INFO", faq: "FAQ",
+};
+
+function activateTab(tabName) {
+  document.querySelectorAll(".nav-btn").forEach((b) => {
+    b.classList.toggle("active", b.dataset.tab === tabName);
+  });
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.add("hidden"));
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (panel) panel.classList.remove("hidden");
+  document.getElementById("mobile-current-tab").textContent = TAB_LABELS[tabName] || tabName.toUpperCase();
+  if (tabName === "properties") backToList();
+  closeDrawer();
+}
+
 function initNav() {
   document.querySelectorAll(".nav-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.add("hidden"));
-      btn.classList.add("active");
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.remove("hidden");
-      if (btn.dataset.tab === "properties") backToList();
-    });
+    btn.addEventListener("click", () => activateTab(btn.dataset.tab));
   });
+}
+
+// ---------- mobile drawer ----------
+function openDrawer() {
+  document.getElementById("nav-drawer").classList.remove("hidden");
+  document.getElementById("nav-drawer-backdrop").classList.remove("hidden");
+}
+function closeDrawer() {
+  document.getElementById("nav-drawer").classList.add("hidden");
+  document.getElementById("nav-drawer-backdrop").classList.add("hidden");
+}
+function initDrawer() {
+  document.getElementById("hamburger-btn").addEventListener("click", openDrawer);
+  document.getElementById("nav-drawer-backdrop").addEventListener("click", closeDrawer);
 }
 
 // ---------- shareable filter links ----------
@@ -419,6 +456,7 @@ document.getElementById("map-back-btn").addEventListener("click", () => {
 });
 
 initNav();
+initDrawer();
 initStepTabs();
 initBuyerForm();
 loadData();

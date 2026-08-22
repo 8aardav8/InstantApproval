@@ -18,27 +18,90 @@ body {
 
 .hidden { display: none !important; }
 
-/* ---------- top bar ---------- */
+/* ---------- top bar (responsive masthead, added 2026-08-21) ---------- */
+/* Wide screens: title bar + icon/label top tabs, matching the real Glide
+   app's landscape layout. Narrow screens: collapses to a hamburger + the
+   current tab name, opening a slide-out drawer -- matching Glide's portrait
+   layout. Breakpoint chosen to roughly track phone-portrait vs. everything
+   wider (tablet landscape and up), not tied to any specific device. */
 .topbar {
   background: var(--navy);
   color: #fff;
-  padding: 14px 16px 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 10px 16px;
+}
+.masthead-row { display: flex; align-items: center; gap: 12px; }
+.masthead-title { font-size: 18px; font-weight: 800; margin: 0; flex: 1; }
+.mobile-current-tab { display: none; flex: 1; text-align: center; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; }
+.hamburger-btn {
+  display: none; background: none; border: none; color: #fff; font-size: 22px; padding: 4px 6px; cursor: pointer;
+}
+.avatar-badge {
+  width: 34px; height: 34px; border-radius: 50%; background: #14b8a6; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex: 0 0 auto;
+}
+.top-tabs { display: flex; gap: 6px; margin-top: 10px; }
+.top-tabs .nav-btn {
+  flex: 0 0 auto; flex-direction: row; gap: 6px; background: none; border: none; color: #9aa7c7;
+  font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+}
+.top-tabs .nav-btn.active { color: #fff; background: rgba(255,255,255,0.12); }
+.top-tabs .nav-icon { font-size: 15px; }
+
+/* Drawer -- mobile only, reuses .nav-btn so the existing click handler
+   (queries all .nav-btn elements) needs no extra JS wiring for tab-switching
+   itself; only open/close behavior is new. */
+.nav-drawer-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40;
+}
+.nav-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 240px; background: var(--navy);
+  z-index: 41; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px;
+  transform: translateX(0); transition: transform 0.2s ease;
+}
+.nav-drawer.hidden, .nav-drawer-backdrop.hidden { display: none; }
+.nav-drawer .nav-btn {
+  flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 10px; background: none; border: none;
+  color: #cbd5e1; font-size: 14px; font-weight: 700; padding: 12px 10px; border-radius: 8px; cursor: pointer; width: 100%;
+}
+.nav-drawer .nav-btn.active { color: #fff; background: rgba(255,255,255,0.12); }
+.nav-drawer .nav-icon { font-size: 16px; }
+
+/* Profile bar -- moved out of the navy header into its own light-background
+   section (matches both reference screenshots: profile card sits below the
+   masthead, not inside it). */
+.profile-bar {
+  background: #fff; border-bottom: 1px solid var(--border);
+  padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+  max-width: 640px; margin: 0 auto; gap: 12px; flex-wrap: wrap;
 }
 .profile { display: flex; align-items: center; gap: 12px; }
 .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #333; }
-.profile-text .name { font-size: 15px; color: #cbd5e1; }
-.profile-text .tagline { font-size: 15px; font-weight: 600; color: #fff; }
+.profile-text .name { font-size: 15px; color: var(--gray-text); }
+.profile-text .tagline { font-size: 15px; font-weight: 600; color: #111827; }
 .profile-actions { display: flex; gap: 8px; }
-.icon-btn, .icon-btn-outline {
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 40px; padding: 0 14px; border-radius: 20px;
+  background: #eef2ff; color: var(--blue); text-decoration: none; font-size: 14px; font-weight: 700;
+}
+.icon-btn-icon { font-size: 16px; }
+.icon-btn-outline {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(255,255,255,0.15); color: #fff; text-decoration: none; font-size: 16px;
+  background: #fff; color: #111827; border: 1px solid var(--border); font-size: 16px;
 }
-.icon-btn-outline {
-  background: #fff; color: #111827; border: 1px solid var(--border);
+
+@media (max-width: 700px) {
+  .masthead-title, .top-tabs { display: none; }
+  .mobile-current-tab { display: block; }
+  .hamburger-btn { display: block; }
+  /* icon-only circles on mobile, matching the portrait reference screenshot */
+  .icon-btn { width: 40px; height: 40px; padding: 0; border-radius: 50%; }
+  .icon-btn-label { display: none; }
+}
+@media (min-width: 701px) {
+  .nav-drawer, .nav-drawer-backdrop { display: none !important; }
+  .bottom-nav { display: none; } /* redundant with the top-tabs row on wide screens */
 }
 
 /* ---------- main / tabs ---------- */

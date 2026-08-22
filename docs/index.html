@@ -9,7 +9,39 @@
 </head>
 <body>
 
+<!-- Masthead: wide screens show a title bar + icon/label top tabs (matching
+     the real Glide app's landscape layout); narrow screens collapse this to
+     a hamburger + the current tab name, opening a slide-out drawer with the
+     same tabs -- see the "responsive nav" rework, 2026-08-21. -->
 <header class="topbar">
+  <div class="masthead-row">
+    <button id="hamburger-btn" class="hamburger-btn" aria-label="Menu">☰</button>
+    <h1 class="masthead-title">Instant-Approval Home Financing - (618)418-4180</h1>
+    <span id="mobile-current-tab" class="mobile-current-tab">PROPERTIES</span>
+    <div class="avatar-badge" aria-label="Aaron David">A</div>
+  </div>
+  <nav class="top-tabs">
+    <button class="nav-btn active" data-tab="properties"><span class="nav-icon">🏠</span>Properties</button>
+    <button class="nav-btn" data-tab="approved"><span class="nav-icon">💲</span>Approved!</button>
+    <button class="nav-btn" data-tab="steps"><span class="nav-icon">✅</span>5 Easy Steps</button>
+    <button class="nav-btn" data-tab="buyer"><span class="nav-icon">👤</span>Buyer Info</button>
+    <button class="nav-btn" data-tab="faq"><span class="nav-icon">❓</span>FAQ</button>
+  </nav>
+</header>
+
+<!-- Slide-out drawer, mobile only -- same tabs/buttons as top-tabs/bottom-nav,
+     reusing the .nav-btn class so the existing click handler (which already
+     queries ALL .nav-btn elements at once) wires this up with no extra JS. -->
+<div id="nav-drawer-backdrop" class="nav-drawer-backdrop hidden"></div>
+<nav id="nav-drawer" class="nav-drawer hidden">
+  <button class="nav-btn active" data-tab="properties"><span class="nav-icon">🏠</span>Properties</button>
+  <button class="nav-btn" data-tab="approved"><span class="nav-icon">💲</span>Approved!</button>
+  <button class="nav-btn" data-tab="steps"><span class="nav-icon">✅</span>5 Easy Steps</button>
+  <button class="nav-btn" data-tab="buyer"><span class="nav-icon">👤</span>Buyer Info</button>
+  <button class="nav-btn" data-tab="faq"><span class="nav-icon">❓</span>FAQ</button>
+</nav>
+
+<div class="profile-bar">
   <div class="profile">
     <img class="avatar" src="assets/aaron.jpg" alt="Aaron David">
     <div class="profile-text">
@@ -18,11 +50,11 @@
     </div>
   </div>
   <div class="profile-actions">
-    <a class="icon-btn" href="tel:6184184180" aria-label="Call">📞</a>
-    <a class="icon-btn" href="sms:6184184180" aria-label="Text">💬</a>
-    <a class="icon-btn" href="mailto:contact@instantapprovalhomes.com" aria-label="Email">✉️</a>
+    <a class="icon-btn" href="tel:6184184180" aria-label="Call"><span class="icon-btn-icon">📞</span><span class="icon-btn-label">Call</span></a>
+    <a class="icon-btn" href="sms:6184184180" aria-label="Text"><span class="icon-btn-icon">💬</span><span class="icon-btn-label">SMS</span></a>
+    <a class="icon-btn" href="mailto:contact@instantapprovalhomes.com" aria-label="Email"><span class="icon-btn-icon">✉️</span><span class="icon-btn-label">Email</span></a>
   </div>
-</header>
+</div>
 
 <main id="app">
 
