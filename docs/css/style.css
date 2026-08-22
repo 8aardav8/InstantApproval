@@ -153,7 +153,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* ---------- card grid ---------- */
 .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 420px) { .card-grid { grid-template-columns: 1fr 1fr; } }
+/* 4 cards per row in landscape, per Aaron's explicit request (2026-08-21).
+   min-width guard avoids a landscape phone/small window rendering 4
+   overly-cramped columns -- roughly the point where 4x~150px columns still
+   have room to breathe. Widen the content container too, otherwise 4
+   columns inside the portrait-oriented 640px max-width would be cramped
+   regardless of how much real landscape width is available. */
+@media (orientation: landscape) and (min-width: 640px) {
+  .card-grid { grid-template-columns: repeat(4, 1fr); }
+  main, .profile-bar { max-width: 900px; }
+}
 .card {
   background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
   cursor: pointer; display: flex; flex-direction: column;

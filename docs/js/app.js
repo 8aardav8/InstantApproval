@@ -342,8 +342,8 @@ function initBuyerForm() {
 // physically clicked (otherwise e.g. a bottom-nav tap wouldn't be reflected
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
-  properties: "PROPERTIES", approved: "APPROVED!", steps: "5 EASY STEPS",
-  buyer: "BUYER INFO", faq: "FAQ",
+  properties: "PROPERTIES", steps: "5 EASY STEPS", approved: "APPROVED!",
+  buyer: "BUYER INFO",
 };
 
 function activateTab(tabName) {
