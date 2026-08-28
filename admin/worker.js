@@ -15,9 +15,24 @@
 //    replicates the existing Glide app's own email-first gate, now with a
 //    phone field added). No auth required -- this is a public lead-capture
 //    endpoint, protected only by a honeypot field checked client-side (see
-//    app.js) plus basic field validation here. Appends one row
-//    (Time/Email/Phone/Agreed) to the Filling Sheet's "App: Logins" tab --
-//    the same tab/shape the current Glide app already writes into.
+//    app.js) plus basic field validation here.
+//
+//    IMPORTANT, changed 2026-08-28 per Aaron's direct instruction: this
+//    Worker does NOT write to the Filling Sheet at all anymore, even though
+//    the service account now has Editor there. Aaron's ask was explicit --
+//    "only allow editing in the App Logins tab for now, with Telegram
+//    check-in before editing, including proposed changes." So instead of
+//    writing directly, this creates an Approval Request Task in the Agent
+//    System Database (the same Sheet/mechanism already used for every other
+//    propose-then-approve flow in this whole project -- see CLAUDE.md's
+//    Behavior-Change Request Loop / Dropbox execute-on-approval sections).
+//    Nathan picks up the open Approval Request, checks in with Aaron on
+//    Telegram showing the exact proposed row, and only appends it to the
+//    Filling Sheet's "App: Logins" tab once Aaron approves. Nathan's own
+//    standing instructions are the enforcement boundary for "App: Logins
+//    only" -- this Worker never touches the Filling Sheet's write path.
+//    The visitor's own gate still closes immediately on submit either way
+//    (see app.js) -- they are never made to wait on Aaron's approval.
 //
 // SETUP (fill these in / set as Worker secrets before this works):
 //   1. AARON_EMAIL below -- already filled in.
@@ -38,13 +53,38 @@
 //      is granted, /gate-login will fail cleanly with a caught error
 //      (visitor sees "something went wrong, call/text us instead"), not a
 //      silent failure.
+//   5. IMMEDIATE check-in, added 2026-08-28 per Aaron's direct ask ("I'd
+//      like the check-in to be immediate"). One more Worker secret:
+//        TELEGRAM_BOT_TOKEN    = the same bot token Nathan's own Telegram
+//                                 connection already uses (found in
+//                                 /root/nanoclaw/.env on the droplet as
+//                                 TELEGRAM_BOT_TOKEN). This Worker only
+//                                 ever calls Telegram's one-way sendMessage
+//                                 API with it -- it never registers or
+//                                 touches the bot's webhook, so this can't
+//                                 conflict with or break Nathan's own
+//                                 Telegram wiring. Aaron's reply lands in
+//                                 the same chat exactly as any other
+//                                 message and reaches Nathan normally.
 
 const AARON_EMAIL = "Ate7010@gmail.com";
 const OAUTH_CLIENT_ID = "74546128016-r0b13a553shc79gae1hf8r42nkd47t3i.apps.googleusercontent.com";
 
+// Aaron's own Telegram chat ID (the bot's one paired/owner chat) -- not a
+// secret in the same sense as the bot token, just a "send to" address, so
+// it's a plain constant here rather than a Worker secret.
+const AARON_TELEGRAM_CHAT_ID = "5752904645";
+
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 const SHEET_TAB = "PROPERTIES";
-const LOGINS_TAB = "App: Logins";
+
+// Agent System Database -- a DIFFERENT spreadsheet from the Filling Sheet
+// above, where the /gate-login route writes an Approval Request Task
+// instead of touching the Filling Sheet directly (see the big comment
+// block up top). Same service account, already has Editor here -- this is
+// its home Sheet, no new grant needed.
+const AGENT_DB_SHEET_ID = "1iFhl222SMp9S2tBuFzroLJWK7z5KU21kpjKbtjU3RJo";
+const TASKS_TAB = "Tasks";
 
 const ALLOWED_ORIGIN = "https://8aardav8.github.io";
 
@@ -160,23 +200,95 @@ async function fetchSheetRows(accessToken) {
   return data.values || [];
 }
 
-// ---------- job 2: append a row to App: Logins ----------
-async function appendLoginRow(accessToken, email, phone, agreed) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!A:D`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW`;
-  const row = [new Date().toISOString(), email, phone, agreed ? "TRUE" : "FALSE"];
+// ---------- job 2: create an Approval Request Task, not a direct write ----------
+// Reads the current Task ID column fresh on every call (rather than trusting
+// a cached max) to minimize -- not eliminate -- collision risk between two
+// near-simultaneous submissions, matching this project's own standing rule
+// ("always read the live sheet's current max ID before writing a new
+// sequential one"). A rare collision here just means two Tasks share an ID,
+// not a data-loss risk, so this lightweight approach is enough for a
+// low-volume lead-capture form -- no locking mechanism built.
+async function nextTaskId(accessToken) {
+  const range = encodeURIComponent(`${TASKS_TAB}!A:A`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${AGENT_DB_SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`task-id read failed: ${await res.text()}`);
+  const data = await res.json();
+  const col = data.values || [];
+  let max = 0;
+  for (const [cell] of col) {
+    const m = /^(?:TASK|EVENT)-(\d+)$/.exec((cell || "").trim());
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `TASK-${String(max + 1).padStart(6, "0")}`;
+}
+
+async function createGateLoginApprovalTask(accessToken, email, phone, agreed) {
+  const taskId = await nextTaskId(accessToken);
+  const now = new Date();
+  const proposedRow = [now.toISOString(), email, phone, agreed ? "TRUE" : "FALSE"];
+
+  // 32 columns, in the exact live Tasks-tab header order (confirmed
+  // 2026-08-28, not assumed) -- Task ID, Task Type, Title/Description,
+  // Status, Priority, Assignee, Requested By, Linked Project ID, Linked
+  // Asset ID, Linked Network ID, Due Date, Created Date, Completed Date,
+  // Dropbox Link, Notes/Flags, then 17 TickTick/Calendar-sync columns left
+  // blank (not applicable to this Task).
+  const row = [
+    taskId,
+    "Approval Request",
+    "New site visitor — approve adding to App: Logins", // fixed, neutral -- not a paraphrase, matches the Behavior-Change Request Loop convention
+    "Open",
+    "Medium",
+    "Nathan",
+    "Site (gate-login)",
+    "", "", "", // Linked Project/Asset/Network ID
+    "", // Due Date
+    now.toISOString().slice(0, 10), // Created Date
+    "", // Completed Date
+    "", // Dropbox Link
+    `Proposed row for Filling Sheet "App: Logins" tab (A:D): ` +
+      `Time=${proposedRow[0]}, Email=${proposedRow[1]}, Phone=${proposedRow[2]}, Agreed=${proposedRow[3]}. ` +
+      `Check in with Aaron on Telegram before writing -- do not append until he approves.`,
+  ];
+
+  const range = encodeURIComponent(`${TASKS_TAB}!A:O`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${AGENT_DB_SHEET_ID}/values/${range}:append?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({ values: [row] }),
   });
-  if (!res.ok) throw new Error(`sheets append failed: ${await res.text()}`);
+  if (!res.ok) throw new Error(`approval-task append failed: ${await res.text()}`);
+  return taskId;
 }
 
 // Very simple, deliberately non-strict validation -- this is a lead-capture
 // gate, not a KYC form. Just enough to reject obvious garbage/empty submits.
 function isPlausibleEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 function isPlausiblePhone(v) { return (v || "").replace(/\D/g, "").length >= 10; }
+
+// Immediate check-in (2026-08-28) -- a plain, one-way push via Telegram's
+// own sendMessage API, independent of Nathan/NanoClaw entirely. Best-effort:
+// if this fails (bad token, Telegram hiccup), the Approval Request Task
+// still exists and Nathan will still surface it on its own normal Approvals
+// check -- a failed push here is a lost "instant" nicety, not a lost
+// approval, so this never throws back to the caller.
+async function pushTelegramCheckIn(env, taskId, email, phone) {
+  if (!env.TELEGRAM_BOT_TOKEN) return; // secret not set yet -- just skip
+  const text =
+    `New site visitor wants in — email ${email}, phone ${phone}.\n` +
+    `OK to add to App: Logins? Reply to approve or reject.`;
+  try {
+    await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
+    });
+  } catch (e) {
+    // Swallowed deliberately -- see comment above.
+  }
+}
 
 async function handleGateLogin(request, env) {
   let body;
@@ -194,8 +306,9 @@ async function handleGateLogin(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    await appendLoginRow(accessToken, email, phone, agreed);
-    return jsonResponse({ ok: true });
+    const taskId = await createGateLoginApprovalTask(accessToken, email, phone, agreed);
+    await pushTelegramCheckIn(env, taskId, email, phone);
+    return jsonResponse({ ok: true, taskId });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
