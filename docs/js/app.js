@@ -696,6 +696,52 @@ const ADMIN_OAUTH_CLIENT_ID = "74546128016-r0b13a553shc79gae1hf8r42nkd47t3i.apps
 const ADMIN_API_URL = "https://super-frost-1dbb.notactuallyit.workers.dev";
 const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
 
+// ---------- Login gate (2026-08-27) ----------
+// Same Worker as the admin API above, new route -- no auth needed, this is
+// the public lead-capture gate (see admin/worker.js's handleGateLogin).
+const GATE_LOGIN_ENDPOINT = `${ADMIN_API_URL}/gate-login`;
+const GATE_STORAGE_KEY = "iah_gate_passed";
+
+function initLoginGate() {
+  const gate = document.getElementById("login-gate");
+  if (localStorage.getItem(GATE_STORAGE_KEY) === "1") {
+    gate.classList.add("hidden");
+    return;
+  }
+  const form = document.getElementById("gate-form");
+  const status = document.getElementById("gate-status");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("gate-email").value.trim();
+    const phone = document.getElementById("gate-phone").value.trim();
+    const agreed = document.getElementById("gate-agree").checked;
+    const honeypot = document.getElementById("gate-hp").value;
+
+    // Bot filled the field only a script would find -- let it "through"
+    // without ever telling it it was caught, and without writing a fake
+    // row to the Sheet.
+    if (honeypot) {
+      localStorage.setItem(GATE_STORAGE_KEY, "1");
+      gate.classList.add("hidden");
+      return;
+    }
+
+    status.textContent = "Continuing...";
+    try {
+      const res = await fetch(GATE_LOGIN_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, phone, agreed }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      localStorage.setItem(GATE_STORAGE_KEY, "1");
+      gate.classList.add("hidden");
+    } catch (err) {
+      status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
+    }
+  });
+}
+
 function decodeJwtPayload(token) {
   try {
     const b64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
@@ -846,4 +892,17 @@ initDrawer();
 initStepTabs();
 initBuyerForm();
 initAdminUI();
+initLoginGate();
 loadData();
+
+// PWA install support (2026-08-27) -- minimal service worker, exists mainly
+// to satisfy Chrome/Android's "installable" criteria for a real Add-to-
+// Home-Screen prompt. iOS has no equivalent auto-prompt regardless (Apple
+// restriction, not something any site including Glide's can change) -- the
+// manifest + apple-touch-icon + meta tags in index.html are what make
+// iOS's manual Share > Add to Home Screen produce a proper full-screen icon.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
