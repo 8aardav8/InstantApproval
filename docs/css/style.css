@@ -346,6 +346,30 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .full-width { width: 100%; margin-top: 20px; }
 .form-status { margin-top: 12px; font-size: 14px; }
 
+/* ---------- login gate (2026-08-27) ---------- */
+.login-gate {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px 24px; overflow-y: auto;
+}
+.login-gate-card { max-width: 420px; width: 100%; text-align: center; }
+.login-gate-icon { width: 96px; height: 96px; border-radius: 22px; margin-bottom: 24px; }
+.login-gate-headline { font-size: 26px; font-weight: 800; line-height: 1.3; margin: 0 0 12px; }
+.login-gate-subtext { color: #b9c2dd; font-size: 15px; margin: 0 0 28px; }
+.login-gate-form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.login-gate-form input[type="email"],
+.login-gate-form input[type="tel"] {
+  padding: 14px 16px; border-radius: 10px; border: 1px solid #3a4a75;
+  background: #1c294f; color: #fff; font-size: 16px; width: 100%;
+}
+.login-gate-form input::placeholder { color: #8b96b8; }
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.login-gate-consent { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #b9c2dd; }
+.login-gate-consent input { margin-top: 3px; flex-shrink: 0; }
+.login-gate .btn-primary { padding: 14px; border-radius: 10px; font-size: 16px; border: none; }
+.login-gate .form-status { color: #b9c2dd; }
+
 /* ---------- bottom nav ---------- */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border);
