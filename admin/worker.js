@@ -208,7 +208,19 @@ async function fetchSheetRows(accessToken) {
 // sequential one"). A rare collision here just means two Tasks share an ID,
 // not a data-loss risk, so this lightweight approach is enough for a
 // low-volume lead-capture form -- no locking mechanism built.
-async function nextTaskId(accessToken) {
+//
+// Also returns the exact next ROW number (col.length + 1, since row 1 is the
+// header and the returned array has one entry per populated row starting
+// there) -- REAL BUG found and fixed 2026-08-28: the original version of
+// this Worker wrote via values:append on range Tasks!A:O and let Sheets
+// auto-detect where the "table" ends. On this specific sheet that detection
+// is unreliable (confirmed live, twice, with two different real submissions
+// both landing many columns off -- data shifted to start at column O
+// instead of A, on a row far past the real last row). Switched to writing
+// with an EXPLICIT row number via values.update instead of :append --
+// this bypasses Sheets' auto-detection entirely, so there's no table-shape
+// heuristic left to get confused.
+async function nextTaskIdAndRow(accessToken) {
   const range = encodeURIComponent(`${TASKS_TAB}!A:A`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${AGENT_DB_SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
@@ -220,11 +232,11 @@ async function nextTaskId(accessToken) {
     const m = /^(?:TASK|EVENT)-(\d+)$/.exec((cell || "").trim());
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
-  return `TASK-${String(max + 1).padStart(6, "0")}`;
+  return { taskId: `TASK-${String(max + 1).padStart(6, "0")}`, row: col.length + 1 };
 }
 
 async function createGateLoginApprovalTask(accessToken, email, phone, agreed) {
-  const taskId = await nextTaskId(accessToken);
+  const { taskId, row: targetRow } = await nextTaskIdAndRow(accessToken);
   const now = new Date();
   const proposedRow = [now.toISOString(), email, phone, agreed ? "TRUE" : "FALSE"];
 
@@ -252,14 +264,17 @@ async function createGateLoginApprovalTask(accessToken, email, phone, agreed) {
       `Check in with Aaron on Telegram before writing -- do not append until he approves.`,
   ];
 
-  const range = encodeURIComponent(`${TASKS_TAB}!A:O`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${AGENT_DB_SHEET_ID}/values/${range}:append?valueInputOption=RAW`;
+  // Explicit target range (Tasks!A509:O509, say) via values.update -- NOT
+  // values:append. update() writes exactly where told, no table-detection,
+  // no ambiguity. See nextTaskIdAndRow's comment above for why this matters.
+  const range = encodeURIComponent(`${TASKS_TAB}!A${targetRow}:O${targetRow}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${AGENT_DB_SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
-    method: "POST",
+    method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ values: [row] }),
+    body: JSON.stringify({ range: `${TASKS_TAB}!A${targetRow}:O${targetRow}`, values: [row] }),
   });
-  if (!res.ok) throw new Error(`approval-task append failed: ${await res.text()}`);
+  if (!res.ok) throw new Error(`approval-task write failed: ${await res.text()}`);
   return taskId;
 }
 
