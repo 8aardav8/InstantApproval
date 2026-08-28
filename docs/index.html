@@ -6,12 +6,56 @@
 <title>Instant-Approval Home Financing</title>
 <meta name="description" content="You're Approved! We sell affordable homes. Easy down payment. Low monthly installments. No Applications. No Credit Check.">
 <link rel="stylesheet" href="css/style.css">
+<!-- PWA / "Add to Home Screen" support, added 2026-08-27 -- matches the
+     capability the current Glide app already offers. Icon is a placeholder
+     (house glyph on the same navy/blue palette as the rest of the site)
+     until Aaron supplies real brand art -- swap the 4 files in
+     docs/assets/ and nothing else needs to change. -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#0e1b3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Instant Approval Homes">
 <!-- Google Identity Services -- powers the admin-only sign-in (Aaron only,
      see the "Admin view" feature, 2026-08-22). Not used by/visible to
      regular buyers at all beyond a small icon in the header. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+
+<!-- ============ LOGIN GATE ============ -->
+<!-- Full-site gate, added 2026-08-27 -- matches the current Glide app's own
+     email-first login screen (screenshot-confirmed copy below), with a
+     Phone field added per Aaron's request. Shown before anything else in
+     <main> until submitted, then remembered via localStorage so a repeat
+     visitor on the same device is never asked again. Writes to the Filling
+     Sheet's "App: Logins" tab (Time/Email/Phone/Agreed) via the admin
+     Worker's new POST /gate-login route -- see admin/worker.js and
+     initLoginGate() in app.js. -->
+<div id="login-gate" class="login-gate">
+  <div class="login-gate-card">
+    <img class="login-gate-icon" src="assets/icon-192.png" alt="">
+    <h1 class="login-gate-headline">Hundreds of Affordable Homes with Instant-Approval Financing.</h1>
+    <p class="login-gate-subtext">Easy down, Low monthly, No Applications &amp; No Credit Checks.</p>
+    <form id="gate-form" class="login-gate-form">
+      <input type="email" id="gate-email" name="email" placeholder="Enter your email" required autocomplete="email">
+      <input type="tel" id="gate-phone" name="phone" placeholder="Enter your phone number" required autocomplete="tel">
+      <!-- Honeypot -- real visitors never see this (off-screen, not
+           type="hidden" -- some bots specifically skip inputs that are
+           hidden that way). If it's ever non-empty on submit, app.js
+           treats the submission as spam and skips writing it. -->
+      <input type="text" id="gate-hp" name="website" class="hp-field" tabindex="-1" autocomplete="off">
+      <label class="login-gate-consent">
+        <input type="checkbox" id="gate-agree" required>
+        By continuing, you agree to be contacted by phone, text, or email about homes and financing options.
+      </label>
+      <button type="submit" class="btn-primary full-width">Continue</button>
+      <div id="gate-status" class="form-status"></div>
+    </form>
+  </div>
+</div>
 
 <!-- Masthead: wide screens show a title bar + icon/label top tabs (matching
      the real Glide app's landscape layout); narrow screens collapse this to
