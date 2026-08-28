@@ -235,10 +235,13 @@ async function nextTaskIdAndRow(accessToken) {
   return { taskId: `TASK-${String(max + 1).padStart(6, "0")}`, row: col.length + 1 };
 }
 
-async function createGateLoginApprovalTask(accessToken, email, phone, agreed) {
+async function createGateLoginApprovalTask(accessToken, name, email, phone, agreed) {
   const { taskId, row: targetRow } = await nextTaskIdAndRow(accessToken);
   const now = new Date();
-  const proposedRow = [now.toISOString(), email, phone, agreed ? "TRUE" : "FALSE"];
+  // Column order matches App: Logins' real layout (confirmed/corrected
+  // 2026-08-28): Time / Email / Agreed / Phone -- Name lands in App:
+  // Logins' own Name(E) column separately, not in this A:D proposed set.
+  const proposedRow = [now.toISOString(), email, agreed ? "TRUE" : "FALSE", phone];
 
   // 32 columns, in the exact live Tasks-tab header order (confirmed
   // 2026-08-28, not assumed) -- Task ID, Task Type, Title/Description,
@@ -259,8 +262,9 @@ async function createGateLoginApprovalTask(accessToken, email, phone, agreed) {
     now.toISOString().slice(0, 10), // Created Date
     "", // Completed Date
     "", // Dropbox Link
-    `Proposed row for Filling Sheet "App: Logins" tab (A:D): ` +
-      `Time=${proposedRow[0]}, Email=${proposedRow[1]}, Phone=${proposedRow[2]}, Agreed=${proposedRow[3]}. ` +
+    `Proposed row for Filling Sheet "App: Logins" tab (Time/Email/Agreed/Phone in columns A/B/C/D, Name in E): ` +
+      `Name=${name}, Time=${proposedRow[0]}, Email=${proposedRow[1]}, Agreed=${proposedRow[2]}, Phone=${proposedRow[3]}. ` +
+      `Also pass the name to the Quo upsert if a NEW contact ends up being created (not for an existing one). ` +
       `Check in with Aaron on Telegram before writing -- do not append until he approves.`,
   ];
 
@@ -289,10 +293,10 @@ function isPlausiblePhone(v) { return (v || "").replace(/\D/g, "").length >= 10;
 // still exists and Nathan will still surface it on its own normal Approvals
 // check -- a failed push here is a lost "instant" nicety, not a lost
 // approval, so this never throws back to the caller.
-async function pushTelegramCheckIn(env, taskId, email, phone) {
+async function pushTelegramCheckIn(env, taskId, name, email, phone) {
   if (!env.TELEGRAM_BOT_TOKEN) return; // secret not set yet -- just skip
   const text =
-    `New site visitor wants in — email ${email}, phone ${phone}.\n` +
+    `New site visitor wants in — ${name}, email ${email}, phone ${phone}.\n` +
     `OK to add to App: Logins? Reply to approve or reject.`;
   try {
     await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -312,17 +316,19 @@ async function handleGateLogin(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  const name = (body.name || "").trim();
   const email = (body.email || "").trim();
   const phone = (body.phone || "").trim();
   const agreed = !!body.agreed;
 
+  if (!name) return jsonResponse({ error: "invalid name" }, 400);
   if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
   if (!isPlausiblePhone(phone)) return jsonResponse({ error: "invalid phone" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const taskId = await createGateLoginApprovalTask(accessToken, email, phone, agreed);
-    await pushTelegramCheckIn(env, taskId, email, phone);
+    const taskId = await createGateLoginApprovalTask(accessToken, name, email, phone, agreed);
+    await pushTelegramCheckIn(env, taskId, name, email, phone);
     return jsonResponse({ ok: true, taskId });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
