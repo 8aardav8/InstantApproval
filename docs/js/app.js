@@ -712,6 +712,7 @@ function initLoginGate() {
   const status = document.getElementById("gate-status");
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const name = document.getElementById("gate-name").value.trim();
     const email = document.getElementById("gate-email").value.trim();
     const phone = document.getElementById("gate-phone").value.trim();
     const agreed = document.getElementById("gate-agree").checked;
@@ -731,7 +732,7 @@ function initLoginGate() {
       const res = await fetch(GATE_LOGIN_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, phone, agreed }),
+        body: JSON.stringify({ name, email, phone, agreed }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       localStorage.setItem(GATE_STORAGE_KEY, "1");
