@@ -898,8 +898,9 @@ function appointmentsForAddress(address) {
 // sizing as the Homes page), so it's clickable through to the real detail
 // page and gets the same photo/address/price context, not just a bare
 // address string. Rebuilt 2026-08-29 into a collapsed-by-default accordion
-// behind a "See your N booked viewings" toggle, per Aaron's direct
-// request -- the toggle click handler itself is wired once in
+// behind an "N viewings scheduled" toggle, per Aaron's direct request (the
+// label wording itself was tightened once more the same day) -- the
+// toggle click handler itself is wired once in
 // initAppointmentsAccordionToggle() below, not here, since this function
 // runs on every refresh/re-render and would otherwise stack duplicate
 // listeners.
@@ -922,7 +923,7 @@ function renderMyAppointmentCards() {
   // predictable than trying to preserve expand state across a rebuild.
   wrap.classList.add("hidden");
   if (toggle) toggle.classList.remove("expanded");
-  if (label) label.textContent = `See your ${listings.length} booked viewing${listings.length === 1 ? "" : "s"}`;
+  if (label) label.textContent = `${listings.length} viewing${listings.length === 1 ? "" : "s"} scheduled`;
   for (const listing of listings) wrap.appendChild(buildListingCard(listing));
 }
 
