@@ -525,6 +525,23 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .required { font-weight: 400; color: var(--gray-text); font-size: 12px; margin-left: 6px; }
 #get-started-form input, #get-started-form select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
 .full-width { width: 100%; margin-top: 20px; }
+/* ID upload, rebuilt as a camera-icon button 2026-08-29 -- real reported
+   request: the native <input type="file">'s own "Choose File / no file
+   selected" control looked out of place next to the rest of the site's
+   own buttons. The real <input> stays in the DOM (still what the form
+   submits, still what "required" validates against) but is hidden via
+   the standard "visually-hidden, not display:none" pattern -- absolute,
+   1x1px, clipped, zero opacity -- rather than display:none, which some
+   browsers skip constraint-validation for entirely (a required
+   display:none field can silently let the form submit with no file at
+   all). Selector uses the element's own id + this class together
+   specifically to out-specificity the generic "#get-started-form input"
+   rule above, which would otherwise re-apply full-width padding/border. */
+#get-started-id-photo.id-photo-input-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; border: 0;
+  opacity: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+.id-photo-upload-btn { width: 100%; margin-top: 4px; }
 .form-status { margin-top: 12px; font-size: 14px; }
 .get-started-id-status { margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #1a8a4a; }
 
