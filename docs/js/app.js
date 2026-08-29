@@ -454,9 +454,17 @@ function showDetail(id) {
   // it stays on the card only, not on the detail/properties page.
 
   detail.innerHTML = `
-    <button class="detail-back" onclick="backToList()">${ICON_BACK}</button>
     <div class="detail-photo-wrap">
       <img class="detail-photo" src="${streetViewUrl(listing.address, 800, 500)}" alt="${escapeHtml(listing.address)}">
+      <!-- Moved INSIDE .detail-photo-wrap 2026-08-29, real reported bug:
+           this used to be a SIBLING of .detail-photo-wrap, so its
+           "position: absolute; top: 0; left: 0" never actually anchored
+           to the photo's own position: relative container -- it anchored
+           to whatever ancestor further up the tree happened to have
+           positioning context instead, landing it inside the fixed navy
+           header bar rather than floating over the photo like it used to.
+           Same container the heart button already correctly floats in. -->
+      <button class="detail-back" onclick="backToList()">${ICON_BACK}</button>
       <button type="button" class="detail-heart${isFavorited(listing.id) ? " favorited" : ""}" data-listing-id="${listing.id}" aria-label="Save to favorites" onclick="toggleFavorite('${listing.id}'); syncFavoriteHearts('${listing.id}')">${ICON_HEART}</button>
     </div>
     <div class="detail-body">
