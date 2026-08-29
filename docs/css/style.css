@@ -109,8 +109,9 @@ body {
 .profile-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: 40px; padding: 0 14px; border-radius: 20px;
+  height: 40px; padding: 0 14px; border-radius: 20px; border: none; cursor: pointer;
   background: #eef2ff; color: var(--blue); text-decoration: none; font-size: 14px; font-weight: 700;
+  font-family: inherit; /* buttons don't inherit this by default like <a> tags do -- needed since Install (added 2026-08-29) is a <button>, not a link like Call/Text */
 }
 .icon-btn-icon { display: inline-flex; }
 .icon-btn-outline {
@@ -345,6 +346,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 #buyer-form input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; }
 .full-width { width: 100%; margin-top: 20px; }
 .form-status { margin-top: 12px; font-size: 14px; }
+
+/* ---------- install app (2026-08-29) ---------- */
+.install-ios-popover {
+  position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 900;
+  background: var(--navy); color: #fff; border-radius: 12px; padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+.install-ios-popover p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; }
+.install-ios-popover .btn-outline { color: #fff; border-color: #fff; }
 
 /* ---------- login gate (2026-08-27) ---------- */
 .login-gate {
