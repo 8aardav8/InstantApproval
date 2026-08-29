@@ -134,14 +134,31 @@ function renderStatsStrip() {
 // doesn't fully fit, added 2026-08-29 per Aaron's direct request ("Always
 // leave half a pill visible if scrolling is necessary, so it's obvious
 // there's more to see"). Pure CSS/overflow alone can't promise this --
-// whether the natural cutoff lands mid-pill, right at a pill boundary
-// (no visible hint at all), or with only a sliver showing depends
-// entirely on how pill widths happen to divide the available width for
-// a given screen/font. This measures the REAL rendered layout and
-// deliberately narrows the visible (unscrolled) content area via
-// padding-right -- not the container's own outer width, which stays
-// full-page -- so the boundary always lands at the midpoint of whichever
-// pill would otherwise straddle it.
+// whether the natural cutoff lands mid-pill, right at a clean pill
+// boundary (no visible hint at all), or with only a near-invisible sliver
+// showing depends entirely on how pill widths happen to divide the
+// available width for a given screen/font -- confirmed live on a real
+// iPhone SE width, where the natural cutoff left only an 8px sliver of
+// the last pill, not a meaningful "half" anyone would actually notice.
+//
+// Real bug fixed while building this, not just a starting design: the
+// first version picked whichever pill naturally straddled the viewport
+// edge as the "reveal half of this one" target -- but if that pill's own
+// midpoint falls PAST the container's natural width (as it did in the
+// 8px-sliver case above), there is no way to reveal 50% of it without the
+// container somehow being wider than it actually is; padding-right can
+// only ever SHRINK what's visible, never grow it. The fix: find the LAST
+// pill that fits ENTIRELY within the natural width, and deliberately
+// reveal only half of THAT one instead -- its own right edge is by
+// definition already within the natural width, so showing exactly half
+// of it is always achievable by shrinking, never requires growing.
+//
+// getBoundingClientRect() is used for position, not offsetLeft/
+// offsetWidth -- offsetLeft is relative to the nearest POSITIONED
+// ancestor (often far up the tree, e.g. <body>, picking up unrelated
+// ancestor padding along the way), not necessarily .stats-strip itself,
+// confirmed live to produce nonsensical values here since nothing between
+// this element and <body> is actually position:relative/absolute.
 function adjustStatsStripPeek() {
   const strip = document.getElementById("stats-strip");
   if (!strip) return;
@@ -151,9 +168,22 @@ function adjustStatsStripPeek() {
   const available = strip.clientWidth;
   if (strip.scrollWidth <= available + 1) return; // everything already fits -- nothing to peek at
 
-  const target = pills.find((pill) => pill.offsetLeft + pill.offsetWidth > available);
-  if (!target) return; // shouldn't happen given the overflow check above, but don't guess
-  const revealWidth = target.offsetLeft + target.offsetWidth / 2;
+  const stripLeft = strip.getBoundingClientRect().left;
+  const positions = pills.map((pill) => {
+    const rect = pill.getBoundingClientRect();
+    return { left: rect.left - stripLeft, width: rect.width };
+  });
+
+  // Last pill that fits entirely within the natural (unpadded) width --
+  // fall back to the very first pill if even that one alone overflows
+  // (an extreme, unlikely case for 4 short pills on any real device).
+  let target = positions[0];
+  for (const pos of positions) {
+    if (pos.left + pos.width <= available) target = pos;
+    else break;
+  }
+
+  const revealWidth = target.left + target.width / 2;
   const extraPadding = Math.max(0, available - revealWidth);
   strip.style.paddingRight = `${extraPadding}px`;
 }
