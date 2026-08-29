@@ -17,6 +17,24 @@ const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
 let ALL_LISTINGS = [];
 let GENERATED_AT = null;
+// Redesigned 2026-08-29, per Aaron's direct request: appointments used to
+// render as a standalone list at the bottom of Get Started; now they're
+// embedded directly into the shared card component (buildListingCard), so
+// a property with an active appointment shows it on its card wherever that
+// card appears -- Homes, Favorites, and a new "Your Appointments" section
+// at the top of Get Started. MY_APPOINTMENTS is this visitor's own
+// (matched by their gate email, refreshed via refreshMyAppointments()).
+// ADMIN_APPOINTMENTS_BY_ADDRESS and ADMIN_FAVORITES_BY_ADDRESS are the
+// admin-only bulk views across ALL visitors (both refreshed together via
+// refreshAdminActivity(), only ever populated once a verified admin token
+// exists) -- entirely separate data, never conflated: a regular visitor
+// only ever sees their OWN appointment/favorite on a card, never anyone
+// else's. Favorites themselves stay real-time synced per visitor (see
+// toggleFavorite()) so Aaron's bulk view stays accurate without needing a
+// separate visitor-side mechanism.
+let MY_APPOINTMENTS = [];
+let ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+let ADMIN_FAVORITES_BY_ADDRESS = {};
 // Availability defaults to "Available" again (2026-08-22) -- briefly
 // changed to "Any" on 2026-08-21, reverted per Aaron's direct request the
 // next day. area is a checkbox multi-select (array), not free-text.
@@ -34,6 +52,21 @@ async function loadData() {
   renderStatsStrip();
   updateFilterBadge();
   renderCardGrid();
+  // Appointment data is an enhancement on top of already-complete cards,
+  // not core content -- fetched AFTER the first render rather than
+  // blocking it, then everything re-renders once each resolves. A visitor
+  // with an active appointment (or an admin with the bulk view) briefly
+  // sees plain cards before the banners/badges appear a moment later,
+  // rather than a blank grid waiting on two extra network round trips.
+  refreshMyAppointments().then(() => {
+    renderMyAppointmentCards();
+    renderCardGrid();
+    renderFavoritesGrid();
+  });
+  refreshAdminActivity().then(() => {
+    renderCardGrid();
+    renderFavoritesGrid();
+  });
 }
 
 // Area is now a checkbox list, not free text -- populated live from the
@@ -170,6 +203,41 @@ function buildListingCard(listing) {
   });
   card.appendChild(heartBtn);
 
+  // Admin-only badges, added 2026-08-29 per Aaron's direct request --
+  // opposite the heart (top-left, heart is top-right), showing how many
+  // people have an active appointment scheduled here and, separately, how
+  // many have favorited it. Read from ADMIN_APPOINTMENTS_BY_ADDRESS /
+  // ADMIN_FAVORITES_BY_ADDRESS (the bulk, all-visitors views, both
+  // refreshed together via refreshAdminActivity()) -- completely separate
+  // from MY_APPOINTMENTS below, which is this visitor's own and is all a
+  // regular (non-admin) visitor ever sees on a card. getStoredAdminToken()
+  // returning falsy for anyone who isn't Aaron, signed in, is what keeps
+  // these invisible to everyone else -- the data itself is also never even
+  // fetched unless a verified admin token exists (see
+  // refreshAdminActivity), so there's nothing to leak either way. Each
+  // badge only renders at all when its own count is actually > 0.
+  if (getStoredAdminToken()) {
+    const adminAppts = ADMIN_APPOINTMENTS_BY_ADDRESS[listing.address] || [];
+    if (adminAppts.length > 0) {
+      const badge = document.createElement("span");
+      badge.className = "admin-appointment-badge";
+      badge.textContent = String(adminAppts.length);
+      badge.title = `${adminAppts.length} scheduled appointment${adminAppts.length === 1 ? "" : "s"} (admin only)`;
+      card.appendChild(badge);
+    }
+    const adminFavs = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
+    if (adminFavs.length > 0) {
+      const favBadge = document.createElement("span");
+      // Stacks below the appointment badge when both are present (see CSS)
+      // rather than overlapping -- top-left corner has room for at most
+      // two small badges before it'd crowd the photo.
+      favBadge.className = "admin-favorite-badge" + (adminAppts.length > 0 ? " stacked" : "");
+      favBadge.textContent = String(adminFavs.length);
+      favBadge.title = `Favorited by ${adminFavs.length} visitor${adminFavs.length === 1 ? "" : "s"} (admin only)`;
+      card.appendChild(favBadge);
+    }
+  }
+
   const body = document.createElement("div");
   body.className = "card-body";
   // Card status line shows the LATEST UPDATE date, not first-available --
@@ -191,6 +259,20 @@ function buildListingCard(listing) {
     <div class="card-money">${escapeHtml(listing.monthly)} a month</div>
   `;
   card.appendChild(body);
+
+  // Embedded appointment banner(s), redesigned 2026-08-29 from a separate
+  // list at the bottom of Get Started into part of the shared card itself,
+  // per Aaron's direct request -- surfaces automatically on whichever
+  // grid(s) this listing's card appears in (Homes, Favorites, and the
+  // "Your Appointments" section at the top of Get Started), since they
+  // all render through this same function. Only ever this visitor's OWN
+  // appointment(s) (matched by their own gate email) -- never another
+  // visitor's, which is exactly why this reads MY_APPOINTMENTS (this
+  // browser's own fetch), not the admin-only bulk map above.
+  for (const appt of appointmentsForAddress(listing.address)) {
+    card.appendChild(buildAppointmentBanner(appt, localStorage.getItem(GATE_EMAIL_STORAGE_KEY)));
+  }
+
   return card;
 }
 
@@ -224,6 +306,24 @@ function toggleFavorite(id) {
   const i = favs.indexOf(id);
   if (i === -1) favs.push(id); else favs.splice(i, 1);
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favs));
+  // Sync to the Sheet, added 2026-08-29 per Aaron's direct request (admin
+  // visibility into who's favorited a property, with contact info) --
+  // immediate, not debounced like the filter/search sync, since toggling a
+  // heart is one deliberate action, not rapid-fire typing. Rides along in
+  // the SAME /sync-visitor endpoint/payload as filters now (see
+  // currentFilterSyncPayload) rather than a separate mechanism -- silently
+  // a no-op if this browser never passed the gate, same as the filter sync.
+  if (typeof syncVisitorNow === "function") syncVisitorNow();
+}
+// Converts this device's favorited listing IDs into real addresses for the
+// Sheet sync -- IDs are a client-side slug (see slugify()), meaningless to
+// Aaron/Nathan reading the Sheet directly; the address is what the
+// appointments feature already stores there too, kept consistent.
+function getFavoriteAddresses() {
+  return getFavorites()
+    .map((id) => ALL_LISTINGS.find((l) => l.id === id))
+    .filter(Boolean)
+    .map((l) => l.address);
 }
 // Added 2026-08-29 alongside the stale-heart bug fix -- a listing can have
 // up to three separate heart-button DOM elements alive at once (its
@@ -737,17 +837,22 @@ function localTodayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// ---------- Appointments banner (2026-08-29) ----------
-// Reads LIVE from the Sheet on every render (never localStorage) so
-// Cancel/Change Date can never drift out of sync with what's actually
-// shown -- see admin/worker.js's job 5 for the full backend design.
-async function loadAndRenderAppointments() {
-  const wrap = document.getElementById("appointments-banner-wrap");
-  if (!wrap) return;
+// ---------- Appointments (redesigned 2026-08-29) ----------
+// Split into a data-only refresh (refreshMyAppointments) and a render step
+// (renderMyAppointmentCards, used only for the "Your Appointments" section
+// at the top of Get Started) -- the OTHER two places an appointment can now
+// show, a card in the Homes grid or the Favorites grid, don't need a
+// dedicated render function at all: buildListingCard() itself embeds the
+// banner automatically for any listing with a match, so renderCardGrid()/
+// renderFavoritesGrid() already pick it up as a side effect of their own
+// normal rendering. MY_APPOINTMENTS is refreshed here; the Sheet stays the
+// one source of truth throughout, same principle as the original design --
+// Cancel/Change Date always re-fetch fresh afterward rather than trusting
+// an optimistic local update.
+async function refreshMyAppointments() {
   const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
   if (!email) {
-    wrap.classList.add("hidden");
-    wrap.innerHTML = "";
+    MY_APPOINTMENTS = [];
     return;
   }
   try {
@@ -755,25 +860,38 @@ async function loadAndRenderAppointments() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const today = localTodayISO();
-    const upcoming = (data.appointments || [])
+    MY_APPOINTMENTS = (data.appointments || [])
       .filter((a) => a.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date));
-
-    wrap.innerHTML = "";
-    if (upcoming.length === 0) {
-      wrap.classList.add("hidden");
-      return;
-    }
-    wrap.classList.remove("hidden");
-    for (const appt of upcoming) {
-      wrap.appendChild(buildAppointmentBanner(appt, email));
-    }
   } catch (err) {
-    // Best-effort display -- a failed fetch just means no banner shows,
+    // Best-effort -- a failed fetch just means no banners show anywhere,
     // not a visitor-facing error (they can still submit a new appointment
-    // via the form above regardless).
-    wrap.classList.add("hidden");
+    // via the form regardless).
+    MY_APPOINTMENTS = [];
   }
+}
+
+function appointmentsForAddress(address) {
+  return MY_APPOINTMENTS.filter((a) => a.address === address);
+}
+
+// "Your Appointments" section at the top of Get Started, replacing the old
+// standalone banner list -- one full property card per listing with an
+// active appointment (via buildListingCard, same as Homes/Favorites), so
+// it's clickable through to the real detail page and gets the same photo/
+// address/price context, not just a bare address string.
+function renderMyAppointmentCards() {
+  const wrap = document.getElementById("appointments-banner-wrap");
+  if (!wrap) return;
+  const addresses = [...new Set(MY_APPOINTMENTS.map((a) => a.address))];
+  const listings = addresses.map((addr) => ALL_LISTINGS.find((l) => l.address === addr)).filter(Boolean);
+  wrap.innerHTML = "";
+  if (listings.length === 0) {
+    wrap.classList.add("hidden");
+    return;
+  }
+  wrap.classList.remove("hidden");
+  for (const listing of listings) wrap.appendChild(buildListingCard(listing));
 }
 
 function formatAppointmentDate(iso) {
@@ -786,20 +904,34 @@ function formatAppointmentDate(iso) {
   return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
 
-function buildAppointmentBanner(appt, email) {
-  const card = document.createElement("div");
-  card.className = "appointment-banner";
-  card.dataset.slot = appt.slot;
+// After every successful Cancel/Change Date, re-fetch and re-render
+// everywhere an appointment-bearing card could be showing right now --
+// cheap regardless of which tab is actually visible (matches this
+// codebase's existing "always safe to re-render, even hidden panels"
+// convention), and guarantees whichever tab the visitor looks at next is
+// already correct without needing a reload.
+async function refreshAndRerenderAppointments() {
+  await refreshMyAppointments();
+  renderMyAppointmentCards();
+  renderCardGrid();
+  renderFavoritesGrid();
+}
 
-  const address = document.createElement("div");
-  address.className = "appointment-address";
-  address.textContent = appt.address;
-  card.appendChild(address);
+// Embedded inside a card by buildListingCard() -- no longer a standalone
+// element, so the address line was dropped (the card itself already shows
+// it) and a single stopPropagation on the whole banner replaces needing it
+// on every individual button, since any click here must never also
+// trigger the card's own click-to-detail handler.
+function buildAppointmentBanner(appt, email) {
+  const banner = document.createElement("div");
+  banner.className = "appointment-banner";
+  banner.dataset.slot = appt.slot;
+  banner.addEventListener("click", (e) => e.stopPropagation());
 
   const date = document.createElement("div");
   date.className = "appointment-date";
-  date.textContent = `Scheduled for ${formatAppointmentDate(appt.date)}`;
-  card.appendChild(date);
+  date.textContent = `Your appointment: ${formatAppointmentDate(appt.date)}`;
+  banner.appendChild(date);
 
   const actions = document.createElement("div");
   actions.className = "appointment-actions";
@@ -838,7 +970,7 @@ function buildAppointmentBanner(appt, email) {
       // honest reflection of the Sheet's real state rather than a
       // silently-wrong optimistic update.
     }
-    loadAndRenderAppointments();
+    refreshAndRerenderAppointments();
   });
 
   const cancelBtn = document.createElement("button");
@@ -858,14 +990,57 @@ function buildAppointmentBanner(appt, email) {
     } catch (err) {
       // Same honest-reflection reasoning as Change Date above.
     }
-    loadAndRenderAppointments();
+    refreshAndRerenderAppointments();
   });
 
   actions.appendChild(changeBtn);
   actions.appendChild(datePicker);
   actions.appendChild(cancelBtn);
-  card.appendChild(actions);
-  return card;
+  banner.appendChild(actions);
+  return banner;
+}
+
+// ---------- Admin bulk activity: appointments + favorites (2026-08-29) ----------
+// Aaron's own request, admin-only: small badges on every card (opposite
+// the heart) showing how many people have scheduled a viewing and/or
+// favorited it, plus who/when/contact-info on the detail page for both.
+// Entirely separate from MY_APPOINTMENTS above -- this is the bulk,
+// all-visitors view, only ever fetched once a verified admin token exists,
+// never for a regular visitor. One request covers both datasets (see
+// admin/worker.js job 6) since they come from the same underlying rows.
+async function refreshAdminActivity() {
+  const token = getStoredAdminToken();
+  if (!token) {
+    ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+    ADMIN_FAVORITES_BY_ADDRESS = {};
+    return;
+  }
+  try {
+    const res = await fetch(ADMIN_ACTIVITY_ENDPOINT, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const today = localTodayISO();
+
+    const groupedAppts = {};
+    for (const appt of data.appointments || []) {
+      if (appt.date < today) continue; // only count/show upcoming, matching the visitor-facing definition
+      (groupedAppts[appt.address] = groupedAppts[appt.address] || []).push(appt);
+    }
+    for (const list of Object.values(groupedAppts)) list.sort((a, b) => a.date.localeCompare(b.date));
+    ADMIN_APPOINTMENTS_BY_ADDRESS = groupedAppts;
+
+    // Favorites have no date to filter by -- an unfavorite just removes
+    // the entry entirely, so everything returned is, by definition, a
+    // currently-active favorite.
+    const groupedFavs = {};
+    for (const fav of data.favorites || []) {
+      (groupedFavs[fav.address] = groupedFavs[fav.address] || []).push(fav);
+    }
+    ADMIN_FAVORITES_BY_ADDRESS = groupedFavs;
+  } catch (err) {
+    ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+    ADMIN_FAVORITES_BY_ADDRESS = {};
+  }
 }
 
 // Added 2026-08-29 per Aaron's request -- once someone's uploaded an ID,
@@ -912,7 +1087,7 @@ function initGetStartedForm() {
   // editable, in case something's wrong or a different buyer is using the
   // same device.
   prefillGetStartedContactFields();
-  loadAndRenderAppointments();
+  renderMyAppointmentCards();
 
   // Don't let anyone pick a date before today. Fixed 2026-08-29, real
   // reported bug: this previously used toISOString(), which reports the
@@ -958,7 +1133,7 @@ function initGetStartedForm() {
         idPhotoInput.files = dt.files;
       }
       updateIdPhotoStatus();
-      loadAndRenderAppointments(); // show the just-created appointment immediately, no tab switch needed
+      refreshAndRerenderAppointments(); // show the just-created appointment immediately, on this card and everywhere else it appears
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }
@@ -996,7 +1171,7 @@ function activateTab(tabName) {
   // own submit handler -- a cheap, idempotent defensive re-sync so this
   // tab always reflects the freshest gate values no matter how it was
   // reached, rather than depending on exactly one call site staying correct.
-  if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); loadAndRenderAppointments(); }
+  if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); renderMyAppointmentCards(); }
   closeDrawer();
 }
 
@@ -1173,6 +1348,9 @@ document.getElementById("show-map-btn").addEventListener("click", toggleMapAccor
 const ADMIN_OAUTH_CLIENT_ID = "74546128016-r0b13a553shc79gae1hf8r42nkd47t3i.apps.googleusercontent.com";
 const ADMIN_API_URL = "https://super-frost-1dbb.notactuallyit.workers.dev";
 const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
+// Bulk admin activity (appointments + favorites across all visitors),
+// added 2026-08-29 -- see admin/worker.js job 6 (handleAdminActivity).
+const ADMIN_ACTIVITY_ENDPOINT = `${ADMIN_API_URL}/admin-activity`;
 
 // ---------- Login gate (2026-08-27) ----------
 // Same Worker as the admin API above, new route -- no auth needed, this is
@@ -1247,6 +1425,13 @@ function initLoginGate() {
       // this call is safe regardless of source order (see the ADMIN_API_URL
       // TDZ bug fixed the same day for why that distinction matters here).
       if (typeof prefillGetStartedContactFields === "function") prefillGetStartedContactFields();
+      // Same timing-bug class, fixed 2026-08-29: a RETURNING visitor (real
+      // existing appointments on the Sheet) who cleared localStorage and
+      // re-gates on this device wouldn't see their own appointment cards
+      // until a reload, since the initial refreshMyAppointments() in
+      // loadData() already ran (and found no email) before this write ever
+      // happened. Calling it again right here closes that gap too.
+      if (typeof refreshAndRerenderAppointments === "function") refreshAndRerenderAppointments();
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }
@@ -1276,6 +1461,9 @@ function currentFilterSyncPayload() {
       area: filterState.area,
     },
     search: document.getElementById("search-box").value.trim(),
+    // Added 2026-08-29 -- always the FULL current list, same "resend
+    // everything, not a diff" approach already used for filters above.
+    favorites: getFavoriteAddresses(),
   };
 }
 
@@ -1356,6 +1544,13 @@ function handleAdminCredentialResponse(response) {
   localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, response.credential);
   updateAdminButtonState();
   document.getElementById("admin-login-popover").classList.add("hidden");
+  // Appointment/favorite badges, added 2026-08-29 -- fetch the bulk view
+  // now that a real admin token exists, then re-render both grids so the
+  // badges appear immediately rather than waiting for the next reload.
+  refreshAdminActivity().then(() => {
+    renderCardGrid();
+    renderFavoritesGrid();
+  });
   // If a listing detail page is already open, refresh it so the admin
   // fields appear immediately without needing to navigate away and back.
   if (!document.getElementById("view-detail").classList.contains("hidden")) {
@@ -1432,6 +1627,34 @@ async function renderAdminSection(listing) {
     if (listing.picsLink && listing.picsLink.trim()) {
       html += `<button class="btn-outline btn-full" type="button" onclick="copyPhotoLinkAndOpenSheet(this)" data-pics-link="${escapeHtml(listing.picsLink)}">Copy Photo Link &amp; Open Sheet</button>`;
     }
+
+    // Scheduled appointments + who's favorited this listing, added
+    // 2026-08-29 per Aaron's direct request -- placed after the Copy Photo
+    // Link button, per his explicit ordering. Both reuse the SAME
+    // bulk-fetched ADMIN_APPOINTMENTS_BY_ADDRESS/ADMIN_FAVORITES_BY_ADDRESS
+    // maps the card badges already use (see refreshAdminActivity) -- no
+    // separate network call needed per detail-page view.
+    const apptsForThis = ADMIN_APPOINTMENTS_BY_ADDRESS[listing.address] || [];
+    if (apptsForThis.length > 0) {
+      html += `<div class="admin-info-title" style="margin-top:14px">Scheduled Appointments (${apptsForThis.length})</div>`;
+      for (const a of apptsForThis) {
+        html += `<div class="admin-activity-row">
+          <div><strong>${escapeHtml(a.name || "(no name)")}</strong> — ${escapeHtml(formatAppointmentDate(a.date))}</div>
+          <div class="admin-activity-contact">${escapeHtml(a.email || "")}${a.email && a.phone ? " · " : ""}${escapeHtml(a.phone || "")}</div>
+        </div>`;
+      }
+    }
+    const favsForThis = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
+    if (favsForThis.length > 0) {
+      html += `<div class="admin-info-title" style="margin-top:14px">Favorited By (${favsForThis.length})</div>`;
+      for (const f of favsForThis) {
+        html += `<div class="admin-activity-row">
+          <div><strong>${escapeHtml(f.name || "(no name)")}</strong></div>
+          <div class="admin-activity-contact">${escapeHtml(f.email || "")}${f.email && f.phone ? " · " : ""}${escapeHtml(f.phone || "")}</div>
+        </div>`;
+      }
+    }
+
     container.innerHTML = html;
   } catch (e) {
     container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Request failed.</div>`;
@@ -1447,6 +1670,13 @@ function initAdminUI() {
     updateAdminButtonState();
     document.getElementById("admin-login-popover").classList.add("hidden");
     if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+    // Clear the bulk admin view and re-render immediately, added
+    // 2026-08-29 -- the badges/detail-page info shouldn't linger visible
+    // for even one more render after signing out.
+    ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+    ADMIN_FAVORITES_BY_ADDRESS = {};
+    renderCardGrid();
+    renderFavoritesGrid();
   });
   // Google Identity Services' script loads async -- poll briefly rather
   // than assume it's ready by the time this runs.
@@ -1455,6 +1685,15 @@ function initAdminUI() {
       google.accounts.id.initialize({ client_id: ADMIN_OAUTH_CLIENT_ID, callback: handleAdminCredentialResponse });
       google.accounts.id.renderButton(document.getElementById("g_id_signin"), { theme: "outline", size: "medium" });
       updateAdminButtonState();
+      // Already signed in from a previous visit (valid token still in
+      // localStorage) -- fetch the bulk admin view now, added 2026-08-29,
+      // so badges show up without needing to sign out/in again to trigger it.
+      if (getStoredAdminToken()) {
+        refreshAdminActivity().then(() => {
+          renderCardGrid();
+          renderFavoritesGrid();
+        });
+      }
     } else {
       setTimeout(tryInit, 200);
     }
