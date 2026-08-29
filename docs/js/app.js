@@ -203,20 +203,29 @@ function buildListingCard(listing) {
   });
   card.appendChild(heartBtn);
 
-  // Admin-only badges, added 2026-08-29 per Aaron's direct request --
-  // opposite the heart (top-left, heart is top-right), showing how many
-  // people have an active appointment scheduled here and, separately, how
-  // many have favorited it. Read from ADMIN_APPOINTMENTS_BY_ADDRESS /
-  // ADMIN_FAVORITES_BY_ADDRESS (the bulk, all-visitors views, both
-  // refreshed together via refreshAdminActivity()) -- completely separate
-  // from MY_APPOINTMENTS below, which is this visitor's own and is all a
-  // regular (non-admin) visitor ever sees on a card. getStoredAdminToken()
-  // returning falsy for anyone who isn't Aaron, signed in, is what keeps
-  // these invisible to everyone else -- the data itself is also never even
-  // fetched unless a verified admin token exists (see
-  // refreshAdminActivity), so there's nothing to leak either way. Each
-  // badge only renders at all when its own count is actually > 0.
+  // Admin-only badges, rearranged 2026-08-29 per Aaron's direct request --
+  // favorites (red) sits right under the heart, appointments (blue) at the
+  // bottom-right -- showing how many people have favorited this property
+  // and, separately, how many have an active appointment scheduled here.
+  // Read from ADMIN_APPOINTMENTS_BY_ADDRESS / ADMIN_FAVORITES_BY_ADDRESS
+  // (the bulk, all-visitors views, both refreshed together via
+  // refreshAdminActivity()) -- completely separate from MY_APPOINTMENTS
+  // below, which is this visitor's own and is all a regular (non-admin)
+  // visitor ever sees on a card. getStoredAdminToken() returning falsy for
+  // anyone who isn't Aaron, signed in, is what keeps these invisible to
+  // everyone else -- the data itself is also never even fetched unless a
+  // verified admin token exists (see refreshAdminActivity), so there's
+  // nothing to leak either way. Each badge only renders at all when its
+  // own count is actually > 0.
   if (getStoredAdminToken()) {
+    const adminFavs = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
+    if (adminFavs.length > 0) {
+      const favBadge = document.createElement("span");
+      favBadge.className = "admin-favorite-badge";
+      favBadge.textContent = String(adminFavs.length);
+      favBadge.title = `Favorited by ${adminFavs.length} visitor${adminFavs.length === 1 ? "" : "s"} (admin only)`;
+      card.appendChild(favBadge);
+    }
     const adminAppts = ADMIN_APPOINTMENTS_BY_ADDRESS[listing.address] || [];
     if (adminAppts.length > 0) {
       const badge = document.createElement("span");
@@ -224,17 +233,6 @@ function buildListingCard(listing) {
       badge.textContent = String(adminAppts.length);
       badge.title = `${adminAppts.length} scheduled appointment${adminAppts.length === 1 ? "" : "s"} (admin only)`;
       card.appendChild(badge);
-    }
-    const adminFavs = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
-    if (adminFavs.length > 0) {
-      const favBadge = document.createElement("span");
-      // Stacks below the appointment badge when both are present (see CSS)
-      // rather than overlapping -- top-left corner has room for at most
-      // two small badges before it'd crowd the photo.
-      favBadge.className = "admin-favorite-badge" + (adminAppts.length > 0 ? " stacked" : "");
-      favBadge.textContent = String(adminFavs.length);
-      favBadge.title = `Favorited by ${adminFavs.length} visitor${adminFavs.length === 1 ? "" : "s"} (admin only)`;
-      card.appendChild(favBadge);
     }
   }
 
