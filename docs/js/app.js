@@ -711,6 +711,147 @@ function prefillGetStartedContactFields() {
   document.getElementById("get-started-phone").value = localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "";
 }
 
+// Extracted 2026-08-29 from the date-min fix into a shared top-level
+// function -- the appointments banner (below) needs the exact same
+// "visitor's own local calendar day" logic to decide which appointments
+// still count as upcoming, and duplicating it risked the two definitions
+// silently drifting apart later.
+function localTodayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// ---------- Appointments banner (2026-08-29) ----------
+// Reads LIVE from the Sheet on every render (never localStorage) so
+// Cancel/Change Date can never drift out of sync with what's actually
+// shown -- see admin/worker.js's job 5 for the full backend design.
+async function loadAndRenderAppointments() {
+  const wrap = document.getElementById("appointments-banner-wrap");
+  if (!wrap) return;
+  const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+  if (!email) {
+    wrap.classList.add("hidden");
+    wrap.innerHTML = "";
+    return;
+  }
+  try {
+    const res = await fetch(`${MY_APPOINTMENTS_ENDPOINT}?email=${encodeURIComponent(email)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const today = localTodayISO();
+    const upcoming = (data.appointments || [])
+      .filter((a) => a.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    wrap.innerHTML = "";
+    if (upcoming.length === 0) {
+      wrap.classList.add("hidden");
+      return;
+    }
+    wrap.classList.remove("hidden");
+    for (const appt of upcoming) {
+      wrap.appendChild(buildAppointmentBanner(appt, email));
+    }
+  } catch (err) {
+    // Best-effort display -- a failed fetch just means no banner shows,
+    // not a visitor-facing error (they can still submit a new appointment
+    // via the form above regardless).
+    wrap.classList.add("hidden");
+  }
+}
+
+function formatAppointmentDate(iso) {
+  // "2026-09-05" -> "Fri, Sep 5, 2026". Parsed as local, not UTC -- new
+  // Date("2026-09-05") would parse as UTC midnight, which can display as
+  // the PREVIOUS day for anyone west of UTC. Same class of bug already
+  // fixed once this session for the date min= logic.
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
+
+function buildAppointmentBanner(appt, email) {
+  const card = document.createElement("div");
+  card.className = "appointment-banner";
+  card.dataset.slot = appt.slot;
+
+  const address = document.createElement("div");
+  address.className = "appointment-address";
+  address.textContent = appt.address;
+  card.appendChild(address);
+
+  const date = document.createElement("div");
+  date.className = "appointment-date";
+  date.textContent = `Scheduled for ${formatAppointmentDate(appt.date)}`;
+  card.appendChild(date);
+
+  const actions = document.createElement("div");
+  actions.className = "appointment-actions";
+
+  const changeBtn = document.createElement("button");
+  changeBtn.type = "button";
+  changeBtn.className = "btn-small";
+  changeBtn.textContent = "Change Date";
+
+  const datePicker = document.createElement("input");
+  datePicker.type = "date";
+  datePicker.className = "appt-date-picker hidden";
+  datePicker.min = localTodayISO();
+  datePicker.value = appt.date;
+
+  changeBtn.addEventListener("click", () => {
+    const showing = !datePicker.classList.contains("hidden");
+    datePicker.classList.toggle("hidden", showing);
+    if (!showing) datePicker.focus();
+  });
+
+  datePicker.addEventListener("change", async () => {
+    const newDate = datePicker.value;
+    if (!newDate || newDate < localTodayISO()) return; // native min= already guards this, belt-and-suspenders
+    changeBtn.disabled = true;
+    try {
+      const res = await fetch(UPDATE_APPOINTMENT_DATE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, slot: appt.slot, newDate }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      // Fall through to the re-render below regardless -- it will just
+      // show the OLD date again if the write actually failed, which is an
+      // honest reflection of the Sheet's real state rather than a
+      // silently-wrong optimistic update.
+    }
+    loadAndRenderAppointments();
+  });
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn-small btn-danger";
+  cancelBtn.textContent = "Cancel Viewing";
+  cancelBtn.addEventListener("click", async () => {
+    if (!confirm(`Cancel your viewing at ${appt.address} on ${formatAppointmentDate(appt.date)}?`)) return;
+    cancelBtn.disabled = true;
+    try {
+      const res = await fetch(CANCEL_APPOINTMENT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, slot: appt.slot }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      // Same honest-reflection reasoning as Change Date above.
+    }
+    loadAndRenderAppointments();
+  });
+
+  actions.appendChild(changeBtn);
+  actions.appendChild(datePicker);
+  actions.appendChild(cancelBtn);
+  card.appendChild(actions);
+  return card;
+}
+
 function initGetStartedForm() {
   const form = document.getElementById("get-started-form");
   const status = document.getElementById("get-started-status");
@@ -719,6 +860,7 @@ function initGetStartedForm() {
   // editable, in case something's wrong or a different buyer is using the
   // same device.
   prefillGetStartedContactFields();
+  loadAndRenderAppointments();
 
   // Don't let anyone pick a date before today. Fixed 2026-08-29, real
   // reported bug: this previously used toISOString(), which reports the
@@ -726,21 +868,18 @@ function initGetStartedForm() {
   // (this site's whole US audience), UTC can already be "tomorrow" for
   // several hours of the local evening, which would wrongly compute
   // today's own local date as before the "min" and block it as if it were
-  // in the past. Uses local Y/M/D components instead so "today" always
-  // means the visitor's own actual today.
+  // in the past. Uses localTodayISO() (local Y/M/D components) instead so
+  // "today" always means the visitor's own actual today -- shared with the
+  // appointments banner below, not duplicated.
   const dateInput = document.getElementById("get-started-date");
-  const todayLocal = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  };
-  dateInput.min = todayLocal();
+  dateInput.min = localTodayISO();
   // Belt-and-suspenders on top of the native min= constraint -- some
   // mobile date pickers only grey out/block past dates in their own
   // picker UI without necessarily stopping every path to a manually-typed
   // out-of-range value from landing in the field. Explicitly re-validate
   // on change and clear anything that slips through anyway.
   dateInput.addEventListener("change", () => {
-    if (dateInput.value && dateInput.value < todayLocal()) {
+    if (dateInput.value && dateInput.value < localTodayISO()) {
       dateInput.value = "";
       dateInput.setCustomValidity("Please choose today or a later date.");
     } else {
@@ -759,6 +898,7 @@ function initGetStartedForm() {
       status.textContent = "Thanks! We've got your info and ID on file.";
       form.reset();
       prefillGetStartedContactFields(); // reset() above wipes the prefilled contact fields too -- put them back
+      loadAndRenderAppointments(); // show the just-created appointment immediately, no tab switch needed
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }
@@ -796,7 +936,7 @@ function activateTab(tabName) {
   // own submit handler -- a cheap, idempotent defensive re-sync so this
   // tab always reflects the freshest gate values no matter how it was
   // reached, rather than depending on exactly one call site staying correct.
-  if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); }
+  if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); loadAndRenderAppointments(); }
   closeDrawer();
 }
 
@@ -974,6 +1114,12 @@ const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
 // the public lead-capture gate (see admin/worker.js's handleGateLogin).
 const GATE_LOGIN_ENDPOINT = `${ADMIN_API_URL}/gate-login`;
 const UPLOAD_ID_ENDPOINT = `${ADMIN_API_URL}/upload-id`;
+// Appointment scheduling, added 2026-08-29 -- see admin/worker.js's job 5
+// for the full design (slots stored as "<address> | <date>" in App:
+// Logins columns O-X, read live on every visit, never cached locally).
+const MY_APPOINTMENTS_ENDPOINT = `${ADMIN_API_URL}/my-appointments`;
+const CANCEL_APPOINTMENT_ENDPOINT = `${ADMIN_API_URL}/cancel-appointment`;
+const UPDATE_APPOINTMENT_DATE_ENDPOINT = `${ADMIN_API_URL}/update-appointment-date`;
 const GATE_STORAGE_KEY = "iah_gate_passed";
 // Added 2026-08-29 alongside visitor filter-sync -- the gate previously
 // only stored a bare "passed" flag, with no way to attribute a later
