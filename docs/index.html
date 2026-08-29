@@ -220,6 +220,10 @@
             <option value="recent" selected>Most recently updated</option>
             <option value="monthly-asc">Lowest monthly payment</option>
             <option value="down-asc">Lowest down payment</option>
+            <!-- Added 2026-08-29 per Aaron's direct request. Backed by
+                 FAVORITE_COUNTS (see app.js) -- a public, count-only
+                 endpoint, no visitor identity involved. -->
+            <option value="popular">Most popular</option>
           </select>
         </label>
         <div class="filter-actions">
