@@ -1646,22 +1646,14 @@ async function renderAdminSection(listing) {
       html += `<button class="btn-outline btn-full" type="button" onclick="copyPhotoLinkAndOpenSheet(this)" data-pics-link="${escapeHtml(listing.picsLink)}">Copy Photo Link &amp; Open Sheet</button>`;
     }
 
-    // Scheduled appointments + who's favorited this listing, added
+    // Who's favorited this listing + scheduled appointments, added
     // 2026-08-29 per Aaron's direct request -- placed after the Copy Photo
-    // Link button, per his explicit ordering. Both reuse the SAME
-    // bulk-fetched ADMIN_APPOINTMENTS_BY_ADDRESS/ADMIN_FAVORITES_BY_ADDRESS
-    // maps the card badges already use (see refreshAdminActivity) -- no
-    // separate network call needed per detail-page view.
-    const apptsForThis = ADMIN_APPOINTMENTS_BY_ADDRESS[listing.address] || [];
-    if (apptsForThis.length > 0) {
-      html += `<div class="admin-info-title" style="margin-top:14px">Scheduled Appointments (${apptsForThis.length})</div>`;
-      for (const a of apptsForThis) {
-        html += `<div class="admin-activity-row">
-          <div><strong>${escapeHtml(a.name || "(no name)")}</strong> — ${escapeHtml(formatAppointmentDate(a.date))}</div>
-          <div class="admin-activity-contact">${escapeHtml(a.email || "")}${a.email && a.phone ? " · " : ""}${escapeHtml(a.phone || "")}</div>
-        </div>`;
-      }
-    }
+    // Link button, favorites BEFORE appointments, both per his explicit
+    // ordering ("put favs and then appointments AFTER the copy photo link
+    // button"). Both reuse the SAME bulk-fetched
+    // ADMIN_APPOINTMENTS_BY_ADDRESS/ADMIN_FAVORITES_BY_ADDRESS maps the
+    // card badges already use (see refreshAdminActivity) -- no separate
+    // network call needed per detail-page view.
     const favsForThis = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
     if (favsForThis.length > 0) {
       html += `<div class="admin-info-title" style="margin-top:14px">Favorited By (${favsForThis.length})</div>`;
@@ -1669,6 +1661,16 @@ async function renderAdminSection(listing) {
         html += `<div class="admin-activity-row">
           <div><strong>${escapeHtml(f.name || "(no name)")}</strong></div>
           <div class="admin-activity-contact">${escapeHtml(f.email || "")}${f.email && f.phone ? " · " : ""}${escapeHtml(f.phone || "")}</div>
+        </div>`;
+      }
+    }
+    const apptsForThis = ADMIN_APPOINTMENTS_BY_ADDRESS[listing.address] || [];
+    if (apptsForThis.length > 0) {
+      html += `<div class="admin-info-title" style="margin-top:14px">Scheduled Appointments (${apptsForThis.length})</div>`;
+      for (const a of apptsForThis) {
+        html += `<div class="admin-activity-row">
+          <div><strong>${escapeHtml(a.name || "(no name)")}</strong> — ${escapeHtml(formatAppointmentDate(a.date))}</div>
+          <div class="admin-activity-contact">${escapeHtml(a.email || "")}${a.email && a.phone ? " · " : ""}${escapeHtml(a.phone || "")}</div>
         </div>`;
       }
     }
