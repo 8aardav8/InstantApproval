@@ -888,12 +888,66 @@ function initAdminUI() {
   tryInit();
 }
 
+// ---------- Install App button (2026-08-29) ----------
+// Before this, "Add to Home Screen" relied entirely on the browser's own
+// native, easy-to-miss affordance (a small address-bar icon or a buried
+// 3-dot-menu item on Android; nothing at all visible on iOS unless a
+// visitor already knew to check Share). This gives it an actual visible
+// button instead.
+function initInstallButton() {
+  const btn = document.getElementById("install-app-btn");
+  if (!btn) return;
+
+  // Already running installed (opened from the home-screen icon) -- never
+  // show the button at all, nothing to install.
+  const alreadyInstalled =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true; // iOS's own older standalone flag
+  if (alreadyInstalled) return;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if (isIOS) {
+    // iOS can never trigger a native install prompt programmatically --
+    // Apple restriction, not a gap in this code. Show the button always
+    // (no beforeinstallprompt-style event exists to gate on), and show
+    // instructions instead of doing nothing when tapped.
+    btn.classList.remove("hidden");
+    const popover = document.getElementById("install-ios-popover");
+    btn.addEventListener("click", () => popover.classList.remove("hidden"));
+    document.getElementById("install-ios-dismiss").addEventListener("click", () => popover.classList.add("hidden"));
+    return;
+  }
+
+  // Android/Chrome (and other Chromium browsers that support this) -- the
+  // real native prompt. Only shown once the browser actually confirms the
+  // site is installable by firing this event; there's no way to check in
+  // advance.
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    btn.classList.remove("hidden");
+  });
+  btn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    btn.classList.add("hidden");
+  });
+  window.addEventListener("appinstalled", () => {
+    btn.classList.add("hidden");
+  });
+}
+
 initNav();
 initDrawer();
 initStepTabs();
 initBuyerForm();
 initAdminUI();
 initLoginGate();
+initInstallButton();
 loadData();
 
 // PWA install support (2026-08-27) -- minimal service worker, exists mainly
