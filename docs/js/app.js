@@ -701,6 +701,11 @@ const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
 // the public lead-capture gate (see admin/worker.js's handleGateLogin).
 const GATE_LOGIN_ENDPOINT = `${ADMIN_API_URL}/gate-login`;
 const GATE_STORAGE_KEY = "iah_gate_passed";
+// Added 2026-08-29 alongside visitor filter-sync -- the gate previously
+// only stored a bare "passed" flag, with no way to attribute a later
+// visit/filter-change back to a specific person. Storing the email too
+// (already given voluntarily at gate time) is what makes that possible.
+const GATE_EMAIL_STORAGE_KEY = "iah_gate_email";
 
 function initLoginGate() {
   const gate = document.getElementById("login-gate");
@@ -736,11 +741,76 @@ function initLoginGate() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       localStorage.setItem(GATE_STORAGE_KEY, "1");
+      localStorage.setItem(GATE_EMAIL_STORAGE_KEY, email);
       gate.classList.add("hidden");
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }
   });
+}
+
+// ---------- Visitor filter-sync (2026-08-29) ----------
+// Keeps each returning visitor's row in App: Logins current -- Last Login
+// plus their current search filters and free-text search term -- so Aaron
+// can ask Nathan things like "who wants a 3-bed in East St. Louis" and get
+// a real, live-queried answer. Writes directly via the Worker, no approval
+// gate, no Nathan/LLM involved at all -- this is a routine, no-judgment
+// refresh of an already-consented person's own preferences, not a new
+// contact being created (that part still goes through the existing
+// check-in-and-approve flow untouched). Silently a no-op if this browser
+// never actually passed the gate (nothing to attribute the sync to).
+const SYNC_VISITOR_ENDPOINT = `${ADMIN_API_URL}/sync-visitor`;
+
+function currentFilterSyncPayload() {
+  return {
+    email: localStorage.getItem(GATE_EMAIL_STORAGE_KEY),
+    filters: {
+      sort: filterState.sort,
+      down: filterState.down,
+      monthly: filterState.monthly,
+      beds: filterState.beds,
+      area: filterState.area,
+    },
+    search: document.getElementById("search-box").value.trim(),
+  };
+}
+
+function syncVisitorNow() {
+  const payload = currentFilterSyncPayload();
+  if (!payload.email) return; // never passed the gate in this browser -- nothing to attribute this to
+  // Best-effort, fire-and-forget -- a missed sync just means slightly
+  // stale filter columns until the next one, never a broken page. Never
+  // surfaced to the visitor either way.
+  fetch(SYNC_VISITOR_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+}
+
+function initVisitorSync() {
+  if (!localStorage.getItem(GATE_EMAIL_STORAGE_KEY)) return;
+
+  // Once on load -- covers "just opened the app," updating Last Login even
+  // if they don't touch a single filter this visit.
+  syncVisitorNow();
+
+  // Debounced on every filter/search change -- these already fire live per
+  // keystroke/click (see applyFiltersFromControls and the search-box
+  // "input" listener), which would mean a request per keystroke without
+  // this. 1.5s of no further changes before actually sending.
+  let debounceTimer = null;
+  const scheduleSync = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(syncVisitorNow, 1500);
+  };
+  document.getElementById("f-sort").addEventListener("change", scheduleSync);
+  document.getElementById("f-status").addEventListener("change", scheduleSync);
+  document.getElementById("f-down").addEventListener("change", scheduleSync);
+  document.getElementById("f-monthly").addEventListener("change", scheduleSync);
+  document.getElementById("f-beds").addEventListener("change", scheduleSync);
+  document.querySelectorAll("#area-checkboxes input[type=checkbox]").forEach((cb) => cb.addEventListener("change", scheduleSync));
+  document.getElementById("search-box").addEventListener("input", scheduleSync);
 }
 
 function decodeJwtPayload(token) {
@@ -948,7 +1018,11 @@ initBuyerForm();
 initAdminUI();
 initLoginGate();
 initInstallButton();
-loadData();
+// initVisitorSync() chained after loadData() resolves, not called
+// alongside it -- #area-checkboxes is only populated inside loadData()'s
+// renderAreaCheckboxes(), so wiring sync listeners on it any earlier would
+// silently find zero checkboxes to attach to.
+loadData().then(initVisitorSync);
 
 // PWA install support (2026-08-27) -- minimal service worker, exists mainly
 // to satisfy Chrome/Android's "installable" criteria for a real Add-to-
