@@ -852,9 +852,45 @@ function buildAppointmentBanner(appt, email) {
   return card;
 }
 
+// Added 2026-08-29 per Aaron's request -- once someone's uploaded an ID,
+// they shouldn't have to re-upload the same file to book a second (or
+// third...) appointment in the same visit. In-memory only (a plain JS
+// variable, not localStorage -- File/Blob objects can't be serialized into
+// storage anyway, and Aaron's own framing was specifically "without
+// reloading," so losing this on an actual page reload is expected, not a
+// gap). Re-applied to the file input via the DataTransfer API, which is
+// the real, standards-based way to programmatically set an <input
+// type="file">'s selected files -- legitimate here since the File object
+// itself always originated from a genuine prior user gesture (they picked
+// it once via the OS file/photo picker), not fabricated or read from disk
+// without their action.
+let lastUploadedIdPhoto = null;
+
+function updateIdPhotoStatus() {
+  const el = document.getElementById("get-started-id-status");
+  if (!el) return;
+  if (lastUploadedIdPhoto) {
+    el.textContent = `✓ ID on file: ${lastUploadedIdPhoto.name}`;
+    el.classList.remove("hidden");
+  } else {
+    el.textContent = "";
+    el.classList.add("hidden");
+  }
+}
+
 function initGetStartedForm() {
   const form = document.getElementById("get-started-form");
   const status = document.getElementById("get-started-status");
+  const idPhotoInput = document.getElementById("get-started-id-photo");
+
+  // Track whatever the visitor actually picks, whether that's their first
+  // upload or a deliberate swap to a different file for a second buyer --
+  // a fresh manual selection always wins and becomes the new "remembered"
+  // one going forward.
+  idPhotoInput.addEventListener("change", () => {
+    lastUploadedIdPhoto = idPhotoInput.files[0] || null;
+    updateIdPhotoStatus();
+  });
 
   // Prefill from whatever this browser already gave at the gate -- still
   // editable, in case something's wrong or a different buyer is using the
@@ -898,6 +934,14 @@ function initGetStartedForm() {
       status.textContent = "Thanks! We've got your info and ID on file.";
       form.reset();
       prefillGetStartedContactFields(); // reset() above wipes the prefilled contact fields too -- put them back
+      // reset() also clears the file input -- re-apply the same ID photo
+      // via DataTransfer so the next appointment doesn't need it re-picked.
+      if (lastUploadedIdPhoto) {
+        const dt = new DataTransfer();
+        dt.items.add(lastUploadedIdPhoto);
+        idPhotoInput.files = dt.files;
+      }
+      updateIdPhotoStatus();
       loadAndRenderAppointments(); // show the just-created appointment immediately, no tab switch needed
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
@@ -915,7 +959,7 @@ function initGetStartedForm() {
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
   properties: "HOMES", steps: "HOW IT WORKS", approved: "APPROVED!",
-  "get-started": "GET STARTED", favorites: "MY FAVORITES",
+  "get-started": "GET STARTED", favorites: "FAVORITES",
 };
 
 function activateTab(tabName) {
@@ -941,7 +985,12 @@ function activateTab(tabName) {
 }
 
 function initNav() {
-  document.querySelectorAll(".nav-btn").forEach((btn) => {
+  // [data-tab] added 2026-08-29 -- the new persistent "Download App" menu
+  // items (see initInstallUI) reuse the .nav-btn class for visual
+  // consistency but aren't tabs at all, and have no data-tab attribute.
+  // Every real tab button already has one, so this scopes the selector
+  // without changing behavior for any of them.
+  document.querySelectorAll(".nav-btn[data-tab]").forEach((btn) => {
     btn.addEventListener("click", () => activateTab(btn.dataset.tab));
   });
 }
@@ -1414,43 +1463,79 @@ const INSTALL_BANNER_DISMISSED_KEY = "iah_install_banner_dismissed";
 // real install-banner implementations elsewhere on the web.
 const INSTALL_BANNER_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
-function initInstallBanner() {
+// Rebuilt 2026-08-29, real request from Aaron: alongside the dismissible
+// banner, a persistent "Download App" item should stay in the header menu
+// (top-tabs + drawer) whenever the app isn't installed -- unlike the
+// banner, this ignores the dismiss/cooldown state entirely, so someone who
+// dismissed the banner still has an obvious, permanent way to install
+// later. Both surfaces (banner + the two menu items) now share one
+// mechanism for visibility and the actual install trigger, rather than
+// duplicating the platform-detection logic per surface.
+function initInstallUI() {
   const banner = document.getElementById("install-banner");
-  if (!banner) return;
-
-  // Dismissed recently -- stay quiet for the cooldown window, but not
-  // forever. A banner that reappeared every single visit right after
-  // someone said no would be pure annoyance, not "urging" -- but never
-  // asking again at all means someone who dismissed it out of habit, or
-  // before they'd decided they liked the site, never gets a second chance.
-  const dismissedAt = parseInt(localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) || "0", 10);
-  if (dismissedAt && Date.now() - dismissedAt < INSTALL_BANNER_COOLDOWN_MS) return;
+  const menuBtns = [
+    document.getElementById("toptabs-install-btn"),
+    document.getElementById("drawer-install-btn"),
+  ].filter(Boolean);
+  if (!banner && menuBtns.length === 0) return;
 
   // Already running installed (opened from the home-screen icon) -- never
-  // show the banner at all, nothing to install.
+  // show ANY of this, nothing to install, for the rest of this page's life.
   const alreadyInstalled =
     window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true; // iOS's own older standalone flag
   if (alreadyInstalled) return;
 
-  const dismiss = () => {
-    localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, String(Date.now()));
-    banner.classList.add("hidden");
-  };
-  document.getElementById("install-banner-dismiss").addEventListener("click", dismiss);
-
-  const installBtn = document.getElementById("install-banner-btn");
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferredPrompt = null;
+
+  function bannerAllowedByCooldown() {
+    const dismissedAt = parseInt(localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) || "0", 10);
+    return !dismissedAt || Date.now() - dismissedAt >= INSTALL_BANNER_COOLDOWN_MS;
+  }
+
+  // The menu items are NOT gated by the banner's dismiss/cooldown at all --
+  // that's the whole point of having them be the persistent fallback.
+  function showInstallUI() {
+    menuBtns.forEach((btn) => btn.classList.remove("hidden"));
+    if (banner && bannerAllowedByCooldown()) banner.classList.remove("hidden");
+  }
+  function hideInstallUI() {
+    menuBtns.forEach((btn) => btn.classList.add("hidden"));
+    if (banner) banner.classList.add("hidden");
+  }
+
+  async function triggerInstall() {
+    if (isIOS) {
+      // iOS can never trigger a native install prompt programmatically --
+      // Apple restriction, not a gap in this code. Show instructions
+      // instead of doing nothing when any of the three buttons is tapped.
+      document.getElementById("install-ios-popover").classList.remove("hidden");
+      return;
+    }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (choice.outcome === "accepted") hideInstallUI(); // else leave everything showing -- they can still install later
+  }
+
+  if (banner) {
+    document.getElementById("install-banner-dismiss").addEventListener("click", () => {
+      localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, String(Date.now()));
+      banner.classList.add("hidden"); // menu items deliberately stay visible regardless
+    });
+    document.getElementById("install-banner-btn").addEventListener("click", triggerInstall);
+  }
+  menuBtns.forEach((btn) => btn.addEventListener("click", triggerInstall));
 
   if (isIOS) {
-    // iOS can never trigger a native install prompt programmatically --
-    // Apple restriction, not a gap in this code. Show the banner always
-    // (no beforeinstallprompt-style event exists to gate on), and show
-    // instructions instead of doing nothing when tapped.
-    banner.classList.remove("hidden");
-    const popover = document.getElementById("install-ios-popover");
-    installBtn.addEventListener("click", () => popover.classList.remove("hidden"));
-    document.getElementById("install-ios-dismiss").addEventListener("click", () => popover.classList.add("hidden"));
+    // No install-eligibility signal exists on iOS at all -- just show
+    // everything now, and wire the popover's own dismiss once.
+    showInstallUI();
+    document.getElementById("install-ios-dismiss").addEventListener("click", () => {
+      document.getElementById("install-ios-popover").classList.add("hidden");
+    });
     return;
   }
 
@@ -1459,22 +1544,12 @@ function initInstallBanner() {
   // site is installable by firing this event; there's no way to check in
   // advance, and on a visitor's very first action on the site this may not
   // have fired yet at all (Chrome's own engagement heuristics decide when).
-  let deferredPrompt = null;
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    banner.classList.remove("hidden");
+    showInstallUI();
   });
-  installBtn.addEventListener("click", async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    banner.classList.add("hidden");
-  });
-  window.addEventListener("appinstalled", () => {
-    banner.classList.add("hidden");
-  });
+  window.addEventListener("appinstalled", hideInstallUI);
 }
 
 initNav();
@@ -1482,7 +1557,7 @@ initDrawer();
 initStepTabs();
 initAdminUI();
 initLoginGate();
-initInstallBanner();
+initInstallUI();
 // initGetStartedForm() and initVisitorSync() both chained after loadData()
 // resolves, not called alongside it -- both need ALL_LISTINGS (property
 // dropdown / #area-checkboxes respectively) which only exist once
