@@ -150,9 +150,20 @@
   <!-- iOS install instructions popover -- iOS can never trigger a native
        install prompt (Apple restriction), so tapping Install there shows
        this instead of doing nothing. -->
-  <div id="install-ios-popover" class="install-ios-popover hidden">
+  <div id="install-ios-popover" class="bottom-popover hidden">
     <p>To install: tap the <strong>Share</strong> icon in Safari's toolbar, then <strong>"Add to Home Screen."</strong></p>
     <button id="install-ios-dismiss" class="btn-outline" type="button">Got it</button>
+  </div>
+
+  <!-- Post-submit "Booked!" confirmation popup, added 2026-08-29 per
+       Aaron's direct request -- shown once a Get Started submission
+       actually succeeds (shares the .bottom-popover shape/style with the
+       iOS install popover above). Aaron's exact wording, don't paraphrase.
+       Dismissed via its own "Got it" button; wired in the Get Started
+       form's submit handler in app.js. -->
+  <div id="booking-confirm-popup" class="bottom-popover hidden">
+    <p>Booked! Please call us to confirm, one hour in advance of arrival.</p>
+    <button id="booking-confirm-dismiss" class="btn-outline" type="button">Got it</button>
   </div>
 </div>
 
@@ -464,6 +475,13 @@
         <label>Preferred Inspection Date <span class="required">Required</span>
           <input type="date" id="get-started-date" name="inspectionDate" required>
         </label>
+        <!-- Moved here 2026-08-29, per Aaron's direct request, out of the
+             combined policy paragraph that used to sit after the whole
+             form -- this half (the visiting-hours window) belongs right
+             under the date picker it actually explains; the "call to
+             confirm" half stays where it was, see .get-started-policy
+             below and the new post-submit popup. -->
+        <p class="get-started-hours-note">You're welcome to inspect the property any time between <strong>9 AM and 8 PM</strong> on the date you choose.</p>
         <label>Full Name <span class="required">Required</span>
           <input type="text" id="get-started-name" name="name" required>
         </label>
@@ -494,13 +512,15 @@
                input's own display can be easy to miss/unclear on mobile. -->
           <p id="get-started-id-status" class="get-started-id-status hidden"></p>
         </label>
-        <button type="submit" class="btn-primary full-width">Submit</button>
+        <button type="submit" class="btn-primary full-width">Schedule It</button>
       </form>
       <div id="get-started-status" class="form-status"></div>
-      <!-- Static policy text, added 2026-08-29 per Aaron's direct wording --
-           always visible, not just a post-submit message, so a visitor
-           knows what to expect before they even fill the form out. -->
-      <p class="get-started-policy">Once we have your valid ID, your contact info, and the property address, you're welcome to inspect the property any time between <strong>9 AM and 8 PM</strong> on the date you chose. Please call us to confirm one hour in advance of arrival.</p>
+      <!-- Static policy text, added 2026-08-29 per Aaron's direct wording,
+           trimmed the same day -- the visiting-hours half moved up to sit
+           under the date picker (see above); this half stays here,
+           always visible before the form is even filled out, and is also
+           repeated in the post-submit "Booked!" popup below. -->
+      <p class="get-started-policy">Please call us to confirm one hour in advance of arrival.</p>
       <!-- Call/Text buttons, added 2026-08-29 per Aaron's direct request --
            placed right after the policy paragraph. Same tel:/sms: pattern
            and phone number (AARON_PHONE) already used everywhere else on
