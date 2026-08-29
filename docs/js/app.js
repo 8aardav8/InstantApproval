@@ -306,6 +306,22 @@ function shareLink(listing) {
 function showDetail(id) {
   const listing = ALL_LISTINGS.find((l) => l.id === id);
   if (!listing) return;
+
+  // Fixed 2026-08-29, real reported bug: #view-detail lives INSIDE
+  // #tab-properties's own section, not as a top-level element -- clicking
+  // a card from any OTHER tab that reuses buildListingCard (Favorites)
+  // correctly called this function and correctly unhid #view-detail, but
+  // #tab-properties itself was still hidden by activateTab()'s own
+  // tab-switching, so nothing ever became visible. Ensure the Properties
+  // tab-panel is the active one first, whichever tab this was actually
+  // called from. activateTab("properties") also calls backToList()
+  // internally, but that's harmless here -- it runs and completes before
+  // the view-list/view-detail toggle immediately below, so the final state
+  // still ends up correct (detail shown, not the list).
+  if (document.getElementById("tab-properties").classList.contains("hidden")) {
+    activateTab("properties");
+  }
+
   // Note: #map-accordion is a child of #view-list, so hiding view-list below
   // already visually hides the map too if it was open -- no separate step
   // needed (it was a sibling "page" before the 2026-08-22 accordion rework).
