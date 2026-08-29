@@ -444,10 +444,12 @@ function isPlausiblePhone(v) { return (v || "").replace(/\D/g, "").length >= 10;
 // Telegram hiccup), the visitor is already fully processed regardless --
 // this is purely a nicety notification, never load-bearing, so it never
 // throws back to the caller.
-async function pushTelegramPing(env, name, email, phone, quoResult, isNew) {
+// Only ever called for a genuinely NEW visitor now (see handleGateLogin's
+// call site below) -- no isNew parameter/branch needed here anymore, since
+// a "returning visitor" message could never actually fire.
+async function pushTelegramPing(env, name, email, phone, quoResult) {
   if (!env.TELEGRAM_BOT_TOKEN) return; // secret not set yet -- just skip
   const lines = [`New site visitor — ${name}, ${email}, ${phone}.`];
-  if (isNew === false) lines.push("(Returning visitor -- updated their existing App: Logins row.)");
   if (quoResult) {
     if (quoResult.action === "created") lines.push("New Quo contact created.");
     else if (quoResult.action === "updated") lines.push("Existing Quo contact updated with this email.");
@@ -515,7 +517,18 @@ async function handleGateLogin(request, env) {
     quoResult = null; // pushTelegramPing reports this as a failure below, never throws
   }
 
-  await pushTelegramPing(env, name, email, phone, quoResult, target.isNew);
+  // Only ping for a GENUINELY new visitor -- fixed 2026-08-29, real
+  // reported noise: a returning visitor re-passing the gate (trivially
+  // easy to trigger just by testing in a fresh incognito window, which
+  // wipes the "already passed" localStorage flag every time) was pinging
+  // Telegram on every single re-submission, literally saying "New site
+  // visitor" about someone who very much wasn't new. The Sheet row and Quo
+  // upsert above still run unconditionally either way (both are correct,
+  // idempotent housekeeping regardless of whether this is a first visit)
+  // -- only the notification itself is gated on isNew now.
+  if (target.isNew) {
+    await pushTelegramPing(env, name, email, phone, quoResult);
+  }
 
   return jsonResponse({ ok: true });
 }
@@ -556,6 +569,64 @@ async function handleAdminLookup(request, env, listingId) {
       return jsonResponse({ fields });
     }
     return jsonResponse({ error: "listing not found" }, 404);
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// ---------- job 6: admin bulk appointments lookup (2026-08-29) ----------
+// Aaron's request, admin-only: a small badge on every card showing how many
+// people have scheduled an appointment there, plus who/when/contact-info on
+// the detail page. Same admin auth as job 1 (verifyIdToken against
+// AARON_EMAIL) -- this returns real names/emails/phones across ALL
+// visitors, not just the caller's own, so it must never be reachable
+// without a verified admin token.
+//
+// Deliberately ONE bulk read of the whole App: Logins tab (columns B-X:
+// Email, Phone, Name, and the 10 appointment slots), not one read per
+// listing -- with ~145+ rows and potentially hundreds of listings, a
+// per-listing query would mean a query explosion for something that's
+// cheap to compute from one full-tab read. The front end groups the flat
+// result by address itself (for the badge counts and the per-listing
+// detail list) and decides what counts as "still upcoming" -- this
+// endpoint returns everything it finds, past or future, same "return raw,
+// let the client filter" split already used elsewhere in this file.
+async function handleAdminAppointments(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!B:X`);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`admin appointments read failed: ${await res.text()}`);
+    const data = await res.json();
+    const rows = data.values || [];
+
+    // Range starts at column B, so index 0 here = column B.
+    // B=0(Email) C=1 D=2(Phone) E=3(Name) F=4 G=5 H=6 I=7 J=8 K=9 L=10 M=11
+    // N=12 -- Appointment slots (O-X) start at index 13, 10 in a row.
+    const appointments = [];
+    for (let i = 1; i < rows.length; i++) { // row 0 is the header
+      const row = rows[i];
+      const email = (row[0] || "").trim();
+      const phone = (row[2] || "").trim();
+      const name = (row[3] || "").trim();
+      for (let slot = 0; slot < 10; slot++) {
+        const raw = (row[13 + slot] || "").trim();
+        if (!raw) continue;
+        const parts = raw.split(" | ");
+        const address = (parts[0] || "").trim();
+        const date = (parts[1] || "").trim();
+        if (address && date) appointments.push({ address, date, name, email, phone });
+      }
+    }
+    return jsonResponse({ appointments });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -943,6 +1014,10 @@ export default {
 
     if (url.pathname === "/update-appointment-date" && request.method === "POST") {
       return handleUpdateAppointmentDate(request, env);
+    }
+
+    if (url.pathname === "/admin-appointments" && request.method === "GET") {
+      return handleAdminAppointments(request, env);
     }
 
     if (request.method === "GET") {
