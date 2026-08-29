@@ -141,16 +141,30 @@ function buildListingCard(listing) {
 
   // Heart/favorite toggle, added 2026-08-29. stopPropagation so tapping the
   // heart doesn't also trigger the card's own click-to-detail handler above.
+  // data-listing-id + syncFavoriteHearts (below) fixed a real reported bug:
+  // the Properties grid and Favorites grid each build their OWN independent
+  // card for the same listing, so toggling a heart on one never touched the
+  // other's separate DOM element -- unfavoriting from the Favorites tab
+  // correctly removed the card there, but the same listing's heart on the
+  // main Properties page stayed stuck red. Fixed by tagging every heart
+  // button with the listing id it belongs to and, on any toggle, updating
+  // every element sharing that id across the whole page in one pass.
   const heartBtn = document.createElement("button");
   heartBtn.type = "button";
   heartBtn.className = "card-heart" + (isFavorited(listing.id) ? " favorited" : "");
+  heartBtn.dataset.listingId = listing.id;
   heartBtn.setAttribute("aria-label", "Save to favorites");
   heartBtn.innerHTML = ICON_HEART;
   heartBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     toggleFavorite(listing.id);
-    heartBtn.classList.toggle("favorited", isFavorited(listing.id));
-    if (document.getElementById("tab-favorites") && !document.getElementById("tab-favorites").classList.contains("hidden")) {
+    syncFavoriteHearts(listing.id);
+    // A class sync alone won't remove a now-unfavorited card from the
+    // Favorites grid (that grid needs the DOM node actually gone, not just
+    // unstyled) -- only rebuild it when it's the visible tab and this
+    // listing just dropped out of favorites.
+    const favTab = document.getElementById("tab-favorites");
+    if (favTab && !favTab.classList.contains("hidden") && !isFavorited(listing.id)) {
       renderFavoritesGrid();
     }
   });
@@ -210,6 +224,18 @@ function toggleFavorite(id) {
   const i = favs.indexOf(id);
   if (i === -1) favs.push(id); else favs.splice(i, 1);
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favs));
+}
+// Added 2026-08-29 alongside the stale-heart bug fix -- a listing can have
+// up to three separate heart-button DOM elements alive at once (its
+// Properties-grid card, its Favorites-grid card if favorited, and the
+// detail view if open on that listing). Call this after every
+// toggleFavorite() so all of them agree with the new state in one pass,
+// via the data-listing-id attribute every heart button now carries.
+function syncFavoriteHearts(id) {
+  const favored = isFavorited(id);
+  document.querySelectorAll(`[data-listing-id="${id}"]`).forEach((el) => {
+    el.classList.toggle("favorited", favored);
+  });
 }
 function renderFavoritesGrid() {
   const grid = document.getElementById("favorites-grid");
@@ -317,7 +343,7 @@ function showDetail(id) {
     <button class="detail-back" onclick="backToList()">${ICON_BACK}</button>
     <div class="detail-photo-wrap">
       <img class="detail-photo" src="${streetViewUrl(listing.address, 800, 500)}" alt="${escapeHtml(listing.address)}">
-      <button type="button" class="detail-heart${isFavorited(listing.id) ? " favorited" : ""}" aria-label="Save to favorites" onclick="toggleFavorite('${listing.id}'); this.classList.toggle('favorited', isFavorited('${listing.id}'))">${ICON_HEART}</button>
+      <button type="button" class="detail-heart${isFavorited(listing.id) ? " favorited" : ""}" data-listing-id="${listing.id}" aria-label="Save to favorites" onclick="toggleFavorite('${listing.id}'); syncFavoriteHearts('${listing.id}')">${ICON_HEART}</button>
     </div>
     <div class="detail-body">
       <div class="detail-status">${escapeHtml(listing.status)}</div>
@@ -565,22 +591,116 @@ function goToGetStartedFor(listingId) {
   activateTab("get-started");
 }
 
-function populateGetStartedPropertyDropdown() {
-  const select = document.getElementById("get-started-property");
-  if (!select) return;
-  select.querySelectorAll("option[data-real]").forEach((o) => o.remove());
-  const available = ALL_LISTINGS.filter((l) => l.status === "Available")
+// Rebuilt 2026-08-29 as a type-to-filter autocomplete -- real reported
+// request: the plain <select> listed every Available property in one long
+// native dropdown, painful to scroll through against a real inventory.
+// The visible text input (#get-started-property-input) is what the user
+// types into; the hidden input (#get-started-property, name="property")
+// is what actually submits -- same field/value shape (an address string)
+// admin/worker.js already expected, so the backend needed no changes.
+let getStartedAutocompleteWired = false;
+
+function getStartedAvailableListings() {
+  // Available-only, per Aaron's explicit instruction -- matches the
+  // filter the old <select> already applied; preserved deliberately, not
+  // just carried over by accident, while rebuilding this control.
+  return ALL_LISTINGS.filter((l) => l.status === "Available")
     .sort((a, b) => a.address.localeCompare(b.address));
-  for (const listing of available) {
-    const opt = document.createElement("option");
-    opt.value = listing.address;
-    opt.textContent = listing.address;
-    opt.dataset.real = "1";
-    select.appendChild(opt);
+}
+
+function populateGetStartedPropertyDropdown() {
+  const input = document.getElementById("get-started-property-input");
+  const hidden = document.getElementById("get-started-property");
+  const list = document.getElementById("get-started-property-options");
+  if (!input || !hidden || !list) return;
+
+  // Wire event listeners exactly once -- this function runs on every visit
+  // to this tab (see activateTab), but re-adding listeners each time would
+  // stack duplicates.
+  if (!getStartedAutocompleteWired) {
+    getStartedAutocompleteWired = true;
+    let activeIndex = -1;
+
+    function selectAddress(address) {
+      input.value = address;
+      hidden.value = address;
+      input.setCustomValidity("");
+      list.classList.add("hidden");
+    }
+
+    function renderOptions(query) {
+      const q = query.trim().toLowerCase();
+      // Cap at 8 -- "drastically reduce options," per Aaron's own wording,
+      // not just "filter." An untyped focus (query "") still shows the
+      // first 8 alphabetically rather than nothing, so the field doesn't
+      // look broken/empty the moment it's focused.
+      const matches = getStartedAvailableListings()
+        .filter((l) => !q || l.address.toLowerCase().includes(q))
+        .slice(0, 8);
+      list.innerHTML = "";
+      activeIndex = -1;
+      if (matches.length === 0) {
+        const li = document.createElement("li");
+        li.className = "no-results";
+        li.textContent = "No matching properties";
+        list.appendChild(li);
+      } else {
+        matches.forEach((listing) => {
+          const li = document.createElement("li");
+          li.textContent = listing.address;
+          li.dataset.address = listing.address;
+          // mousedown, not click -- fires before the input's blur handler
+          // below would otherwise close the list first and swallow the tap.
+          li.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            selectAddress(listing.address);
+          });
+          list.appendChild(li);
+        });
+      }
+      list.classList.remove("hidden");
+    }
+
+    input.addEventListener("input", () => {
+      // Any manual retyping invalidates a previously-confirmed selection --
+      // require picking an option again (native validation, via
+      // setCustomValidity below) rather than letting free-typed text that
+      // never matched a real listing slip through as the submitted value.
+      hidden.value = "";
+      input.setCustomValidity(input.value.trim() ? "Please choose a property from the list." : "");
+      renderOptions(input.value);
+    });
+    input.addEventListener("focus", () => renderOptions(input.value));
+    input.addEventListener("blur", () => setTimeout(() => list.classList.add("hidden"), 150));
+    input.addEventListener("keydown", (e) => {
+      const items = Array.from(list.querySelectorAll("li:not(.no-results)"));
+      if (list.classList.contains("hidden") || items.length === 0) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex - 1, 0);
+      } else if (e.key === "Enter") {
+        if (activeIndex >= 0) { e.preventDefault(); selectAddress(items[activeIndex].dataset.address); }
+        return;
+      } else if (e.key === "Escape") {
+        list.classList.add("hidden");
+        return;
+      } else {
+        return;
+      }
+      items.forEach((li, i) => li.classList.toggle("active", i === activeIndex));
+    });
   }
+
   if (pendingGetStartedPropertyId) {
     const listing = ALL_LISTINGS.find((l) => l.id === pendingGetStartedPropertyId);
-    if (listing) select.value = listing.address;
+    if (listing) {
+      input.value = listing.address;
+      hidden.value = listing.address;
+      input.setCustomValidity("");
+    }
     pendingGetStartedPropertyId = null;
   }
 }
@@ -600,8 +720,33 @@ function initGetStartedForm() {
   // same device.
   prefillGetStartedContactFields();
 
-  // Don't let anyone pick a date before today.
-  document.getElementById("get-started-date").min = new Date().toISOString().slice(0, 10);
+  // Don't let anyone pick a date before today. Fixed 2026-08-29, real
+  // reported bug: this previously used toISOString(), which reports the
+  // UTC date, not the visitor's own local date -- for anyone west of UTC
+  // (this site's whole US audience), UTC can already be "tomorrow" for
+  // several hours of the local evening, which would wrongly compute
+  // today's own local date as before the "min" and block it as if it were
+  // in the past. Uses local Y/M/D components instead so "today" always
+  // means the visitor's own actual today.
+  const dateInput = document.getElementById("get-started-date");
+  const todayLocal = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  dateInput.min = todayLocal();
+  // Belt-and-suspenders on top of the native min= constraint -- some
+  // mobile date pickers only grey out/block past dates in their own
+  // picker UI without necessarily stopping every path to a manually-typed
+  // out-of-range value from landing in the field. Explicitly re-validate
+  // on change and clear anything that slips through anyway.
+  dateInput.addEventListener("change", () => {
+    if (dateInput.value && dateInput.value < todayLocal()) {
+      dateInput.value = "";
+      dateInput.setCustomValidity("Please choose today or a later date.");
+    } else {
+      dateInput.setCustomValidity("");
+    }
+  });
 
   populateGetStartedPropertyDropdown();
 
@@ -647,7 +792,11 @@ function activateTab(tabName) {
   // -- and so a property picked via "Schedule to Inspect" (which calls
   // activateTab("get-started") itself) gets the dropdown pre-selected.
   if (tabName === "favorites") renderFavoritesGrid();
-  if (tabName === "get-started") populateGetStartedPropertyDropdown();
+  // Also re-run the contact-field prefill here, not just from the gate's
+  // own submit handler -- a cheap, idempotent defensive re-sync so this
+  // tab always reflects the freshest gate values no matter how it was
+  // reached, rather than depending on exactly one call site staying correct.
+  if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); }
   closeDrawer();
 }
 
@@ -875,6 +1024,18 @@ function initLoginGate() {
       localStorage.setItem(GATE_NAME_STORAGE_KEY, name);
       localStorage.setItem(GATE_PHONE_STORAGE_KEY, phone);
       gate.classList.add("hidden");
+      // Real reported bug, fixed 2026-08-29: prefillGetStartedContactFields()
+      // was only ever called once, at initial page load, via
+      // initGetStartedForm() -- for a first-time visitor who submits the
+      // gate and THEN visits Get Started in that same page session (no
+      // reload), that one-shot call already ran before this localStorage
+      // write ever happened, so it read empty values and never re-ran.
+      // Calling it again right here, the moment real values exist, closes
+      // that gap. Guarded since this function is declared later in the
+      // file but is a hoisted `function` declaration, not a `const`, so
+      // this call is safe regardless of source order (see the ADMIN_API_URL
+      // TDZ bug fixed the same day for why that distinction matters here).
+      if (typeof prefillGetStartedContactFields === "function") prefillGetStartedContactFields();
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }
