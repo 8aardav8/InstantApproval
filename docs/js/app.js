@@ -1314,6 +1314,15 @@ function initGetStartedForm() {
     updateIdPhotoStatus();
   });
 
+  // Camera-icon button added 2026-08-29, replacing the native <input
+  // type="file">'s own "Choose File" control (still the real input under
+  // the hood -- see .id-photo-input-hidden in style.css). A plain .click()
+  // on the real input opens the exact same native picker (Take Photo /
+  // Photo Library / Choose File) it always did.
+  document.getElementById("get-started-id-upload-btn").addEventListener("click", () => {
+    idPhotoInput.click();
+  });
+
   // Prefill from whatever this browser already gave at the gate -- still
   // editable, in case something's wrong or a different buyer is using the
   // same device.
