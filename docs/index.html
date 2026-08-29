@@ -509,10 +509,6 @@
         <label>Phone Number <span class="required">Required</span>
           <input type="tel" id="get-started-phone" name="phone" required>
         </label>
-        <!-- Moved to sit immediately above the ID field 2026-08-29, per
-             Aaron's direct request (previously sat under the page header,
-             disconnected from the field it actually explains). -->
-        <p>To view the inside of a property in person or schedule an inspection, we'll need a copy of your ID on file for our entry log.</p>
         <label>Clear Photo of Valid ID <span class="required">Required</span>
           <!-- capture="environment" removed 2026-08-29, real reported bug:
                that attribute forces mobile browsers to skip their normal
@@ -522,6 +518,12 @@
                native chooser's full set of options (Take Photo / Photo
                Library / Choose File, wording varies by OS/browser). -->
           <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" required>
+          <!-- Moved below the ID field 2026-08-29, per Aaron's direct
+               request (previously sat above it), and reworded to the
+               shorter, more direct wording he gave verbatim -- don't
+               paraphrase. Second move for this paragraph the same week;
+               see the 2026-08-29 entry above this one for the first. -->
+          <p class="get-started-id-note">To view the inside of a property in person, upload a clear photo of your ID for our entry log.</p>
           <!-- Added 2026-08-29 per Aaron's request -- once a visitor has
                uploaded an ID once, it stays selected (re-applied to this
                input in app.js via the DataTransfer API) so they can book
