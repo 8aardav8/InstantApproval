@@ -82,10 +82,17 @@
   </div>
   <nav class="top-tabs">
     <button class="nav-btn active" data-tab="properties"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>Homes</button>
-    <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>My Favorites</button>
+    <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>Favorites</button>
     <button class="nav-btn" data-tab="steps"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>How it Works</button>
     <button class="nav-btn" data-tab="approved"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/></svg></span>Approved!</button>
     <button class="nav-btn" data-tab="get-started"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Get Started</button>
+    <!-- Persistent "Download App" menu item, added 2026-08-29 per Aaron's
+         direct request -- stays in the header menu whenever the app isn't
+         installed, independent of the banner's own dismiss/cooldown state
+         (see initInstallUI in app.js, which drives this + the drawer's
+         copy + the banner all from one shared mechanism). No data-tab --
+         this isn't a tab, see initNav()'s [data-tab] scoping. -->
+    <button id="toptabs-install-btn" class="nav-btn hidden" type="button"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></span>Download App</button>
   </nav>
 </header>
 
@@ -101,8 +108,10 @@
      installability there) and taps into the instructions popover instead
      of a native prompt (Apple restriction, not a gap in this code); never
      shown at all if already running installed (display-mode: standalone),
-     or if this visitor already dismissed it once (see initInstallBanner in
-     app.js). -->
+     or if this visitor already dismissed it recently -- within a 14-day
+     cooldown, not forever (see initInstallUI in app.js, which also drives
+     the persistent "Download App" header menu items that are NOT gated by
+     this dismiss/cooldown at all). -->
 <div id="install-banner" class="install-banner hidden">
   <span class="install-banner-icon">📲</span>
   <span class="install-banner-text">Install this site as an app for one-tap access next time!</span>
@@ -116,10 +125,13 @@
 <div id="nav-drawer-backdrop" class="nav-drawer-backdrop hidden"></div>
 <nav id="nav-drawer" class="nav-drawer hidden">
   <button class="nav-btn active" data-tab="properties"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>Homes</button>
-    <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>My Favorites</button>
+    <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>Favorites</button>
   <button class="nav-btn" data-tab="steps"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>How it Works</button>
   <button class="nav-btn" data-tab="approved"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/></svg></span>Approved!</button>
   <button class="nav-btn" data-tab="get-started"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Get Started</button>
+  <!-- Persistent "Download App" menu item -- drawer's copy of the one in
+       .top-tabs above, see that comment for the full explanation. -->
+  <button id="drawer-install-btn" class="nav-btn hidden" type="button"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></span>Download App</button>
 </nav>
 
 <div class="profile-bar">
@@ -330,33 +342,6 @@
   <section id="tab-approved" class="tab-panel hidden static-page">
     <h1 class="page-title">💰You're Approved!💰</h1>
 
-    <!-- Renting-vs-owning frame -- moved here from the Properties/home tab
-         2026-08-21, per Aaron's request. Minimal copy, every fact already
-         confirmed live on Approved!/5 Easy Steps. -->
-    <div class="rent-frame">
-      <p class="rent-frame-headline">Every month, you're paying for a home. The question is whose.</p>
-      <div class="rent-frame-cols">
-        <div class="rent-col">
-          <div class="rent-col-title">When you rent</div>
-          <ul>
-            <li>✕ Your payment disappears on the 1st — you'll never see it again</li>
-            <li>✕ Rent can go up any time, and you can't stop it</li>
-            <li>✕ After years of payments, you own nothing</li>
-          </ul>
-        </div>
-        <div class="own-col">
-          <div class="rent-col-title">When you own with us</div>
-          <ul>
-            <li>✓ No bank, no credit check, no applications</li>
-            <li>✓ Your price and payment are locked in from day one</li>
-            <li>✓ Every payment builds toward a home that's actually yours</li>
-            <li>✓ Paint it, fix it, rent it out, sell it, or pass it down — it's yours</li>
-            <li>✓ Cancel anytime if you're paid current, no penalty</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
     <p>Thank you for your interest in our seller-finance program! We've helped thousands of renters become buyers. If you can rent a house, now you can buy a house! No Applications. No Credit Checks.</p>
 
     <h2>✅ Seller Financing</h2>
@@ -384,6 +369,33 @@
 
     <h2>⚠️ Taxes &amp; Insurance</h2>
     <p>Property taxes and homeowners' insurance must be paid monthly to protect both buyer and seller.<br>Taxes are usually included in your monthly payment, but insurance is your responsibility. Be prepared to take ownership of this property and cover these expenses.</p>
+
+    <!-- Renting-vs-owning frame -- moved to the bottom of this tab
+         2026-08-29 per Aaron's direct request (was right after the h1,
+         placed there 2026-08-21). Content unchanged. -->
+    <div class="rent-frame">
+      <p class="rent-frame-headline">Every month, you're paying for a home. The question is whose.</p>
+      <div class="rent-frame-cols">
+        <div class="rent-col">
+          <div class="rent-col-title">When you rent</div>
+          <ul>
+            <li>✕ Your payment disappears on the 1st — you'll never see it again</li>
+            <li>✕ Rent can go up any time, and you can't stop it</li>
+            <li>✕ After years of payments, you own nothing</li>
+          </ul>
+        </div>
+        <div class="own-col">
+          <div class="rent-col-title">When you own with us</div>
+          <ul>
+            <li>✓ No bank, no credit check, no applications</li>
+            <li>✓ Your price and payment are locked in from day one</li>
+            <li>✓ Every payment builds toward a home that's actually yours</li>
+            <li>✓ Paint it, fix it, rent it out, sell it, or pass it down — it's yours</li>
+            <li>✓ Cancel anytime if you're paid current, no penalty</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ============ GET STARTED TAB ============ -->
@@ -437,6 +449,13 @@
                native chooser's full set of options (Take Photo / Photo
                Library / Choose File, wording varies by OS/browser). -->
           <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" required>
+          <!-- Added 2026-08-29 per Aaron's request -- once a visitor has
+               uploaded an ID once, it stays selected (re-applied to this
+               input in app.js via the DataTransfer API) so they can book
+               more than one appointment without re-uploading each time.
+               This line shows that it's already attached, since a file
+               input's own display can be easy to miss/unclear on mobile. -->
+          <p id="get-started-id-status" class="get-started-id-status hidden"></p>
         </label>
         <button type="submit" class="btn-primary full-width">Submit</button>
       </form>
@@ -479,7 +498,7 @@
 
 <nav class="bottom-nav">
   <button class="nav-btn active" data-tab="properties"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>HOMES</button>
-  <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>MY FAVORITES</button>
+  <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>FAVORITES</button>
   <button class="nav-btn" data-tab="steps"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>HOW IT WORKS</button>
   <button class="nav-btn" data-tab="approved"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/></svg></span>APPROVED!</button>
   <button class="nav-btn" data-tab="get-started"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>GET STARTED</button>
