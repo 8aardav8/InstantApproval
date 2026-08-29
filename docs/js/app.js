@@ -119,13 +119,45 @@ function renderStatsStrip() {
   // signal instead of a new fetch/endpoint). Placed right next to Areas,
   // per Aaron's own wording ("along with the 14 areas card").
   const sold = ALL_LISTINGS.filter((l) => l.status === "Sold");
+  // Areas moved before Homes available 2026-08-29, per Aaron's direct
+  // request -- pure reorder, values/logic unchanged.
   el.innerHTML = `
-    <div class="stat-pill"><strong>${available.length}</strong>Homes available</div>
     <div class="stat-pill"><strong>${areas.size || "—"}</strong>Areas</div>
+    <div class="stat-pill"><strong>${available.length}</strong>Homes available</div>
     <div class="stat-pill"><strong>${sold.length}</strong>Families housed</div>
     <div class="stat-pill"><strong>No</strong>Bank or credit check</div>
   `;
+  adjustStatsStripPeek();
 }
+
+// Guarantees a partial ("peek") pill is always visible when the strip
+// doesn't fully fit, added 2026-08-29 per Aaron's direct request ("Always
+// leave half a pill visible if scrolling is necessary, so it's obvious
+// there's more to see"). Pure CSS/overflow alone can't promise this --
+// whether the natural cutoff lands mid-pill, right at a pill boundary
+// (no visible hint at all), or with only a sliver showing depends
+// entirely on how pill widths happen to divide the available width for
+// a given screen/font. This measures the REAL rendered layout and
+// deliberately narrows the visible (unscrolled) content area via
+// padding-right -- not the container's own outer width, which stays
+// full-page -- so the boundary always lands at the midpoint of whichever
+// pill would otherwise straddle it.
+function adjustStatsStripPeek() {
+  const strip = document.getElementById("stats-strip");
+  if (!strip) return;
+  strip.style.paddingRight = "0px"; // reset before measuring the TRUE natural layout
+  const pills = Array.from(strip.children);
+  if (pills.length === 0) return;
+  const available = strip.clientWidth;
+  if (strip.scrollWidth <= available + 1) return; // everything already fits -- nothing to peek at
+
+  const target = pills.find((pill) => pill.offsetLeft + pill.offsetWidth > available);
+  if (!target) return; // shouldn't happen given the overflow check above, but don't guess
+  const revealWidth = target.offsetLeft + target.offsetWidth / 2;
+  const extraPadding = Math.max(0, available - revealWidth);
+  strip.style.paddingRight = `${extraPadding}px`;
+}
+window.addEventListener("resize", adjustStatsStripPeek);
 
 // ---------- filtering ----------
 function matchesFilters(listing) {
