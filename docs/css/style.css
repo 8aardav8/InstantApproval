@@ -46,13 +46,15 @@ body {
   display: none; background: none; border: none; color: #fff; font-size: 22px; padding: 4px 6px; cursor: pointer;
 }
 .admin-login-btn {
-  /* Deliberately understated -- a plain outline icon, not a branded button,
-     since this is an Aaron-only entry point, not something buyers should be
-     drawn to. Turns solid/filled (.signed-in) once actually logged in, as a
-     quiet visual confirmation. */
+  /* Camouflaged, added 2026-08-29 per Aaron's direct request -- the
+     unactivated icon is now the exact same color as the header background,
+     so it's effectively invisible to a regular visitor who doesn't already
+     know it's there. Still fully present/tappable, just not visually
+     announcing itself. Turns solid green (.signed-in) once actually
+     logged in, as a quiet confirmation only Aaron would recognize. */
   display: flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 50%; border: none; background: none;
-  color: rgba(255,255,255,0.55); cursor: pointer; flex: 0 0 auto;
+  color: var(--navy); cursor: pointer; flex: 0 0 auto;
 }
 .admin-login-btn.signed-in { color: #7ee0a8; }
 .admin-login-popover {
