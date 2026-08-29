@@ -432,6 +432,22 @@
            always visible, not just a post-submit message, so a visitor
            knows what to expect before they even fill the form out. -->
       <p class="get-started-policy">Once we have your valid ID, your contact info, and the property address, you're welcome to inspect the property any time between <strong>9 AM and 8 PM</strong> on the date you chose. Please call us to confirm one hour in advance of arrival.</p>
+      <!-- Call/Text buttons, added 2026-08-29 per Aaron's direct request --
+           placed right after the policy paragraph. Same tel:/sms: pattern
+           and phone number (AARON_PHONE) already used everywhere else on
+           the site (5 Easy Steps, detail view). -->
+      <div class="get-started-contact-buttons">
+        <a class="btn-outline" href="tel:6184184180">📞 Call Us</a>
+        <a class="btn-outline" href="sms:6184184180">💬 Text Us</a>
+      </div>
+      <!-- Appointments banner, added 2026-08-29 -- populated by
+           loadAndRenderAppointments() in app.js. Reads LIVE from the Sheet
+           on every visit to this tab (via GET /my-appointments), never
+           cached in localStorage, so Cancel/Change Date can never drift
+           out of sync with what's actually shown. Empty/hidden until at
+           least one active (not-yet-past) appointment exists for this
+           visitor's email. -->
+      <div id="appointments-banner-wrap" class="appointments-banner-wrap hidden"></div>
     </div>
   </section>
 
