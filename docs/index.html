@@ -521,28 +521,26 @@
         <label>Phone Number <span class="required">Required</span>
           <input type="tel" id="get-started-phone" name="phone" required>
         </label>
-        <label>Clear Photo of Valid ID <span class="required">Required</span>
+        <label>
+          <!-- Camera icon added 2026-08-29 (flat line-drawing style, same
+               stroke SVG already used for the Photo-link-not-working
+               button elsewhere on this site), per Aaron's direct request --
+               a brief same-day custom camera-icon BUTTON replacing the
+               native "Choose File" control entirely was tried first, then
+               explicitly reverted the same day ("switch it back to the way
+               it was, but just add a flat line drawing of a camera"). Back
+               to the plain native <input type="file"> below -- no hidden-
+               input trick, no custom click-to-open button -- just this
+               icon decorating the label. -->
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Clear Photo of Valid ID <span class="required">Required</span>
           <!-- capture="environment" removed 2026-08-29, real reported bug:
                that attribute forces mobile browsers to skip their normal
                picker and launch the camera directly, with no option to
                instead choose an existing photo/file. accept="image/*"
                alone still restricts to image files but restores the
                native chooser's full set of options (Take Photo / Photo
-               Library / Choose File, wording varies by OS/browser).
-               Real reported follow-up the same day: the native "Choose
-               File / no file selected" control itself looked out of place
-               next to the rest of the site's own buttons. The actual
-               <input type="file"> stays in the DOM (still what the form
-               submits, still what "required" validates against) but is
-               now visually hidden -- NOT display:none, which some browsers
-               skip constraint-validation for, but a near-zero-size,
-               opacity:0 box (see .id-photo-input-hidden in style.css) so
-               "please select a file" still fires normally on submit. A new
-               camera-icon button below triggers it via .click(). -->
-          <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" required class="id-photo-input-hidden" tabindex="-1">
-          <button type="button" id="get-started-id-upload-btn" class="btn-outline id-photo-upload-btn">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Take or Upload Photo
-          </button>
+               Library / Choose File, wording varies by OS/browser). -->
+          <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" required>
           <!-- Moved below the ID field 2026-08-29, per Aaron's direct
                request (previously sat above it), and reworded to the
                shorter, more direct wording he gave verbatim -- don't
