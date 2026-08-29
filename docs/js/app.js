@@ -120,9 +120,13 @@ function renderStatsStrip() {
   // per Aaron's own wording ("along with the 14 areas card").
   const sold = ALL_LISTINGS.filter((l) => l.status === "Sold");
   // Areas moved before Homes available 2026-08-29, per Aaron's direct
-  // request -- pure reorder, values/logic unchanged.
+  // request -- pure reorder, values/logic unchanged. Label reworded
+  // "Areas" -> "States" the same day, per Aaron's direct correction --
+  // display text only, the underlying `area` field/variable name is left
+  // as-is (matches the real Sheet column name), still just a distinct-
+  // value count.
   el.innerHTML = `
-    <div class="stat-pill"><strong>${areas.size || "—"}</strong>Areas</div>
+    <div class="stat-pill"><strong>${areas.size || "—"}</strong>States</div>
     <div class="stat-pill"><strong>${available.length}</strong>Homes available</div>
     <div class="stat-pill"><strong>${sold.length}</strong>Families housed</div>
     <div class="stat-pill"><strong>No</strong>Bank or credit check</div>
