@@ -389,12 +389,38 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* ---------- 5 steps ---------- */
 .step-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; overflow-x: auto; }
-.step-tab { background: none; border: none; font-size: 14px; color: var(--gray-text); padding: 6px 8px; cursor: pointer; white-space: nowrap; }
-.step-tab.active { color: #111827; font-weight: 800; background: var(--gray-bg); border-radius: 8px; }
+/* Rebuilt as real pill-shaped buttons 2026-08-29, per Aaron's direct
+   request -- the old plain-text tabs (no background/border at all when
+   inactive) didn't read as clickable buttons. */
+.step-tab {
+  background: #fff; border: 1px solid var(--border); border-radius: 20px;
+  font-size: 14px; font-weight: 600; color: #111827;
+  padding: 8px 16px; cursor: pointer; white-space: nowrap;
+}
+.step-tab.active { color: #fff; font-weight: 800; background: var(--blue); border-color: var(--blue); }
 .step-actions { display: flex; gap: 10px; margin-top: 16px; }
+/* Swipe-between-steps support, added 2026-08-29 per Aaron's direct
+   request -- a light touch-feedback cue (brief opacity dip) so a real
+   swipe gesture on the content area gives some visual response, distinct
+   from a tab click which already has its own active-state feedback. */
+.step-content { transition: opacity 0.15s ease; }
+.step-content.swiping { opacity: 0.5; }
 
 /* ---------- buyer form ---------- */
 .form-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+/* Get Started split into multiple stacked .form-cards 2026-08-29, per
+   Aaron's direct request ("wall of text... more intimidating than it
+   should [be]") -- gap between them, since .form-card itself has no
+   margin (it was previously the one single outer box, nothing to space
+   from). Scoped to #get-started-form specifically so this doesn't affect
+   .form-card wherever else it might be reused later. */
+#get-started-form .form-card { margin-bottom: 16px; }
+.form-card-heading { margin: 0 0 14px; font-size: 15px; font-weight: 800; color: #111827; }
+/* Sits right under the ID label, above the actual file input -- the exact
+   wording the brief custom upload BUTTON used before it was reverted back
+   to the native file input, per Aaron's request to keep that phrase
+   visible somewhere even without the button itself. */
+.get-started-id-hint { margin: 4px 0 0; font-size: 13px; font-weight: 700; color: var(--blue); }
 
 /* Install banner, rebuilt 2026-08-29 -- replaces the old small icon button
    that lived in .profile-bar. Sits full-width right below the header. */
