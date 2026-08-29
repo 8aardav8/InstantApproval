@@ -89,6 +89,27 @@
   </nav>
 </header>
 
+<!-- Install banner, rebuilt 2026-08-29 -- replaces the old small icon
+     button that used to sit in the profile bar, per Aaron's direct request
+     ("rather than a small download icon... a new user should have a
+     banner at the top of the page"). Sits at the top of the actual visible
+     page content (right below the header) -- shown only after the login
+     gate is passed, since nothing behind it is visible until then anyway.
+     Same platform logic as before, now driving a full banner instead of a
+     small icon: Android/Chrome shows this once the real beforeinstallprompt
+     event confirms installability; iOS always shows it (no way to detect
+     installability there) and taps into the instructions popover instead
+     of a native prompt (Apple restriction, not a gap in this code); never
+     shown at all if already running installed (display-mode: standalone),
+     or if this visitor already dismissed it once (see initInstallBanner in
+     app.js). -->
+<div id="install-banner" class="install-banner hidden">
+  <span class="install-banner-icon">📲</span>
+  <span class="install-banner-text">Install this site as an app for one-tap access next time!</span>
+  <button id="install-banner-btn" class="btn-primary install-banner-btn" type="button">Install</button>
+  <button id="install-banner-dismiss" class="install-banner-dismiss" type="button" aria-label="Dismiss">✕</button>
+</div>
+
 <!-- Slide-out drawer, mobile only -- same tabs/buttons as top-tabs/bottom-nav,
      reusing the .nav-btn class so the existing click handler (which already
      queries ALL .nav-btn elements at once) wires this up with no extra JS. -->
@@ -112,14 +133,6 @@
   <div class="profile-actions">
     <a class="icon-btn" href="tel:6184184180" aria-label="Call"><span class="icon-btn-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span><span class="icon-btn-label">Call</span></a>
     <a class="icon-btn" href="sms:6184184180" aria-label="Text"><span class="icon-btn-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4A9 9 0 0 1 4 18l-2 1 1-3.2A8.4 8.4 0 1 1 21 11.5z"/></svg></span><span class="icon-btn-label">SMS</span></a>
-    <!-- Install App button, added 2026-08-29 -- hidden by default via CSS,
-         only shown once app.js confirms installability (Android: the real
-         beforeinstallprompt event fired; iOS: always shown, since there's
-         no way to detect installability there, just shows instructions
-         instead of a native prompt -- Apple restriction, not a gap in our
-         code). Never shown at all if already running installed
-         (display-mode: standalone). -->
-    <button id="install-app-btn" class="icon-btn hidden" type="button" aria-label="Install App"><span class="icon-btn-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></span><span class="icon-btn-label">Install</span></button>
   </div>
 
   <!-- iOS install instructions popover -- iOS can never trigger a native
