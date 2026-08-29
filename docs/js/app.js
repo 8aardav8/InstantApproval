@@ -774,7 +774,7 @@ function initGetStartedForm() {
 // physically clicked (otherwise e.g. a bottom-nav tap wouldn't be reflected
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
-  properties: "HOMES", steps: "NEXT STEPS", approved: "APPROVED!",
+  properties: "HOMES", steps: "HOW IT WORKS", approved: "APPROVED!",
   "get-started": "GET STARTED", favorites: "FAVORITES",
 };
 
