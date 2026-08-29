@@ -27,6 +27,22 @@ body {
 
 .hidden { display: none !important; }
 
+/* ---------- pull-to-refresh (2026-08-29) ---------- */
+/* Sits fixed at the very top, translated fully off-screen by default;
+   initPullToRefresh() in app.js drives its transform/text directly as the
+   visitor drags, so the transition below only smooths the snap-back on
+   release, not the live drag itself (which needs to track the finger
+   exactly, no lag). z-index above everything, including the login gate
+   (1000) -- a reload is meaningful even from the gate itself. */
+.pull-refresh-indicator {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1001;
+  display: flex; align-items: center; justify-content: center;
+  height: 50px; margin-top: -50px;
+  background: var(--navy); color: #fff; font-size: 13px; font-weight: 600;
+  transition: margin-top 0.2s ease;
+}
+.pull-refresh-indicator.dragging { transition: none; }
+
 /* ---------- top bar (responsive masthead, added 2026-08-21) ---------- */
 /* Wide screens: title bar + icon/label top tabs, matching the real Glide
    app's landscape layout. Narrow screens: collapses to a hamburger + the
