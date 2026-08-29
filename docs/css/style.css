@@ -388,14 +388,26 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .static-page .own-col li { color: #eafff2; }
 
 /* ---------- 5 steps ---------- */
-.step-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; overflow-x: auto; }
-/* Rebuilt as real pill-shaped buttons 2026-08-29, per Aaron's direct
-   request -- the old plain-text tabs (no background/border at all when
-   inactive) didn't read as clickable buttons. */
+/* overflow-x: auto REMOVED same day -- real reported bug: the pill-shaped
+   buttons below were wide enough that all 5 didn't fit across a real
+   iPhone screen, so the row silently became horizontally scrollable
+   instead of showing every step at once, which Aaron explicitly didn't
+   want ("I don't wanna have to scroll left and right"). Fixed at the
+   actual cause, not by re-adding scroll affordance: each tab now takes an
+   equal flex: 1 share of the full row width (see .step-tab below), so 5
+   always fit edge-to-edge on any real screen width, nothing to scroll. */
+.step-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+/* Rebuilt as real buttons 2026-08-29, per Aaron's direct request -- the
+   old plain-text tabs (no background/border at all when inactive) didn't
+   read as clickable buttons. Sizing revisited the same day (see above):
+   flex: 1 makes each of the 5 take an equal share of the row instead of
+   sizing to its own text, and padding/font-size/radius were all reduced
+   from the first pass so "Step 1"-"Step 5" still read cleanly at the
+   narrower width that results. */
 .step-tab {
-  background: #fff; border: 1px solid var(--border); border-radius: 20px;
-  font-size: 14px; font-weight: 600; color: #111827;
-  padding: 8px 16px; cursor: pointer; white-space: nowrap;
+  flex: 1; background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 12px; font-weight: 700; color: #111827;
+  padding: 8px 2px; cursor: pointer; white-space: nowrap; text-align: center;
 }
 .step-tab.active { color: #fff; font-weight: 800; background: var(--blue); border-color: var(--blue); }
 .step-actions { display: flex; gap: 10px; margin-top: 16px; }
@@ -406,15 +418,23 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .step-content { transition: opacity 0.15s ease; }
 .step-content.swiping { opacity: 0.5; }
 
-/* ---------- buyer form ---------- */
+/* ---------- buyer form / card-grouped static pages ---------- */
 .form-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
 /* Get Started split into multiple stacked .form-cards 2026-08-29, per
    Aaron's direct request ("wall of text... more intimidating than it
    should [be]") -- gap between them, since .form-card itself has no
    margin (it was previously the one single outer box, nothing to space
-   from). Scoped to #get-started-form specifically so this doesn't affect
-   .form-card wherever else it might be reused later. */
-#get-started-form .form-card { margin-bottom: 16px; }
+   from). Same day, extended to Approved! (h2 sections) and How it Works
+   (step content) -- reused wherever a .static-page groups its own content
+   into cards, not just Get Started specifically anymore, hence the
+   broader .static-page scope rather than #get-started-form alone. */
+.static-page .form-card { margin-bottom: 16px; }
+/* A heading as a card's own first child shouldn't ALSO carry
+   .static-page h2's own margin-top:20px -- that's meant for a heading
+   breaking up a page's flat flow, not one sitting inside a padded card
+   right at its top edge. Covers both Get Started's own
+   <h2 class="form-card-heading"> and Approved!'s plain <h2> sections. */
+.form-card > h2:first-child { margin-top: 0; }
 .form-card-heading { margin: 0 0 14px; font-size: 15px; font-weight: 800; color: #111827; }
 /* Sits right under the ID label, above the actual file input -- the exact
    wording the brief custom upload BUTTON used before it was reverted back
