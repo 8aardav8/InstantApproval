@@ -1406,15 +1406,25 @@ function initAdminUI() {
 // Aaron's direct request ("a new user should have a banner... urge them
 // to install the site as an app").
 const INSTALL_BANNER_DISMISSED_KEY = "iah_install_banner_dismissed";
+// Cooldown, not a permanent hide -- added 2026-08-29, real question from
+// Aaron ("if someone clicks the X and doesn't install can the banner come
+// back later?"). A one-time dismissal shouldn't mean never being offered
+// this again; it just means "not right now." Stores a timestamp (not a
+// bare flag) so it can re-show once enough time has passed, same as most
+// real install-banner implementations elsewhere on the web.
+const INSTALL_BANNER_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 function initInstallBanner() {
   const banner = document.getElementById("install-banner");
   if (!banner) return;
 
-  // Dismissed once, don't show again on this device -- a banner that
-  // reappears every single visit after someone's already said no would be
-  // pure annoyance, not "urging," at that point.
-  if (localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) === "1") return;
+  // Dismissed recently -- stay quiet for the cooldown window, but not
+  // forever. A banner that reappeared every single visit right after
+  // someone said no would be pure annoyance, not "urging" -- but never
+  // asking again at all means someone who dismissed it out of habit, or
+  // before they'd decided they liked the site, never gets a second chance.
+  const dismissedAt = parseInt(localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) || "0", 10);
+  if (dismissedAt && Date.now() - dismissedAt < INSTALL_BANNER_COOLDOWN_MS) return;
 
   // Already running installed (opened from the home-screen icon) -- never
   // show the banner at all, nothing to install.
@@ -1424,7 +1434,7 @@ function initInstallBanner() {
   if (alreadyInstalled) return;
 
   const dismiss = () => {
-    localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, "1");
+    localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, String(Date.now()));
     banner.classList.add("hidden");
   };
   document.getElementById("install-banner-dismiss").addEventListener("click", dismiss);
