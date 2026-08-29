@@ -952,6 +952,89 @@ function initAppointmentsAccordionToggle() {
   });
 }
 
+// ---------- Pull-to-refresh (2026-08-29) ----------
+// A custom gesture, not a free native browser feature -- see the HTML
+// comment on #pull-refresh-indicator for why this had to be built rather
+// than relied on (the footer-overscroll fix specifically disables the
+// native rubber-band gesture Chrome/Android would otherwise use to trigger
+// its own pull-to-refresh, and installed standalone PWAs don't reliably
+// get a native one on either platform either way). A real full
+// location.reload() on release past the threshold -- simplest way to
+// guarantee EVERYTHING is genuinely fresh (listings, admin badges,
+// appointments, favorites), matching Aaron's own explicit ask ("reload"),
+// not a partial re-fetch of just one piece of state.
+const PULL_REFRESH_THRESHOLD = 70; // px of downward drag needed to trigger a reload
+const PULL_REFRESH_MAX = 100; // visual cap so the indicator can't be dragged indefinitely
+function initPullToRefresh() {
+  const indicator = document.getElementById("pull-refresh-indicator");
+  const text = document.getElementById("pull-refresh-text");
+  if (!indicator || !text) return;
+
+  let startY = null;
+  let pulling = false;
+  let currentPull = 0;
+
+  function setPull(px) {
+    currentPull = px;
+    indicator.style.marginTop = `${-50 + px}px`;
+    text.textContent = px >= PULL_REFRESH_THRESHOLD ? "↑ Release to refresh" : "↓ Pull to refresh";
+  }
+
+  function reset() {
+    indicator.classList.remove("dragging");
+    indicator.style.marginTop = "";
+    text.textContent = "↓ Pull to refresh";
+    startY = null;
+    pulling = false;
+    currentPull = 0;
+  }
+
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      // Single-touch only (ignore pinch-zoom), and only from the very top
+      // of the page -- if there's room to scroll up first, a downward drag
+      // should scroll normally, not trigger a refresh.
+      if (e.touches.length !== 1 || window.scrollY > 0) return;
+      startY = e.touches[0].clientY;
+      pulling = true;
+      indicator.classList.add("dragging");
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!pulling || startY === null || e.touches.length !== 1) return;
+      const deltaY = e.touches[0].clientY - startY;
+      // Genuinely pulling down from the top -- claim the gesture (prevents
+      // any residual native scroll/selection behavior while dragging) and
+      // move the indicator. A negative/zero delta (finger moving up, or a
+      // normal scroll took over because more content exists) means this
+      // isn't a pull-to-refresh drag -- let it go, don't fight the page.
+      if (deltaY > 0 && window.scrollY <= 0) {
+        e.preventDefault();
+        setPull(Math.min(deltaY, PULL_REFRESH_MAX));
+      } else if (currentPull > 0) {
+        reset();
+      }
+    },
+    { passive: false }
+  );
+
+  document.addEventListener("touchend", () => {
+    if (!pulling) return;
+    if (currentPull >= PULL_REFRESH_THRESHOLD) {
+      text.textContent = "↻ Refreshing...";
+      location.reload();
+      return; // leave the indicator showing through the reload
+    }
+    reset();
+  });
+  document.addEventListener("touchcancel", reset);
+}
+
 function formatAppointmentDate(iso) {
   // "2026-09-05" -> "Fri, Sep 5, 2026". Parsed as local, not UTC -- new
   // Date("2026-09-05") would parse as UTC midnight, which can display as
@@ -1890,6 +1973,7 @@ initAdminUI();
 initLoginGate();
 initInstallUI();
 initAppointmentsAccordionToggle();
+initPullToRefresh();
 // initGetStartedForm() and initVisitorSync() both chained after loadData()
 // resolves, not called alongside it -- both need ALL_LISTINGS (property
 // dropdown / #area-checkboxes respectively) which only exist once
