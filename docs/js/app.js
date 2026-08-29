@@ -495,9 +495,11 @@ function showDetail(id) {
   // Inquire/Photo-not-working) -- jumps to Get Started with this property
   // pre-selected. onclick calls goToGetStartedFor(id) rather than a plain
   // <a href="#tab-get-started">, since the property still needs to be
-  // pre-selected in that form, not just the tab switched.
+  // pre-selected in that form, not just the tab switched. Changed from
+  // btn-outline to btn-primary (blue) the same day, per Aaron's direct
+  // request to match Inquire's own color.
   const scheduleBtn = availableOnly
-    ? `<button type="button" class="btn-outline btn-full" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule to Inspect</button>` : "";
+    ? `<button type="button" class="btn-primary btn-full" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule to Inspect</button>` : "";
   // Livability deliberately NOT shown here -- per Aaron's 2026-08-21 request,
   // it stays on the card only, not on the detail/properties page.
 
@@ -1504,9 +1506,15 @@ function refreshCardGridAndMap() {
   if (isMapAccordionOpen()) renderMapMarkers();
 }
 
-document.getElementById("sort-apply").addEventListener("click", () => {
+// Sort applies live on selection, no Apply button -- added 2026-08-29 per
+// Aaron's direct request, matching the exact same live-apply pattern the
+// filter controls below already use (see applyFiltersFromControls' own
+// comment). Deliberately does NOT close sort-panel on change, same reason
+// as filters: closing it would hide the dropdown the moment you pick an
+// option, which reads as the control vanishing rather than confirming
+// the choice.
+document.getElementById("f-sort").addEventListener("change", () => {
   filterState.sort = document.getElementById("f-sort").value;
-  document.getElementById("sort-panel").classList.add("hidden");
   refreshCardGridAndMap();
 });
 // Filters apply live as each control changes, per Aaron's 2026-08-22
