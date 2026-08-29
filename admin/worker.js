@@ -574,24 +574,27 @@ async function handleAdminLookup(request, env, listingId) {
   }
 }
 
-// ---------- job 6: admin bulk appointments lookup (2026-08-29) ----------
+// ---------- job 6: admin bulk activity lookup (2026-08-29) ----------
 // Aaron's request, admin-only: a small badge on every card showing how many
-// people have scheduled an appointment there, plus who/when/contact-info on
-// the detail page. Same admin auth as job 1 (verifyIdToken against
-// AARON_EMAIL) -- this returns real names/emails/phones across ALL
-// visitors, not just the caller's own, so it must never be reachable
-// without a verified admin token.
+// people have an appointment scheduled AND a separate badge for how many
+// have favorited it, plus who/when/contact-info (appointments) and who
+// (favorites, with contact info too) on the detail page. Same admin auth
+// as job 1 (verifyIdToken against AARON_EMAIL) -- this returns real names/
+// emails/phones across ALL visitors, not just the caller's own, so it must
+// never be reachable without a verified admin token.
 //
-// Deliberately ONE bulk read of the whole App: Logins tab (columns B-X:
-// Email, Phone, Name, and the 10 appointment slots), not one read per
-// listing -- with ~145+ rows and potentially hundreds of listings, a
-// per-listing query would mean a query explosion for something that's
-// cheap to compute from one full-tab read. The front end groups the flat
-// result by address itself (for the badge counts and the per-listing
-// detail list) and decides what counts as "still upcoming" -- this
-// endpoint returns everything it finds, past or future, same "return raw,
-// let the client filter" split already used elsewhere in this file.
-async function handleAdminAppointments(request, env) {
+// Deliberately ONE bulk read of the whole App: Logins tab (columns B-Y:
+// Email, Phone, Name, the 10 appointment slots, and Favorites), not one
+// read per listing -- with ~145+ rows and potentially hundreds of
+// listings, a per-listing query would mean a query explosion for something
+// cheap to compute from one full-tab read. The front end groups both flat
+// results by address itself (for badge counts and per-listing detail
+// lists) and decides what counts as "still upcoming" for appointments --
+// this endpoint returns everything it finds, past or future, same
+// "return raw, let the client filter" split already used elsewhere here.
+// Favorites have no date at all (an unfavorite just removes it from the
+// list entirely, nothing to filter by recency), so those are returned as-is.
+async function handleAdminActivity(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
   if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
@@ -601,17 +604,18 @@ async function handleAdminAppointments(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!B:X`);
+    const range = encodeURIComponent(`${LOGINS_TAB}!B:Y`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!res.ok) throw new Error(`admin appointments read failed: ${await res.text()}`);
+    if (!res.ok) throw new Error(`admin activity read failed: ${await res.text()}`);
     const data = await res.json();
     const rows = data.values || [];
 
     // Range starts at column B, so index 0 here = column B.
     // B=0(Email) C=1 D=2(Phone) E=3(Name) F=4 G=5 H=6 I=7 J=8 K=9 L=10 M=11
-    // N=12 -- Appointment slots (O-X) start at index 13, 10 in a row.
+    // N=12 -- Appointment slots (O-X) at indices 13-22, Favorites (Y) at 23.
     const appointments = [];
+    const favorites = [];
     for (let i = 1; i < rows.length; i++) { // row 0 is the header
       const row = rows[i];
       const email = (row[0] || "").trim();
@@ -625,8 +629,15 @@ async function handleAdminAppointments(request, env) {
         const date = (parts[1] || "").trim();
         if (address && date) appointments.push({ address, date, name, email, phone });
       }
+      const favRaw = (row[23] || "").trim();
+      if (favRaw) {
+        for (const address of favRaw.split(" | ")) {
+          const trimmed = address.trim();
+          if (trimmed) favorites.push({ address: trimmed, name, email, phone });
+        }
+      }
     }
-    return jsonResponse({ appointments });
+    return jsonResponse({ appointments, favorites });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -694,6 +705,24 @@ async function handleSyncVisitor(request, env) {
       body: JSON.stringify({ range: `${LOGINS_TAB}!G${row}:M${row}`, values }),
     });
     if (!res.ok) throw new Error(`sync write failed: ${await res.text()}`);
+
+    // Favorites, added 2026-08-29 per Aaron's direct request (admin
+    // visibility into who's favorited a property) -- column Y, not
+    // adjacent to G:M (N through X sit in between, untouched), so this is
+    // a separate write. Guarded on Array.isArray so older cached
+    // front-end code that doesn't send `favorites` at all can't
+    // accidentally wipe this column with an unconditional empty write.
+    if (Array.isArray(body.favorites)) {
+      const favRange = encodeURIComponent(`${LOGINS_TAB}!Y${row}:Y${row}`);
+      const favUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${favRange}?valueInputOption=RAW`;
+      const favRes = await fetch(favUrl, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `${LOGINS_TAB}!Y${row}:Y${row}`, values: [[body.favorites.join(" | ")]] }),
+      });
+      if (!favRes.ok) throw new Error(`favorites sync write failed: ${await favRes.text()}`);
+    }
+
     return jsonResponse({ ok: true, action: "updated", row });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -1016,8 +1045,8 @@ export default {
       return handleUpdateAppointmentDate(request, env);
     }
 
-    if (url.pathname === "/admin-appointments" && request.method === "GET") {
-      return handleAdminAppointments(request, env);
+    if (url.pathname === "/admin-activity" && request.method === "GET") {
+      return handleAdminActivity(request, env);
     }
 
     if (request.method === "GET") {
