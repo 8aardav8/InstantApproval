@@ -166,11 +166,23 @@ function buildListingCard(listing) {
   card.className = "card";
   card.addEventListener("click", () => showDetail(listing.id));
 
+  // Photo-only positioning context, added 2026-08-29 -- real reported bug:
+  // the heart/badges below were absolutely positioned relative to .card as
+  // a whole, which happened to look right for the heart (the photo sits
+  // first, at the card's own top edge) but put the appointments badge at
+  // the bottom of the WHOLE card (including the price/beds text below the
+  // photo), not the bottom of the photo itself, per Aaron's explicit ask.
+  // Wrapping just the image gives these an anchor scoped to the photo only
+  // -- same pattern already used for the detail view's .detail-photo-wrap.
+  const photoWrap = document.createElement("div");
+  photoWrap.className = "card-photo-wrap";
+  card.appendChild(photoWrap);
+
   const img = document.createElement("img");
   img.loading = "lazy";
   img.src = streetViewUrl(listing.address, 400, 300);
   img.alt = listing.address;
-  card.appendChild(img);
+  photoWrap.appendChild(img);
 
   // Heart/favorite toggle, added 2026-08-29. stopPropagation so tapping the
   // heart doesn't also trigger the card's own click-to-detail handler above.
@@ -201,22 +213,24 @@ function buildListingCard(listing) {
       renderFavoritesGrid();
     }
   });
-  card.appendChild(heartBtn);
+  photoWrap.appendChild(heartBtn);
 
-  // Admin-only badges, rearranged 2026-08-29 per Aaron's direct request --
-  // favorites (red) sits right under the heart, appointments (blue) at the
-  // bottom-right -- showing how many people have favorited this property
-  // and, separately, how many have an active appointment scheduled here.
-  // Read from ADMIN_APPOINTMENTS_BY_ADDRESS / ADMIN_FAVORITES_BY_ADDRESS
-  // (the bulk, all-visitors views, both refreshed together via
-  // refreshAdminActivity()) -- completely separate from MY_APPOINTMENTS
-  // below, which is this visitor's own and is all a regular (non-admin)
-  // visitor ever sees on a card. getStoredAdminToken() returning falsy for
-  // anyone who isn't Aaron, signed in, is what keeps these invisible to
-  // everyone else -- the data itself is also never even fetched unless a
-  // verified admin token exists (see refreshAdminActivity), so there's
-  // nothing to leak either way. Each badge only renders at all when its
-  // own count is actually > 0.
+  // Admin-only badges. Rearranged twice now: first (2026-08-29) to favorites
+  // under the heart + appointments at the card's own bottom-right; then
+  // (same day, real reported bug) moved into photoWrap above so BOTH anchor
+  // to the bottom-right of the PHOTO specifically, not the whole card, and
+  // restacked so appointments (blue) sits directly below favorites (red) --
+  // see .admin-favorite-badge/.admin-appointment-badge in style.css for the
+  // actual bottom offsets. Read from ADMIN_APPOINTMENTS_BY_ADDRESS /
+  // ADMIN_FAVORITES_BY_ADDRESS (the bulk, all-visitors views, both
+  // refreshed together via refreshAdminActivity()) -- completely separate
+  // from MY_APPOINTMENTS below, which is this visitor's own and is all a
+  // regular (non-admin) visitor ever sees on a card. getStoredAdminToken()
+  // returning falsy for anyone who isn't Aaron, signed in, is what keeps
+  // these invisible to everyone else -- the data itself is also never even
+  // fetched unless a verified admin token exists (see refreshAdminActivity),
+  // so there's nothing to leak either way. Each badge only renders at all
+  // when its own count is actually > 0.
   if (getStoredAdminToken()) {
     const adminFavs = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
     if (adminFavs.length > 0) {
@@ -224,7 +238,7 @@ function buildListingCard(listing) {
       favBadge.className = "admin-favorite-badge";
       favBadge.textContent = String(adminFavs.length);
       favBadge.title = `Favorited by ${adminFavs.length} visitor${adminFavs.length === 1 ? "" : "s"} (admin only)`;
-      card.appendChild(favBadge);
+      photoWrap.appendChild(favBadge);
     }
     const adminAppts = ADMIN_APPOINTMENTS_BY_ADDRESS[listing.address] || [];
     if (adminAppts.length > 0) {
@@ -232,7 +246,7 @@ function buildListingCard(listing) {
       badge.className = "admin-appointment-badge";
       badge.textContent = String(adminAppts.length);
       badge.title = `${adminAppts.length} scheduled appointment${adminAppts.length === 1 ? "" : "s"} (admin only)`;
-      card.appendChild(badge);
+      photoWrap.appendChild(badge);
     }
   }
 
