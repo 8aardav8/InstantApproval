@@ -471,9 +471,16 @@
       </button>
       <div id="appointments-banner-wrap" class="appointments-banner-wrap hidden"></div>
     </div>
-    <div class="form-card">
-      <h1 class="page-title">Schedule Your Inspection</h1>
-      <form id="get-started-form">
+    <h1 class="page-title">Schedule Your Inspection</h1>
+    <!-- Split into separate cards 2026-08-29, per Aaron's direct request --
+         the whole form used to be ONE .form-card, which read as "a wall of
+         text" and felt more intimidating than it should. Still ONE real
+         <form> underneath (so a single Submit still collects/validates
+         everything together) -- just visually grouped into distinct cards
+         now, same .form-card look reused per group instead of one giant box. -->
+    <form id="get-started-form">
+      <div class="form-card">
+        <h2 class="form-card-heading">Property &amp; Date</h2>
         <label>Property Address <span class="required">Required</span>
           <!-- Rebuilt 2026-08-29 as a type-to-filter autocomplete -- the
                plain <select> below listed every Available property in one
@@ -512,15 +519,32 @@
              confirm" half stays where it was, see .get-started-policy
              below and the new post-submit popup. -->
         <p class="get-started-hours-note">You're welcome to inspect the property any time between <strong>9 AM and 8 PM</strong> on the date you choose.</p>
-        <label>Full Name <span class="required">Required</span>
+      </div>
+
+      <div class="form-card">
+        <h2 class="form-card-heading">Your Info</h2>
+        <!-- Flat line-drawing icons added to Name/Email/Phone 2026-08-29,
+             per Aaron's direct request, matching the camera icon already
+             added to the ID field -- same stroke-SVG style throughout.
+             Person icon reuses the exact same shape as the Showings nav
+             tab's own icon, for a real, deliberate visual echo rather than
+             a coincidence. -->
+        <label>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Full Name <span class="required">Required</span>
           <input type="text" id="get-started-name" name="name" required>
         </label>
-        <label>Email <span class="required">Required</span>
+        <label>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>Email <span class="required">Required</span>
           <input type="email" id="get-started-email" name="email" required>
         </label>
-        <label>Phone Number <span class="required">Required</span>
+        <label>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Phone Number <span class="required">Required</span>
           <input type="tel" id="get-started-phone" name="phone" required>
         </label>
+      </div>
+
+      <div class="form-card">
+        <h2 class="form-card-heading">ID Verification</h2>
         <label>
           <!-- Camera icon added 2026-08-29 (flat line-drawing style, same
                stroke SVG already used for the Photo-link-not-working
@@ -533,6 +557,11 @@
                input trick, no custom click-to-open button -- just this
                icon decorating the label. -->
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Clear Photo of Valid ID <span class="required">Required</span>
+          <!-- Added 2026-08-29 -- Aaron wanted the removed custom button's
+               own wording ("Take or Upload Photo") kept somewhere visible
+               next to the native control, even after the button itself was
+               reverted, rather than losing that phrase entirely. -->
+          <p class="get-started-id-hint">Take or Upload Photo</p>
           <!-- capture="environment" removed 2026-08-29, real reported bug:
                that attribute forces mobile browsers to skip their normal
                picker and launch the camera directly, with no option to
@@ -555,23 +584,24 @@
                input's own display can be easy to miss/unclear on mobile. -->
           <p id="get-started-id-status" class="get-started-id-status hidden"></p>
         </label>
-        <button type="submit" class="btn-primary full-width">Schedule It</button>
-      </form>
-      <div id="get-started-status" class="form-status"></div>
-      <!-- Static policy text, added 2026-08-29 per Aaron's direct wording,
-           trimmed the same day -- the visiting-hours half moved up to sit
-           under the date picker (see above); this half stays here,
-           always visible before the form is even filled out, and is also
-           repeated in the post-submit "Booked!" popup below. -->
-      <p class="get-started-policy">Please call us to confirm one hour in advance of arrival.</p>
-      <!-- Call/Text buttons, added 2026-08-29 per Aaron's direct request --
-           placed right after the policy paragraph. Same tel:/sms: pattern
-           and phone number (AARON_PHONE) already used everywhere else on
-           the site (5 Easy Steps, detail view). -->
-      <div class="get-started-contact-buttons">
-        <a class="btn-outline" href="tel:6184184180">📞 Call</a>
-        <a class="btn-outline" href="sms:6184184180">💬 Text</a>
       </div>
+
+      <button type="submit" class="btn-primary full-width">Schedule It</button>
+    </form>
+    <div id="get-started-status" class="form-status"></div>
+    <!-- Static policy text, added 2026-08-29 per Aaron's direct wording,
+         trimmed the same day -- the visiting-hours half moved up to sit
+         under the date picker (see above); this half stays here,
+         always visible before the form is even filled out, and is also
+         repeated in the post-submit "Booked!" popup below. -->
+    <p class="get-started-policy">Please call us to confirm one hour in advance of arrival.</p>
+    <!-- Call/Text buttons, added 2026-08-29 per Aaron's direct request --
+         placed right after the policy paragraph. Same tel:/sms: pattern
+         and phone number (AARON_PHONE) already used everywhere else on
+         the site (5 Easy Steps, detail view). -->
+    <div class="get-started-contact-buttons">
+      <a class="btn-outline" href="tel:6184184180">📞 Call</a>
+      <a class="btn-outline" href="sms:6184184180">💬 Text</a>
     </div>
   </section>
 
