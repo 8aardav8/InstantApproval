@@ -35,6 +35,15 @@ let GENERATED_AT = null;
 let MY_APPOINTMENTS = [];
 let ADMIN_APPOINTMENTS_BY_ADDRESS = {};
 let ADMIN_FAVORITES_BY_ADDRESS = {};
+// Public "most popular" sort support, added 2026-08-29 per Aaron's direct
+// request. Deliberately NOT the same data as ADMIN_FAVORITES_BY_ADDRESS
+// above -- that one carries real visitor names/emails/phones and is
+// correctly gated behind an admin token; FAVORITE_COUNTS is a bare
+// per-address count with zero visitor identity in it, fetched from its own
+// public /favorite-counts endpoint, so every visitor can sort by it without
+// crossing the privacy line the rest of this build has drawn everywhere
+// else (counts are fine, identities are gated).
+let FAVORITE_COUNTS = {};
 // Availability defaults to "Available" again (2026-08-22) -- briefly
 // changed to "Any" on 2026-08-21, reverted per Aaron's direct request the
 // next day. area is a checkbox multi-select (array), not free-text.
@@ -66,6 +75,14 @@ async function loadData() {
   refreshAdminActivity().then(() => {
     renderCardGrid();
     renderFavoritesGrid();
+  });
+  refreshFavoriteCounts().then(() => {
+    // Only worth a re-render if "Most popular" is the active sort --
+    // otherwise this data doesn't affect what's currently on screen.
+    if (filterState.sort === "popular") {
+      renderCardGrid();
+      renderFavoritesGrid();
+    }
   });
 }
 
@@ -142,6 +159,23 @@ function sortListings(listings) {
     sorted.sort((a, b) => (parseMoney(a.monthly) ?? Infinity) - (parseMoney(b.monthly) ?? Infinity));
   } else if (filterState.sort === "down-asc") {
     sorted.sort((a, b) => (parseMoney(a.down) ?? Infinity) - (parseMoney(b.down) ?? Infinity));
+  } else if (filterState.sort === "popular") {
+    // Most favorites first (FAVORITE_COUNTS -- public, count-only, see its
+    // own comment). A listing with no favorites at all is simply absent
+    // from FAVORITE_COUNTS, not an explicit 0 -- `|| 0` covers that. Ties
+    // (including the common "0 vs 0" case) fall back to the same
+    // recency ordering as the default sort, so the whole list still reads
+    // sensibly below whatever few listings actually have real favorites.
+    sorted.sort((a, b) => {
+      const diff = (FAVORITE_COUNTS[b.address] || 0) - (FAVORITE_COUNTS[a.address] || 0);
+      if (diff !== 0) return diff;
+      const da = parseListingDate(a.lastUpdate);
+      const db = parseListingDate(b.lastUpdate);
+      if (da && db) return db - da;
+      if (da) return -1;
+      if (db) return 1;
+      return 0;
+    });
   } else {
     // Default: most recently updated first. Listings with an unparseable
     // date sort to the end rather than silently to the top/bottom at random.
@@ -1188,6 +1222,24 @@ async function refreshAdminActivity() {
   }
 }
 
+// Public "most popular" sort data, added 2026-08-29 per Aaron's direct
+// request -- fetched for EVERY visitor, not just admin (see
+// FAVORITE_COUNTS_ENDPOINT's own comment for why this is safe/separate
+// from the admin-only bulk view above: bare counts only, no identity).
+async function refreshFavoriteCounts() {
+  try {
+    const res = await fetch(FAVORITE_COUNTS_ENDPOINT);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    FAVORITE_COUNTS = data.counts || {};
+  } catch (err) {
+    // Best-effort -- a failed fetch just means "Most popular" sorts as if
+    // every listing had 0 favorites (a stable, harmless fallback), not a
+    // visitor-facing error.
+    FAVORITE_COUNTS = {};
+  }
+}
+
 // Added 2026-08-29 per Aaron's request -- once someone's uploaded an ID,
 // they shouldn't have to re-upload the same file to book a second (or
 // third...) appointment in the same visit. In-memory only (a plain JS
@@ -1508,6 +1560,10 @@ const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
 // Bulk admin activity (appointments + favorites across all visitors),
 // added 2026-08-29 -- see admin/worker.js job 6 (handleAdminActivity).
 const ADMIN_ACTIVITY_ENDPOINT = `${ADMIN_API_URL}/admin-activity`;
+// Public per-address favorite COUNTS (no auth, no identity) -- see
+// admin/worker.js's handleFavoriteCounts, added right alongside
+// handleAdminActivity but deliberately a separate, unauthenticated route.
+const FAVORITE_COUNTS_ENDPOINT = `${ADMIN_API_URL}/favorite-counts`;
 
 // ---------- Login gate (2026-08-27) ----------
 // Same Worker as the admin API above, new route -- no auth needed, this is
