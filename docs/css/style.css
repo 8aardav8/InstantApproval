@@ -283,7 +283,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
      which is contrast-independent of whatever's behind it -- plus a white
      ring so it also stands out against the site's own light body
      background if it's ever seen off the photo. */
-  position: absolute; margin: 10px; background: var(--navy); color: #fff; border: 2px solid #fff;
+  /* top: 0; left: 0; added 2026-08-29, real reported bug: "position:
+     absolute" with margin but no inset (top/left/right/bottom) values
+     falls back to the element's normal in-flow ("static") position --
+     margin alone never creates a corner-floating effect. This button had
+     been silently rendering in plain document flow instead of floating
+     over the top-left of the photo, likely since whichever edit last
+     touched this rule (its own history shows a background-color pass on
+     2026-08-22, not a position change) -- undetected until Aaron reported
+     the arrow "not appearing where it used to be." */
+  position: absolute; top: 0; left: 0; margin: 10px; background: var(--navy); color: #fff; border: 2px solid #fff;
   border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
@@ -410,22 +419,22 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appointment-actions .btn-small.btn-danger { color: #c0293c; border-color: #f0c3ca; }
 .appt-date-picker { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
 
-/* Admin-only badges, added 2026-08-29 -- opposite the heart (top-left,
-   heart is top-right). Two independent counts (appointments in red,
-   favorites in pink -- deliberately distinct colors so they're never
-   confused for one number), each rendered only when its own count is > 0.
-   .stacked pushes the favorites badge below the appointments one when
-   both are present, so they never overlap. */
+/* Admin-only badges, rearranged 2026-08-29 per Aaron's direct request --
+   favorites (red) sits right under the heart, opposite corner from
+   appointments (blue) at the bottom-right. Two independent counts, each
+   rendered only when its own count is > 0 -- no longer need a .stacked
+   variant now that they're in two different corners rather than sharing
+   one. */
 .admin-appointment-badge, .admin-favorite-badge {
-  position: absolute; top: 10px; left: 10px; z-index: 5;
+  position: absolute; right: 10px; z-index: 5;
   min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-.admin-appointment-badge { background: #c0293c; }
-.admin-favorite-badge { background: #e0245e; }
-.admin-favorite-badge.stacked { top: 40px; }
+/* top: 50px = heart's own top (10px) + its height (34px) + a 6px gap. */
+.admin-favorite-badge { top: 50px; background: #c0293c; }
+.admin-appointment-badge { bottom: 10px; background: var(--blue); }
 
 /* Detail-page "Scheduled Appointments" / "Favorited By" lists, added
    2026-08-29 -- same visual language as the existing admin-info-* blocks
