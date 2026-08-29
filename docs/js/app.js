@@ -1167,6 +1167,14 @@ function initGetStartedForm() {
 
   populateGetStartedPropertyDropdown();
 
+  // "Booked!" confirmation popup, added 2026-08-29 per Aaron's direct
+  // request -- wired once here (initGetStartedForm only ever runs once,
+  // see the bottom init sequence), shown on every successful submission
+  // via showBookingConfirmPopup() below.
+  document.getElementById("booking-confirm-dismiss").addEventListener("click", () => {
+    document.getElementById("booking-confirm-popup").classList.add("hidden");
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     status.textContent = "Uploading...";
@@ -1174,6 +1182,7 @@ function initGetStartedForm() {
       const res = await fetch(UPLOAD_ID_ENDPOINT, { method: "POST", body: new FormData(form) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       status.textContent = "Thanks! We've got your info and ID on file.";
+      document.getElementById("booking-confirm-popup").classList.remove("hidden");
       form.reset();
       prefillGetStartedContactFields(); // reset() above wipes the prefilled contact fields too -- put them back
       // reset() also clears the file input -- re-apply the same ID photo
