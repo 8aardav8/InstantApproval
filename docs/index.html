@@ -410,8 +410,9 @@
     <!-- "Your Appointments" section, moved to the TOP 2026-08-29 per
          Aaron's direct request ("rather than banners at the bottom... use
          property cards at the top"), then rebuilt the same day into a
-         collapsed-by-default accordion behind a "See your N booked
-         viewings" badge, per his follow-up request -- cards start hidden
+         collapsed-by-default accordion behind an "N viewings scheduled"
+         badge (label wording tightened again same day, per Aaron's direct
+         request), per his follow-up request -- cards start hidden
          so this section doesn't push the actual booking form down the
          page for a visitor who's just glancing at Get Started, not
          checking existing bookings. Populated by renderMyAppointmentCards()
@@ -435,14 +436,13 @@
          widths now match exactly. -->
     <div id="appointments-accordion" class="appointments-accordion hidden">
       <button type="button" id="appointments-accordion-toggle" class="appointments-accordion-toggle">
-        <span id="appointments-accordion-label">See your booked viewings</span>
+        <span id="appointments-accordion-label">Viewings scheduled</span>
         <span class="appointments-accordion-chevron">▾</span>
       </button>
       <div id="appointments-banner-wrap" class="appointments-banner-wrap hidden"></div>
     </div>
     <div class="form-card">
-      <h1 class="page-title">Get Started</h1>
-      <p>To view the inside of a property in person or schedule an inspection, we'll need a copy of your ID on file for our entry log.</p>
+      <h1 class="page-title">Schedule Your Inspection</h1>
       <form id="get-started-form">
         <label>Property Address <span class="required">Required</span>
           <!-- Rebuilt 2026-08-29 as a type-to-filter autocomplete -- the
@@ -473,6 +473,10 @@
         <label>Phone Number <span class="required">Required</span>
           <input type="tel" id="get-started-phone" name="phone" required>
         </label>
+        <!-- Moved to sit immediately above the ID field 2026-08-29, per
+             Aaron's direct request (previously sat under the page header,
+             disconnected from the field it actually explains). -->
+        <p>To view the inside of a property in person or schedule an inspection, we'll need a copy of your ID on file for our entry log.</p>
         <label>Clear Photo of Valid ID <span class="required">Required</span>
           <!-- capture="environment" removed 2026-08-29, real reported bug:
                that attribute forces mobile browsers to skip their normal
