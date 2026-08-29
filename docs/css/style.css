@@ -366,6 +366,25 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* ---------- buyer form ---------- */
 .form-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
 
+/* Get Started -- Call/Text buttons + appointments banner, added 2026-08-29. */
+.get-started-contact-buttons { display: flex; gap: 10px; margin-top: 14px; }
+.get-started-contact-buttons .btn-outline { flex: 1; text-align: center; }
+
+.appointments-banner-wrap { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.appointment-banner {
+  background: #f0f3fb; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; display: flex; flex-direction: column; gap: 8px;
+}
+.appointment-banner .appointment-address { font-weight: 700; font-size: 14px; }
+.appointment-banner .appointment-date { font-size: 13px; color: var(--gray-text); }
+.appointment-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.appointment-actions .btn-small {
+  padding: 8px 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: #fff; color: #111827; cursor: pointer;
+}
+.appointment-actions .btn-small.btn-danger { color: #c0293c; border-color: #f0c3ca; }
+.appt-date-picker { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
+
 /* Get Started property autocomplete, added 2026-08-29 -- replaces a plain
    <select> that listed every Available property in one long native
    dropdown. */
