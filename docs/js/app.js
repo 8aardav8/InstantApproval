@@ -741,15 +741,78 @@ function mapPopupContent(listing) {
 }
 
 // ---------- 5 Easy Steps ----------
+// Pulled the actual step-switching logic out into its own function,
+// 2026-08-29, so both a tab click and a swipe gesture (added the same day,
+// see initStepSwipe below) drive the exact same code path rather than
+// duplicating the show/hide logic in two places.
+function activateStep(stepNumber) {
+  const target = document.querySelector(`.step-content[data-step="${stepNumber}"]`);
+  if (!target) return; // out of range -- swipe past the first/last step, nothing to do
+  document.querySelectorAll(".step-tab").forEach((b) => b.classList.toggle("active", b.dataset.step === String(stepNumber)));
+  document.querySelectorAll(".step-content").forEach((c) => c.classList.add("hidden"));
+  target.classList.remove("hidden");
+}
+
+function getCurrentStep() {
+  const activeTab = document.querySelector(".step-tab.active");
+  return activeTab ? parseInt(activeTab.dataset.step, 10) : 1;
+}
+
 function initStepTabs() {
   document.querySelectorAll(".step-tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".step-tab").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".step-content").forEach((c) => c.classList.add("hidden"));
-      btn.classList.add("active");
-      document.querySelector(`.step-content[data-step="${btn.dataset.step}"]`).classList.remove("hidden");
-    });
+    btn.addEventListener("click", () => activateStep(parseInt(btn.dataset.step, 10)));
   });
+}
+
+// Swipe left/right to move between steps, added 2026-08-29 per Aaron's
+// direct request. Scoped to #tab-steps as a whole (not just .step-content)
+// so a swipe anywhere on the page -- not just precisely over the text --
+// works, matching how a real swipeable card UI usually behaves. Requires
+// the gesture to be predominantly horizontal (deltaX clearly bigger than
+// deltaY) before claiming it, so an ordinary vertical scroll on a long
+// step's text is never mistaken for a swipe. Clamps at the first/last
+// step rather than wrapping around -- activateStep() itself already
+// no-ops safely on an out-of-range number, so the clamp here is just to
+// avoid a pointless activateStep(0) or activateStep(6) call.
+const SWIPE_THRESHOLD = 50; // px of horizontal movement needed to count as a real swipe
+function initStepSwipe() {
+  const section = document.getElementById("tab-steps");
+  if (!section) return;
+  const stepCount = document.querySelectorAll(".step-tab").length;
+  let startX = null;
+  let startY = null;
+
+  section.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  // Light visual feedback once the drag clearly reads as horizontal -- the
+  // current step dips in opacity (see .step-content.swiping in style.css)
+  // so a real drag doesn't feel like it did nothing until release.
+  section.addEventListener("touchmove", (e) => {
+    if (startX === null || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    const activeContent = document.querySelector(".step-content:not(.hidden)");
+    if (activeContent) activeContent.classList.toggle("swiping", Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy));
+  }, { passive: true });
+
+  section.addEventListener("touchend", (e) => {
+    const activeContent = document.querySelector(".step-content:not(.hidden)");
+    if (activeContent) activeContent.classList.remove("swiping");
+    if (startX === null || e.changedTouches.length !== 1) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startX = null;
+    startY = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return; // not a real horizontal swipe
+    const current = getCurrentStep();
+    const next = dx < 0 ? current + 1 : current - 1; // swipe left = next step, swipe right = previous
+    if (next < 1 || next > stepCount) return;
+    activateStep(next);
+  }, { passive: true });
 }
 
 // ---------- Get Started form (rebuilt 2026-08-29 -- real backend now, was
@@ -2058,6 +2121,7 @@ function initInstallUI() {
 initNav();
 initDrawer();
 initStepTabs();
+initStepSwipe();
 initAdminUI();
 initLoginGate();
 initInstallUI();
