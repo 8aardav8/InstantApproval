@@ -543,7 +543,17 @@ function initStepTabs() {
 
 // ---------- Get Started form (rebuilt 2026-08-29 -- real backend now, was
 // UI-only as "Buyer Info" before) ----------
-const UPLOAD_ID_ENDPOINT = `${ADMIN_API_URL}/upload-id`;
+// NOTE: UPLOAD_ID_ENDPOINT itself is declared down near ADMIN_API_URL (see
+// below) -- it used to be declared right here, which was a real bug: this
+// section runs before ADMIN_API_URL's own `const` is reached further down
+// the file, so referencing it here threw "Cannot access 'ADMIN_API_URL'
+// before initialization" on every page load. That's a synchronous,
+// uncaught top-level error, which aborted the ENTIRE rest of this script
+// -- including the call to initLoginGate() at the bottom of the file --
+// which is why the gate's submit button never got its JS handler and fell
+// through to a native form submission (page "reload", fields cleared,
+// visitor never let in). Fixed 2026-08-28 by moving the declaration to
+// after ADMIN_API_URL actually exists.
 // Set by goToGetStartedFor() (called from the detail page's "Schedule to
 // Inspect" button) -- read once by populateGetStartedPropertyDropdown()
 // the next time it runs, then cleared, so it doesn't stick around and
@@ -814,6 +824,7 @@ const ADMIN_TOKEN_STORAGE_KEY = "admin_id_token";
 // Same Worker as the admin API above, new route -- no auth needed, this is
 // the public lead-capture gate (see admin/worker.js's handleGateLogin).
 const GATE_LOGIN_ENDPOINT = `${ADMIN_API_URL}/gate-login`;
+const UPLOAD_ID_ENDPOINT = `${ADMIN_API_URL}/upload-id`;
 const GATE_STORAGE_KEY = "iah_gate_passed";
 // Added 2026-08-29 alongside visitor filter-sync -- the gate previously
 // only stored a bare "passed" flag, with no way to attribute a later
