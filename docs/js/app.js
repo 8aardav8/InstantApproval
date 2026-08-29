@@ -906,15 +906,26 @@ function localTodayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Added 2026-08-29 per Aaron's direct request ("Calendar for scheduling
-// should only display today, and the following 10 days") -- generalizes
-// localTodayISO() to compute an offset date, used for the date pickers'
-// `max` attribute. Same local Y/M/D approach, not UTC, for the identical
-// reason localTodayISO() itself exists.
-function localDatePlusDays(days) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+// Replaces the native <input type="date"> on both date pickers, added
+// 2026-08-29 -- real reported bug: several mobile browsers render their own
+// full native calendar UI regardless of min=/max=, so a visitor could still
+// see (and scroll through) months of dates even though only an 11-day
+// window (today + 10) was ever valid. A closed <select> of exactly those 11
+// options makes an out-of-range date structurally impossible to pick,
+// rather than relying on native min/max enforcement that isn't consistent
+// across browsers. Returns {value, label} pairs -- value is the plain ISO
+// date the rest of this codebase already expects everywhere (Sheet writes,
+// comparisons), label is what the visitor actually reads.
+function buildDateOptions() {
+  const options = [];
+  for (let i = 0; i <= 10; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const formatted = d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    options.push({ value, label: i === 0 ? `Today (${formatted})` : formatted });
+  }
+  return options;
 }
 
 // ---------- Appointments (redesigned 2026-08-29) ----------
@@ -1131,15 +1142,23 @@ function buildAppointmentBanner(appt, email) {
   changeBtn.className = "btn-small";
   changeBtn.textContent = "Change Date";
 
-  const datePicker = document.createElement("input");
-  datePicker.type = "date";
+  // Rebuilt as a closed <select> 2026-08-29 -- same fix, same reason as the
+  // main booking date field (see buildDateOptions()'s own comment): some
+  // mobile browsers show a full native calendar for <input type="date">
+  // regardless of min=/max=. appt.date is guaranteed to be one of these 11
+  // options -- it can only ever be today or later (past appointments are
+  // filtered out before this banner is ever built, see refreshMyAppointments)
+  // and can only ever be closer than the original 10-day cap it was booked
+  // under, never farther.
+  const datePicker = document.createElement("select");
   datePicker.className = "appt-date-picker hidden";
-  datePicker.min = localTodayISO();
-  // Same 10-day upper bound as the initial booking date field, added
-  // 2026-08-29 per Aaron's direct request -- rescheduling shouldn't be
-  // able to reach further out than a fresh booking could.
-  datePicker.max = localDatePlusDays(10);
-  datePicker.value = appt.date;
+  for (const { value, label } of buildDateOptions()) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    if (value === appt.date) opt.selected = true;
+    datePicker.appendChild(opt);
+  }
 
   changeBtn.addEventListener("click", () => {
     const showing = !datePicker.classList.contains("hidden");
@@ -1149,7 +1168,7 @@ function buildAppointmentBanner(appt, email) {
 
   datePicker.addEventListener("change", async () => {
     const newDate = datePicker.value;
-    if (!newDate || newDate < localTodayISO() || newDate > localDatePlusDays(10)) return; // native min=/max= already guard this, belt-and-suspenders
+    if (!newDate || newDate === appt.date) return; // no real change, or somehow blank -- nothing to write
     changeBtn.disabled = true;
     try {
       const res = await fetch(UPDATE_APPOINTMENT_DATE_ENDPOINT, {
@@ -1301,33 +1320,26 @@ function initGetStartedForm() {
   prefillGetStartedContactFields();
   renderMyAppointmentCards();
 
-  // Don't let anyone pick a date before today. Fixed 2026-08-29, real
-  // reported bug: this previously used toISOString(), which reports the
-  // UTC date, not the visitor's own local date -- for anyone west of UTC
-  // (this site's whole US audience), UTC can already be "tomorrow" for
-  // several hours of the local evening, which would wrongly compute
-  // today's own local date as before the "min" and block it as if it were
-  // in the past. Uses localTodayISO() (local Y/M/D components) instead so
-  // "today" always means the visitor's own actual today -- shared with the
-  // appointments banner below, not duplicated.
-  const dateInput = document.getElementById("get-started-date");
-  dateInput.min = localTodayISO();
-  // Upper bound added 2026-08-29 per Aaron's direct request -- only today
-  // plus the following 10 days are choosable at all (an 11-day window).
-  dateInput.max = localDatePlusDays(10);
-  // Belt-and-suspenders on top of the native min=/max= constraints -- some
-  // mobile date pickers only grey out/block out-of-range dates in their
-  // own picker UI without necessarily stopping every path to a manually-
-  // typed out-of-range value from landing in the field. Explicitly
-  // re-validate on change and clear anything that slips through anyway.
-  dateInput.addEventListener("change", () => {
-    if (dateInput.value && (dateInput.value < localTodayISO() || dateInput.value > localDatePlusDays(10))) {
-      dateInput.value = "";
-      dateInput.setCustomValidity("Please choose a date within the next 10 days.");
-    } else {
-      dateInput.setCustomValidity("");
-    }
-  });
+  // Rebuilt 2026-08-29 as a closed <select> -- see buildDateOptions()'s own
+  // comment for why (several mobile browsers ignore <input type="date">'s
+  // min=/max= and show a full native calendar regardless). No min/max/
+  // re-validation logic needed anymore: the dropdown's own option list IS
+  // the valid range, an out-of-range value simply doesn't exist to pick.
+  // Populated once here, at init, same as this whole function only runs
+  // once -- not repopulated per tab-visit like the property dropdown below,
+  // since doing so would also reset any date the visitor already picked.
+  // A theoretical edge case this doesn't cover: a page left open across a
+  // real midnight would keep showing a now-stale "Today" as an option --
+  // low-stakes (worst case, the visitor picks a date that's already
+  // trivially just today or a day off) and not worth the UX cost of
+  // silently clearing a real in-progress selection to close it.
+  const dateSelect = document.getElementById("get-started-date");
+  for (const { value, label } of buildDateOptions()) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    dateSelect.appendChild(opt);
+  }
 
   populateGetStartedPropertyDropdown();
 
