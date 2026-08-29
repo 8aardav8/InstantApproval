@@ -387,9 +387,24 @@
       <p>To view a property in person or schedule an inspection, we'll need a copy of your ID on file first.</p>
       <form id="get-started-form">
         <label>Property Address <span class="required">Required</span>
-          <select id="get-started-property" name="property" required>
-            <option value="" selected disabled>Choose a property…</option>
-          </select>
+          <!-- Rebuilt 2026-08-29 as a type-to-filter autocomplete -- the
+               plain <select> below listed every Available property in one
+               long native dropdown, painful to scroll through on a real
+               inventory. The visible text input is what the user types
+               into; the hidden input is what actually submits (same
+               "property" field/value the Worker already expects -- an
+               address string -- so admin/worker.js needed no changes). -->
+          <div class="autocomplete-wrap">
+            <input type="text" id="get-started-property-input" placeholder="Start typing an address…" autocomplete="off" required>
+            <input type="hidden" id="get-started-property" name="property">
+            <ul id="get-started-property-options" class="autocomplete-list hidden"></ul>
+          </div>
+        </label>
+        <!-- Moved to immediately follow Property Address 2026-08-29, per
+             Aaron's direct request (was the last field, right before ID
+             upload/Submit). -->
+        <label>Preferred Inspection Date <span class="required">Required</span>
+          <input type="date" id="get-started-date" name="inspectionDate" required>
         </label>
         <label>Full Name <span class="required">Required</span>
           <input type="text" id="get-started-name" name="name" required>
@@ -401,10 +416,14 @@
           <input type="tel" id="get-started-phone" name="phone" required>
         </label>
         <label>Clear Photo of Valid ID <span class="required">Required</span>
-          <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" capture="environment" required>
-        </label>
-        <label>Preferred Inspection Date <span class="required">Required</span>
-          <input type="date" id="get-started-date" name="inspectionDate" required>
+          <!-- capture="environment" removed 2026-08-29, real reported bug:
+               that attribute forces mobile browsers to skip their normal
+               picker and launch the camera directly, with no option to
+               instead choose an existing photo/file. accept="image/*"
+               alone still restricts to image files but restores the
+               native chooser's full set of options (Take Photo / Photo
+               Library / Choose File, wording varies by OS/browser). -->
+          <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" required>
         </label>
         <button type="submit" class="btn-primary full-width">Submit</button>
       </form>
