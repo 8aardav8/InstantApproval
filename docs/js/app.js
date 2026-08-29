@@ -15,10 +15,6 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
-// TODO(kickoff): once the small serverless backend is deployed, point this
-// at its real URL (e.g. https://<worker>.<account>.workers.dev/buyer-info).
-const BUYER_INFO_ENDPOINT = "";
-
 let ALL_LISTINGS = [];
 let GENERATED_AT = null;
 // Availability defaults to "Available" again (2026-08-22) -- briefly
@@ -129,47 +125,100 @@ function sortListings(listings) {
 }
 
 // ---------- card grid ----------
+// Pulled out as its own function 2026-08-29 so both the Homes grid and the
+// new Favorites grid render cards identically -- one implementation, not
+// two copies that could drift apart.
+function buildListingCard(listing) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.addEventListener("click", () => showDetail(listing.id));
+
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.src = streetViewUrl(listing.address, 400, 300);
+  img.alt = listing.address;
+  card.appendChild(img);
+
+  // Heart/favorite toggle, added 2026-08-29. stopPropagation so tapping the
+  // heart doesn't also trigger the card's own click-to-detail handler above.
+  const heartBtn = document.createElement("button");
+  heartBtn.type = "button";
+  heartBtn.className = "card-heart" + (isFavorited(listing.id) ? " favorited" : "");
+  heartBtn.setAttribute("aria-label", "Save to favorites");
+  heartBtn.innerHTML = ICON_HEART;
+  heartBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleFavorite(listing.id);
+    heartBtn.classList.toggle("favorited", isFavorited(listing.id));
+    if (document.getElementById("tab-favorites") && !document.getElementById("tab-favorites").classList.contains("hidden")) {
+      renderFavoritesGrid();
+    }
+  });
+  card.appendChild(heartBtn);
+
+  const body = document.createElement("div");
+  body.className = "card-body";
+  // Card status line shows the LATEST UPDATE date, not first-available --
+  // per Aaron's explicit correction (default sort is also by this same
+  // field, so the visible date and the sort order agree with each other).
+  // Livability stays on the card only -- deliberately dropped from the
+  // detail view per Aaron's 2026-08-21 request.
+  // Livability display, per Aaron's explicit 2026-08-21 call: a 0 (or
+  // missing) rating shows NOTHING -- no "(0)", not even empty "()" --
+  // only a real 1-5 rating gets shown as "(N)". This is a deliberate
+  // product decision for the new site, distinct from what the live Glide
+  // app happens to render for the same data.
+  const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
+  body.innerHTML = `
+    <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
+    <div class="card-address">${escapeHtml(listing.address)}</div>
+    <div class="card-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
+    <div class="card-money">${escapeHtml(listing.down)} down</div>
+    <div class="card-money">${escapeHtml(listing.monthly)} a month</div>
+  `;
+  card.appendChild(body);
+  return card;
+}
+
 function renderCardGrid() {
   const grid = document.getElementById("card-grid");
   const empty = document.getElementById("empty-state");
   const filtered = sortListings(ALL_LISTINGS.filter(matchesFilters));
   grid.innerHTML = "";
   empty.classList.toggle("hidden", filtered.length > 0);
+  for (const listing of filtered) grid.appendChild(buildListingCard(listing));
+}
 
-  for (const listing of filtered) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.addEventListener("click", () => showDetail(listing.id));
+// ---------- Favorites (2026-08-29) ----------
+// Local-to-this-device only (localStorage), same simplicity level as the
+// gate itself -- not synced to the Sheet. A JSON array of listing ids.
+const FAVORITES_STORAGE_KEY = "iah_favorites";
+const ICON_HEART = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
 
-    const img = document.createElement("img");
-    img.loading = "lazy";
-    img.src = streetViewUrl(listing.address, 400, 300);
-    img.alt = listing.address;
-    card.appendChild(img);
-
-    const body = document.createElement("div");
-    body.className = "card-body";
-    // Card status line shows the LATEST UPDATE date, not first-available --
-    // per Aaron's explicit correction (default sort is also by this same
-    // field, so the visible date and the sort order agree with each other).
-    // Livability stays on the card only -- deliberately dropped from the
-    // detail view per Aaron's 2026-08-21 request.
-    // Livability display, per Aaron's explicit 2026-08-21 call: a 0 (or
-    // missing) rating shows NOTHING -- no "(0)", not even empty "()" --
-    // only a real 1-5 rating gets shown as "(N)". This is a deliberate
-    // product decision for the new site, distinct from what the live Glide
-    // app happens to render for the same data.
-    const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
-    body.innerHTML = `
-      <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
-      <div class="card-address">${escapeHtml(listing.address)}</div>
-      <div class="card-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
-      <div class="card-money">${escapeHtml(listing.down)} down</div>
-      <div class="card-money">${escapeHtml(listing.monthly)} a month</div>
-    `;
-    card.appendChild(body);
-    grid.appendChild(card);
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || "[]");
+  } catch (e) {
+    return [];
   }
+}
+function isFavorited(id) {
+  return getFavorites().includes(id);
+}
+function toggleFavorite(id) {
+  const favs = getFavorites();
+  const i = favs.indexOf(id);
+  if (i === -1) favs.push(id); else favs.splice(i, 1);
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favs));
+}
+function renderFavoritesGrid() {
+  const grid = document.getElementById("favorites-grid");
+  const empty = document.getElementById("favorites-empty-state");
+  const favIds = getFavorites();
+  const favListings = ALL_LISTINGS.filter((l) => favIds.includes(l.id));
+  grid.innerHTML = "";
+  empty.classList.toggle("hidden", favListings.length > 0);
+  for (const listing of favListings) grid.appendChild(buildListingCard(listing));
 }
 
 function streetViewUrl(address, w, h) {
@@ -244,6 +293,7 @@ function showDetail(id) {
   const ICON_CAMERA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
   const ICON_DIRECTIONS = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>';
   const ICON_BACK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg>';
+  const ICON_CALENDAR = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
 
   const availableOnly = listing.status === "Available";
   const inquireBtn = availableOnly
@@ -253,12 +303,22 @@ function showDetail(id) {
   // "didn't work like the others did." Same <a> pattern now, all three.
   const photoBtn = availableOnly
     ? `<a class="btn-outline btn-full" href="${photoNotWorkingLink(listing)}">${ICON_CAMERA}Photo link not working?</a>` : "";
+  // "Schedule to Inspect" added 2026-08-29, Available-only (same rule as
+  // Inquire/Photo-not-working) -- jumps to Get Started with this property
+  // pre-selected. onclick calls goToGetStartedFor(id) rather than a plain
+  // <a href="#tab-get-started">, since the property still needs to be
+  // pre-selected in that form, not just the tab switched.
+  const scheduleBtn = availableOnly
+    ? `<button type="button" class="btn-outline btn-full" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule to Inspect</button>` : "";
   // Livability deliberately NOT shown here -- per Aaron's 2026-08-21 request,
   // it stays on the card only, not on the detail/properties page.
 
   detail.innerHTML = `
     <button class="detail-back" onclick="backToList()">${ICON_BACK}</button>
-    <img class="detail-photo" src="${streetViewUrl(listing.address, 800, 500)}" alt="${escapeHtml(listing.address)}">
+    <div class="detail-photo-wrap">
+      <img class="detail-photo" src="${streetViewUrl(listing.address, 800, 500)}" alt="${escapeHtml(listing.address)}">
+      <button type="button" class="detail-heart${isFavorited(listing.id) ? " favorited" : ""}" aria-label="Save to favorites" onclick="toggleFavorite('${listing.id}'); this.classList.toggle('favorited', isFavorited('${listing.id}'))">${ICON_HEART}</button>
+    </div>
     <div class="detail-body">
       <div class="detail-status">${escapeHtml(listing.status)}</div>
       <div class="detail-address">${escapeHtml(listing.address)}</div>
@@ -267,6 +327,7 @@ function showDetail(id) {
         <a class="btn-outline" href="${shareLink(listing)}">${ICON_LINK}Share</a>
       </div>
       <a class="btn-outline btn-full" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
+      ${scheduleBtn}
       ${detailField("First Available", listing.onMarketDate)}
       ${listing.picsLink && listing.picsLink.trim()
         ? `<div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>`
@@ -480,24 +541,71 @@ function initStepTabs() {
   });
 }
 
-// ---------- Buyer Info form ----------
-function initBuyerForm() {
-  const form = document.getElementById("buyer-form");
-  const status = document.getElementById("buyer-form-status");
+// ---------- Get Started form (rebuilt 2026-08-29 -- real backend now, was
+// UI-only as "Buyer Info" before) ----------
+const UPLOAD_ID_ENDPOINT = `${ADMIN_API_URL}/upload-id`;
+// Set by goToGetStartedFor() (called from the detail page's "Schedule to
+// Inspect" button) -- read once by populateGetStartedPropertyDropdown()
+// the next time it runs, then cleared, so it doesn't stick around and
+// wrongly re-apply on some later, unrelated visit to this tab.
+let pendingGetStartedPropertyId = null;
+
+function goToGetStartedFor(listingId) {
+  pendingGetStartedPropertyId = listingId;
+  activateTab("get-started");
+}
+
+function populateGetStartedPropertyDropdown() {
+  const select = document.getElementById("get-started-property");
+  if (!select) return;
+  select.querySelectorAll("option[data-real]").forEach((o) => o.remove());
+  const available = ALL_LISTINGS.filter((l) => l.status === "Available")
+    .sort((a, b) => a.address.localeCompare(b.address));
+  for (const listing of available) {
+    const opt = document.createElement("option");
+    opt.value = listing.address;
+    opt.textContent = listing.address;
+    opt.dataset.real = "1";
+    select.appendChild(opt);
+  }
+  if (pendingGetStartedPropertyId) {
+    const listing = ALL_LISTINGS.find((l) => l.id === pendingGetStartedPropertyId);
+    if (listing) select.value = listing.address;
+    pendingGetStartedPropertyId = null;
+  }
+}
+
+function prefillGetStartedContactFields() {
+  document.getElementById("get-started-name").value = localStorage.getItem(GATE_NAME_STORAGE_KEY) || "";
+  document.getElementById("get-started-email").value = localStorage.getItem(GATE_EMAIL_STORAGE_KEY) || "";
+  document.getElementById("get-started-phone").value = localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "";
+}
+
+function initGetStartedForm() {
+  const form = document.getElementById("get-started-form");
+  const status = document.getElementById("get-started-status");
+
+  // Prefill from whatever this browser already gave at the gate -- still
+  // editable, in case something's wrong or a different buyer is using the
+  // same device.
+  prefillGetStartedContactFields();
+
+  // Don't let anyone pick a date before today.
+  document.getElementById("get-started-date").min = new Date().toISOString().slice(0, 10);
+
+  populateGetStartedPropertyDropdown();
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!BUYER_INFO_ENDPOINT) {
-      status.textContent = "Form isn't connected to a backend yet -- this is a UI preview.";
-      return;
-    }
-    status.textContent = "Submitting...";
+    status.textContent = "Uploading...";
     try {
-      const res = await fetch(BUYER_INFO_ENDPOINT, { method: "POST", body: new FormData(form) });
+      const res = await fetch(UPLOAD_ID_ENDPOINT, { method: "POST", body: new FormData(form) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      status.textContent = "Thanks! We've received your info.";
+      status.textContent = "Thanks! We've got your info and ID on file.";
       form.reset();
+      prefillGetStartedContactFields(); // reset() above wipes the prefilled contact fields too -- put them back
     } catch (err) {
-      status.textContent = "Something went wrong submitting your info -- please call or text us instead.";
+      status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }
   });
 }
@@ -512,7 +620,7 @@ function initBuyerForm() {
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
   properties: "HOMES", steps: "NEXT STEPS", approved: "APPROVED!",
-  buyer: "MY PROFILE",
+  "get-started": "GET STARTED", favorites: "FAVORITES",
 };
 
 function activateTab(tabName) {
@@ -524,6 +632,12 @@ function activateTab(tabName) {
   if (panel) panel.classList.remove("hidden");
   document.getElementById("mobile-current-tab").textContent = TAB_LABELS[tabName] || tabName.toUpperCase();
   if (tabName === "properties") backToList();
+  // Re-render on every visit, not just once at load, so a heart tapped
+  // from the Homes/detail views elsewhere in the app shows up immediately
+  // -- and so a property picked via "Schedule to Inspect" (which calls
+  // activateTab("get-started") itself) gets the dropdown pre-selected.
+  if (tabName === "favorites") renderFavoritesGrid();
+  if (tabName === "get-started") populateGetStartedPropertyDropdown();
   closeDrawer();
 }
 
@@ -706,6 +820,11 @@ const GATE_STORAGE_KEY = "iah_gate_passed";
 // visit/filter-change back to a specific person. Storing the email too
 // (already given voluntarily at gate time) is what makes that possible.
 const GATE_EMAIL_STORAGE_KEY = "iah_gate_email";
+// Added 2026-08-29 alongside the Get Started page -- that page prefills
+// Name/Email/Phone from whatever the visitor already gave at the gate, so
+// all three need to be persisted now, not just email.
+const GATE_NAME_STORAGE_KEY = "iah_gate_name";
+const GATE_PHONE_STORAGE_KEY = "iah_gate_phone";
 
 function initLoginGate() {
   const gate = document.getElementById("login-gate");
@@ -742,6 +861,8 @@ function initLoginGate() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       localStorage.setItem(GATE_STORAGE_KEY, "1");
       localStorage.setItem(GATE_EMAIL_STORAGE_KEY, email);
+      localStorage.setItem(GATE_NAME_STORAGE_KEY, name);
+      localStorage.setItem(GATE_PHONE_STORAGE_KEY, phone);
       gate.classList.add("hidden");
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
@@ -1014,15 +1135,17 @@ function initInstallButton() {
 initNav();
 initDrawer();
 initStepTabs();
-initBuyerForm();
 initAdminUI();
 initLoginGate();
 initInstallButton();
-// initVisitorSync() chained after loadData() resolves, not called
-// alongside it -- #area-checkboxes is only populated inside loadData()'s
-// renderAreaCheckboxes(), so wiring sync listeners on it any earlier would
-// silently find zero checkboxes to attach to.
-loadData().then(initVisitorSync);
+// initGetStartedForm() and initVisitorSync() both chained after loadData()
+// resolves, not called alongside it -- both need ALL_LISTINGS (property
+// dropdown / #area-checkboxes respectively) which only exist once
+// loadData() has actually populated them.
+loadData().then(() => {
+  initGetStartedForm();
+  initVisitorSync();
+});
 
 // PWA install support (2026-08-27) -- minimal service worker, exists mainly
 // to satisfy Chrome/Android's "installable" criteria for a real Add-to-
