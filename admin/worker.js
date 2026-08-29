@@ -249,8 +249,15 @@ async function fetchSheetRows(accessToken) {
 // findLoginsRowByEmail (further below) since that one has a different
 // contract (returns a bare row number or null, never creates) -- this one
 // always returns a row to write to, existing or the next free one.
+// Reads A:F (not just A:B) so a returning-visitor write can see the
+// existing Phone/Name/ID Link values -- added 2026-08-29 alongside the
+// backfill fix below, real reported bug: a legacy row from before the gate
+// collected Name/Phone (or one where a prior submission simply never
+// captured them) never got backfilled on a later visit that DID provide
+// real values, since writeLoginsRow's returning-visitor branch only ever
+// touched Last Login.
 async function findOrNextLoginsRow(accessToken, email) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!A:B`);
+  const range = encodeURIComponent(`${LOGINS_TAB}!A:F`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
@@ -258,21 +265,39 @@ async function findOrNextLoginsRow(accessToken, email) {
   const col = data.values || [];
   const target = email.trim().toLowerCase();
   for (let i = 1; i < col.length; i++) {
-    if ((col[i][1] || "").trim().toLowerCase() === target) return { row: i + 1, isNew: false }; // 1-indexed sheet row
+    if ((col[i][1] || "").trim().toLowerCase() === target) {
+      const existing = col[i] || [];
+      return {
+        row: i + 1, // 1-indexed sheet row
+        isNew: false,
+        existingPhone: (existing[3] || "").trim(),
+        existingName: (existing[4] || "").trim(),
+        existingIdLink: (existing[5] || "").trim(),
+      };
+    }
   }
   return { row: col.length + 1, isNew: true };
 }
 
 // Writes the full A:G span for a gate-login event. For a brand-new visitor
-// this fills First Login through Last Login (columns A-G); for a returning
-// visitor (isNew: false) this only touches Last Login (G) -- First Login/
-// Email/Agreed/Phone/Name/ID Link must never be silently overwritten by a
-// repeat gate pass, same non-destructive stance already used by
-// /sync-visitor. Explicit-row values.update, not :append -- see the real
-// auto-detection bug this avoided, documented in git history for this file
-// (values:append landed a real submission's data starting at column O
-// instead of A, on a row far past the real last row).
-async function writeLoginsRow(accessToken, { row, isNew }, { name, email, phone, agreed }) {
+// this fills First Login through Last Login (columns A-G). For a returning
+// visitor (isNew: false) this writes Phone/Name/Last Login (D, E, G) --
+// NOT a blind overwrite: each of Phone/Name keeps its EXISTING value if one
+// is already on file, and only takes the newly-submitted value to fill in
+// a gap that was previously blank (see findOrNextLoginsRow above, which
+// supplies existingPhone/existingName/existingIdLink for exactly this).
+// Real reported bug, fixed 2026-08-29: this used to only ever touch Last
+// Login for a returning visitor, so a legacy blank-Name row (e.g. from
+// before the gate collected a name at all) could never be filled in later,
+// even by a visitor who then typed their real name on a subsequent visit.
+// ID Link (F) is always echoed back untouched either way -- the gate never
+// collects it, so there's nothing to backfill or protect there, just don't
+// let it get wiped by the batch write. Explicit-row values.update, not
+// :append -- see the real auto-detection bug this avoided, documented in
+// git history for this file (values:append landed a real submission's data
+// starting at column O instead of A, on a row far past the real last row).
+async function writeLoginsRow(accessToken, target, { name, email, phone, agreed }) {
+  const { row, isNew } = target;
   const nowIso = new Date().toISOString();
   if (isNew) {
     const values = [[nowIso, email, agreed ? "TRUE" : "FALSE", phone, name, "", nowIso]];
@@ -285,12 +310,16 @@ async function writeLoginsRow(accessToken, { row, isNew }, { name, email, phone,
     });
     if (!res.ok) throw new Error(`logins row create failed: ${await res.text()}`);
   } else {
-    const range = encodeURIComponent(`${LOGINS_TAB}!G${row}:G${row}`);
+    const finalPhone = target.existingPhone || phone || "";
+    const finalName = target.existingName || name || "";
+    const finalIdLink = target.existingIdLink || "";
+    const values = [[finalPhone, finalName, finalIdLink, nowIso]];
+    const range = encodeURIComponent(`${LOGINS_TAB}!D${row}:G${row}`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
     const res = await fetch(url, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!G${row}:G${row}`, values: [[nowIso]] }),
+      body: JSON.stringify({ range: `${LOGINS_TAB}!D${row}:G${row}`, values }),
     });
     if (!res.ok) throw new Error(`logins row update failed: ${await res.text()}`);
   }
@@ -648,6 +677,41 @@ async function handleAdminActivity(request, env) {
       }
     }
     return jsonResponse({ appointments, favorites });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Public "most popular" sort support, added 2026-08-29 per Aaron's direct
+// request. Deliberately a SEPARATE endpoint from /admin-activity above,
+// not a public flag on that one -- /admin-activity returns real visitor
+// names/emails/phones alongside favorites and is correctly auth-gated;
+// this one reads the exact same Favorites column but only ever aggregates
+// it down to a bare per-address COUNT, which carries no visitor identity
+// at all, so it's safe to expose with no auth, same privacy line this
+// project already draws everywhere else (counts are fine, identities are
+// gated). Reads only column Y (not the full B:Y admin-activity needs),
+// since a count doesn't need name/phone/email at all.
+async function handleFavoriteCounts(request, env) {
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!Y2:Y`);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`favorite counts read failed: ${await res.text()}`);
+    const data = await res.json();
+    const rows = data.values || [];
+    const counts = {};
+    for (const row of rows) {
+      const favRaw = (row[0] || "").trim();
+      if (!favRaw) continue;
+      for (const address of favRaw.split(" | ")) {
+        const trimmed = address.trim();
+        if (!trimmed) continue;
+        counts[trimmed] = (counts[trimmed] || 0) + 1;
+      }
+    }
+    return jsonResponse({ counts });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -1060,6 +1124,10 @@ export default {
 
     if (url.pathname === "/admin-activity" && request.method === "GET") {
       return handleAdminActivity(request, env);
+    }
+
+    if (url.pathname === "/favorite-counts" && request.method === "GET") {
+      return handleFavoriteCounts(request, env);
     }
 
     if (request.method === "GET") {
