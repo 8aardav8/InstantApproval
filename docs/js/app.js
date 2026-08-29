@@ -112,9 +112,17 @@ function renderStatsStrip() {
   const el = document.getElementById("stats-strip");
   const available = ALL_LISTINGS.filter((l) => l.status === "Available");
   const areas = new Set(available.map((l) => l.area).filter(Boolean));
+  // "Families housed" added 2026-08-29, per Aaron's direct request -- a
+  // genuine count of Sold-status listings already present in the real
+  // data (properties.json includes Sold rows precisely so the status
+  // filter can show them; this just reads the same data for a trust
+  // signal instead of a new fetch/endpoint). Placed right next to Areas,
+  // per Aaron's own wording ("along with the 14 areas card").
+  const sold = ALL_LISTINGS.filter((l) => l.status === "Sold");
   el.innerHTML = `
     <div class="stat-pill"><strong>${available.length}</strong>Homes available</div>
     <div class="stat-pill"><strong>${areas.size || "—"}</strong>Areas</div>
+    <div class="stat-pill"><strong>${sold.length}</strong>Families housed</div>
     <div class="stat-pill"><strong>No</strong>Bank or credit check</div>
   `;
 }
