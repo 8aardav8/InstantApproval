@@ -423,6 +423,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 #get-started-form input, #get-started-form select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
 .full-width { width: 100%; margin-top: 20px; }
 .form-status { margin-top: 12px; font-size: 14px; }
+.get-started-id-status { margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #1a8a4a; }
 
 /* ---------- install app (2026-08-29) ---------- */
 .install-ios-popover {
