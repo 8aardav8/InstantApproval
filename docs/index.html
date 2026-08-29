@@ -84,7 +84,8 @@
     <button class="nav-btn active" data-tab="properties"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>Homes</button>
     <button class="nav-btn" data-tab="steps"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>Next Steps</button>
     <button class="nav-btn" data-tab="approved"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/></svg></span>Approved!</button>
-    <button class="nav-btn" data-tab="buyer"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>My Profile</button>
+    <button class="nav-btn" data-tab="get-started"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Get Started</button>
+    <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>Favorites</button>
   </nav>
 </header>
 
@@ -96,7 +97,8 @@
   <button class="nav-btn active" data-tab="properties"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>Homes</button>
   <button class="nav-btn" data-tab="steps"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>Next Steps</button>
   <button class="nav-btn" data-tab="approved"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/></svg></span>Approved!</button>
-  <button class="nav-btn" data-tab="buyer"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>My Profile</button>
+  <button class="nav-btn" data-tab="get-started"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Get Started</button>
+    <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>Favorites</button>
 </nav>
 
 <div class="profile-bar">
@@ -371,28 +373,58 @@
     <p>Property taxes and homeowners' insurance must be paid monthly to protect both buyer and seller.<br>Taxes are usually included in your monthly payment, but insurance is your responsibility. Be prepared to take ownership of this property and cover these expenses.</p>
   </section>
 
-  <!-- ============ BUYER INFO TAB ============ -->
-  <section id="tab-buyer" class="tab-panel hidden static-page">
+  <!-- ============ GET STARTED TAB ============ -->
+  <!-- Rebuilt from the old, never-connected "Buyer Info" tab, 2026-08-29,
+       per Aaron's direct request. Real, working ID-upload backend now
+       (see UPLOAD_ID_ENDPOINT in app.js) -- the old version was UI-only.
+       Name/Email/Phone are prefilled from the gate-login info already on
+       file for this browser (still editable, in case something's wrong or
+       a different buyer is using the same device) -- only the property
+       and the ID photo are genuinely new information being collected here. -->
+  <section id="tab-get-started" class="tab-panel hidden static-page">
     <div class="form-card">
-      <h1 class="page-title">Enter Buyer Info Below</h1>
-      <p>Update buyer contact info to be used on the purchase paperwork.</p>
-      <form id="buyer-form">
-        <label>Buyer Email <span class="required">Required</span>
-          <input type="email" name="email" required>
+      <h1 class="page-title">Get Started</h1>
+      <p>To view a property in person or schedule an inspection, we'll need a copy of your ID on file first.</p>
+      <form id="get-started-form">
+        <label>Property Address <span class="required">Required</span>
+          <select id="get-started-property" name="property" required>
+            <option value="" selected disabled>Choose a property…</option>
+          </select>
         </label>
-        <label>Buyer Name <span class="required">Required</span>
-          <input type="text" name="name" required>
+        <label>Full Name <span class="required">Required</span>
+          <input type="text" id="get-started-name" name="name" required>
         </label>
-        <label>Buyer Phone Number <span class="required">Required</span>
-          <input type="tel" name="phone" required>
+        <label>Email <span class="required">Required</span>
+          <input type="email" id="get-started-email" name="email" required>
+        </label>
+        <label>Phone Number <span class="required">Required</span>
+          <input type="tel" id="get-started-phone" name="phone" required>
         </label>
         <label>Clear Photo of Valid ID <span class="required">Required</span>
-          <input type="file" name="idPhoto" accept="image/*" capture="environment" required>
+          <input type="file" id="get-started-id-photo" name="idPhoto" accept="image/*" capture="environment" required>
+        </label>
+        <label>Preferred Inspection Date <span class="required">Required</span>
+          <input type="date" id="get-started-date" name="inspectionDate" required>
         </label>
         <button type="submit" class="btn-primary full-width">Submit</button>
       </form>
-      <div id="buyer-form-status" class="form-status"></div>
+      <div id="get-started-status" class="form-status"></div>
+      <!-- Static policy text, added 2026-08-29 per Aaron's direct wording --
+           always visible, not just a post-submit message, so a visitor
+           knows what to expect before they even fill the form out. -->
+      <p class="get-started-policy">Once we have your ID on file (for our entry log), your info, and the property address, you're welcome to inspect the property any time between <strong>9 AM and 8 PM</strong> on the day you chose. Please call us to confirm one hour in advance of arrival.</p>
     </div>
+  </section>
+
+  <!-- ============ FAVORITES TAB ============ -->
+  <!-- Added 2026-08-29. Local-to-this-device only (localStorage), not
+       synced to the Sheet -- same simplicity level as the gate itself.
+       Reuses the exact same card-rendering function as the Homes tab
+       (see renderCardGrid in app.js), just filtered to favorited IDs. -->
+  <section id="tab-favorites" class="tab-panel hidden">
+    <h1 class="page-title">My Favorites</h1>
+    <div id="favorites-grid" class="card-grid"></div>
+    <div id="favorites-empty-state" class="empty-state hidden">No favorites yet — tap the heart on any home to save it here.</div>
   </section>
 
 </main>
@@ -401,7 +433,8 @@
   <button class="nav-btn active" data-tab="properties"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span>HOMES</button>
   <button class="nav-btn" data-tab="steps"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>NEXT STEPS</button>
   <button class="nav-btn" data-tab="approved"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/></svg></span>APPROVED!</button>
-  <button class="nav-btn" data-tab="buyer"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>MY PROFILE</button>
+  <button class="nav-btn" data-tab="get-started"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>GET STARTED</button>
+  <button class="nav-btn" data-tab="favorites"><span class="nav-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>FAVORITES</button>
 </nav>
 
 <script src="js/app.js"></script>
