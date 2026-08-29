@@ -491,18 +491,19 @@ function showDetail(id) {
   // "didn't work like the others did." Same <a> pattern now, all three.
   const photoBtn = availableOnly
     ? `<a class="btn-outline btn-full" href="${photoNotWorkingLink(listing)}">${ICON_CAMERA}Photo link not working?</a>` : "";
-  // "Schedule to Inspect" added 2026-08-29, Available-only (same rule as
-  // Inquire/Photo-not-working) -- jumps to Get Started with this property
-  // pre-selected. onclick calls goToGetStartedFor(id) rather than a plain
-  // <a href="#tab-get-started">, since the property still needs to be
-  // pre-selected in that form, not just the tab switched. Changed from
-  // btn-outline to btn-primary (blue) the same day, per Aaron's direct
-  // request to match Inquire's own color. btn-full DROPPED the same day
-  // too -- moved into the same .action-row as Get Directions (see below),
-  // so it needs to flex to share the row rather than force its own
-  // full-width block, same as Inquire/Share above it.
+  // "Schedule a Viewing" (originally "Schedule to Inspect," reworded the
+  // same day per Aaron's direct request) added 2026-08-29, Available-only
+  // (same rule as Inquire/Photo-not-working) -- jumps to Get Started with
+  // this property pre-selected. onclick calls goToGetStartedFor(id) rather
+  // than a plain <a href="#tab-get-started">, since the property still
+  // needs to be pre-selected in that form, not just the tab switched.
+  // Changed from btn-outline to btn-primary (blue) the same day, per
+  // Aaron's direct request to match Inquire's own color. btn-full DROPPED
+  // the same day too -- moved into the same .action-row as Get Directions
+  // (see below), so it needs to flex to share the row rather than force
+  // its own full-width block, same as Inquire/Share above it.
   const scheduleBtn = availableOnly
-    ? `<button type="button" class="btn-primary" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule to Inspect</button>` : "";
+    ? `<button type="button" class="btn-primary" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule a Viewing</button>` : "";
   // Livability deliberately NOT shown here -- per Aaron's 2026-08-21 request,
   // it stays on the card only, not on the detail/properties page.
 
@@ -527,7 +528,7 @@ function showDetail(id) {
         ${inquireBtn}
         <a class="btn-outline" href="${shareLink(listing)}">${ICON_LINK}Share</a>
       </div>
-      <!-- Get Directions + Schedule to Inspect share a row, added
+      <!-- Get Directions + Schedule a Viewing share a row, added
            2026-08-29 per Aaron's direct request -- same .action-row flex
            pattern as Inquire/Share above (both dropped btn-full so they
            flex to share the space instead of each forcing its own
@@ -1387,7 +1388,7 @@ function activateTab(tabName) {
   if (tabName === "properties") backToList();
   // Re-render on every visit, not just once at load, so a heart tapped
   // from the Homes/detail views elsewhere in the app shows up immediately
-  // -- and so a property picked via "Schedule to Inspect" (which calls
+  // -- and so a property picked via "Schedule a Viewing" (which calls
   // activateTab("get-started") itself) gets the dropdown pre-selected.
   if (tabName === "favorites") renderFavoritesGrid();
   // Also re-run the contact-field prefill here, not just from the gate's
