@@ -721,6 +721,31 @@ async function handleUploadId(request, env) {
     });
     if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
 
+    // Record this appointment in App: Logins -- added 2026-08-29, per
+    // Aaron's direct request ("Each appointment created should be added to
+    // a new column in the sheet"). Reuses the SAME find-or-create-row logic
+    // as gate-login (findOrNextLoginsRow/writeLoginsRow) rather than
+    // assuming a matching row already exists -- a Get Started submission
+    // can use a DIFFERENT email than whatever originally passed the gate on
+    // this device, since all three contact fields here are deliberately
+    // editable. `agreed: true` is the right default when a fresh row gets
+    // created from here, since reaching this form at all required already
+    // passing the site-wide consent gate.
+    let appointmentSaved = false;
+    try {
+      const accessToken = await getSheetsAccessToken(env);
+      const target = await findOrNextLoginsRow(accessToken, email);
+      await writeLoginsRow(accessToken, target, { name, email, phone, agreed: true });
+      await addAppointment(accessToken, target.row, property, inspectionDate);
+      appointmentSaved = true;
+    } catch (e) {
+      // Best-effort -- the ID/Dropbox upload (the actually-required part of
+      // this submission) already succeeded by this point; a Sheet hiccup
+      // here shouldn't turn into a visitor-facing failure for something
+      // they already completed. Surfaced to Aaron via the Telegram note
+      // below instead, so it's not silently lost.
+    }
+
     // Notify Aaron -- informational, no approval needed (see the big
     // comment above this section for why). Best-effort, same as the
     // gate-login push: a failed notification never blocks the visitor.
@@ -729,7 +754,8 @@ async function handleUploadId(request, env) {
         `ID uploaded — ${name}, ${phone}, ${email}.\n` +
         `Property: ${property}\n` +
         `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
-        `Filed as: ${filename}`;
+        `Filed as: ${filename}` +
+        (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)");
       fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -737,6 +763,150 @@ async function handleUploadId(request, env) {
       }).catch(() => {});
     }
 
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// ---------- job 5: appointment scheduling (2026-08-29) ----------
+// Slots stored as "<address> | <date>" in App: Logins columns O-X
+// (Appointment 1-10), one visitor row, up to 10 concurrent scheduled
+// viewings. The Get Started page's appointments banner reads this LIVE on
+// every visit (never cached in localStorage) specifically so Cancel/Change
+// Date can never drift out of sync with what's actually shown -- the Sheet
+// is the one source of truth here, same principle the rest of this build
+// already follows for anything Aaron/Nathan also needs to see.
+const APPOINTMENT_SLOT_COUNT = 10;
+const APPOINTMENT_COLS = ["O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"];
+
+async function readAppointmentRawCells(accessToken, row) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!O${row}:X${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`appointment slots read failed: ${await res.text()}`);
+  const data = await res.json();
+  const cells = (data.values && data.values[0]) || [];
+  const out = [];
+  for (let i = 0; i < APPOINTMENT_SLOT_COUNT; i++) out.push((cells[i] || "").trim());
+  return out;
+}
+
+function parseAppointmentCell(raw, slot) {
+  if (!raw) return null;
+  const parts = raw.split(" | ");
+  const address = (parts[0] || "").trim();
+  const date = (parts[1] || "").trim();
+  if (!address || !date) return null;
+  return { slot, address, date };
+}
+
+// Drops any already-past slots, appends the new one, and FIFO-caps at 10 if
+// genuinely more than 10 are still active. "today" here is server-side
+// UTC, an approximation -- fine, since this only prunes stale entries to
+// free capacity and never blocks a visitor action, unlike the client-side
+// local-date check that guards the actual date PICKER.
+async function addAppointment(accessToken, row, address, date) {
+  const cells = await readAppointmentRawCells(accessToken, row);
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  let active = cells
+    .map((raw, i) => parseAppointmentCell(raw, i + 1))
+    .filter((a) => a && a.date >= todayUtc)
+    .map((a) => `${a.address} | ${a.date}`);
+  active.push(`${address} | ${date}`);
+  if (active.length > APPOINTMENT_SLOT_COUNT) active = active.slice(active.length - APPOINTMENT_SLOT_COUNT);
+  while (active.length < APPOINTMENT_SLOT_COUNT) active.push("");
+
+  const range = encodeURIComponent(`${LOGINS_TAB}!O${row}:X${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!O${row}:X${row}`, values: [active] }),
+  });
+  if (!res.ok) throw new Error(`appointment slots write failed: ${await res.text()}`);
+}
+
+async function handleMyAppointments(request, env) {
+  const url = new URL(request.url);
+  const email = (url.searchParams.get("email") || "").trim();
+  if (!email) return jsonResponse({ error: "missing email" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ appointments: [] });
+    const cells = await readAppointmentRawCells(accessToken, row);
+    const appointments = cells.map((raw, i) => parseAppointmentCell(raw, i + 1)).filter(Boolean);
+    return jsonResponse({ appointments });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleCancelAppointment(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
+  const slot = parseInt(body.slot, 10);
+  if (!email || !slot || slot < 1 || slot > APPOINTMENT_SLOT_COUNT) {
+    return jsonResponse({ error: "missing/invalid email or slot" }, 400);
+  }
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
+    const col = APPOINTMENT_COLS[slot - 1];
+    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+    const res = await fetch(putUrl, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[""]] }),
+    });
+    if (!res.ok) throw new Error(`cancel write failed: ${await res.text()}`);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleUpdateAppointmentDate(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
+  const slot = parseInt(body.slot, 10);
+  const newDate = (body.newDate || "").trim();
+  if (!email || !slot || slot < 1 || slot > APPOINTMENT_SLOT_COUNT || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+    return jsonResponse({ error: "missing/invalid email, slot, or newDate" }, 400);
+  }
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
+    const col = APPOINTMENT_COLS[slot - 1];
+    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+    const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!getRes.ok) throw new Error(`slot read failed: ${await getRes.text()}`);
+    const getData = await getRes.json();
+    const raw = ((getData.values && getData.values[0] && getData.values[0][0]) || "").trim();
+    const existing = parseAppointmentCell(raw, slot);
+    if (!existing) return jsonResponse({ error: "that slot is empty -- nothing to reschedule" }, 404);
+    const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+    const putRes = await fetch(putUrl, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[`${existing.address} | ${newDate}`]] }),
+    });
+    if (!putRes.ok) throw new Error(`reschedule write failed: ${await putRes.text()}`);
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -761,6 +931,18 @@ export default {
 
     if (url.pathname === "/upload-id" && request.method === "POST") {
       return handleUploadId(request, env);
+    }
+
+    if (url.pathname === "/my-appointments" && request.method === "GET") {
+      return handleMyAppointments(request, env);
+    }
+
+    if (url.pathname === "/cancel-appointment" && request.method === "POST") {
+      return handleCancelAppointment(request, env);
+    }
+
+    if (url.pathname === "/update-appointment-date" && request.method === "POST") {
+      return handleUpdateAppointmentDate(request, env);
     }
 
     if (request.method === "GET") {
