@@ -393,10 +393,12 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .login-gate-headline { font-size: 26px; font-weight: 800; line-height: 1.3; margin: 0 0 12px; }
 .login-gate-subtext { color: #b9c2dd; font-size: 15px; margin: 0 0 28px; }
 .login-gate-form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.login-gate-form input[type="text"],
 .login-gate-form input[type="email"],
 .login-gate-form input[type="tel"] {
   padding: 14px 16px; border-radius: 10px; border: 1px solid #3a4a75;
   background: #1c294f; color: #fff; font-size: 16px; width: 100%;
+  font-family: inherit; /* type="text" doesn't inherit this the way email/tel already happened to, added 2026-08-29 alongside the Name field style fix */
 }
 .login-gate-form input::placeholder { color: #8b96b8; }
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
