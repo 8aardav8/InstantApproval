@@ -893,22 +893,48 @@ function appointmentsForAddress(address) {
 }
 
 // "Your Appointments" section at the top of Get Started, replacing the old
-// standalone banner list -- one full property card per listing with an
-// active appointment (via buildListingCard, same as Homes/Favorites), so
-// it's clickable through to the real detail page and gets the same photo/
-// address/price context, not just a bare address string.
+// standalone banner list -- one property card per listing with an active
+// appointment (via buildListingCard, same as Homes/Favorites, same grid
+// sizing as the Homes page), so it's clickable through to the real detail
+// page and gets the same photo/address/price context, not just a bare
+// address string. Rebuilt 2026-08-29 into a collapsed-by-default accordion
+// behind a "See your N booked viewings" toggle, per Aaron's direct
+// request -- the toggle click handler itself is wired once in
+// initAppointmentsAccordionToggle() below, not here, since this function
+// runs on every refresh/re-render and would otherwise stack duplicate
+// listeners.
 function renderMyAppointmentCards() {
+  const accordion = document.getElementById("appointments-accordion");
   const wrap = document.getElementById("appointments-banner-wrap");
-  if (!wrap) return;
+  const label = document.getElementById("appointments-accordion-label");
+  const toggle = document.getElementById("appointments-accordion-toggle");
+  if (!accordion || !wrap) return;
   const addresses = [...new Set(MY_APPOINTMENTS.map((a) => a.address))];
   const listings = addresses.map((addr) => ALL_LISTINGS.find((l) => l.address === addr)).filter(Boolean);
   wrap.innerHTML = "";
   if (listings.length === 0) {
-    wrap.classList.add("hidden");
+    accordion.classList.add("hidden");
     return;
   }
-  wrap.classList.remove("hidden");
+  accordion.classList.remove("hidden");
+  // Always starts collapsed on a fresh render (a new booking, a cancel, a
+  // reschedule, or simply revisiting this tab) -- simpler and more
+  // predictable than trying to preserve expand state across a rebuild.
+  wrap.classList.add("hidden");
+  if (toggle) toggle.classList.remove("expanded");
+  if (label) label.textContent = `See your ${listings.length} booked viewing${listings.length === 1 ? "" : "s"}`;
   for (const listing of listings) wrap.appendChild(buildListingCard(listing));
+}
+
+function initAppointmentsAccordionToggle() {
+  const toggle = document.getElementById("appointments-accordion-toggle");
+  const wrap = document.getElementById("appointments-banner-wrap");
+  if (!toggle || !wrap) return;
+  toggle.addEventListener("click", () => {
+    const showing = !wrap.classList.contains("hidden");
+    wrap.classList.toggle("hidden", showing);
+    toggle.classList.toggle("expanded", !showing);
+  });
 }
 
 function formatAppointmentDate(iso) {
@@ -1839,6 +1865,7 @@ initStepTabs();
 initAdminUI();
 initLoginGate();
 initInstallUI();
+initAppointmentsAccordionToggle();
 // initGetStartedForm() and initVisitorSync() both chained after loadData()
 // resolves, not called alongside it -- both need ALL_LISTINGS (property
 // dropdown / #area-checkboxes respectively) which only exist once
