@@ -399,7 +399,22 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    that comment in app.js), one per active appointment, stacked -- .card's
    own flex-column default stretch already gives each card full width of
    this wrapper without needing an explicit width rule here. */
-.appointments-banner-wrap { margin-bottom: 18px; display: flex; flex-direction: column; gap: 10px; }
+/* Accordion wrapper, added 2026-08-29 per Aaron's direct request -- the
+   card list starts collapsed behind a "See your N booked viewings" toggle
+   rather than always showing, so this section doesn't push the actual
+   booking form down the page for a visitor just glancing at Get Started. */
+.appointments-accordion { margin-bottom: 18px; }
+.appointments-accordion-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+  background: #eef2ff; color: var(--navy); font-weight: 700; font-size: 14px; cursor: pointer;
+}
+.appointments-accordion-chevron { transition: transform 0.15s ease; }
+.appointments-accordion-toggle.expanded .appointments-accordion-chevron { transform: rotate(180deg); }
+/* Same grid sizing as the Homes/Favorites card-grid, added 2026-08-29 per
+   Aaron's direct request ("same width as on the Homes page") -- was a
+   full-width flex-column stack of full-size cards before. */
+.appointments-banner-wrap { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 /* Appointment banner, redesigned 2026-08-29 from a standalone bordered box
    into a section embedded INSIDE a card (see buildListingCard) -- no
