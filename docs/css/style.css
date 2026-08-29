@@ -516,6 +516,11 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    border/large margin here, unlike .get-started-policy -- this is a note
    between two form fields, not a section break after the whole form. */
 .get-started-hours-note { margin: 6px 0 0; font-size: 13px; color: var(--gray-text); line-height: 1.5; }
+/* Sits inside the ID label, below the file field itself -- added
+   2026-08-29, same shape as .get-started-hours-note above (this text
+   moved twice the same week: originally above the page header, then
+   above the ID field, now below it, per Aaron's own iterative requests). */
+.get-started-id-note { margin: 6px 0 0; font-size: 13px; color: var(--gray-text); line-height: 1.5; }
 #get-started-form label { display: block; margin: 16px 0 4px; font-weight: 600; font-size: 14px; }
 .required { font-weight: 400; color: var(--gray-text); font-size: 12px; margin-left: 6px; }
 #get-started-form input, #get-started-form select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
