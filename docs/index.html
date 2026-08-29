@@ -492,7 +492,18 @@
              Aaron's direct request (was the last field, right before ID
              upload/Submit). -->
         <label>Preferred Inspection Date <span class="required">Required</span>
-          <input type="date" id="get-started-date" name="inspectionDate" required>
+          <!-- Rebuilt as a closed <select> 2026-08-29, real reported bug:
+               several mobile browsers show their own full native calendar
+               UI for <input type="date">, regardless of min=/max= -- a
+               visitor could still see and scroll through months of dates
+               even though only today + the next 10 days were ever valid.
+               Populated by buildDateOptions() in app.js; the placeholder
+               option below is disabled so a visitor must actively choose,
+               matching the old field's own "required, nothing pre-filled"
+               behavior. -->
+          <select id="get-started-date" name="inspectionDate" required>
+            <option value="" disabled selected>Choose a date</option>
+          </select>
         </label>
         <!-- Moved here 2026-08-29, per Aaron's direct request, out of the
              combined policy paragraph that used to sit after the whole
