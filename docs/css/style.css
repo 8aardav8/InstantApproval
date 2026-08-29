@@ -8,12 +8,21 @@
 
 * { box-sizing: border-box; }
 
+/* Fixes a real reported bug (2026-08-29): mobile browsers (Safari/Chrome)
+   let the page rubber-band-scroll past its own content, revealing blank
+   space below the fixed bottom nav as if you'd scrolled "through" it. This
+   isn't the footer itself misbehaving -- it's the page's own overscroll/
+   bounce effect. `none` on both html and body is needed; body alone isn't
+   always enough on iOS Safari specifically. */
+html { overscroll-behavior: none; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--gray-bg);
   color: #111827;
   padding-bottom: 90px; /* space for bottom nav -- bumped 2026-08-21 alongside its taller height */
+  overscroll-behavior: none;
 }
 
 .hidden { display: none !important; }
@@ -228,6 +237,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   main, .profile-bar { max-width: 900px; }
 }
 .card {
+  position: relative; /* anchors .card-heart's absolute positioning, added 2026-08-29 */
   background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
   cursor: pointer; display: flex; flex-direction: column;
   /* "jump from the page just a bit" -- a soft elevation shadow plus a slight
@@ -235,6 +245,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
+/* ---------- favorite heart (2026-08-29) ---------- */
+.card-heart, .detail-heart {
+  position: absolute; top: 10px; right: 10px; z-index: 5;
+  width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.9); color: #6b7280;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.card-heart svg, .detail-heart svg { fill: none; }
+.card-heart.favorited, .detail-heart.favorited { color: #e0245e; }
+.card-heart.favorited svg, .detail-heart.favorited svg { fill: currentColor; }
+.detail-photo-wrap { position: relative; }
 .card:hover, .card:active {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.12);
@@ -341,9 +363,10 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* ---------- buyer form ---------- */
 .form-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
-#buyer-form label { display: block; margin: 16px 0 4px; font-weight: 600; font-size: 14px; }
+.get-started-policy { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--gray-text); line-height: 1.5; }
+#get-started-form label { display: block; margin: 16px 0 4px; font-weight: 600; font-size: 14px; }
 .required { font-weight: 400; color: var(--gray-text); font-size: 12px; margin-left: 6px; }
-#buyer-form input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; }
+#get-started-form input, #get-started-form select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
 .full-width { width: 100%; margin-top: 20px; }
 .form-status { margin-top: 12px; font-size: 14px; }
 
