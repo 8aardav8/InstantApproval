@@ -248,6 +248,11 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 /* ---------- favorite heart (2026-08-29) ---------- */
+/* Positioning context for the heart + admin badges, added 2026-08-29 --
+   scopes their absolute positioning to the photo itself (mirrors the
+   existing .detail-photo-wrap below), not the whole .card (which also
+   includes the price/beds text under the photo). */
+.card-photo-wrap { position: relative; }
 .card-heart, .detail-heart {
   position: absolute; top: 10px; right: 10px; z-index: 5;
   width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
@@ -413,8 +418,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appointments-accordion-toggle.expanded .appointments-accordion-chevron { transform: rotate(180deg); }
 /* Same grid sizing as the Homes/Favorites card-grid, added 2026-08-29 per
    Aaron's direct request ("same width as on the Homes page") -- was a
-   full-width flex-column stack of full-size cards before. */
+   full-width flex-column stack of full-size cards before. Real reported
+   bug, same day: only the portrait 2-column part of that match was ever
+   applied -- the landscape 4-column breakpoint below was missing, so this
+   stayed 2-up in landscape while .card-grid switched to 4. Same media
+   query as .card-grid now covers both. */
 .appointments-banner-wrap { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (orientation: landscape) and (min-width: 640px) {
+  .appointments-banner-wrap { grid-template-columns: repeat(4, 1fr); }
+}
 
 /* Appointment banner, redesigned 2026-08-29 from a standalone bordered box
    into a section embedded INSIDE a card (see buildListingCard) -- no
@@ -434,12 +446,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appointment-actions .btn-small.btn-danger { color: #c0293c; border-color: #f0c3ca; }
 .appt-date-picker { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
 
-/* Admin-only badges, rearranged 2026-08-29 per Aaron's direct request --
-   favorites (red) sits right under the heart, opposite corner from
-   appointments (blue) at the bottom-right. Two independent counts, each
+/* Admin-only badges, rearranged twice now: first (2026-08-29) to favorites
+   under the heart + appointments at the card's own bottom-right corner;
+   then (same day, real reported bug -- appointments was anchoring to the
+   bottom of the WHOLE card, including the price/beds text below the
+   photo, not the photo itself) both moved to be children of
+   .card-photo-wrap (below) so they anchor to the photo specifically, and
+   restacked so appointments (blue) sits directly below favorites (red),
+   both at the photo's bottom-right corner. Two independent counts, each
    rendered only when its own count is > 0 -- no longer need a .stacked
-   variant now that they're in two different corners rather than sharing
-   one. */
+   variant now that neither shares a slot with the other. */
 .admin-appointment-badge, .admin-favorite-badge {
   position: absolute; right: 10px; z-index: 5;
   min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
@@ -447,8 +463,9 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   font-size: 12px; font-weight: 700; color: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-/* top: 50px = heart's own top (10px) + its height (34px) + a 6px gap. */
-.admin-favorite-badge { top: 50px; background: #c0293c; }
+/* bottom: 40px = appointment badge's own bottom (10px) + its height (22px)
+   + an 8px gap -- stacks favorites directly above appointments. */
+.admin-favorite-badge { bottom: 40px; background: #c0293c; }
 .admin-appointment-badge { bottom: 10px; background: var(--blue); }
 
 /* Detail-page "Scheduled Appointments" / "Favorited By" lists, added
