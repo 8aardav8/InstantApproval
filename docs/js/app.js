@@ -837,6 +837,17 @@ function localTodayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// Added 2026-08-29 per Aaron's direct request ("Calendar for scheduling
+// should only display today, and the following 10 days") -- generalizes
+// localTodayISO() to compute an offset date, used for the date pickers'
+// `max` attribute. Same local Y/M/D approach, not UTC, for the identical
+// reason localTodayISO() itself exists.
+function localDatePlusDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // ---------- Appointments (redesigned 2026-08-29) ----------
 // Split into a data-only refresh (refreshMyAppointments) and a render step
 // (renderMyAppointmentCards, used only for the "Your Appointments" section
@@ -945,6 +956,10 @@ function buildAppointmentBanner(appt, email) {
   datePicker.type = "date";
   datePicker.className = "appt-date-picker hidden";
   datePicker.min = localTodayISO();
+  // Same 10-day upper bound as the initial booking date field, added
+  // 2026-08-29 per Aaron's direct request -- rescheduling shouldn't be
+  // able to reach further out than a fresh booking could.
+  datePicker.max = localDatePlusDays(10);
   datePicker.value = appt.date;
 
   changeBtn.addEventListener("click", () => {
@@ -955,7 +970,7 @@ function buildAppointmentBanner(appt, email) {
 
   datePicker.addEventListener("change", async () => {
     const newDate = datePicker.value;
-    if (!newDate || newDate < localTodayISO()) return; // native min= already guards this, belt-and-suspenders
+    if (!newDate || newDate < localTodayISO() || newDate > localDatePlusDays(10)) return; // native min=/max= already guard this, belt-and-suspenders
     changeBtn.disabled = true;
     try {
       const res = await fetch(UPDATE_APPOINTMENT_DATE_ENDPOINT, {
@@ -1100,15 +1115,18 @@ function initGetStartedForm() {
   // appointments banner below, not duplicated.
   const dateInput = document.getElementById("get-started-date");
   dateInput.min = localTodayISO();
-  // Belt-and-suspenders on top of the native min= constraint -- some
-  // mobile date pickers only grey out/block past dates in their own
-  // picker UI without necessarily stopping every path to a manually-typed
-  // out-of-range value from landing in the field. Explicitly re-validate
-  // on change and clear anything that slips through anyway.
+  // Upper bound added 2026-08-29 per Aaron's direct request -- only today
+  // plus the following 10 days are choosable at all (an 11-day window).
+  dateInput.max = localDatePlusDays(10);
+  // Belt-and-suspenders on top of the native min=/max= constraints -- some
+  // mobile date pickers only grey out/block out-of-range dates in their
+  // own picker UI without necessarily stopping every path to a manually-
+  // typed out-of-range value from landing in the field. Explicitly
+  // re-validate on change and clear anything that slips through anyway.
   dateInput.addEventListener("change", () => {
-    if (dateInput.value && dateInput.value < localTodayISO()) {
+    if (dateInput.value && (dateInput.value < localTodayISO() || dateInput.value > localDatePlusDays(10))) {
       dateInput.value = "";
-      dateInput.setCustomValidity("Please choose today or a later date.");
+      dateInput.setCustomValidity("Please choose a date within the next 10 days.");
     } else {
       dateInput.setCustomValidity("");
     }
