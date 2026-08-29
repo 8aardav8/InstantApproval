@@ -497,9 +497,12 @@ function showDetail(id) {
   // <a href="#tab-get-started">, since the property still needs to be
   // pre-selected in that form, not just the tab switched. Changed from
   // btn-outline to btn-primary (blue) the same day, per Aaron's direct
-  // request to match Inquire's own color.
+  // request to match Inquire's own color. btn-full DROPPED the same day
+  // too -- moved into the same .action-row as Get Directions (see below),
+  // so it needs to flex to share the row rather than force its own
+  // full-width block, same as Inquire/Share above it.
   const scheduleBtn = availableOnly
-    ? `<button type="button" class="btn-primary btn-full" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule to Inspect</button>` : "";
+    ? `<button type="button" class="btn-primary" onclick="goToGetStartedFor('${listing.id}')">${ICON_CALENDAR}Schedule to Inspect</button>` : "";
   // Livability deliberately NOT shown here -- per Aaron's 2026-08-21 request,
   // it stays on the card only, not on the detail/properties page.
 
@@ -524,8 +527,17 @@ function showDetail(id) {
         ${inquireBtn}
         <a class="btn-outline" href="${shareLink(listing)}">${ICON_LINK}Share</a>
       </div>
-      <a class="btn-outline btn-full" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
-      ${scheduleBtn}
+      <!-- Get Directions + Schedule to Inspect share a row, added
+           2026-08-29 per Aaron's direct request -- same .action-row flex
+           pattern as Inquire/Share above (both dropped btn-full so they
+           flex to share the space instead of each forcing its own
+           full-width block). scheduleBtn can be an empty string for a
+           Sold/Pending listing, in which case Get Directions alone just
+           naturally fills the row via its own flex: 1. -->
+      <div class="action-row">
+        <a class="btn-outline" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
+        ${scheduleBtn}
+      </div>
       ${detailField("First Available", listing.onMarketDate)}
       ${listing.picsLink && listing.picsLink.trim()
         ? `<div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>`
