@@ -25,6 +25,24 @@
 </head>
 <body>
 
+<!-- Pull-to-refresh indicator, added 2026-08-29 per Aaron's direct request
+     ("please allow reload by pulling down on web or app"). Needed as a
+     custom gesture, not relied on as a free native browser feature: the
+     footer-overscroll fix (`overscroll-behavior: none` on html/body,
+     2026-08-29) specifically disables the rubber-band scroll Chrome/Android
+     uses to trigger its own native pull-to-refresh, and installed
+     standalone PWAs don't reliably get one either on either platform. Sits
+     above everything (z-index in style.css), translated fully off-screen
+     until a real downward touch-drag from the very top of the page pulls
+     it down -- see initPullToRefresh() in app.js for the gesture logic. A
+     real reload (`location.reload()`), not a partial re-fetch -- simplest
+     way to guarantee every piece of state (admin badges, listings,
+     appointments, favorites) is genuinely fresh, matching Aaron's own
+     wording ("reload"). -->
+<div id="pull-refresh-indicator" class="pull-refresh-indicator">
+  <span id="pull-refresh-text">↓ Pull to refresh</span>
+</div>
+
 <!-- ============ LOGIN GATE ============ -->
 <!-- Full-site gate, added 2026-08-27 -- matches the current Glide app's own
      email-first login screen (screenshot-confirmed copy below), with a
