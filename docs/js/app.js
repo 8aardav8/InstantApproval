@@ -1397,33 +1397,49 @@ function initAdminUI() {
   tryInit();
 }
 
-// ---------- Install App button (2026-08-29) ----------
+// ---------- Install banner (rebuilt 2026-08-29) ----------
 // Before this, "Add to Home Screen" relied entirely on the browser's own
 // native, easy-to-miss affordance (a small address-bar icon or a buried
 // 3-dot-menu item on Android; nothing at all visible on iOS unless a
-// visitor already knew to check Share). This gives it an actual visible
-// button instead.
-function initInstallButton() {
-  const btn = document.getElementById("install-app-btn");
-  if (!btn) return;
+// visitor already knew to check Share), then briefly a small icon tucked
+// into the profile bar. Replaced with a real top-of-page banner per
+// Aaron's direct request ("a new user should have a banner... urge them
+// to install the site as an app").
+const INSTALL_BANNER_DISMISSED_KEY = "iah_install_banner_dismissed";
+
+function initInstallBanner() {
+  const banner = document.getElementById("install-banner");
+  if (!banner) return;
+
+  // Dismissed once, don't show again on this device -- a banner that
+  // reappears every single visit after someone's already said no would be
+  // pure annoyance, not "urging," at that point.
+  if (localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) === "1") return;
 
   // Already running installed (opened from the home-screen icon) -- never
-  // show the button at all, nothing to install.
+  // show the banner at all, nothing to install.
   const alreadyInstalled =
     window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true; // iOS's own older standalone flag
   if (alreadyInstalled) return;
 
+  const dismiss = () => {
+    localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, "1");
+    banner.classList.add("hidden");
+  };
+  document.getElementById("install-banner-dismiss").addEventListener("click", dismiss);
+
+  const installBtn = document.getElementById("install-banner-btn");
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   if (isIOS) {
     // iOS can never trigger a native install prompt programmatically --
-    // Apple restriction, not a gap in this code. Show the button always
+    // Apple restriction, not a gap in this code. Show the banner always
     // (no beforeinstallprompt-style event exists to gate on), and show
     // instructions instead of doing nothing when tapped.
-    btn.classList.remove("hidden");
+    banner.classList.remove("hidden");
     const popover = document.getElementById("install-ios-popover");
-    btn.addEventListener("click", () => popover.classList.remove("hidden"));
+    installBtn.addEventListener("click", () => popover.classList.remove("hidden"));
     document.getElementById("install-ios-dismiss").addEventListener("click", () => popover.classList.add("hidden"));
     return;
   }
@@ -1431,22 +1447,23 @@ function initInstallButton() {
   // Android/Chrome (and other Chromium browsers that support this) -- the
   // real native prompt. Only shown once the browser actually confirms the
   // site is installable by firing this event; there's no way to check in
-  // advance.
+  // advance, and on a visitor's very first action on the site this may not
+  // have fired yet at all (Chrome's own engagement heuristics decide when).
   let deferredPrompt = null;
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    btn.classList.remove("hidden");
+    banner.classList.remove("hidden");
   });
-  btn.addEventListener("click", async () => {
+  installBtn.addEventListener("click", async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     deferredPrompt = null;
-    btn.classList.add("hidden");
+    banner.classList.add("hidden");
   });
   window.addEventListener("appinstalled", () => {
-    btn.classList.add("hidden");
+    banner.classList.add("hidden");
   });
 }
 
@@ -1455,7 +1472,7 @@ initDrawer();
 initStepTabs();
 initAdminUI();
 initLoginGate();
-initInstallButton();
+initInstallBanner();
 // initGetStartedForm() and initVisitorSync() both chained after loadData()
 // resolves, not called alongside it -- both need ALL_LISTINGS (property
 // dropdown / #area-checkboxes respectively) which only exist once
