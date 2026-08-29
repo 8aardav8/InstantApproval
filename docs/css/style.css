@@ -478,6 +478,11 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .autocomplete-list li.no-results { color: var(--gray-text); cursor: default; }
 .autocomplete-list li.no-results:hover { background: none; }
 .get-started-policy { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--gray-text); line-height: 1.5; }
+/* Sits between the date picker and Full Name -- added 2026-08-29, split
+   out of .get-started-policy above (see that rule's comment). No top
+   border/large margin here, unlike .get-started-policy -- this is a note
+   between two form fields, not a section break after the whole form. */
+.get-started-hours-note { margin: 6px 0 0; font-size: 13px; color: var(--gray-text); line-height: 1.5; }
 #get-started-form label { display: block; margin: 16px 0 4px; font-weight: 600; font-size: 14px; }
 .required { font-weight: 400; color: var(--gray-text); font-size: 12px; margin-left: 6px; }
 #get-started-form input, #get-started-form select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
@@ -485,18 +490,24 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .form-status { margin-top: 12px; font-size: 14px; }
 .get-started-id-status { margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #1a8a4a; }
 
-/* ---------- install app (2026-08-29) ---------- */
-.install-ios-popover {
+/* ---------- bottom popover (shared shape, install app 2026-08-29 +
+   booking confirmation 2026-08-29) ---------- */
+/* Renamed from .install-ios-popover to .bottom-popover the same day it was
+   reused for the "Booked!" confirmation, since a class literally named
+   "install" on an unrelated booking-confirmation popup would mislead the
+   next person reading this file -- both elements share the exact same
+   fixed-bottom-banner shape/style, so one class earns its keep here. */
+.bottom-popover {
   position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 900;
   background: var(--navy); color: #fff; border-radius: 12px; padding: 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
-.install-ios-popover p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; }
+.bottom-popover p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; }
 /* background: transparent added 2026-08-29, real reported bug: the base
    .btn-outline rule sets background: #fff, and this override only ever
    touched color/border-color -- white text was rendering on a white
    button background, invisible, leaving what looked like a blank box. */
-.install-ios-popover .btn-outline { background: transparent; color: #fff; border-color: #fff; }
+.bottom-popover .btn-outline { background: transparent; color: #fff; border-color: #fff; }
 
 /* ---------- login gate (2026-08-27) ---------- */
 .login-gate {
