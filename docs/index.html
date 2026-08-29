@@ -407,36 +407,41 @@
        a different buyer is using the same device) -- only the property
        and the ID photo are genuinely new information being collected here. -->
   <section id="tab-get-started" class="tab-panel hidden static-page">
+    <!-- "Your Appointments" section, moved to the TOP 2026-08-29 per
+         Aaron's direct request ("rather than banners at the bottom... use
+         property cards at the top"), then rebuilt the same day into a
+         collapsed-by-default accordion behind a "See your N booked
+         viewings" badge, per his follow-up request -- cards start hidden
+         so this section doesn't push the actual booking form down the
+         page for a visitor who's just glancing at Get Started, not
+         checking existing bookings. Populated by renderMyAppointmentCards()
+         in app.js -- one property card (via buildListingCard, same
+         component as Homes/Favorites) per listing with an active
+         appointment for THIS visitor (matched by their own gate email,
+         refreshed via refreshMyAppointments/refreshAndRerenderAppointments).
+         Since every card is built through that same shared function, any
+         listing with an active appointment also shows this same embedded
+         banner on its Homes-grid and Favorites-grid cards automatically --
+         this section isn't a separate mechanism, just the one place ALL of
+         a visitor's own appointment cards get collected together. The
+         whole accordion stays hidden until at least one appointment exists
+         at all.
+         Deliberately kept OUTSIDE .form-card (a real bug found and fixed
+         2026-08-29, not the original design): .form-card's own 20px
+         padding was shrinking these cards to ~152px vs. a real Homes-grid
+         card's 173px, contradicting Aaron's explicit "same width as on the
+         Homes page" request. As a direct sibling of .form-card, this only
+         inherits <main>'s page-level padding, same as .card-grid, so the
+         widths now match exactly. -->
+    <div id="appointments-accordion" class="appointments-accordion hidden">
+      <button type="button" id="appointments-accordion-toggle" class="appointments-accordion-toggle">
+        <span id="appointments-accordion-label">See your booked viewings</span>
+        <span class="appointments-accordion-chevron">▾</span>
+      </button>
+      <div id="appointments-banner-wrap" class="appointments-banner-wrap hidden"></div>
+    </div>
     <div class="form-card">
       <h1 class="page-title">Get Started</h1>
-      <!-- "Your Appointments" section, moved to the TOP 2026-08-29 per
-           Aaron's direct request ("rather than banners at the bottom...
-           use property cards at the top"), then rebuilt the same day into
-           a collapsed-by-default accordion behind a "See your N booked
-           viewings" badge, per his follow-up request -- cards start hidden
-           so this section doesn't push the actual booking form down the
-           page for a visitor who's just glancing at Get Started, not
-           checking existing bookings. Populated by
-           renderMyAppointmentCards() in app.js -- one property card (via
-           buildListingCard, same component as Homes/Favorites, same grid
-           sizing as the Homes page too -- see .appointments-banner-wrap in
-           style.css) per listing with an active appointment for THIS
-           visitor (matched by their own gate email, refreshed via
-           refreshMyAppointments/refreshAndRerenderAppointments). Since
-           every card is built through that same shared function, any
-           listing with an active appointment also shows this same
-           embedded banner on its Homes-grid and Favorites-grid cards
-           automatically -- this section isn't a separate mechanism, just
-           the one place ALL of a visitor's own appointment cards get
-           collected together. The whole accordion stays hidden until at
-           least one appointment exists at all. -->
-      <div id="appointments-accordion" class="appointments-accordion hidden">
-        <button type="button" id="appointments-accordion-toggle" class="appointments-accordion-toggle">
-          <span id="appointments-accordion-label">See your booked viewings</span>
-          <span class="appointments-accordion-chevron">▾</span>
-        </button>
-        <div id="appointments-banner-wrap" class="appointments-banner-wrap hidden"></div>
-      </div>
       <p>To view the inside of a property in person or schedule an inspection, we'll need a copy of your ID on file for our entry log.</p>
       <form id="get-started-form">
         <label>Property Address <span class="required">Required</span>
