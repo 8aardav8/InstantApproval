@@ -381,17 +381,27 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .install-banner-dismiss:hover { opacity: 1; }
 
-/* Get Started -- Call/Text buttons + appointments banner, added 2026-08-29. */
+/* Get Started -- Call/Text buttons + "Your Appointments" section, added
+   2026-08-29. */
 .get-started-contact-buttons { display: flex; gap: 10px; margin-top: 14px; }
 .get-started-contact-buttons .btn-outline { flex: 1; text-align: center; }
 
-.appointments-banner-wrap { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+/* Holds full buildListingCard() cards now (redesigned 2026-08-29 -- see
+   that comment in app.js), one per active appointment, stacked -- .card's
+   own flex-column default stretch already gives each card full width of
+   this wrapper without needing an explicit width rule here. */
+.appointments-banner-wrap { margin-bottom: 18px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Appointment banner, redesigned 2026-08-29 from a standalone bordered box
+   into a section embedded INSIDE a card (see buildListingCard) -- no
+   longer its own border/radius (that would look like a card-within-a-
+   card), just a light-tinted strip with a top divider separating it from
+   the card's own price/beds line above it. */
 .appointment-banner {
-  background: #f0f3fb; border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px; display: flex; flex-direction: column; gap: 8px;
+  background: #f0f3fb; border-top: 1px solid var(--border);
+  padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px;
 }
-.appointment-banner .appointment-address { font-weight: 700; font-size: 14px; }
-.appointment-banner .appointment-date { font-size: 13px; color: var(--gray-text); }
+.appointment-banner .appointment-date { font-weight: 600; font-size: 13px; color: #111827; }
 .appointment-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .appointment-actions .btn-small {
   padding: 8px 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border);
@@ -399,6 +409,32 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .appointment-actions .btn-small.btn-danger { color: #c0293c; border-color: #f0c3ca; }
 .appt-date-picker { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
+
+/* Admin-only badges, added 2026-08-29 -- opposite the heart (top-left,
+   heart is top-right). Two independent counts (appointments in red,
+   favorites in pink -- deliberately distinct colors so they're never
+   confused for one number), each rendered only when its own count is > 0.
+   .stacked pushes the favorites badge below the appointments one when
+   both are present, so they never overlap. */
+.admin-appointment-badge, .admin-favorite-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 5;
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.admin-appointment-badge { background: #c0293c; }
+.admin-favorite-badge { background: #e0245e; }
+.admin-favorite-badge.stacked { top: 40px; }
+
+/* Detail-page "Scheduled Appointments" / "Favorited By" lists, added
+   2026-08-29 -- same visual language as the existing admin-info-* blocks
+   this sits alongside. */
+.admin-activity-row {
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.admin-activity-row:last-child { border-bottom: none; }
+.admin-activity-contact { color: var(--gray-text); margin-top: 2px; }
 
 /* Get Started property autocomplete, added 2026-08-29 -- replaces a plain
    <select> that listed every Available property in one long native
