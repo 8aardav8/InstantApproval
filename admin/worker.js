@@ -101,6 +101,16 @@ const AARON_TELEGRAM_CHAT_ID = "5752904645";
 // memory. Real name is "Buyer IDs", not "IDs" (that was from older, paused
 // notes elsewhere in this project that turned out to be stale).
 const DROPBOX_IDS_FOLDER = "/**WORK BOX/**REAL ESTATE/*SLOW FLIPS/FILLING/Buyer IDs";
+// The folder's own share link, given directly by Aaron when this folder
+// was first set up -- included in the ID-upload Telegram ping so he can
+// jump straight there. NOT a link to the exact uploaded file: creating a
+// real per-file shared link requires Dropbox's `sharing.write` scope,
+// which the current refresh token doesn't have (confirmed live, 2026-08-29
+// -- the app itself needs that scope enabled in the Dropbox App Console,
+// then a full OAuth re-authorization, same process as the earlier
+// files.content.write upgrade). Aaron chose the folder-link now, exact-
+// file-link-later tradeoff explicitly rather than waiting on that.
+const DROPBOX_BUYER_IDS_FOLDER_LINK = "https://www.dropbox.com/scl/fo/jj1egrthqv88f7btqaofq/AFonsjf0bIQ08B9f9nS80PA?rlkey=kit7qc346vzpdk6gv0wn9n60c&st=1wef8h8q&dl=0";
 
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 const SHEET_TAB = "PROPERTIES";
@@ -854,7 +864,10 @@ async function handleUploadId(request, env) {
         `ID uploaded — ${name}, ${phone}, ${email}.\n` +
         `Property: ${property}\n` +
         `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
-        `Filed as: ${filename}` +
+        `Filed as: ${filename}\n` +
+        // Folder link, not a link to this exact file -- see
+        // DROPBOX_BUYER_IDS_FOLDER_LINK's own comment for why.
+        `${DROPBOX_BUYER_IDS_FOLDER_LINK}` +
         (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)");
       fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
