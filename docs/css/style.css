@@ -365,6 +365,24 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* ---------- buyer form ---------- */
 .form-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+
+/* Get Started property autocomplete, added 2026-08-29 -- replaces a plain
+   <select> that listed every Available property in one long native
+   dropdown. */
+.autocomplete-wrap { position: relative; }
+.autocomplete-list {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+  margin: 4px 0 0; padding: 4px; list-style: none;
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  max-height: 220px; overflow-y: auto;
+}
+.autocomplete-list li {
+  padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+.autocomplete-list li:hover, .autocomplete-list li.active { background: #f0f3fb; }
+.autocomplete-list li.no-results { color: var(--gray-text); cursor: default; }
+.autocomplete-list li.no-results:hover { background: none; }
 .get-started-policy { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--gray-text); line-height: 1.5; }
 #get-started-form label { display: block; margin: 16px 0 4px; font-weight: 600; font-size: 14px; }
 .required { font-weight: 400; color: var(--gray-text); font-size: 12px; margin-left: 6px; }
@@ -409,7 +427,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* ---------- bottom nav ---------- */
 .bottom-nav {
+  /* z-index added 2026-08-29 -- real reported bug: with no z-index set here
+     (defaulted to auto), .card-heart/.detail-heart's explicit z-index:5
+     outranked it in the shared stacking context, so a heart icon on a
+     scrolled card visually painted ON TOP of this fixed footer bar. 20
+     sits comfortably above ordinary page content (hearts at 5) but well
+     below the drawer/overlay layers (30+) so the drawer still covers this
+     bar correctly when open. */
   position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border);
+  z-index: 20;
   display: flex; padding: 10px 0 16px; /* slightly taller, per Aaron's 2026-08-21 request (was 6px 0 10px) */
 }
 .nav-btn {
