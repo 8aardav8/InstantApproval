@@ -251,7 +251,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    columns inside the portrait-oriented 640px max-width would be cramped
    regardless of how much real landscape width is available. */
 @media (orientation: landscape) and (min-width: 640px) {
-  .card-grid { grid-template-columns: repeat(4, 1fr); }
+  .card-grid { grid-template-columns: repeat(3, 1fr); }
   main, .profile-bar { max-width: 900px; }
 }
 .card {
@@ -487,7 +487,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    query as .card-grid now covers both. */
 .appointments-banner-wrap { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (orientation: landscape) and (min-width: 640px) {
-  .appointments-banner-wrap { grid-template-columns: repeat(4, 1fr); }
+  .appointments-banner-wrap { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Appointment banner, redesigned 2026-08-29 from a standalone bordered box
