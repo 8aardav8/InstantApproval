@@ -125,7 +125,19 @@ const LOGINS_TAB = "App: Logins";
 const QUO_BASE = "https://api.quo.com/v1";
 const FILLING_PHONE_NUMBER_ID = "PN6pbOQwqH";
 
-const ALLOWED_ORIGIN = "https://8aardav8.github.io";
+const ALLOWED_ORIGINS = [
+  "https://8aardav8.github.io",
+  "https://instantapprovalhomes.com",
+  "https://www.instantapprovalhomes.com",
+];
+// Kept for the few call sites that build a response inline (OPTIONS,
+// jsonResponse's default) before the real Origin is known -- the actual
+// per-request origin gets applied afterward by the fetch() wrapper below,
+// which overwrites this default when the request's Origin is on the
+// allowlist. Anything not on the allowlist (or no Origin header at all,
+// e.g. a direct curl/server call) just keeps this default, unchanged from
+// the original single-origin behavior.
+const ALLOWED_ORIGIN = ALLOWED_ORIGINS[0];
 
 // Same slug logic as scripts/generate_properties.py's slugify() -- MUST
 // stay in sync, since this is how an incoming public listing id gets
@@ -1090,53 +1102,83 @@ async function handleUpdateAppointmentDate(request, env) {
   }
 }
 
+// Real per-request CORS fix, added 2026-08-31 (multi-origin bug found the
+// day of the instantapprovalhomes.com domain cutover -- the site started
+// loading from the new domain, but every internal response still hardcoded
+// Access-Control-Allow-Origin to the old github.io origin, so browsers
+// silently blocked every fetch() from the real site: curl (no CORS
+// enforcement) worked fine, masking this from a raw endpoint test, but the
+// real browser correctly refused every response and the frontend surfaced
+// it as a generic "Something went wrong" error). Rather than thread the
+// real Origin through every individual jsonResponse()/corsHeaders() call
+// site (30+ of them), this wraps the single top-level fetch() entry point
+// and rewrites just the one response header afterward, based on the
+// incoming request's actual Origin against the allowlist above. Anything
+// not on the allowlist (or with no Origin header at all -- e.g. a direct
+// server-to-server call) is left exactly as the inner handlers already set
+// it, unchanged from the original single-origin behavior.
+async function route(request, env) {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders() });
+  }
+
+  const url = new URL(request.url);
+
+  if (url.pathname === "/gate-login" && request.method === "POST") {
+    return handleGateLogin(request, env);
+  }
+
+  if (url.pathname === "/sync-visitor" && request.method === "POST") {
+    return handleSyncVisitor(request, env);
+  }
+
+  if (url.pathname === "/upload-id" && request.method === "POST") {
+    return handleUploadId(request, env);
+  }
+
+  if (url.pathname === "/my-appointments" && request.method === "GET") {
+    return handleMyAppointments(request, env);
+  }
+
+  if (url.pathname === "/cancel-appointment" && request.method === "POST") {
+    return handleCancelAppointment(request, env);
+  }
+
+  if (url.pathname === "/update-appointment-date" && request.method === "POST") {
+    return handleUpdateAppointmentDate(request, env);
+  }
+
+  if (url.pathname === "/admin-activity" && request.method === "GET") {
+    return handleAdminActivity(request, env);
+  }
+
+  if (url.pathname === "/favorite-counts" && request.method === "GET") {
+    return handleFavoriteCounts(request, env);
+  }
+
+  if (request.method === "GET") {
+    const listingId = url.searchParams.get("id");
+    if (!listingId) return jsonResponse({ error: "missing id" }, 400);
+    return handleAdminLookup(request, env, listingId);
+  }
+
+  return jsonResponse({ error: "not found" }, 404);
+}
+
 export default {
   async fetch(request, env) {
-    if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders() });
+    const response = await route(request, env);
+    const origin = request.headers.get("Origin");
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      const headers = new Headers(response.headers);
+      headers.set("Access-Control-Allow-Origin", origin);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
     }
-
-    const url = new URL(request.url);
-
-    if (url.pathname === "/gate-login" && request.method === "POST") {
-      return handleGateLogin(request, env);
-    }
-
-    if (url.pathname === "/sync-visitor" && request.method === "POST") {
-      return handleSyncVisitor(request, env);
-    }
-
-    if (url.pathname === "/upload-id" && request.method === "POST") {
-      return handleUploadId(request, env);
-    }
-
-    if (url.pathname === "/my-appointments" && request.method === "GET") {
-      return handleMyAppointments(request, env);
-    }
-
-    if (url.pathname === "/cancel-appointment" && request.method === "POST") {
-      return handleCancelAppointment(request, env);
-    }
-
-    if (url.pathname === "/update-appointment-date" && request.method === "POST") {
-      return handleUpdateAppointmentDate(request, env);
-    }
-
-    if (url.pathname === "/admin-activity" && request.method === "GET") {
-      return handleAdminActivity(request, env);
-    }
-
-    if (url.pathname === "/favorite-counts" && request.method === "GET") {
-      return handleFavoriteCounts(request, env);
-    }
-
-    if (request.method === "GET") {
-      const listingId = url.searchParams.get("id");
-      if (!listingId) return jsonResponse({ error: "missing id" }, 400);
-      return handleAdminLookup(request, env, listingId);
-    }
-
-    return jsonResponse({ error: "not found" }, 404);
+    return response;
   },
 };
 
