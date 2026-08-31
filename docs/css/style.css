@@ -631,6 +631,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border);
   z-index: 20;
   display: flex; padding: 10px 0 16px; /* slightly taller, per Aaron's 2026-08-21 request (was 6px 0 10px) */
+  /* Real reported bug (2026-08-31): on real iOS hardware, this bar would
+     scroll partway up the page during a scroll gesture and stop there,
+     instead of staying pinned to the bottom the whole time -- a known,
+     documented iOS Safari compositing quirk with position:fixed, made more
+     likely by this page's own overscroll-behavior:none (see that rule's
+     own comment above -- added for a different, earlier bug). Neither
+     desktop Chromium nor a desktop-hosted WebKit build reproduces this
+     (both held the bar perfectly fixed through every scroll test run
+     against them), since neither runs real iOS's own touch/momentum-scroll
+     compositor -- confirmed real-device-only, not something testable here.
+     Forcing this element onto its own GPU compositing layer is the
+     standard, well-established fix for this exact class of iOS bug. */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 .nav-btn {
   flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center;
