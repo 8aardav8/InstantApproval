@@ -1523,7 +1523,7 @@ function initGetStartedForm() {
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
   properties: "HOMES", steps: "HOW IT WORKS", approved: "APPROVED!",
-  "get-started": "SHOWINGS", favorites: "FAVORITES",
+  "get-started": "MY SHOWINGS", favorites: "MY FAVORITES",
 };
 
 function activateTab(tabName) {
