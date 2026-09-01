@@ -59,7 +59,16 @@ MIN_VALUE_LENGTH = 5
 # leak. Without this, the check would permanently false-positive on every
 # self-owned listing. Does NOT apply to Lock box / Row ID / etc. -- there's
 # no equivalent legitimate reason for those to ever match template text.
-KNOWN_SAFE_VALUES = {"Aaron David"}
+#
+# "coming" (2026-09-01): a real status placeholder in the Lock box column
+# ("no code assigned yet"), not a secret -- confirmed against the live Sheet
+# (listing 229 Stone St, Dupo IL). It cleared MIN_VALUE_LENGTH (6 chars) and
+# happened to substring-match "upcoming" inside an unrelated app.js comment
+# ("// only count/show upcoming..."), which is what actually triggered the
+# false positive -- a pure coincidental collision with a common English
+# word, not a real leak. Confirmed via the live snapshot that every other
+# short/non-numeric Lock box value already sits below MIN_VALUE_LENGTH.
+KNOWN_SAFE_VALUES = {"Aaron David", "coming"}
 
 # Narrow, explicitly-dated exceptions -- NOT a general weakening of the check.
 # Each entry is a real, understood case, reviewed and approved by Aaron
