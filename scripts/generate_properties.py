@@ -37,10 +37,22 @@ from google.oauth2.service_account import Credentials
 SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk"
 TAB_NAME = "PROPERTIES"
 
+# Real bug fixed here (2026-09-01): this script and verify_no_sensitive_data.py
+# used to each independently re-read the live Sheet. Both run in the same CI
+# job, seconds apart -- but the Sheet is actively edited as someone's real job
+# (lockbox codes, pricing), so a real edit landing in that gap could make the
+# two reads disagree, producing a spurious sensitive-data mismatch that blocks
+# an otherwise-clean publish (confirmed happening for real, 3 days running).
+# Fix: write the exact raw rows used here to a shared snapshot file: verify
+# reads THIS, not a fresh Sheet query, guaranteeing both scripts see identical
+# data. Never committed -- not under docs/, and listed in .gitignore.
+RAW_SNAPSHOT_PATH_NAME = ".raw_properties_snapshot.json"
+
 # Repo-relative output path (script is expected to run from repo root in CI;
 # resolve relative to this file so local runs from any cwd still work).
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "data", "properties.json")
+RAW_SNAPSHOT_PATH = os.path.join(REPO_ROOT, RAW_SNAPSHOT_PATH_NAME)
 
 # Statuses that are ever included in the public dataset. Anything else
 # (Off-Market, "Off- market", typos, future values) is excluded and logged.
@@ -176,6 +188,13 @@ def main():
     all_values = ws.get_all_values()
     if not all_values:
         raise SystemExit("FATAL: PROPERTIES tab returned no data at all.")
+
+    # Shared snapshot for verify_no_sensitive_data.py -- see the comment by
+    # RAW_SNAPSHOT_PATH_NAME above for why this exists. Written as early as
+    # possible, right after the read, so the two scripts' data is identical
+    # regardless of anything else that happens later in this function.
+    with open(RAW_SNAPSHOT_PATH, "w") as f:
+        json.dump(all_values, f)
 
     headers = all_values[0]
     header_idx = {h: i for i, h in enumerate(headers)}

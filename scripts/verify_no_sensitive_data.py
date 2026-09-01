@@ -18,21 +18,29 @@ row's own raw value against the whole output too, so row-scoping only
 removes noise, it doesn't reduce coverage of the thing that actually matters:
 whether a row's own secret ended up in its own public listing.
 
+Real bug fixed here (2026-09-01): this used to do its own independent Sheet
+read via get_client()/gspread, separate from generate_properties.py's own
+read a step earlier in the same CI job. Both scripts querying the live Sheet
+seconds apart raced against real, ongoing edits (the Sheet is someone's
+actual daily-use pricing/lockbox tracker) -- if a row changed in that gap,
+the two reads could disagree, producing a spurious mismatch that blocked an
+otherwise-clean publish. Confirmed happening for real, 3 days running.
+Fix: read the exact same raw snapshot generate_properties.py already wrote,
+instead of re-querying the Sheet here -- the two scripts now provably see
+identical data, and this script no longer needs live Sheets credentials at
+all for its own purposes.
+
 Usage:
-  GCP_SA_KEY_JSON=<service-account json>  python3 verify_no_sensitive_data.py
+  python3 verify_no_sensitive_data.py
+  (must run in the same CI job/workspace as generate_properties.py, after it)
 """
 import json
 import os
 import sys
 
-import gspread
-from google.oauth2.service_account import Credentials
-
-SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk"
-TAB_NAME = "PROPERTIES"
-
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "data", "properties.json")
+RAW_SNAPSHOT_PATH = os.path.join(REPO_ROOT, ".raw_properties_snapshot.json")
 
 SENSITIVE_COLUMNS = [
     "Lock box ", "Seller name and link", "🔒 Row ID",
@@ -75,18 +83,16 @@ def log(msg):
     print(f"[verify_no_sensitive_data] {msg}", file=sys.stderr)
 
 
-def get_client():
-    key_json = os.environ.get("GCP_SA_KEY_JSON")
-    key_file = os.environ.get("GCP_SA_KEY_FILE")
-    scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly",
-              "https://www.googleapis.com/auth/drive.readonly"]
-    if key_json:
-        creds = Credentials.from_service_account_info(json.loads(key_json), scopes=scopes)
-    elif key_file:
-        creds = Credentials.from_service_account_file(os.path.expanduser(key_file), scopes=scopes)
-    else:
-        raise SystemExit("FATAL: neither GCP_SA_KEY_JSON nor GCP_SA_KEY_FILE is set.")
-    return gspread.authorize(creds)
+def load_raw_snapshot():
+    if not os.path.exists(RAW_SNAPSHOT_PATH):
+        raise SystemExit(
+            f"FATAL: {RAW_SNAPSHOT_PATH} doesn't exist. This script must run in the "
+            "same CI job/workspace as generate_properties.py, AFTER it -- it reads "
+            "that script's raw Sheet snapshot rather than querying the Sheet itself "
+            "(see the module docstring for why)."
+        )
+    with open(RAW_SNAPSHOT_PATH) as f:
+        return json.load(f)
 
 
 def slugify(address):
@@ -126,10 +132,7 @@ def main():
             except Exception:
                 pass  # binary files (images etc.)
 
-    client = get_client()
-    sh = client.open_by_key(SHEET_ID)
-    ws = sh.worksheet(TAB_NAME)
-    all_values = ws.get_all_values()
+    all_values = load_raw_snapshot()
     headers = all_values[0]
     header_idx = {h: i for i, h in enumerate(headers)}
     addr_idx = header_idx["Address"]

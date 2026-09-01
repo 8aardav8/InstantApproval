@@ -1,0 +1,7 @@
+# Shared scratch file between generate_properties.py and
+# verify_no_sensitive_data.py -- a raw Sheet snapshot containing real
+# lockbox codes and seller info. Never meant to be committed; it only ever
+# exists transiently within one CI job's ephemeral workspace (or a local
+# dev run). See generate_properties.py's own comment for why this file
+# exists at all.
+.raw_properties_snapshot.json
