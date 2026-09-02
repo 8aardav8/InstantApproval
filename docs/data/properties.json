@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T16:54:30.106922+00:00",
+  "generatedAt": "2026-09-02T16:57:43.987306+00:00",
   "listings": [
     {
       "id": "712-w-waggoner-st-decatur-il-62526",
@@ -311,7 +311,7 @@
       "id": "5816-hodiamont-ave-st-louis-mo-63136",
       "address": "5816 Hodiamont Ave., St. Louis MO 63136",
       "onMarketDate": "8/20",
-      "lastUpdate": "8/31",
+      "lastUpdate": "9/1",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$980",
@@ -319,7 +319,7 @@
       "beds": "4",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.7166599,
       "lng": -90.25776619999999
@@ -3932,7 +3932,7 @@
       "id": "515-s-boyd-st-decatur-il-62522",
       "address": "515 S Boyd St, Decatur, IL 62522",
       "onMarketDate": "5/28/2026",
-      "lastUpdate": "8/30/2026",
+      "lastUpdate": "9/1/2026",
       "area": "IL - Decatur",
       "down": "$1,000",
       "monthly": "$800",
