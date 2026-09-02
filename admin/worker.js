@@ -495,12 +495,21 @@ function isPlausiblePhone(v) { return (v || "").replace(/\D/g, "").length >= 10;
 // Telegram hiccup), the visitor is already fully processed regardless --
 // this is purely a nicety notification, never load-bearing, so it never
 // throws back to the caller.
-// Only ever called for a genuinely NEW visitor now (see handleGateLogin's
-// call site below) -- no isNew parameter/branch needed here anymore, since
-// a "returning visitor" message could never actually fire.
-async function pushTelegramPing(env, name, email, phone, quoResult) {
+// Called for a genuinely NEW visitor, or (added 2026-09-02, see
+// handleGateLogin's call site below) for an EXISTING visitor whose phone
+// was blank and just got filled in for the first time -- the real case
+// this covers is someone migrating from the old Glide app, whose row
+// predates the Phone/Name columns entirely. Deliberately NOT fired for an
+// actual phone/email CHANGE -- that can't happen today by design (see
+// writeLoginsRow's own comment: an existing non-blank value always wins),
+// so there's no "updated" case to notify on yet.
+async function pushTelegramPing(env, name, email, phone, quoResult, kind = "new") {
   if (!env.TELEGRAM_BOT_TOKEN) return; // secret not set yet -- just skip
-  const lines = [`New site visitor — ${name}, ${email}, ${phone}.`];
+  const headline =
+    kind === "phone-backfilled"
+      ? `Phone number added (first time on file) — ${name}, ${email}, ${phone}.`
+      : `New site visitor — ${name}, ${email}, ${phone}.`;
+  const lines = [headline];
   if (quoResult) {
     if (quoResult.action === "created") lines.push("New Quo contact created.");
     else if (quoResult.action === "updated") lines.push("Existing Quo contact updated with this email.");
@@ -541,7 +550,11 @@ async function handleGateLogin(request, env) {
   try {
     accessToken = await getSheetsAccessToken(env);
     target = await findOrNextLoginsRow(accessToken, email);
+    // Captured BEFORE writeLoginsRow, which is what actually fills the gap --
+    // this reflects the row's state as it stood coming into this request.
+    const phoneWasBlank = !target.isNew && !target.existingPhone;
     await writeLoginsRow(accessToken, target, { name, email, phone, agreed });
+    target.phoneJustBackfilled = phoneWasBlank && !!phone;
   } catch (e) {
     // The Sheet row is the one thing this endpoint can't silently skip --
     // if writing it fails, report the real error (app.js shows its own
@@ -577,8 +590,17 @@ async function handleGateLogin(request, env) {
   // upsert above still run unconditionally either way (both are correct,
   // idempotent housekeeping regardless of whether this is a first visit)
   // -- only the notification itself is gated on isNew now.
+  //
+  // Second case added 2026-09-02, Aaron's direct request: also ping when an
+  // EXISTING row's phone was blank and just got filled in for the first
+  // time (the real case: someone migrating from the old Glide app, whose
+  // row predates the Phone/Name columns). Mutually exclusive with isNew by
+  // construction -- phoneJustBackfilled can only be true when isNew is
+  // false, see the capture above.
   if (target.isNew) {
     await pushTelegramPing(env, name, email, phone, quoResult);
+  } else if (target.phoneJustBackfilled) {
+    await pushTelegramPing(env, name, email, phone, quoResult, "phone-backfilled");
   }
 
   return jsonResponse({ ok: true });
