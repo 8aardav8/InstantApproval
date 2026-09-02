@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T17:07:59.708441+00:00",
+  "generatedAt": "2026-09-02T17:08:30.553213+00:00",
   "listings": [
     {
       "id": "293-cameron-st-jackson-ms-39212",
@@ -549,7 +549,7 @@
       "id": "905-n-wesley-st-springfield-il-62702",
       "address": "905 N Wesley St Springfield IL 62702",
       "onMarketDate": "8/9",
-      "lastUpdate": "8/9",
+      "lastUpdate": "9/2",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$995",
@@ -557,7 +557,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "700",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8111481,
       "lng": -89.61504579999999
