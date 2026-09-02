@@ -115,6 +115,19 @@ const DROPBOX_BUYER_IDS_FOLDER_LINK = "https://www.dropbox.com/scl/fo/jj1egrthqv
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 const SHEET_TAB = "PROPERTIES";
 const LOGINS_TAB = "App: Logins";
+const PENDING_PHONE_TAB = "Pending Phone Changes";
+
+// Added 2026-09-02, Aaron's direct request, closing a real gap: there was no
+// way for a visitor to ever correct their own phone number (writeLoginsRow's
+// finalPhone rule always keeps whatever's already on file, deliberately, to
+// stop a bad-faith resubmission from silently overwriting a real value -- see
+// that function's own comment). This adds a real, gated path for a
+// DELIBERATE, verified correction: a visitor requests a change, the NEW
+// number gets texted asking for a reply, and only a real "YES" reply from
+// that same number actually triggers the overwrite. The general gate-login/
+// booking paths are completely untouched -- they still can never overwrite
+// an existing phone, by design; this is a separate, narrower, verified path.
+const PHONE_CHANGE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour, Aaron's explicit choice
 
 // Quo (OpenPhone) -- same base URL/auth shape as tools/quo.mjs on the
 // droplet ("Authorization: <key>", no Bearer prefix -- confirmed against
@@ -1124,6 +1137,269 @@ async function handleUpdateAppointmentDate(request, env) {
   }
 }
 
+// ---------- Phone-number change, verified via a reply-to-confirm text ----------
+// Added 2026-09-02 -- see the PHONE_CHANGE_TIMEOUT_MS comment above for the
+// full "why" (writeLoginsRow deliberately never overwrites an existing
+// phone; this is the one real, gated path that can).
+
+// Reads/writes the Pending Phone Changes tab. Row shape: Email, Old Phone,
+// New Phone, Requested At, Expires At, Status, Target Row.
+async function findPendingPhoneChangeByEmail(accessToken, email) {
+  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A:G`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`pending-phone read failed: ${await res.text()}`);
+  const data = await res.json();
+  const rows = data.values || [];
+  const target = email.trim().toLowerCase();
+  // Last match wins if somehow more than one exists for the same email --
+  // shouldn't happen given the upsert-in-place logic below, but don't crash
+  // if it ever does.
+  let found = null;
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][0] || "").trim().toLowerCase() === target) found = { row: i + 1, values: rows[i] };
+  }
+  return found;
+}
+
+async function findPendingPhoneChangeByNewPhone(accessToken, e164Phone) {
+  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A:G`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`pending-phone read failed: ${await res.text()}`);
+  const data = await res.json();
+  const rows = data.values || [];
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const [, , newPhone, , expiresAt, status] = rows[i];
+    if ((newPhone || "").trim() === e164Phone && status === "Pending" && expiresAt && Date.parse(expiresAt) > Date.now()) {
+      return { row: i + 1, values: rows[i] };
+    }
+  }
+  return null;
+}
+
+async function writePendingPhoneChangeRow(accessToken, row, values) {
+  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A${row}:G${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${PENDING_PHONE_TAB}!A${row}:G${row}`, values: [values] }),
+  });
+  if (!res.ok) throw new Error(`pending-phone write failed: ${await res.text()}`);
+}
+
+async function nextPendingPhoneChangeRow(accessToken) {
+  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A:A`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`pending-phone read failed: ${await res.text()}`);
+  const data = await res.json();
+  return (data.values || []).length + 1;
+}
+
+async function sendQuoText(env, e164To, content) {
+  const res = await fetch(`${QUO_BASE}/messages`, {
+    method: "POST",
+    headers: { Authorization: env.QUO_API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ content, from: FILLING_PHONE_NUMBER_ID, to: [e164To] }),
+  });
+  if (!res.ok) throw new Error(`quo send failed: ${await res.text()}`);
+  return res.json();
+}
+
+// Step 1: a visitor requests a phone-number change. Only ever operates on an
+// EXISTING row (found by email) -- never creates one, that's exclusively the
+// gate-login path's job. Texts the NEW number and waits for a reply; the
+// actual overwrite only ever happens in handleQuoMessageWebhook below.
+async function handleRequestPhoneChange(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
+  const newPhoneRaw = (body.newPhone || "").trim();
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(newPhoneRaw)) return jsonResponse({ error: "invalid phone" }, 400);
+  const newPhoneE164 = toE164(newPhoneRaw);
+  if (!newPhoneE164) return jsonResponse({ error: "invalid phone" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const targetRow = await findLoginsRowByEmail(accessToken, email);
+    if (!targetRow) {
+      return jsonResponse({ error: "not found", message: "We couldn't find an account with that email." }, 404);
+    }
+
+    const existingRange = encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`);
+    const existingRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${existingRange}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!existingRes.ok) throw new Error(`existing-phone read failed: ${await existingRes.text()}`);
+    const existingData = await existingRes.json();
+    const oldPhone = ((existingData.values || [[]])[0] || [])[0] || "";
+
+    if (toE164(oldPhone) === newPhoneE164) {
+      return jsonResponse({ error: "unchanged", message: "That's already the phone number we have on file." }, 400);
+    }
+
+    const nowIso = new Date().toISOString();
+    const expiresIso = new Date(Date.now() + PHONE_CHANGE_TIMEOUT_MS).toISOString();
+    const rowValues = [email, oldPhone, newPhoneE164, nowIso, expiresIso, "Pending", String(targetRow)];
+
+    // Upsert-in-place: refresh an existing pending request for this email
+    // rather than piling up duplicates if someone submits more than once.
+    const existingPending = await findPendingPhoneChangeByEmail(accessToken, email);
+    const pendingRow = existingPending ? existingPending.row : await nextPendingPhoneChangeRow(accessToken);
+    await writePendingPhoneChangeRow(accessToken, pendingRow, rowValues);
+
+    await sendQuoText(
+      env,
+      newPhoneE164,
+      `Reply YES within 1 hour to confirm updating your phone number for www.InstantApprovalHomes.com. Didn't request this? Just ignore this text.`,
+    );
+
+    return jsonResponse({ ok: true, message: `We've texted ${newPhoneE164} -- reply YES within 1 hour to confirm.` });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// ---------- OpenPhone/Quo webhook signature verification ----------
+// Real, confirmed format (found live 2026-09-02 by capturing an actual
+// request's headers -- the docs summary that led to the first attempt said
+// "Standard-Webhooks-compatible", webhook-id/webhook-timestamp/webhook-
+// signature headers, whsec_-prefixed secret -- confirmed wrong). The real
+// header is a single `openphone-signature`, format
+// `<scheme>;<version>;<timestamp>;<signature>` (e.g.
+// "hmac;1;1639710054089;mw1K4fvh5m9XzsGon4C5N3KvL0bkmPZSAyb/9Vms2Qo="),
+// matches OpenPhone's own real docs. Signed content is `{timestamp}.
+// {payload}` (no id component), and the payload must have ALL whitespace/
+// newlines stripped before signing -- re-serializing via
+// JSON.stringify(JSON.parse(rawBody)) reproduces OpenPhone's own minified
+// form for ordinary JSON. Verified against a real live webhook call.
+async function verifyQuoWebhookSignature(request, rawBody, secret) {
+  const sigHeader = request.headers.get("openphone-signature");
+  if (!sigHeader) return false;
+
+  const parts = sigHeader.split(";");
+  if (parts.length !== 4) return false;
+  const [, , timestamp, signature] = parts;
+
+  let minified;
+  try {
+    minified = JSON.stringify(JSON.parse(rawBody));
+  } catch (e) {
+    return false;
+  }
+
+  const secretBytes = base64ToBytes(secret.trim());
+  const signedContent = `${timestamp}.${minified}`;
+  const key = await crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sigBytes = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signedContent));
+  const expected = bytesToBase64(new Uint8Array(sigBytes));
+
+  return expected === signature;
+}
+
+function base64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function bytesToBase64(bytes) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+// Step 2: Quo calls this when a message.received event fires on the Filling
+// number. Verifies the signature first (unsigned/forged requests never get
+// to touch the Sheet), then checks for a real, still-valid, matching pending
+// request before doing anything. Always returns 200 once the signature
+// check passes -- an unmatched or non-affirmative text is a normal, expected
+// case (Quo delivers every inbound message to this number, not just replies
+// to a pending request), not an error.
+async function handleQuoMessageWebhook(request, env) {
+  const rawBody = await request.text();
+
+  if (!env.QUO_WEBHOOK_SECRET) {
+    return jsonResponse({ error: "webhook not configured" }, 500);
+  }
+  const validSignature = await verifyQuoWebhookSignature(request, rawBody, env.QUO_WEBHOOK_SECRET);
+  if (!validSignature) {
+    return jsonResponse({ error: "invalid signature" }, 401);
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON" }, 400);
+  }
+
+  // Real field names confirmed 2026-09-02 via a captured live payload:
+  // event type is "type", not "event"; the message object lives at
+  // data.object, not data.resource -- both wrong guesses from a docs
+  // summary rather than real payload data.
+  if (payload.type !== "message.received") {
+    return jsonResponse({ ok: true }); // not the event we care about, ack and ignore
+  }
+
+  const resource = (payload.data && payload.data.object) || {};
+  const fromRaw = resource.from || (payload.data && payload.data.context && payload.data.context.from) || "";
+  const text = (resource.text || resource.content || resource.body || "").trim();
+  const fromE164 = toE164(fromRaw);
+
+  if (!fromE164 || !/^(yes|y|confirm|ok)\b/i.test(text)) {
+    return jsonResponse({ ok: true }); // not an affirmative reply, nothing to do
+  }
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const pending = await findPendingPhoneChangeByNewPhone(accessToken, fromE164);
+    if (!pending) {
+      return jsonResponse({ ok: true }); // no matching/still-valid pending request
+    }
+
+    const [email, oldPhone, newPhone, , , , targetRowStr] = pending.values;
+    const targetRow = Number(targetRowStr);
+
+    const phoneUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`)}?valueInputOption=RAW`;
+    const writeRes = await fetch(phoneUrl, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!D${targetRow}:D${targetRow}`, values: [[newPhone]] }),
+    });
+    if (!writeRes.ok) throw new Error(`phone overwrite failed: ${await writeRes.text()}`);
+
+    const confirmedRow = [email, oldPhone, newPhone, pending.values[3], pending.values[4], "Confirmed", targetRowStr];
+    await writePendingPhoneChangeRow(accessToken, pending.row, confirmedRow);
+
+    if (env.TELEGRAM_BOT_TOKEN) {
+      const text2 = `Phone number CHANGED (visitor-confirmed) — ${email}.\nOld: ${oldPhone || "(blank)"}\nNew: ${newPhone}`;
+      fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: text2 }),
+      }).catch(() => {});
+    }
+
+    // Best-effort reply confirmation to the visitor -- never blocks/throws,
+    // the Sheet update above is the part that actually matters.
+    sendQuoText(env, fromE164, "Thanks! Your phone number has been updated.").catch(() => {});
+
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Real per-request CORS fix, added 2026-08-31 (multi-origin bug found the
 // day of the instantapprovalhomes.com domain cutover -- the site started
 // loading from the new domain, but every internal response still hardcoded
@@ -1176,6 +1452,16 @@ async function route(request, env) {
 
   if (url.pathname === "/favorite-counts" && request.method === "GET") {
     return handleFavoriteCounts(request, env);
+  }
+
+  if (url.pathname === "/request-phone-change" && request.method === "POST") {
+    return handleRequestPhoneChange(request, env);
+  }
+
+  // Called by Quo itself, not the site -- no CORS-origin concern here, this
+  // is a server-to-server webhook.
+  if (url.pathname === "/quo-webhook" && request.method === "POST") {
+    return handleQuoMessageWebhook(request, env);
   }
 
   if (request.method === "GET") {
