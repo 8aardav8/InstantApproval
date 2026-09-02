@@ -1381,18 +1381,26 @@ async function handleQuoMessageWebhook(request, env) {
     const confirmedRow = [email, oldPhone, newPhone, pending.values[3], pending.values[4], "Confirmed", targetRowStr];
     await writePendingPhoneChangeRow(accessToken, pending.row, confirmedRow);
 
+    // Real bug fixed 2026-09-02: both notifications below were originally
+    // fire-and-forget (fetch(...).catch(() => {}), no await) -- a real
+    // Cloudflare Workers gotcha: an unawaited promise can be killed the
+    // moment the response returns, since the runtime is free to tear down
+    // the execution context right after. Confirmed live: the Sheet write
+    // above (which WAS awaited) worked, but neither notification arrived.
+    // Fixed by awaiting both -- still wrapped so a Telegram/Quo hiccup can
+    // never turn the actual, already-successful overwrite into an error
+    // response, but now the request genuinely doesn't finish until both
+    // have had a real chance to complete.
     if (env.TELEGRAM_BOT_TOKEN) {
       const text2 = `Phone number CHANGED (visitor-confirmed) — ${email}.\nOld: ${oldPhone || "(blank)"}\nNew: ${newPhone}`;
-      fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: text2 }),
       }).catch(() => {});
     }
 
-    // Best-effort reply confirmation to the visitor -- never blocks/throws,
-    // the Sheet update above is the part that actually matters.
-    sendQuoText(env, fromE164, "Thanks! Your phone number has been updated.").catch(() => {});
+    await sendQuoText(env, fromE164, "Thanks! Your phone number has been updated.").catch(() => {});
 
     return jsonResponse({ ok: true });
   } catch (e) {
