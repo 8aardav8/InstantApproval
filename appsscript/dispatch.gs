@@ -31,12 +31,34 @@
 //      clock-with-list icon) to confirm it fired and returned a 2xx from
 //      GitHub.
 
+// Real fix, 2026-09-02: onChange fired 7 times within 26 seconds for what
+// was apparently one edit action -- a paste/sort/bulk-edit can register as
+// several internal change events, not one. Each dispatch spins up a real
+// GitHub Actions run, and a burst of near-simultaneous runs raced to push,
+// with the loser failing outright and emailing Aaron a failure notice for
+// something that wasn't actually a data problem. Fix: throttle dispatches
+// to at most one per MIN_DISPATCH_INTERVAL_SECONDS. This is safe (not
+// stale) because generate_properties.py always reads the live Sheet fresh
+// at the time the GitHub Actions job actually runs, not at dispatch time --
+// so whichever single dispatch survives the throttle window still picks up
+// the sheet's current (i.e. final, post-burst) state, not a stale snapshot
+// from whichever onChange event happened to fire first.
+const MIN_DISPATCH_INTERVAL_SECONDS = 30;
+
 function onChangeInstallable(e) {
   dispatchToGitHub();
 }
 
 function dispatchToGitHub() {
   const props = PropertiesService.getScriptProperties();
+
+  const lastDispatch = props.getProperty('LAST_DISPATCH_TIME');
+  const now = Date.now();
+  if (lastDispatch && (now - Number(lastDispatch)) / 1000 < MIN_DISPATCH_INTERVAL_SECONDS) {
+    console.log(`Throttled: last dispatch was ${Math.round((now - Number(lastDispatch)) / 1000)}s ago, minimum interval is ${MIN_DISPATCH_INTERVAL_SECONDS}s. Skipping -- a nearby dispatch already covers this change.`);
+    return;
+  }
+
   const owner = props.getProperty('GH_OWNER');
   const repo = props.getProperty('GH_REPO');
   const pat = props.getProperty('GITHUB_PAT');
@@ -67,6 +89,10 @@ function dispatchToGitHub() {
     const code = resp.getResponseCode();
     if (code >= 200 && code < 300) {
       console.log(`Dispatch succeeded (${code})`);
+      // Only record success as "last dispatch" -- a failed call shouldn't
+      // count against the throttle window, so a real follow-up attempt
+      // isn't blocked by a call that never actually reached GitHub.
+      props.setProperty('LAST_DISPATCH_TIME', String(now));
     } else {
       console.error(`Dispatch failed (${code}): ${resp.getContentText()}`);
     }
@@ -81,7 +107,11 @@ function dispatchToGitHub() {
 
 // Manual test helper -- run this once from the Apps Script editor (Run menu)
 // to confirm credentials/permissions are correct before relying on the
-// trigger to fire it automatically.
+// trigger to fire it automatically. Note: this is throttled by the same
+// window as real dispatches, so if you just triggered a real change, this
+// may report "Throttled" rather than actually calling out -- that's
+// expected, not a bug; wait out the window or check Script Properties'
+// LAST_DISPATCH_TIME if you need to force a fresh test.
 function testDispatch() {
   dispatchToGitHub();
 }
