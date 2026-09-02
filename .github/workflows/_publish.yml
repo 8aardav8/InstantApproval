@@ -32,9 +32,12 @@ jobs:
       # Fail-closed safety check -- runs BEFORE git commit, not after. This
       # repo is public, so anything ever pushed is effectively permanent in
       # git history even if reverted later.
+      #
+      # Real fix 2026-09-01: no longer takes GCP_SA_KEY_JSON -- it used to
+      # do its own independent Sheet read, which raced against the step
+      # above. It now reads the exact raw snapshot the step above already
+      # wrote, so it needs no Sheets credentials of its own at all.
       - name: Verify no sensitive data leaked
-        env:
-          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}
         run: python3 scripts/verify_no_sensitive_data.py
 
       - name: Commit and push if changed
@@ -43,8 +46,40 @@ jobs:
           git config user.email "listings-bot@users.noreply.github.com"
           if git diff --quiet -- docs/data/properties.json; then
             echo "No changes to properties.json -- skipping commit."
-          else
+            exit 0
+          fi
+          # Real bug fixed here (2026-09-02): a burst of near-simultaneous
+          # dispatches (Apps Script's onChange trigger can fire several
+          # times for what feels like one edit -- a paste or sort can
+          # register as multiple internal changes) produced overlapping
+          # runs racing to push, and the concurrency group above only
+          # serializes so much -- a losing run still needs to recover, not
+          # just fail and email Aaron an error. A plain `git pull --rebase`
+          # isn't safe here: properties.json is a single generated blob,
+          # not line-mergeable, so two different regenerations of it would
+          # just conflict outright rather than merge cleanly. Instead: save
+          # our freshly-generated file outside git, and on a push failure,
+          # reset cleanly to whatever's latest and restore our file over it
+          # before retrying -- our generation is always current regardless
+          # of which attempt actually lands, since generate_properties.py
+          # always reads the live Sheet fresh at run time.
+          cp docs/data/properties.json /tmp/properties.json.new
+          for i in 1 2 3 4 5; do
+            cp /tmp/properties.json.new docs/data/properties.json
+            if git diff --quiet -- docs/data/properties.json; then
+              echo "Already up to date with latest remote (another run already pushed identical content) -- nothing left to do."
+              exit 0
+            fi
             git add docs/data/properties.json
             git commit -m "Auto-update listings data [skip ci]"
-            git push
-          fi
+            if git push; then
+              echo "Pushed on attempt $i."
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely a race with another run) -- resetting to latest and retrying..."
+            git fetch origin main
+            git reset --hard origin/main
+            sleep $((RANDOM % 5 + 1))
+          done
+          echo "::error::Failed to push after 5 attempts."
+          exit 1
