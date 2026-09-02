@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T15:43:38.063823+00:00",
+  "generatedAt": "2026-09-02T16:51:29.831996+00:00",
   "listings": [
     {
       "id": "712-w-waggoner-st-decatur-il-62526",
@@ -6754,7 +6754,7 @@
       "id": "821-n-oakland-ave-decatur-il-62-514",
       "address": "821 N. Oakland Ave Decatur IL 62,514",
       "onMarketDate": "6/3",
-      "lastUpdate": "6/3/2026",
+      "lastUpdate": "9/1/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$749",
@@ -6762,7 +6762,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "840",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8487762,
       "lng": -88.9730515
