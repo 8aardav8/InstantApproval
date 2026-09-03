@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:25:33.245832+00:00",
+  "generatedAt": "2026-09-03T17:26:32.235644+00:00",
   "listings": [
     {
       "id": "517-n-31st-street-east-saint-louis-il-62205",
@@ -7,11 +7,11 @@
       "onMarketDate": "9/2",
       "lastUpdate": "9/2",
       "area": "IL - East St Louis",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$990",
       "picsLink": "https://drive.google.com/drive/folders/15WSiqBo0b24IrDWP1rEfhgRqryBKzxUA?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
