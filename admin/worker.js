@@ -764,6 +764,70 @@ async function handleFavoriteCounts(request, env) {
   }
 }
 
+// ---------- My Info lookup + name update, added 2026-09-02 ----------
+// The read side of what lets "My Info" and Showings show genuinely synced
+// data -- both fetch fresh from here rather than trusting a stale
+// localStorage copy (the same class of staleness bug already found and
+// fixed once this build in the appointment-prefill timing issue).
+async function handleMyInfo(request, env) {
+  const url = new URL(request.url);
+  const email = (url.searchParams.get("email") || "").trim();
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "not found" }, 404);
+
+    const range = encodeURIComponent(`${LOGINS_TAB}!D${row}:F${row}`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`my-info read failed: ${await res.text()}`);
+    const data = await res.json();
+    const [phone, name, idLink] = (data.values || [[]])[0] || [];
+
+    return jsonResponse({ name: name || "", phone: phone || "", email, idOnFile: !!idLink });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Name has no real risk tied to it (unlike phone/email, it's not used as a
+// lookup key or an identity-verification channel anywhere), so it writes
+// directly -- no confirm-flow needed, matching the same reasoning already
+// applied when this was scoped with Aaron.
+async function handleUpdateName(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
+  const name = (body.name || "").trim();
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!name) return jsonResponse({ error: "invalid name" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "not found" }, 404);
+
+    const range = encodeURIComponent(`${LOGINS_TAB}!E${row}:E${row}`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!E${row}:E${row}`, values: [[name]] }),
+    });
+    if (!res.ok) throw new Error(`name update failed: ${await res.text()}`);
+
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // ---------- ID photo proxy, added 2026-09-02 ----------
 // Real privacy concern this exists to solve: the ID Link column holds a
 // PERMANENT, PUBLIC Dropbox shared link (fine for Aaron's own Sheet/
@@ -1554,6 +1618,14 @@ async function route(request, env) {
 
   if (url.pathname === "/id-photo" && request.method === "GET") {
     return handleIdPhoto(request, env);
+  }
+
+  if (url.pathname === "/my-info" && request.method === "GET") {
+    return handleMyInfo(request, env);
+  }
+
+  if (url.pathname === "/update-name" && request.method === "POST") {
+    return handleUpdateName(request, env);
   }
 
   if (url.pathname === "/request-phone-change" && request.method === "POST") {
