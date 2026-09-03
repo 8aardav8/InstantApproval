@@ -129,6 +129,17 @@ const PENDING_PHONE_TAB = "Pending Phone Changes";
 // an existing phone, by design; this is a separate, narrower, verified path.
 const PHONE_CHANGE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour, Aaron's explicit choice
 
+// Email-change confirmation, added 2026-09-02 -- same shape as the phone
+// flow above, but confirmed via a text to the EXISTING (unchanged) phone
+// number rather than needing real email-sending infrastructure this
+// project doesn't have. Email is also, unlike phone, the actual identity/
+// lookup key for a visitor's row -- once a change is confirmed, that
+// visitor's device-local `iah_gate_email` no longer resolves via /my-info
+// (a 404), which the frontend treats as "re-pass the gate," self-healing
+// without any cross-device state sync.
+const PENDING_EMAIL_TAB = "Pending Email Changes";
+const EMAIL_CHANGE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour, same window as phone changes
+
 // Quo (OpenPhone) -- same base URL/auth shape as tools/quo.mjs on the
 // droplet ("Authorization: <key>", no Bearer prefix -- confirmed against
 // Quo's own docs, which explicitly say they don't use Bearer tokens).
@@ -362,6 +373,22 @@ async function writeQuoLink(accessToken, row, quoLink) {
     body: JSON.stringify({ range: `${LOGINS_TAB}!N${row}:N${row}`, values: [[quoLink]] }),
   });
   if (!res.ok) throw new Error(`quo-link write failed: ${await res.text()}`);
+}
+
+// Writes just the ID Link column (F) once a real Dropbox shared link is
+// known -- same isolated-single-column pattern as writeQuoLink above.
+// Deliberately NOT folded into writeLoginsRow's own idLink handling (which
+// only ever PRESERVES an existing value, never accepts a new one) -- a
+// fresh upload should always win over whatever was there before.
+async function writeIdLink(accessToken, row, idLink) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!F${row}:F${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!F${row}:F${row}`, values: [[idLink]] }),
+  });
+  if (!res.ok) throw new Error(`id-link write failed: ${await res.text()}`);
 }
 
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
@@ -769,6 +796,32 @@ async function handleFavoriteCounts(request, env) {
 // data -- both fetch fresh from here rather than trusting a stale
 // localStorage copy (the same class of staleness bug already found and
 // fixed once this build in the appointment-prefill timing issue).
+// Co-buyer slots stored as "<name> | <email> | <phone> | <idLink>" in
+// columns Z (slot 1) / AA (slot 2) -- same flat, human-readable
+// pipe-delimited convention already used for Favorites (column Y), chosen
+// over JSON so Aaron/Nathan can read a slot directly as a plain cell.
+function parseCoBuyerCell(raw) {
+  if (!raw) return null;
+  const parts = raw.split("|").map((s) => s.trim());
+  const [name, email, phone, idLink] = parts;
+  if (!name && !email && !phone) return null;
+  return { name: name || "", email: email || "", phone: phone || "", idOnFile: !!idLink };
+}
+
+function buildCoBuyerCell(name, email, phone, idLink) {
+  return [name || "", email || "", phone || "", idLink || ""].join(" | ");
+}
+
+// Pulls just the raw idLink field (4th pipe segment) out of a co-buyer
+// cell, without the "is this cell populated at all" gating parseCoBuyerCell
+// does -- used when preserving an existing link across an unrelated
+// name/email/phone edit.
+function extractCoBuyerIdLink(raw) {
+  if (!raw) return "";
+  const parts = raw.split("|").map((s) => s.trim());
+  return parts[3] || "";
+}
+
 async function handleMyInfo(request, env) {
   const url = new URL(request.url);
   const email = (url.searchParams.get("email") || "").trim();
@@ -787,7 +840,20 @@ async function handleMyInfo(request, env) {
     const data = await res.json();
     const [phone, name, idLink] = (data.values || [[]])[0] || [];
 
-    return jsonResponse({ name: name || "", phone: phone || "", email, idOnFile: !!idLink });
+    // Separate read for the Co-Buyer columns (Z:AA) -- kept isolated from
+    // the D:F read above rather than widening it across 20+ intervening
+    // columns (appointments, filters, favorites) that have nothing to do
+    // with this response.
+    const coRange = encodeURIComponent(`${LOGINS_TAB}!Z${row}:AA${row}`);
+    const coRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${coRange}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!coRes.ok) throw new Error(`co-buyer read failed: ${await coRes.text()}`);
+    const coData = await coRes.json();
+    const [coBuyer1Raw, coBuyer2Raw] = (coData.values || [[]])[0] || [];
+    const coBuyers = [parseCoBuyerCell(coBuyer1Raw), parseCoBuyerCell(coBuyer2Raw)];
+
+    return jsonResponse({ name: name || "", phone: phone || "", email, idOnFile: !!idLink, coBuyers });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -828,6 +894,156 @@ async function handleUpdateName(request, env) {
   }
 }
 
+// ---------- Additional Buyers (co-buyers), added 2026-09-02 ----------
+// Up to 2 co-buyer slots per visitor, per Aaron's explicit choice. Name/
+// email/phone save independently of the ID upload (a visitor may fill in
+// contact info before ever getting to the ID) -- this handler always
+// PRESERVES whatever idLink is already in the slot's cell, same non-
+// destructive stance as writeLoginsRow's own Phone/Name handling.
+async function handleUpdateCoBuyer(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
+  const slot = Number(body.slot);
+  const coName = (body.name || "").trim();
+  const coEmail = (body.coBuyerEmail || "").trim();
+  const coPhone = (body.coBuyerPhone || "").trim();
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (slot !== 1 && slot !== 2) return jsonResponse({ error: "invalid slot" }, 400);
+  if (!coName) return jsonResponse({ error: "invalid co-buyer name" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "not found" }, 404);
+
+    const col = slot === 1 ? "Z" : "AA";
+    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const existingRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!existingRes.ok) throw new Error(`co-buyer existing-cell read failed: ${await existingRes.text()}`);
+    const existingData = await existingRes.json();
+    const idLink = extractCoBuyerIdLink(((existingData.values || [[]])[0] || [])[0] || "");
+
+    const cell = buildCoBuyerCell(coName, coEmail, coPhone, idLink);
+    const writeRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cell]] }),
+    });
+    if (!writeRes.ok) throw new Error(`co-buyer write failed: ${await writeRes.text()}`);
+
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Co-buyer ID upload -- mirrors handleUploadId's Dropbox mechanics (same
+// folder, same overwrite-on-resubmit convention, same real shared-link
+// creation) but simpler: no appointment/property/date involved, just a
+// file attached to an already-saved co-buyer slot. Requires the slot's
+// Name/Phone to already be saved (via /update-co-buyer first) since the
+// filename convention needs both -- returns a clear error rather than
+// inventing a placeholder name if they're missing.
+async function handleUploadCoBuyerId(request, env) {
+  let form;
+  try {
+    form = await request.formData();
+  } catch (e) {
+    return jsonResponse({ error: "invalid form data" }, 400);
+  }
+  const email = (form.get("email") || "").toString().trim();
+  const slot = Number((form.get("slot") || "").toString());
+  const idPhoto = form.get("idPhoto");
+
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (slot !== 1 && slot !== 2) return jsonResponse({ error: "invalid slot" }, 400);
+  if (!idPhoto || typeof idPhoto === "string") return jsonResponse({ error: "missing ID photo" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "not found" }, 404);
+
+    const col = slot === 1 ? "Z" : "AA";
+    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const cellRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!cellRes.ok) throw new Error(`co-buyer cell read failed: ${await cellRes.text()}`);
+    const cellData = await cellRes.json();
+    const rawCell = ((cellData.values || [[]])[0] || [])[0] || "";
+    const [coName, coEmail, coPhone] = rawCell.split("|").map((s) => (s || "").trim());
+    if (!coName || !coPhone) {
+      return jsonResponse({ error: "co-buyer info missing", message: "Please save this co-buyer's name and phone first." }, 400);
+    }
+
+    const primaryRange = encodeURIComponent(`${LOGINS_TAB}!E${row}:E${row}`);
+    const primaryRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${primaryRange}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!primaryRes.ok) throw new Error(`primary-name read failed: ${await primaryRes.text()}`);
+    const primaryData = await primaryRes.json();
+    const primaryName = ((primaryData.values || [[]])[0] || [])[0] || "";
+
+    const dropboxToken = await getDropboxAccessToken(env);
+    const filename = buildCoBuyerIdFilename(coName, coPhone, primaryName, idPhoto.name);
+    const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
+    const fileBytes = await idPhoto.arrayBuffer();
+
+    const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxToken}`,
+        "Dropbox-API-Arg": JSON.stringify({ path: destPath, mode: "overwrite", mute: false }),
+        "Content-Type": "application/octet-stream",
+      },
+      body: fileBytes,
+    });
+    if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
+
+    const idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+
+    // Re-read the cell immediately before writing back (not the copy read
+    // above) so a concurrent name/phone edit isn't clobbered by this
+    // slower Dropbox round trip.
+    const freshRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!freshRes.ok) throw new Error(`co-buyer fresh-cell read failed: ${await freshRes.text()}`);
+    const freshData = await freshRes.json();
+    const freshRaw = ((freshData.values || [[]])[0] || [])[0] || "";
+    const [freshName, freshEmail, freshPhone] = freshRaw.split("|").map((s) => (s || "").trim());
+
+    const cell = buildCoBuyerCell(freshName || coName, freshEmail || coEmail, freshPhone || coPhone, idLink);
+    const writeRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cell]] }),
+    });
+    if (!writeRes.ok) throw new Error(`co-buyer id-link write failed: ${await writeRes.text()}`);
+
+    if (env.TELEGRAM_BOT_TOKEN) {
+      const text = `Co-buyer ID uploaded — ${coName} (co-buyer of ${primaryName}), ${coPhone}.\nFiled as: ${filename}\n${idLink}`;
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
+      }).catch(() => {});
+    }
+
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // ---------- ID photo proxy, added 2026-09-02 ----------
 // Real privacy concern this exists to solve: the ID Link column holds a
 // PERMANENT, PUBLIC Dropbox shared link (fine for Aaron's own Sheet/
@@ -853,10 +1069,17 @@ async function handleUpdateName(request, env) {
 async function handleIdPhoto(request, env) {
   const url = new URL(request.url);
   const email = (url.searchParams.get("email") || "").trim();
+  // Optional -- added 2026-09-02 for co-buyer ID thumbnails. Absent/blank
+  // means the primary buyer's own ID (column F), same as before.
+  const coBuyerSlot = (url.searchParams.get("coBuyerSlot") || "").trim();
   if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (coBuyerSlot && coBuyerSlot !== "1" && coBuyerSlot !== "2") {
+    return jsonResponse({ error: "invalid coBuyerSlot" }, 400);
+  }
 
   const cache = caches.default;
-  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent(email.toLowerCase())}`, request);
+  const cacheSuffix = coBuyerSlot ? `-cobuyer${coBuyerSlot}` : "";
+  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent(email.toLowerCase())}${cacheSuffix}`, request);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
@@ -865,13 +1088,25 @@ async function handleIdPhoto(request, env) {
     const row = await findLoginsRowByEmail(accessToken, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
-    const linkRange = encodeURIComponent(`${LOGINS_TAB}!F${row}:F${row}`);
-    const linkRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${linkRange}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!linkRes.ok) throw new Error(`ID link read failed: ${await linkRes.text()}`);
-    const linkData = await linkRes.json();
-    const sharedLink = ((linkData.values || [[]])[0] || [])[0] || "";
+    let sharedLink;
+    if (coBuyerSlot) {
+      const col = coBuyerSlot === "1" ? "Z" : "AA";
+      const coRange = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+      const coRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${coRange}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!coRes.ok) throw new Error(`co-buyer ID link read failed: ${await coRes.text()}`);
+      const coData = await coRes.json();
+      sharedLink = extractCoBuyerIdLink(((coData.values || [[]])[0] || [])[0] || "");
+    } else {
+      const linkRange = encodeURIComponent(`${LOGINS_TAB}!F${row}:F${row}`);
+      const linkRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${linkRange}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!linkRes.ok) throw new Error(`ID link read failed: ${await linkRes.text()}`);
+      const linkData = await linkRes.json();
+      sharedLink = ((linkData.values || [[]])[0] || [])[0] || "";
+    }
     if (!sharedLink) return jsonResponse({ error: "no ID on file" }, 404);
 
     const dropboxToken = await getDropboxAccessToken(env);
@@ -1055,6 +1290,57 @@ function buildIdFilename(fullName, phone, originalFilename) {
   return `${namePart} - ${last4}.${ext}`;
 }
 
+// Same convention as buildIdFilename, extended with a co-buyer tag and the
+// primary buyer's own last name -- Aaron's explicit choice (same Dropbox
+// folder as the primary buyer's ID, not a separate one, distinguished by
+// filename alone). "<CoBuyerLast>, <CoBuyerFirst> (Co-buyer of
+// <PrimaryLast>) - <last4 of co-buyer phone>.<ext>".
+function buildCoBuyerIdFilename(coBuyerName, coBuyerPhone, primaryName, originalFilename) {
+  const base = buildIdFilename(coBuyerName, coBuyerPhone, originalFilename);
+  const primaryParts = (primaryName || "").trim().split(/\s+/).filter(Boolean);
+  const primaryLast = primaryParts.length ? primaryParts[primaryParts.length - 1] : "Unknown";
+  const dot = base.lastIndexOf(".");
+  const namePart = dot >= 0 ? base.slice(0, dot) : base;
+  const extPart = dot >= 0 ? base.slice(dot) : "";
+  return `${namePart} (Co-buyer of ${primaryLast})${extPart}`;
+}
+
+// Real regression found and fixed 2026-09-02: CLAUDE.md documented this as
+// already built ("handleUploadId updated to create/reuse a real shared
+// link, write it to ID Link") but the actual deployed code never had it --
+// most likely an earlier direct-Cloudflare deploy this session was built
+// from a stale local worker.js snapshot that predated the feature, silently
+// dropping it on a later redeploy. Found by checking the real code before
+// building co-buyer ID upload on top of it, not assumed from the docs.
+// mode: "overwrite" already guarantees a re-upload reuses the same path, so
+// the 409 fallback (list_shared_links) is the normal, expected path on any
+// second-or-later upload for the same person, not a rare edge case.
+async function createOrReuseSharedLink(dropboxToken, path) {
+  const createRes = await fetch("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+  if (createRes.ok) {
+    const data = await createRes.json();
+    return data.url;
+  }
+  const errText = await createRes.text();
+  if (!errText.includes("shared_link_already_exists")) {
+    throw new Error(`dropbox create_shared_link failed: ${errText}`);
+  }
+  const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ path, direct_only: true }),
+  });
+  if (!listRes.ok) throw new Error(`dropbox list_shared_links failed: ${await listRes.text()}`);
+  const listData = await listRes.json();
+  const link = (listData.links || [])[0];
+  if (!link) throw new Error("dropbox: link reported existing but list_shared_links returned none");
+  return link.url;
+}
+
 async function handleUploadId(request, env) {
   let form;
   try {
@@ -1096,6 +1382,18 @@ async function handleUploadId(request, env) {
     });
     if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
 
+    // Real shared link, not just the folder link -- see
+    // createOrReuseSharedLink's own comment for the regression this fixes.
+    // Best-effort: a Dropbox sharing hiccup shouldn't block the appointment
+    // save below, which is the actually-required part of this submission.
+    let idLink = "";
+    try {
+      idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+    } catch (e) {
+      // fall through with idLink = "" -- flagged to Aaron via the Telegram
+      // note below rather than failing the whole submission.
+    }
+
     // Record this appointment in App: Logins -- added 2026-08-29, per
     // Aaron's direct request ("Each appointment created should be added to
     // a new column in the sheet"). Reuses the SAME find-or-create-row logic
@@ -1111,6 +1409,7 @@ async function handleUploadId(request, env) {
       const accessToken = await getSheetsAccessToken(env);
       const target = await findOrNextLoginsRow(accessToken, email);
       await writeLoginsRow(accessToken, target, { name, email, phone, agreed: true });
+      if (idLink) await writeIdLink(accessToken, target.row, idLink);
       await addAppointment(accessToken, target.row, property, inspectionDate);
       appointmentSaved = true;
     } catch (e) {
@@ -1122,19 +1421,25 @@ async function handleUploadId(request, env) {
     }
 
     // Notify Aaron -- informational, no approval needed (see the big
-    // comment above this section for why). Best-effort, same as the
-    // gate-login push: a failed notification never blocks the visitor.
+    // comment above this section for why). Best-effort (wrapped so a
+    // Telegram hiccup can't fail the response for something the visitor
+    // already completed successfully), but AWAITED -- a second real bug
+    // found and fixed 2026-09-02 alongside the missing-shared-link one
+    // above: this was fire-and-forget (no await), the exact same Cloudflare
+    // Workers gotcha already found and fixed twice elsewhere in this file
+    // (an unawaited promise can be killed the instant the response
+    // returns). Now uses the real per-file link when available (falling
+    // back to the folder link only if the shared-link creation above
+    // failed), matching the original intent.
     if (env.TELEGRAM_BOT_TOKEN) {
       const text =
         `ID uploaded — ${name}, ${phone}, ${email}.\n` +
         `Property: ${property}\n` +
         `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
         `Filed as: ${filename}\n` +
-        // Folder link, not a link to this exact file -- see
-        // DROPBOX_BUYER_IDS_FOLDER_LINK's own comment for why.
-        `${DROPBOX_BUYER_IDS_FOLDER_LINK}` +
+        `${idLink || DROPBOX_BUYER_IDS_FOLDER_LINK}` +
         (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)");
-      fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
@@ -1352,6 +1657,63 @@ async function nextPendingPhoneChangeRow(accessToken) {
   return (data.values || []).length + 1;
 }
 
+// ---------- Pending Email Changes -- mirrors the 4 helpers above exactly,
+// swapping what's being confirmed (email instead of phone) and what the
+// webhook reply gets matched against (the visitor's existing on-file
+// PHONE, since that's who the confirmation text actually goes to -- the
+// new email itself can't receive a text). Columns: Old Email | New Email |
+// Phone | Requested At | Expires At | Status | Target Row.
+async function findPendingEmailChangeByOldEmail(accessToken, email) {
+  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A:G`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`pending-email read failed: ${await res.text()}`);
+  const data = await res.json();
+  const rows = data.values || [];
+  const target = email.trim().toLowerCase();
+  let found = null;
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][0] || "").trim().toLowerCase() === target) found = { row: i + 1, values: rows[i] };
+  }
+  return found;
+}
+
+async function findPendingEmailChangeByPhone(accessToken, e164Phone) {
+  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A:G`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`pending-email read failed: ${await res.text()}`);
+  const data = await res.json();
+  const rows = data.values || [];
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const [, , phone, , expiresAt, status] = rows[i];
+    if ((phone || "").trim() === e164Phone && status === "Pending" && expiresAt && Date.parse(expiresAt) > Date.now()) {
+      return { row: i + 1, values: rows[i] };
+    }
+  }
+  return null;
+}
+
+async function writePendingEmailChangeRow(accessToken, row, values) {
+  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A${row}:G${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${PENDING_EMAIL_TAB}!A${row}:G${row}`, values: [values] }),
+  });
+  if (!res.ok) throw new Error(`pending-email write failed: ${await res.text()}`);
+}
+
+async function nextPendingEmailChangeRow(accessToken) {
+  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A:A`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`pending-email read failed: ${await res.text()}`);
+  const data = await res.json();
+  return (data.values || []).length + 1;
+}
+
 async function sendQuoText(env, e164To, content) {
   const res = await fetch(`${QUO_BASE}/messages`, {
     method: "POST",
@@ -1417,6 +1779,78 @@ async function handleRequestPhoneChange(request, env) {
     );
 
     return jsonResponse({ ok: true, message: `We've texted ${newPhoneE164} -- reply YES within 1 hour to confirm.` });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Step 1 of the email-change flow -- mirrors handleRequestPhoneChange
+// exactly, except the confirmation text goes to the visitor's EXISTING,
+// unchanged phone (email itself can't receive a text). Only ever operates
+// on an existing row, found by the CURRENT email -- never creates one.
+async function handleRequestEmailChange(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
+  const newEmail = (body.newEmail || "").trim();
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid current email" }, 400);
+  if (!isPlausibleEmail(newEmail)) return jsonResponse({ error: "invalid new email" }, 400);
+  if (email.toLowerCase() === newEmail.toLowerCase()) {
+    return jsonResponse({ error: "unchanged", message: "That's already the email we have on file." }, 400);
+  }
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const targetRow = await findLoginsRowByEmail(accessToken, email);
+    if (!targetRow) {
+      return jsonResponse({ error: "not found", message: "We couldn't find an account with that email." }, 404);
+    }
+
+    // Refuse if the desired new email already belongs to a DIFFERENT row --
+    // avoids two visitor rows silently colliding on the same identity key.
+    const collisionRow = await findLoginsRowByEmail(accessToken, newEmail);
+    if (collisionRow && collisionRow !== targetRow) {
+      return jsonResponse({ error: "in use", message: "That email is already associated with another account." }, 400);
+    }
+
+    const phoneRange = encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`);
+    const phoneRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${phoneRange}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!phoneRes.ok) throw new Error(`existing-phone read failed: ${await phoneRes.text()}`);
+    const phoneData = await phoneRes.json();
+    const onFilePhone = ((phoneData.values || [[]])[0] || [])[0] || "";
+    const onFilePhoneE164 = toE164(onFilePhone);
+    if (!onFilePhoneE164) {
+      return jsonResponse({
+        error: "no phone on file",
+        message: "We don't have a phone number on file to confirm this with -- please add one first, or contact us directly.",
+      }, 400);
+    }
+
+    const nowIso = new Date().toISOString();
+    const expiresIso = new Date(Date.now() + EMAIL_CHANGE_TIMEOUT_MS).toISOString();
+    const rowValues = [email, newEmail, onFilePhoneE164, nowIso, expiresIso, "Pending", String(targetRow)];
+
+    // Upsert-in-place, same reasoning as the phone flow: refresh an
+    // existing pending request for this email rather than piling up
+    // duplicates on repeated submissions.
+    const existingPending = await findPendingEmailChangeByOldEmail(accessToken, email);
+    const pendingRow = existingPending ? existingPending.row : await nextPendingEmailChangeRow(accessToken);
+    await writePendingEmailChangeRow(accessToken, pendingRow, rowValues);
+
+    await sendQuoText(
+      env,
+      onFilePhoneE164,
+      `Reply YES within 1 hour to confirm updating your email to ${newEmail} for www.InstantApprovalHomes.com. Didn't request this? Just ignore this text.`,
+    );
+
+    return jsonResponse({ ok: true, message: `We've texted your phone on file -- reply YES within 1 hour to confirm.` });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -1516,45 +1950,79 @@ async function handleQuoMessageWebhook(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const pending = await findPendingPhoneChangeByNewPhone(accessToken, fromE164);
-    if (!pending) {
-      return jsonResponse({ ok: true }); // no matching/still-valid pending request
+    const pendingPhone = await findPendingPhoneChangeByNewPhone(accessToken, fromE164);
+    if (pendingPhone) {
+      const [email, oldPhone, newPhone, , , , targetRowStr] = pendingPhone.values;
+      const targetRow = Number(targetRowStr);
+
+      const phoneUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`)}?valueInputOption=RAW`;
+      const writeRes = await fetch(phoneUrl, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `${LOGINS_TAB}!D${targetRow}:D${targetRow}`, values: [[newPhone]] }),
+      });
+      if (!writeRes.ok) throw new Error(`phone overwrite failed: ${await writeRes.text()}`);
+
+      const confirmedRow = [email, oldPhone, newPhone, pendingPhone.values[3], pendingPhone.values[4], "Confirmed", targetRowStr];
+      await writePendingPhoneChangeRow(accessToken, pendingPhone.row, confirmedRow);
+
+      // Real bug fixed 2026-09-02: both notifications below were originally
+      // fire-and-forget (fetch(...).catch(() => {}), no await) -- a real
+      // Cloudflare Workers gotcha: an unawaited promise can be killed the
+      // moment the response returns, since the runtime is free to tear down
+      // the execution context right after. Confirmed live: the Sheet write
+      // above (which WAS awaited) worked, but neither notification arrived.
+      // Fixed by awaiting both -- still wrapped so a Telegram/Quo hiccup can
+      // never turn the actual, already-successful overwrite into an error
+      // response, but now the request genuinely doesn't finish until both
+      // have had a real chance to complete.
+      if (env.TELEGRAM_BOT_TOKEN) {
+        const text2 = `Phone number CHANGED (visitor-confirmed) — ${email}.\nOld: ${oldPhone || "(blank)"}\nNew: ${newPhone}`;
+        await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: text2 }),
+        }).catch(() => {});
+      }
+
+      await sendQuoText(env, fromE164, "Thanks! Your phone number has been updated.").catch(() => {});
+
+      return jsonResponse({ ok: true });
     }
 
-    const [email, oldPhone, newPhone, , , , targetRowStr] = pending.values;
-    const targetRow = Number(targetRowStr);
+    // No matching pending PHONE change -- check pending EMAIL changes next.
+    // These are matched by the visitor's EXISTING (unchanged) phone number,
+    // since that's who the confirmation text actually went to -- the new
+    // email itself can't receive a text reply.
+    const pendingEmail = await findPendingEmailChangeByPhone(accessToken, fromE164);
+    if (!pendingEmail) {
+      return jsonResponse({ ok: true }); // no matching/still-valid pending request of either kind
+    }
 
-    const phoneUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`)}?valueInputOption=RAW`;
-    const writeRes = await fetch(phoneUrl, {
+    const [oldEmail, newEmail, onFilePhone, , , , targetRowStr2] = pendingEmail.values;
+    const targetRow2 = Number(targetRowStr2);
+
+    const emailUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!B${targetRow2}:B${targetRow2}`)}?valueInputOption=RAW`;
+    const writeRes2 = await fetch(emailUrl, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!D${targetRow}:D${targetRow}`, values: [[newPhone]] }),
+      body: JSON.stringify({ range: `${LOGINS_TAB}!B${targetRow2}:B${targetRow2}`, values: [[newEmail]] }),
     });
-    if (!writeRes.ok) throw new Error(`phone overwrite failed: ${await writeRes.text()}`);
+    if (!writeRes2.ok) throw new Error(`email overwrite failed: ${await writeRes2.text()}`);
 
-    const confirmedRow = [email, oldPhone, newPhone, pending.values[3], pending.values[4], "Confirmed", targetRowStr];
-    await writePendingPhoneChangeRow(accessToken, pending.row, confirmedRow);
+    const confirmedRow2 = [oldEmail, newEmail, onFilePhone, pendingEmail.values[3], pendingEmail.values[4], "Confirmed", targetRowStr2];
+    await writePendingEmailChangeRow(accessToken, pendingEmail.row, confirmedRow2);
 
-    // Real bug fixed 2026-09-02: both notifications below were originally
-    // fire-and-forget (fetch(...).catch(() => {}), no await) -- a real
-    // Cloudflare Workers gotcha: an unawaited promise can be killed the
-    // moment the response returns, since the runtime is free to tear down
-    // the execution context right after. Confirmed live: the Sheet write
-    // above (which WAS awaited) worked, but neither notification arrived.
-    // Fixed by awaiting both -- still wrapped so a Telegram/Quo hiccup can
-    // never turn the actual, already-successful overwrite into an error
-    // response, but now the request genuinely doesn't finish until both
-    // have had a real chance to complete.
     if (env.TELEGRAM_BOT_TOKEN) {
-      const text2 = `Phone number CHANGED (visitor-confirmed) — ${email}.\nOld: ${oldPhone || "(blank)"}\nNew: ${newPhone}`;
+      const text3 = `Email CHANGED (visitor-confirmed) — was ${oldEmail}.\nNew: ${newEmail}`;
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: text2 }),
+        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: text3 }),
       }).catch(() => {});
     }
 
-    await sendQuoText(env, fromE164, "Thanks! Your phone number has been updated.").catch(() => {});
+    await sendQuoText(env, fromE164, "Thanks! Your email has been updated.").catch(() => {});
 
     return jsonResponse({ ok: true });
   } catch (e) {
@@ -1630,6 +2098,18 @@ async function route(request, env) {
 
   if (url.pathname === "/request-phone-change" && request.method === "POST") {
     return handleRequestPhoneChange(request, env);
+  }
+
+  if (url.pathname === "/request-email-change" && request.method === "POST") {
+    return handleRequestEmailChange(request, env);
+  }
+
+  if (url.pathname === "/update-co-buyer" && request.method === "POST") {
+    return handleUpdateCoBuyer(request, env);
+  }
+
+  if (url.pathname === "/upload-co-buyer-id" && request.method === "POST") {
+    return handleUploadCoBuyerId(request, env);
   }
 
   // Called by Quo itself, not the site -- no CORS-origin concern here, this
