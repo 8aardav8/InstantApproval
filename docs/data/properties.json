@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:26:32.235644+00:00",
+  "generatedAt": "2026-09-03T17:27:16.420893+00:00",
   "listings": [
     {
       "id": "517-n-31st-street-east-saint-louis-il-62205",
@@ -21807,7 +21807,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1296",
-      "status": "Sold",
+      "status": "Available",
       "livability": 5,
       "lat": 39.8494153,
       "lng": -88.9747923
