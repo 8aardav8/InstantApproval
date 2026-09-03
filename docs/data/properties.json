@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T16:54:05.298910+00:00",
+  "generatedAt": "2026-09-03T16:56:50.184520+00:00",
   "listings": [
     {
       "id": "293-cameron-st-jackson-ms-39212",
@@ -7485,7 +7485,7 @@
       "id": "1455-e-whitmer-st-decatur-il-62521",
       "address": "1455 E Whitmer St, Decatur, IL 62521",
       "onMarketDate": "4/19/2026",
-      "lastUpdate": "8/29/2026",
+      "lastUpdate": "9/2/2026",
       "area": "IL - Decatur",
       "down": "$1,900",
       "monthly": "$840",
@@ -7493,7 +7493,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1050",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.83511800000001,
       "lng": -88.9368937
