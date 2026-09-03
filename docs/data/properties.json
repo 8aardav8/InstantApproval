@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T16:53:33.459237+00:00",
+  "generatedAt": "2026-09-03T16:54:05.298910+00:00",
   "listings": [
     {
       "id": "293-cameron-st-jackson-ms-39212",
@@ -243,7 +243,7 @@
       "id": "2217-maryland-ave-flint-mi-48506",
       "address": "2217 Maryland Ave. Flint MI 48506",
       "onMarketDate": "8/24",
-      "lastUpdate": "8/24",
+      "lastUpdate": "9/2",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$975",
@@ -16818,7 +16818,7 @@
       "id": "5828-ferris-ave-st-louis-mo-63120",
       "address": "5828 Ferris Ave. st. Louis, MO 63120",
       "onMarketDate": "8/13/2026",
-      "lastUpdate": "8/13/2026",
+      "lastUpdate": "9/2/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$795",
@@ -16826,7 +16826,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6874512,
       "lng": -90.2718134
