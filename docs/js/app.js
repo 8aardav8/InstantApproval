@@ -1084,6 +1084,13 @@ async function prefillGetStartedContactFields() {
     if (data.name) document.getElementById("get-started-name").value = data.name;
     document.getElementById("get-started-email").value = data.email || email || "";
     if (data.phone) document.getElementById("get-started-phone").value = data.phone;
+    // Added 2026-09-03 -- lets a returning visitor with an ID already on
+    // file (from an earlier booking, or uploaded via My Info) skip
+    // re-uploading it just to book another viewing. See updateIdPhotoStatus
+    // below, which is the single place that actually applies this to the
+    // field's required-ness and status line.
+    serverIdOnFile = !!data.idOnFile;
+    updateIdPhotoStatus();
   }
 }
 
@@ -1479,16 +1486,34 @@ async function refreshFavoriteCounts() {
 // without their action.
 let lastUploadedIdPhoto = null;
 
+// Added 2026-09-03 -- whether /my-info reported an ID already on file
+// server-side (set in prefillGetStartedContactFields). Distinct from
+// lastUploadedIdPhoto: that one tracks a fresh pick made THIS session,
+// this one reflects a real, already-confirmed upload from any prior
+// session/device (an earlier booking, or a direct My Info upload).
+let serverIdOnFile = false;
+
+// Extended 2026-09-03 to also reflect a server-confirmed ID (not just a
+// same-session pick) and to toggle whether a fresh photo is actually
+// required -- a returning visitor who already has one on file shouldn't
+// be forced to re-upload just to book another viewing. A fresh pick
+// always takes visual priority over the server-known one (it's more
+// current), but either one alone is enough to satisfy the requirement.
 function updateIdPhotoStatus() {
   const el = document.getElementById("get-started-id-status");
-  if (!el) return;
+  const input = document.getElementById("get-started-id-photo");
+  if (!el || !input) return;
   if (lastUploadedIdPhoto) {
     el.textContent = `✓ ID on file: ${lastUploadedIdPhoto.name}`;
+    el.classList.remove("hidden");
+  } else if (serverIdOnFile) {
+    el.textContent = "✓ ID already on file from a previous visit";
     el.classList.remove("hidden");
   } else {
     el.textContent = "";
     el.classList.add("hidden");
   }
+  input.required = !lastUploadedIdPhoto && !serverIdOnFile;
 }
 
 function initGetStartedForm() {
@@ -1709,6 +1734,32 @@ function initMyInfoUI() {
     }
   });
 
+  // Primary buyer's own ID, added 2026-09-03 -- closes the last real gap
+  // from Aaron's original "My Info" scope ask. Same immediate-upload-on-
+  // select pattern as the co-buyer ID fields below.
+  document.getElementById("my-info-id-photo").addEventListener("change", async (evt) => {
+    const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const file = evt.target.files && evt.target.files[0];
+    const status = document.getElementById("my-info-id-upload-status");
+    if (!email || !file) return;
+    status.textContent = "Uploading...";
+    try {
+      const form = new FormData();
+      form.append("email", email);
+      form.append("idPhoto", file);
+      const res = await fetch(`${ADMIN_API_URL}/upload-my-id`, { method: "POST", body: form });
+      const data = await res.json();
+      if (res.ok) {
+        status.textContent = "Saved!";
+        refreshMyInfoTab(); // re-pull so the new thumbnail actually shows
+      } else {
+        status.textContent = data.message || "Something went wrong -- please try again.";
+      }
+    } catch (e) {
+      status.textContent = "Something went wrong -- please try again.";
+    }
+  });
+
   // Additional Buyers (co-buyers), added 2026-09-02 -- same wiring pattern
   // for both slots, driven by a small helper rather than duplicating the
   // listener code twice, since the two blocks are otherwise identical.
@@ -1792,6 +1843,8 @@ async function refreshMyInfoTab() {
   document.getElementById("my-info-name-status").textContent = "";
   document.getElementById("my-info-phone-status").textContent = "";
   document.getElementById("my-info-email-status").textContent = "";
+  document.getElementById("my-info-id-upload-status").textContent = "";
+  document.getElementById("my-info-id-photo").value = "";
 
   const hasId = document.getElementById("my-info-id-has-file");
   const missingId = document.getElementById("my-info-id-missing");
