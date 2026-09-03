@@ -1354,44 +1354,63 @@ async function handleUploadId(request, env) {
   const property = (form.get("property") || "").toString().trim();
   const inspectionDate = (form.get("inspectionDate") || "").toString().trim();
   const idPhoto = form.get("idPhoto");
+  // A submitted <form>'s FormData always includes an entry for an unselected
+  // file input (an empty File, name: "", size: 0) rather than omitting the
+  // key entirely -- checking size, not just presence/type, is what actually
+  // tells "no file chosen" apart from "a real file was chosen."
+  const hasIdPhoto = !!idPhoto && typeof idPhoto !== "string" && idPhoto.size > 0;
 
   if (!name || !email || !phone || !property || !inspectionDate) {
     return jsonResponse({ error: "missing required field" }, 400);
   }
-  if (!idPhoto || typeof idPhoto === "string") {
-    return jsonResponse({ error: "missing ID photo" }, 400);
-  }
 
   try {
-    const dropboxToken = await getDropboxAccessToken(env);
-    const filename = buildIdFilename(name, phone, idPhoto.name);
-    const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
-    const fileBytes = await idPhoto.arrayBuffer();
+    // Real gap closed 2026-09-03: a photo used to be required on EVERY
+    // booking, even for a returning visitor who already has one on file
+    // (from an earlier booking, or uploaded directly via My Info -- see
+    // handleUploadMyId below). Row lookup now happens first so that can be
+    // checked server-side -- never just trusted from the client -- before
+    // deciding whether a fresh photo is actually required.
+    const accessToken = await getSheetsAccessToken(env);
+    const target = await findOrNextLoginsRow(accessToken, email);
 
-    const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${dropboxToken}`,
-        // mode: "overwrite", not "add" -- see buildIdFilename's comment.
-        // Same name + same last-4-of-phone showing up twice is treated as
-        // the same person re-submitting, not a collision to reject.
-        "Dropbox-API-Arg": JSON.stringify({ path: destPath, mode: "overwrite", mute: false }),
-        "Content-Type": "application/octet-stream",
-      },
-      body: fileBytes,
-    });
-    if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
+    if (!hasIdPhoto && !target.existingIdLink) {
+      return jsonResponse({ error: "missing ID photo" }, 400);
+    }
 
-    // Real shared link, not just the folder link -- see
-    // createOrReuseSharedLink's own comment for the regression this fixes.
-    // Best-effort: a Dropbox sharing hiccup shouldn't block the appointment
-    // save below, which is the actually-required part of this submission.
-    let idLink = "";
-    try {
-      idLink = await createOrReuseSharedLink(dropboxToken, destPath);
-    } catch (e) {
-      // fall through with idLink = "" -- flagged to Aaron via the Telegram
-      // note below rather than failing the whole submission.
+    let idLink = target.existingIdLink || "";
+    let filename = "";
+    if (hasIdPhoto) {
+      const dropboxToken = await getDropboxAccessToken(env);
+      filename = buildIdFilename(name, phone, idPhoto.name);
+      const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
+      const fileBytes = await idPhoto.arrayBuffer();
+
+      const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${dropboxToken}`,
+          // mode: "overwrite", not "add" -- see buildIdFilename's comment.
+          // Same name + same last-4-of-phone showing up twice is treated as
+          // the same person re-submitting, not a collision to reject.
+          "Dropbox-API-Arg": JSON.stringify({ path: destPath, mode: "overwrite", mute: false }),
+          "Content-Type": "application/octet-stream",
+        },
+        body: fileBytes,
+      });
+      if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
+
+      // Real shared link, not just the folder link -- see
+      // createOrReuseSharedLink's own comment for the regression this
+      // fixes. Best-effort: a Dropbox sharing hiccup shouldn't block the
+      // appointment save below, which is the actually-required part of
+      // this submission.
+      try {
+        idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+      } catch (e) {
+        // fall through with whatever idLink already was (existing or "")
+        // -- flagged to Aaron via the Telegram note below either way.
+      }
     }
 
     // Record this appointment in App: Logins -- added 2026-08-29, per
@@ -1406,8 +1425,6 @@ async function handleUploadId(request, env) {
     // passing the site-wide consent gate.
     let appointmentSaved = false;
     try {
-      const accessToken = await getSheetsAccessToken(env);
-      const target = await findOrNextLoginsRow(accessToken, email);
       await writeLoginsRow(accessToken, target, { name, email, phone, agreed: true });
       if (idLink) await writeIdLink(accessToken, target.row, idLink);
       await addAppointment(accessToken, target.row, property, inspectionDate);
@@ -1423,22 +1440,99 @@ async function handleUploadId(request, env) {
     // Notify Aaron -- informational, no approval needed (see the big
     // comment above this section for why). Best-effort (wrapped so a
     // Telegram hiccup can't fail the response for something the visitor
-    // already completed successfully), but AWAITED -- a second real bug
-    // found and fixed 2026-09-02 alongside the missing-shared-link one
-    // above: this was fire-and-forget (no await), the exact same Cloudflare
-    // Workers gotcha already found and fixed twice elsewhere in this file
-    // (an unawaited promise can be killed the instant the response
-    // returns). Now uses the real per-file link when available (falling
-    // back to the folder link only if the shared-link creation above
-    // failed), matching the original intent.
+    // already completed successfully), but AWAITED -- a real bug found and
+    // fixed 2026-09-02: this was fire-and-forget (no await), the exact same
+    // Cloudflare Workers gotcha already found and fixed twice elsewhere in
+    // this file (an unawaited promise can be killed the instant the
+    // response returns). Wording now distinguishes a fresh upload from a
+    // booking that reused an already-on-file ID, so Aaron isn't confused
+    // about which case happened.
     if (env.TELEGRAM_BOT_TOKEN) {
-      const text =
-        `ID uploaded — ${name}, ${phone}, ${email}.\n` +
-        `Property: ${property}\n` +
-        `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
-        `Filed as: ${filename}\n` +
-        `${idLink || DROPBOX_BUYER_IDS_FOLDER_LINK}` +
-        (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)");
+      const text = hasIdPhoto
+        ? `ID uploaded — ${name}, ${phone}, ${email}.\n` +
+          `Property: ${property}\n` +
+          `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
+          `Filed as: ${filename}\n` +
+          `${idLink || DROPBOX_BUYER_IDS_FOLDER_LINK}` +
+          (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)")
+        : `Viewing booked (reused ID already on file) — ${name}, ${phone}, ${email}.\n` +
+          `Property: ${property}\n` +
+          `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)` +
+          (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)");
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
+      }).catch(() => {});
+    }
+
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Upload/replace the PRIMARY buyer's own ID directly from My Info, added
+// 2026-09-03 -- closes the real remaining gap from Aaron's original "My
+// Info" scope ask ("the ID should also be able to be uploaded from the my
+// info page and register as already received on the showings page"). Only
+// the co-buyer version of this existed before; the primary buyer's ID
+// could only ever be attached via a full Showings booking. Mirrors
+// handleUploadCoBuyerId's mechanics (same folder, same overwrite
+// convention, same real shared-link creation) but simpler still -- no
+// slot, no separate name/phone fields to manage, just the row's own
+// already-on-file Name/Phone (required at gate-login, so always present
+// by the time someone reaches My Info).
+async function handleUploadMyId(request, env) {
+  let form;
+  try {
+    form = await request.formData();
+  } catch (e) {
+    return jsonResponse({ error: "invalid form data" }, 400);
+  }
+  const email = (form.get("email") || "").toString().trim();
+  const idPhoto = form.get("idPhoto");
+
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!idPhoto || typeof idPhoto === "string") return jsonResponse({ error: "missing ID photo" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "not found" }, 404);
+
+    const infoRange = encodeURIComponent(`${LOGINS_TAB}!D${row}:E${row}`);
+    const infoRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${infoRange}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!infoRes.ok) throw new Error(`name/phone read failed: ${await infoRes.text()}`);
+    const infoData = await infoRes.json();
+    const [phone, name] = ((infoData.values || [[]])[0] || []);
+    if (!name || !phone) {
+      return jsonResponse({ error: "missing name/phone", message: "Please save your name and phone number first." }, 400);
+    }
+
+    const dropboxToken = await getDropboxAccessToken(env);
+    const filename = buildIdFilename(name, phone, idPhoto.name);
+    const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
+    const fileBytes = await idPhoto.arrayBuffer();
+
+    const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxToken}`,
+        "Dropbox-API-Arg": JSON.stringify({ path: destPath, mode: "overwrite", mute: false }),
+        "Content-Type": "application/octet-stream",
+      },
+      body: fileBytes,
+    });
+    if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
+
+    const idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+    await writeIdLink(accessToken, row, idLink);
+
+    if (env.TELEGRAM_BOT_TOKEN) {
+      const text = `ID uploaded via My Info — ${name}, ${phone}, ${email}.\nFiled as: ${filename}\n${idLink}`;
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2110,6 +2204,10 @@ async function route(request, env) {
 
   if (url.pathname === "/upload-co-buyer-id" && request.method === "POST") {
     return handleUploadCoBuyerId(request, env);
+  }
+
+  if (url.pathname === "/upload-my-id" && request.method === "POST") {
+    return handleUploadMyId(request, env);
   }
 
   // Called by Quo itself, not the site -- no CORS-origin concern here, this
