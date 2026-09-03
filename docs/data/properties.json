@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T00:34:25.122786+00:00",
+  "generatedAt": "2026-09-03T00:35:44.223299+00:00",
   "listings": [
     {
       "id": "293-cameron-st-jackson-ms-39212",
@@ -1679,7 +1679,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "700",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6253761,
       "lng": -90.09656509999999
