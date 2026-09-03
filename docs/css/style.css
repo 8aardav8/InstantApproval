@@ -592,8 +592,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    Buyers" card (a sub-heading + a divider before the 2nd slot), matching
    the site's real color tokens rather than the guessed/fallback values
    this had before. */
+/* Real, stronger separation added 2026-09-03 (Aaron's follow-up ask) --
+   a divider line alone read as too subtle. Each co-buyer now sits in its
+   own light-gray rounded box (same --gray-bg tint the page background and
+   disabled fields already use), so both slots are clearly, equally
+   distinct sub-sections rather than the 2nd merely being set off from the
+   1st by a border-top. */
+.co-buyer-block { background: var(--gray-bg); border-radius: 10px; padding: 16px; }
+.co-buyer-block + .co-buyer-block { margin-top: 16px; }
 .co-buyer-block h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--navy); }
-.co-buyer-block + .co-buyer-block { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
 .co-buyer-intro { color: var(--gray-text); font-size: 13px; margin: 0 0 4px; }
 
 /* ---------- bottom popover (shared shape, install app 2026-08-29 +
