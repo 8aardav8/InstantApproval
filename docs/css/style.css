@@ -574,6 +574,28 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .form-status { margin-top: 12px; font-size: 14px; }
 .get-started-id-status { margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #1a8a4a; }
 
+/* My Info tab, added 2026-09-03 -- real reported gap: #my-info-content
+   never had this same treatment, so every field on the whole tab (not
+   just the co-buyer ones Aaron flagged) was rendering as bare, unstyled
+   native inputs while the visually-identical Showings form right next to
+   it looked polished. Same rules as #get-started-form above, just
+   re-scoped -- this is a real fix for the whole tab, not co-buyer-only,
+   since leaving the primary Name/Email/Phone fields unstyled while only
+   fixing co-buyers would have looked more inconsistent within the same
+   tab, not less. */
+#my-info-content label { display: block; margin: 16px 0 4px; font-weight: 600; font-size: 14px; }
+#my-info-content input, #my-info-content select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
+#my-info-content input:disabled { background: var(--gray-bg); color: var(--gray-text); }
+#my-info-content .btn-outline, #my-info-content .btn-primary { margin-top: 12px; }
+
+/* Co-buyer sub-blocks -- a light visual separation within the "Additional
+   Buyers" card (a sub-heading + a divider before the 2nd slot), matching
+   the site's real color tokens rather than the guessed/fallback values
+   this had before. */
+.co-buyer-block h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--navy); }
+.co-buyer-block + .co-buyer-block { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.co-buyer-intro { color: var(--gray-text); font-size: 13px; margin: 0 0 4px; }
+
 /* ---------- bottom popover (shared shape, install app 2026-08-29 +
    booking confirmation 2026-08-29) ---------- */
 /* Renamed from .install-ios-popover to .bottom-popover the same day it was
