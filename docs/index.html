@@ -704,7 +704,18 @@
         <div id="my-info-id-has-file">
           <img id="my-info-id-thumbnail" alt="Your ID on file">
         </div>
-        <p id="my-info-id-missing" class="hidden">No ID on file yet — upload one from the Showings tab when you book your first viewing.</p>
+        <p id="my-info-id-missing" class="hidden">No ID on file yet — upload one below, or from the Showings tab when you book a viewing.</p>
+        <!-- Added 2026-09-03, closing the last real gap from Aaron's
+             original "My Info" scope ask -- an ID could previously only
+             ever be attached via a full Showings booking. This lets a
+             visitor upload (or replace) their own ID right here, no
+             appointment needed. Uploads immediately on file selection,
+             same pattern as the co-buyer ID fields below. -->
+        <label>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Upload or Replace Your ID
+          <input type="file" id="my-info-id-photo" accept="image/*">
+        </label>
+        <p id="my-info-id-upload-status" class="form-status"></p>
       </div>
 
       <!-- Additional Buyers, added 2026-09-02 -- up to 2 co-buyer slots
