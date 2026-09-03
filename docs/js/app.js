@@ -1027,10 +1027,64 @@ function populateGetStartedPropertyDropdown() {
   }
 }
 
-function prefillGetStartedContactFields() {
+// Shared fetch, added 2026-09-02 -- makes "My Info" genuinely the source of
+// truth Showings pre-fills from, rather than each tab keeping its own
+// separate localStorage-only copy (Aaron's explicit ask). Also keeps the
+// localStorage GATE_NAME/PHONE keys refreshed as a same-device fallback
+// cache for the instant-paint case, not as the primary source anymore.
+// Returns null on any failure (network hiccup, 404) -- callers decide how
+// to handle that; a plain network error just means "try again later," a
+// 404 specifically means "this device's stored identity is stale" (e.g.
+// the email changed and was confirmed on a different channel) and gets
+// handled by handleStaleIdentity below.
+async function fetchMyInfo(email) {
+  if (!email) return null;
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/my-info?email=${encodeURIComponent(email)}`);
+    if (res.status === 404) return { staleIdentity: true };
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.name) localStorage.setItem(GATE_NAME_STORAGE_KEY, data.name);
+    if (data.phone) localStorage.setItem(GATE_PHONE_STORAGE_KEY, data.phone);
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+// A stored email no longer resolving means this device's identity is
+// stale -- almost always because a confirmed email change (see
+// POST /request-email-change) happened on a different channel/device than
+// the one that originally passed the gate. Rather than try to guess the
+// new email or keep silently showing blank/wrong fields, clear the gate
+// state and reload -- the visitor just re-passes the gate once (a low-
+// friction, self-healing fix), which naturally re-establishes identity
+// from scratch and correctly matches their now-updated row as a returning
+// visitor.
+function handleStaleIdentity() {
+  localStorage.removeItem(GATE_STORAGE_KEY);
+  localStorage.removeItem(GATE_EMAIL_STORAGE_KEY);
+  localStorage.removeItem(GATE_NAME_STORAGE_KEY);
+  localStorage.removeItem(GATE_PHONE_STORAGE_KEY);
+  location.reload();
+}
+
+async function prefillGetStartedContactFields() {
+  // Synchronous fallback first (instant, no flash of blank fields) --
+  // My Info is the real source of truth now, this is just a same-device
+  // cache for the instant-paint case while the fresh fetch resolves.
   document.getElementById("get-started-name").value = localStorage.getItem(GATE_NAME_STORAGE_KEY) || "";
   document.getElementById("get-started-email").value = localStorage.getItem(GATE_EMAIL_STORAGE_KEY) || "";
   document.getElementById("get-started-phone").value = localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "";
+
+  const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+  const data = await fetchMyInfo(email);
+  if (data && data.staleIdentity) return handleStaleIdentity();
+  if (data) {
+    if (data.name) document.getElementById("get-started-name").value = data.name;
+    document.getElementById("get-started-email").value = data.email || email || "";
+    if (data.phone) document.getElementById("get-started-phone").value = data.phone;
+  }
 }
 
 // Extracted 2026-08-29 from the date-min fix into a shared top-level
@@ -1627,6 +1681,86 @@ function initMyInfoUI() {
       status.textContent = "Something went wrong -- please try again.";
     }
   });
+
+  // Email-change confirmation, added 2026-09-02 -- same reveal-a-form
+  // pattern as Change Phone Number above, but posts to
+  // POST /request-email-change (confirmed via a text to the visitor's
+  // EXISTING phone, not email -- see that endpoint's own comment).
+  document.getElementById("my-info-change-email-btn").addEventListener("click", () => {
+    document.getElementById("my-info-change-email-form").classList.remove("hidden");
+  });
+
+  document.getElementById("my-info-send-email-code-btn").addEventListener("click", async () => {
+    const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const newEmail = document.getElementById("my-info-new-email").value.trim();
+    const status = document.getElementById("my-info-email-status");
+    if (!email || !newEmail) return;
+    status.textContent = "Sending...";
+    try {
+      const res = await fetch(`${ADMIN_API_URL}/request-email-change`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newEmail }),
+      });
+      const data = await res.json();
+      status.textContent = res.ok ? data.message : (data.message || "Something went wrong -- please try again.");
+    } catch (e) {
+      status.textContent = "Something went wrong -- please try again.";
+    }
+  });
+
+  // Additional Buyers (co-buyers), added 2026-09-02 -- same wiring pattern
+  // for both slots, driven by a small helper rather than duplicating the
+  // listener code twice, since the two blocks are otherwise identical.
+  [1, 2].forEach((slot) => {
+    document.getElementById(`my-info-cobuyer${slot}-save-btn`).addEventListener("click", async () => {
+      const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+      const name = document.getElementById(`my-info-cobuyer${slot}-name`).value.trim();
+      const coBuyerEmail = document.getElementById(`my-info-cobuyer${slot}-email`).value.trim();
+      const coBuyerPhone = document.getElementById(`my-info-cobuyer${slot}-phone`).value.trim();
+      const status = document.getElementById(`my-info-cobuyer${slot}-status`);
+      if (!email || !name) return;
+      status.textContent = "Saving...";
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/update-co-buyer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, slot, name, coBuyerEmail, coBuyerPhone }),
+        });
+        status.textContent = res.ok ? "Saved!" : "Something went wrong -- please try again.";
+      } catch (e) {
+        status.textContent = "Something went wrong -- please try again.";
+      }
+    });
+
+    // ID upload fires immediately on file selection -- unlike the primary
+    // buyer's ID (bundled into the larger Showings form submit), a
+    // co-buyer's ID here has no surrounding form to submit alongside, so
+    // there's nothing to wait for.
+    document.getElementById(`my-info-cobuyer${slot}-id-photo`).addEventListener("change", async (evt) => {
+      const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+      const file = evt.target.files && evt.target.files[0];
+      const status = document.getElementById(`my-info-cobuyer${slot}-id-status`);
+      if (!email || !file) return;
+      status.textContent = "Uploading...";
+      try {
+        const form = new FormData();
+        form.append("email", email);
+        form.append("slot", String(slot));
+        form.append("idPhoto", file);
+        const res = await fetch(`${ADMIN_API_URL}/upload-co-buyer-id`, { method: "POST", body: form });
+        const data = await res.json();
+        if (res.ok) {
+          status.textContent = "Saved!";
+          refreshMyInfoTab(); // re-pull so the new thumbnail actually shows
+        } else {
+          status.textContent = data.message || "Something went wrong -- please try again.";
+        }
+      } catch (e) {
+        status.textContent = "Something went wrong -- please try again.";
+      }
+    });
+  });
 }
 
 async function refreshMyInfoTab() {
@@ -1641,34 +1775,56 @@ async function refreshMyInfoTab() {
   notGated.classList.add("hidden");
   content.classList.remove("hidden");
 
-  try {
-    const res = await fetch(`${ADMIN_API_URL}/my-info?email=${encodeURIComponent(email)}`);
-    if (!res.ok) return; // leave fields as they were rather than blank them out on a hiccup
-    const data = await res.json();
-    document.getElementById("my-info-name").value = data.name || "";
-    document.getElementById("my-info-email").value = data.email || "";
-    document.getElementById("my-info-phone").value = data.phone || "";
-    // Reset the change-phone form + statuses on every fresh visit, so a
-    // stale "Sending..." or a previous session's revealed form doesn't
-    // linger across tab switches.
-    document.getElementById("my-info-change-phone-form").classList.add("hidden");
-    document.getElementById("my-info-new-phone").value = "";
-    document.getElementById("my-info-name-status").textContent = "";
-    document.getElementById("my-info-phone-status").textContent = "";
+  const data = await fetchMyInfo(email);
+  if (data && data.staleIdentity) return handleStaleIdentity();
+  if (!data) return; // network hiccup -- leave fields as they were rather than blank them out
 
-    const hasId = document.getElementById("my-info-id-has-file");
-    const missingId = document.getElementById("my-info-id-missing");
-    if (data.idOnFile) {
-      hasId.classList.remove("hidden");
-      missingId.classList.add("hidden");
-      document.getElementById("my-info-id-thumbnail").src = `${ADMIN_API_URL}/id-photo?email=${encodeURIComponent(email)}`;
-    } else {
-      hasId.classList.add("hidden");
-      missingId.classList.remove("hidden");
-    }
-  } catch (e) {
-    // leave whatever was already rendered rather than erroring the whole tab
+  document.getElementById("my-info-name").value = data.name || "";
+  document.getElementById("my-info-email").value = data.email || "";
+  document.getElementById("my-info-phone").value = data.phone || "";
+  // Reset the change-phone/change-email forms + statuses on every fresh
+  // visit, so a stale "Sending..." or a previous session's revealed form
+  // doesn't linger across tab switches.
+  document.getElementById("my-info-change-phone-form").classList.add("hidden");
+  document.getElementById("my-info-new-phone").value = "";
+  document.getElementById("my-info-change-email-form").classList.add("hidden");
+  document.getElementById("my-info-new-email").value = "";
+  document.getElementById("my-info-name-status").textContent = "";
+  document.getElementById("my-info-phone-status").textContent = "";
+  document.getElementById("my-info-email-status").textContent = "";
+
+  const hasId = document.getElementById("my-info-id-has-file");
+  const missingId = document.getElementById("my-info-id-missing");
+  if (data.idOnFile) {
+    hasId.classList.remove("hidden");
+    missingId.classList.add("hidden");
+    document.getElementById("my-info-id-thumbnail").src = `${ADMIN_API_URL}/id-photo?email=${encodeURIComponent(email)}`;
+  } else {
+    hasId.classList.add("hidden");
+    missingId.classList.remove("hidden");
   }
+
+  // Additional Buyers -- data.coBuyers is [slot1, slot2], each either null
+  // (nothing saved yet) or {name, email, phone, idOnFile}.
+  const coBuyers = data.coBuyers || [null, null];
+  [1, 2].forEach((slot) => {
+    const co = coBuyers[slot - 1];
+    document.getElementById(`my-info-cobuyer${slot}-name`).value = (co && co.name) || "";
+    document.getElementById(`my-info-cobuyer${slot}-email`).value = (co && co.email) || "";
+    document.getElementById(`my-info-cobuyer${slot}-phone`).value = (co && co.phone) || "";
+    document.getElementById(`my-info-cobuyer${slot}-status`).textContent = "";
+    document.getElementById(`my-info-cobuyer${slot}-id-status`).textContent = "";
+    document.getElementById(`my-info-cobuyer${slot}-id-photo`).value = "";
+
+    const coHasId = document.getElementById(`my-info-cobuyer${slot}-id-has-file`);
+    if (co && co.idOnFile) {
+      coHasId.classList.remove("hidden");
+      document.getElementById(`my-info-cobuyer${slot}-id-thumbnail`).src =
+        `${ADMIN_API_URL}/id-photo?email=${encodeURIComponent(email)}&coBuyerSlot=${slot}`;
+    } else {
+      coHasId.classList.add("hidden");
+    }
+  });
 }
 
 // ---------- filter count badge ----------
