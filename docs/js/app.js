@@ -1523,7 +1523,7 @@ function initGetStartedForm() {
 // if the viewport is later resized wide enough to show the top-tabs row).
 const TAB_LABELS = {
   properties: "HOMES", steps: "HOW IT WORKS", approved: "APPROVED!",
-  "get-started": "MY SHOWINGS", favorites: "MY FAVORITES",
+  "get-started": "MY SHOWINGS", favorites: "MY FAVORITES", "my-info": "MY INFO",
 };
 
 function activateTab(tabName) {
@@ -1545,6 +1545,7 @@ function activateTab(tabName) {
   // tab always reflects the freshest gate values no matter how it was
   // reached, rather than depending on exactly one call site staying correct.
   if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); renderMyAppointmentCards(); }
+  if (tabName === "my-info") refreshMyInfoTab();
   closeDrawer();
 }
 
@@ -1571,6 +1572,103 @@ function closeDrawer() {
 function initDrawer() {
   document.getElementById("hamburger-btn").addEventListener("click", openDrawer);
   document.getElementById("nav-drawer-backdrop").addEventListener("click", closeDrawer);
+}
+
+// ---------- My Info tab (added 2026-09-02) ----------
+// Deliberately fetches fresh from the server every time this tab is
+// visited (see activateTab's own call site above), never trusting a
+// cached copy -- same "always re-check, never assume localStorage is
+// still current" discipline already applied elsewhere in this file (the
+// appointment banner, the filter-sync). Wiring (initMyInfoUI) happens once
+// at load; refreshMyInfoTab() is what actually re-fetches/re-renders on
+// every visit.
+function initMyInfoUI() {
+  document.getElementById("my-info-save-name-btn").addEventListener("click", async () => {
+    const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const name = document.getElementById("my-info-name").value.trim();
+    const status = document.getElementById("my-info-name-status");
+    if (!email || !name) return;
+    status.textContent = "Saving...";
+    try {
+      const res = await fetch(`${ADMIN_API_URL}/update-name`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name }),
+      });
+      status.textContent = res.ok ? "Saved!" : "Something went wrong -- please try again.";
+    } catch (e) {
+      status.textContent = "Something went wrong -- please try again.";
+    }
+  });
+
+  document.getElementById("my-info-change-phone-btn").addEventListener("click", () => {
+    document.getElementById("my-info-change-phone-form").classList.remove("hidden");
+  });
+
+  // Reuses the exact same POST /request-phone-change built for the
+  // phone-backfill/verified-change flow -- no new backend logic needed
+  // here, this is just a second real UI entry point into that same,
+  // already-verified-live endpoint.
+  document.getElementById("my-info-send-code-btn").addEventListener("click", async () => {
+    const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const newPhone = document.getElementById("my-info-new-phone").value.trim();
+    const status = document.getElementById("my-info-phone-status");
+    if (!email || !newPhone) return;
+    status.textContent = "Sending...";
+    try {
+      const res = await fetch(`${ADMIN_API_URL}/request-phone-change`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newPhone }),
+      });
+      const data = await res.json();
+      status.textContent = res.ok ? data.message : (data.message || "Something went wrong -- please try again.");
+    } catch (e) {
+      status.textContent = "Something went wrong -- please try again.";
+    }
+  });
+}
+
+async function refreshMyInfoTab() {
+  const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+  const notGated = document.getElementById("my-info-not-gated");
+  const content = document.getElementById("my-info-content");
+  if (!email) {
+    notGated.classList.remove("hidden");
+    content.classList.add("hidden");
+    return;
+  }
+  notGated.classList.add("hidden");
+  content.classList.remove("hidden");
+
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/my-info?email=${encodeURIComponent(email)}`);
+    if (!res.ok) return; // leave fields as they were rather than blank them out on a hiccup
+    const data = await res.json();
+    document.getElementById("my-info-name").value = data.name || "";
+    document.getElementById("my-info-email").value = data.email || "";
+    document.getElementById("my-info-phone").value = data.phone || "";
+    // Reset the change-phone form + statuses on every fresh visit, so a
+    // stale "Sending..." or a previous session's revealed form doesn't
+    // linger across tab switches.
+    document.getElementById("my-info-change-phone-form").classList.add("hidden");
+    document.getElementById("my-info-new-phone").value = "";
+    document.getElementById("my-info-name-status").textContent = "";
+    document.getElementById("my-info-phone-status").textContent = "";
+
+    const hasId = document.getElementById("my-info-id-has-file");
+    const missingId = document.getElementById("my-info-id-missing");
+    if (data.idOnFile) {
+      hasId.classList.remove("hidden");
+      missingId.classList.add("hidden");
+      document.getElementById("my-info-id-thumbnail").src = `${ADMIN_API_URL}/id-photo?email=${encodeURIComponent(email)}`;
+    } else {
+      hasId.classList.add("hidden");
+      missingId.classList.remove("hidden");
+    }
+  } catch (e) {
+    // leave whatever was already rendered rather than erroring the whole tab
+  }
 }
 
 // ---------- filter count badge ----------
@@ -2201,6 +2299,7 @@ initLoginGate();
 initInstallUI();
 initAppointmentsAccordionToggle();
 initPullToRefresh();
+initMyInfoUI();
 // initGetStartedForm() and initVisitorSync() both chained after loadData()
 // resolves, not called alongside it -- both need ALL_LISTINGS (property
 // dropdown / #area-checkboxes respectively) which only exist once
