@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-03T17:29:19.489447+00:00",
+  "generatedAt": "2026-09-03T17:30:12.680712+00:00",
   "listings": [
+    {
+      "id": "1272-w-king-st-decatur-il-62522-decatur-il-62522",
+      "address": "1272 W King St, Decatur, IL 62522 Decatur IL 62522",
+      "onMarketDate": "9/2",
+      "lastUpdate": "9/2",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": ": https://drive.google.com/drive/folders/1iobNf8IfyNgzbYoRK9bRWeuLNxIlfRms",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8494027,
+      "lng": -88.97681229999999
+    },
     {
       "id": "517-n-31st-street-east-saint-louis-il-62205",
       "address": "517 N 31st Street East Saint Louis IL 62205",
