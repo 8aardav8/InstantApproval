@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-03T17:23:52.533793+00:00",
+  "generatedAt": "2026-09-03T17:25:33.245832+00:00",
   "listings": [
+    {
+      "id": "517-n-31st-street-east-saint-louis-il-62205",
+      "address": "517 N 31st Street East Saint Louis IL 62205",
+      "onMarketDate": "9/2",
+      "lastUpdate": "9/2",
+      "area": "IL - East St Louis",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/15WSiqBo0b24IrDWP1rEfhgRqryBKzxUA?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6117028,
+      "lng": -90.12334709999999
+    },
     {
       "id": "293-cameron-st-jackson-ms-39212",
       "address": "293 Cameron St Jackson MS 39212",
