@@ -764,6 +764,96 @@ async function handleFavoriteCounts(request, env) {
   }
 }
 
+// ---------- ID photo proxy, added 2026-09-02 ----------
+// Real privacy concern this exists to solve: the ID Link column holds a
+// PERMANENT, PUBLIC Dropbox shared link (fine for Aaron's own Sheet/
+// Telegram use, since only he sees those) -- embedding that link directly
+// in the site's own HTML to show a thumbnail would put a real, permanent,
+// unauthenticated link to someone's government ID in the page source for
+// anyone to find. Instead: never send the Dropbox URL to the browser at
+// all. This endpoint downloads the actual file bytes server-side (using
+// Quo -- no, Dropbox's own authenticated API, not the public link) and
+// streams them back through this Worker's own domain. Access is gated the
+// same way every other endpoint on this site already is -- knowing the
+// visitor's own email -- deliberately not a stronger bar than the rest of
+// the site, just not a weaker one either.
+//
+// Cached via Cloudflare's Cache API (no new binding/provisioning needed,
+// built into every Worker) so a repeat view doesn't re-download the full
+// file from Dropbox every single time -- real, deliberate tradeoff
+// discussed with Aaron: a true per-request proxy alone would be slower on
+// every view and burn more Dropbox API calls than a temporary-link
+// redirect would; caching for an hour gets the full security benefit
+// (Dropbox URL never reaches the browser) without paying that cost on
+// every repeat view.
+async function handleIdPhoto(request, env) {
+  const url = new URL(request.url);
+  const email = (url.searchParams.get("email") || "").trim();
+  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+
+  const cache = caches.default;
+  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent(email.toLowerCase())}`, request);
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByEmail(accessToken, email);
+    if (!row) return jsonResponse({ error: "not found" }, 404);
+
+    const linkRange = encodeURIComponent(`${LOGINS_TAB}!F${row}:F${row}`);
+    const linkRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${linkRange}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!linkRes.ok) throw new Error(`ID link read failed: ${await linkRes.text()}`);
+    const linkData = await linkRes.json();
+    const sharedLink = ((linkData.values || [[]])[0] || [])[0] || "";
+    if (!sharedLink) return jsonResponse({ error: "no ID on file" }, 404);
+
+    const dropboxToken = await getDropboxAccessToken(env);
+    // sharing/get_shared_link_file -- downloads the actual file content
+    // directly from an already-known shared link, no need to separately
+    // track/derive the raw internal Dropbox path.
+    const fileRes = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxToken}`,
+        "Dropbox-API-Arg": JSON.stringify({ url: sharedLink }),
+      },
+    });
+    if (!fileRes.ok) throw new Error(`dropbox file fetch failed: ${await fileRes.text()}`);
+
+    // Real Dropbox behavior, confirmed live: this endpoint always returns
+    // content-type: application/octet-stream regardless of the actual file
+    // type -- not something fixable by reading a different header. The
+    // real filename (with extension) IS available in the dropbox-api-
+    // result header's JSON, though, so infer the correct image type from
+    // that extension instead of trusting Dropbox's own content-type.
+    let contentType = "image/jpeg"; // reasonable default -- ID_photo uploads only ever accept="image/*"
+    const apiResultHeader = fileRes.headers.get("dropbox-api-result");
+    if (apiResultHeader) {
+      try {
+        const meta = JSON.parse(apiResultHeader);
+        const ext = (meta.name || "").split(".").pop().toLowerCase();
+        const extMap = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", heic: "image/heic" };
+        if (extMap[ext]) contentType = extMap[ext];
+      } catch (e) {
+        // fall through to the default above
+      }
+    }
+    const bytes = await fileRes.arrayBuffer();
+    const response = new Response(bytes, {
+      status: 200,
+      headers: { "Content-Type": contentType, "Cache-Control": "private, max-age=3600", ...corsHeaders() },
+    });
+
+    await cache.put(cacheKey, response.clone());
+    return response;
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // ---------- job 3: visitor filter-sync (2026-08-29) ----------
 // Deliberately NOT an Approval Request / Telegram check-in like gate-login
 // -- this only ever refreshes preference columns on a person who's already
@@ -1460,6 +1550,10 @@ async function route(request, env) {
 
   if (url.pathname === "/favorite-counts" && request.method === "GET") {
     return handleFavoriteCounts(request, env);
+  }
+
+  if (url.pathname === "/id-photo" && request.method === "GET") {
+    return handleIdPhoto(request, env);
   }
 
   if (url.pathname === "/request-phone-change" && request.method === "POST") {
