@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:27:53.044921+00:00",
+  "generatedAt": "2026-09-03T17:28:21.947943+00:00",
   "listings": [
     {
       "id": "517-n-31st-street-east-saint-louis-il-62205",
@@ -21799,13 +21799,13 @@
       "id": "1174-w-king-st-decatur-il-62522",
       "address": "1174 W King St, Decatur, IL 62522",
       "onMarketDate": "9/2/2026",
-      "lastUpdate": "8/26/2025",
+      "lastUpdate": "9/2/2026",
       "area": "IL - Decatur",
-      "down": "$4,000",
+      "down": "$3,000",
       "monthly": "$1,050",
       "picsLink": "https://drive.google.com/drive/folders/1OGD0F-oa7WJm8MTA3kdqpl6eHkdoDJlW",
       "beds": "3",
-      "baths": "1",
+      "baths": "2",
       "sqft": "1296",
       "status": "Available",
       "livability": 5,
