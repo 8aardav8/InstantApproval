@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:03:05.215131+00:00",
+  "generatedAt": "2026-09-03T17:03:58.404790+00:00",
   "listings": [
     {
       "id": "293-cameron-st-jackson-ms-39212",
@@ -2181,10 +2181,10 @@
       "id": "1200-sw-6th-st-fairfield-il-62837",
       "address": "1200 Sw 6th St, Fairfield IL 62837",
       "onMarketDate": "6/25",
-      "lastUpdate": "7/17/2026",
+      "lastUpdate": "9/2/2026",
       "area": "IL - Rural",
       "down": "$3,000",
-      "monthly": "$725",
+      "monthly": "$790",
       "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=111d7d896c0ebdd19bb5bc2a08ecb824",
       "beds": "2",
       "baths": "1",
@@ -8046,10 +8046,10 @@
       "id": "3305-franor-st-alton-il-62002",
       "address": "3305 Franor St, Alton, IL 62002",
       "onMarketDate": "3/30/2026",
-      "lastUpdate": "5/15/2026",
+      "lastUpdate": "9/2/2026",
       "area": "IL - East St Louis",
-      "down": "$1,500",
-      "monthly": "$549",
+      "down": "$1,350",
+      "monthly": "$499",
       "picsLink": "https://drive.google.com/drive/mobile/folders/1DQH93GE37EPH5wyzPuTMaTKPW2QzG4j-",
       "beds": "2",
       "baths": "1",
