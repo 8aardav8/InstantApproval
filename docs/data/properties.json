@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T16:58:54.914085+00:00",
+  "generatedAt": "2026-09-03T17:02:38.444966+00:00",
   "listings": [
     {
       "id": "293-cameron-st-jackson-ms-39212",
@@ -719,7 +719,7 @@
       "id": "314-clubview-dr-jackson-ms-39209",
       "address": "314 Clubview Dr, Jackson, MS 39209",
       "onMarketDate": "8/4",
-      "lastUpdate": "8/27",
+      "lastUpdate": "9/2",
       "area": "MS",
       "down": "$3,000",
       "monthly": "$1,095",
@@ -727,7 +727,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.3372416,
       "lng": -90.2575751
