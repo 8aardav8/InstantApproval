@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:32:07.705506+00:00",
+  "generatedAt": "2026-09-03T17:32:45.890374+00:00",
   "listings": [
     {
       "id": "4547-e-rosewood-rd-decatur-il-62521",
@@ -10,8 +10,8 @@
       "down": "$2,500",
       "monthly": "$750",
       "picsLink": "https://drive.google.com/drive/folders/1vNid_mpDbEx0ZZ-aIODiiH80TjV69e_X",
-      "beds": "",
-      "baths": "",
+      "beds": "1",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
@@ -277,7 +277,7 @@
       "id": "3909-seneca-st-flint-mi-48504",
       "address": "3909 Seneca St Flint MI 48504",
       "onMarketDate": "8/24",
-      "lastUpdate": "8/27",
+      "lastUpdate": "9/3",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$1,057",
@@ -285,7 +285,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1351",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 43.04998,
       "lng": -83.7309614
