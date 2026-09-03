@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-03T17:30:56.253478+00:00",
+  "generatedAt": "2026-09-03T17:31:35.479552+00:00",
   "listings": [
+    {
+      "id": "4547-e-rosewood-rd-decatur-il-62521",
+      "address": "4547 E Rosewood Rd, Decatur IL 62521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8261435,
+      "lng": -88.8845924
+    },
     {
       "id": "1272-w-king-st-decatur-il-62522-decatur-il-62522",
       "address": "1272 W King St, Decatur, IL 62522 Decatur IL 62522",
