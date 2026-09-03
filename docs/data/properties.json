@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-09-03T17:30:12.680712+00:00",
+  "generatedAt": "2026-09-03T17:30:35.201134+00:00",
   "listings": [
     {
       "id": "1272-w-king-st-decatur-il-62522-decatur-il-62522",
       "address": "1272 W King St, Decatur, IL 62522 Decatur IL 62522",
       "onMarketDate": "9/2",
       "lastUpdate": "9/2",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "area": "IL - Decatur",
+      "down": "$2,500",
+      "monthly": "$849",
       "picsLink": ": https://drive.google.com/drive/folders/1iobNf8IfyNgzbYoRK9bRWeuLNxIlfRms",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
