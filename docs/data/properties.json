@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T17:17:50.132069+00:00",
+  "generatedAt": "2026-09-04T17:18:44.411050+00:00",
   "listings": [
     {
       "id": "3002-arizona-ave-flint-mi-48506",
@@ -3465,7 +3465,7 @@
       "baths": "1",
       "sqft": "",
       "status": "Available",
-      "livability": 0,
+      "livability": 2,
       "lat": 38.5624514,
       "lng": -90.1901927
     },
