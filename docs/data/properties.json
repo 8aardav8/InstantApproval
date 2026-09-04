@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T17:07:42.931333+00:00",
+  "generatedAt": "2026-09-04T17:08:12.807483+00:00",
   "listings": [
     {
       "id": "1223-s-harrison-st-saginaw-mi-48-602",
@@ -4981,6 +4981,23 @@
       "livability": 0,
       "lat": 39.852049,
       "lng": -88.9722736
+    },
+    {
+      "id": "2618-e-garfield-ave-decatur-il-62526",
+      "address": "2618 E Garfield Ave Decatur IL 62526",
+      "onMarketDate": "6/1",
+      "lastUpdate": "6/27/2026",
+      "area": "IL - Decatur",
+      "down": "$1,500",
+      "monthly": "$630",
+      "picsLink": "https://drive.google.com/drive/folders/1VJSWPDUWtzCNxJjO45K8pJBrsUlrv0Z1?usp=drive_link",
+      "beds": "2",
+      "baths": "1.5",
+      "sqft": "1170",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8629543,
+      "lng": -88.9187822
     },
     {
       "id": "1505-e-walnut-st-decatur-il-62526",
