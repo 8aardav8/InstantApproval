@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-04T16:25:12.169967+00:00",
+  "generatedAt": "2026-09-04T16:25:40.430108+00:00",
   "listings": [
+    {
+      "id": "1828-w-latrobe-st-peoria-il-61605",
+      "address": "1828 W Latrobe St, Peoria, IL 61605",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1a3RY-1utuPWKRGS6jn03aXBh6R-AeXy7",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.6730106,
+      "lng": -89.6224834
+    },
     {
       "id": "611-haungs-ave-peoria-il-61603",
       "address": "611 Haungs Ave, Peoria, IL 61603",
