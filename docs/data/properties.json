@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T17:10:03.220323+00:00",
+  "generatedAt": "2026-09-04T17:10:34.688528+00:00",
   "listings": [
     {
       "id": "3002-arizona-ave-flint-mi-48506",
@@ -7,12 +7,12 @@
       "onMarketDate": "9/4",
       "lastUpdate": "9/4",
       "area": "MI",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$935",
       "picsLink": "https://drive.google.com/drive/folders/1IjSU5IRNHkW1eVZ7Pv2AUzed3S3VHe14?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "886",
       "status": "Available",
       "livability": 0,
       "lat": 43.0462137,
