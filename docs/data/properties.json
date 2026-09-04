@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T16:40:16.292441+00:00",
+  "generatedAt": "2026-09-04T16:47:58.854996+00:00",
   "listings": [
     {
       "id": "521-n-davis-street-carbondale-il-62-901",
@@ -4374,7 +4374,7 @@
       "id": "715-w-thrush-ave-peoria-il-61604",
       "address": "715 W Thrush Ave, Peoria, IL 61604",
       "onMarketDate": "7/2/2026",
-      "lastUpdate": "8/28/2026",
+      "lastUpdate": "9/3/2026",
       "area": "IL - Peoria",
       "down": "$1,500",
       "monthly": "$545",
@@ -4382,7 +4382,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "804",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.7152815,
       "lng": -89.60433069999999
