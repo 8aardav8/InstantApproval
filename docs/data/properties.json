@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-04T16:56:28.418916+00:00",
+  "generatedAt": "2026-09-04T16:57:16.016546+00:00",
   "listings": [
+    {
+      "id": "2640-s-5th-st-springfield-il-62703",
+      "address": "2640 S 5th St Springfield IL 62703",
+      "onMarketDate": "9/3",
+      "lastUpdate": "9/3",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1Z5LmTckVGNXSaJkdrkKIhTfDgPdeTSWx?usp=share_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.7677248,
+      "lng": -89.6495801
+    },
     {
       "id": "521-n-davis-street-carbondale-il-62-901",
       "address": "521 N. Davis Street Carbondale IL 62,901",
