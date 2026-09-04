@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T16:59:24.069117+00:00",
+  "generatedAt": "2026-09-04T17:00:33.821552+00:00",
   "listings": [
     {
       "id": "801-s-21st-st-decatur-il-62521",
@@ -8,10 +8,10 @@
       "lastUpdate": "9/3",
       "area": "IL - Decatur",
       "down": "$3,000",
-      "monthly": "",
+      "monthly": "$1,050",
       "picsLink": "https://photos.app.goo.gl/iuf7V3aJ2GktpCtSA",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
