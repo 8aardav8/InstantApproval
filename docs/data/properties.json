@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-04T17:00:33.821552+00:00",
+  "generatedAt": "2026-09-04T17:01:18.654272+00:00",
   "listings": [
+    {
+      "id": "1223-s-harrison-st-saginaw-mi-48-602",
+      "address": "1223 S. Harrison St. Saginaw MI 48,602",
+      "onMarketDate": "9/3",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1DI5K9mhVipxuBWwWPU3hk1-Lx7aSqDKM?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.41129979999999,
+      "lng": -83.97566719999999
+    },
     {
       "id": "801-s-21st-st-decatur-il-62521",
       "address": "801 S 21st St. Decatur IL 62521",
