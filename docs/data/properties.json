@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-04T17:09:32.561560+00:00",
+  "generatedAt": "2026-09-04T17:10:03.220323+00:00",
   "listings": [
+    {
+      "id": "3002-arizona-ave-flint-mi-48506",
+      "address": "3002 Arizona Ave. Flint MI 48506",
+      "onMarketDate": "9/4",
+      "lastUpdate": "9/4",
+      "area": "MI",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1IjSU5IRNHkW1eVZ7Pv2AUzed3S3VHe14?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.0462137,
+      "lng": -83.65215649999999
+    },
     {
       "id": "1223-s-harrison-st-saginaw-mi-48-602",
       "address": "1223 S. Harrison St. Saginaw MI 48,602",
