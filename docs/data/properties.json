@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-04T16:58:48.514959+00:00",
+  "generatedAt": "2026-09-04T16:59:24.069117+00:00",
   "listings": [
+    {
+      "id": "801-s-21st-st-decatur-il-62521",
+      "address": "801 S 21st St. Decatur IL 62521",
+      "onMarketDate": "9/3",
+      "lastUpdate": "9/3",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/iuf7V3aJ2GktpCtSA",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.83356120000001,
+      "lng": -88.9280261
+    },
     {
       "id": "2640-s-5th-st-springfield-il-62703",
       "address": "2640 S 5th St Springfield IL 62703",
