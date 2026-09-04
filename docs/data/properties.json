@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-04T15:49:28.030359+00:00",
+  "generatedAt": "2026-09-04T15:50:13.392411+00:00",
   "listings": [
+    {
+      "id": "611-haungs-ave-peoria-il-61603",
+      "address": "611 Haungs Ave, Peoria, IL 61603",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1nsF7utZxeieXkZf2Zm8Y0Z_-XN_2I9ne",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.7139986,
+      "lng": -89.56456209999999
+    },
     {
       "id": "4547-e-rosewood-rd-decatur-il-62521",
       "address": "4547 E Rosewood Rd, Decatur IL 62521",
