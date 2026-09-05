@@ -85,6 +85,10 @@ const OAUTH_CLIENT_ID = "74546128016-r0b13a553shc79gae1hf8r42nkd47t3i.apps.googl
 // secret in the same sense as the bot token, just a "send to" address, so
 // it's a plain constant here rather than a Worker secret.
 const AARON_TELEGRAM_CHAT_ID = "5752904645";
+// Nathan/NanoClaw's "Triage" hat channel -- same id used by
+// watch-scripts/lib.ts's TELEGRAM_CHANNELS.triage on the NanoClaw side.
+// Used only by handleQuoTriageWebhook below.
+const TRIAGE_TELEGRAM_CHAT_ID = "-5379307292";
 
 // 4. POST /upload-id -- the Get Started page (added 2026-08-29, replaces the
 //    old never-connected "Buyer Info" tab). Uploads a visitor's ID photo
@@ -115,6 +119,11 @@ const DROPBOX_BUYER_IDS_FOLDER_LINK = "https://www.dropbox.com/scl/fo/jj1egrthqv
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 const SHEET_TAB = "PROPERTIES";
 const LOGINS_TAB = "App: Logins";
+// The Agent System Database (Nathan's own Sheet, a different one from the
+// Filling Sheet above) -- same shared GCP service account, confirmed
+// working against both. Used only by handleQuoTriageWebhook's "Pending
+// Follow-ups" tab.
+const DB_SHEET_ID = "1iFhl222SMp9S2tBuFzroLJWK7z5KU21kpjKbtjU3RJo";
 const PENDING_PHONE_TAB = "Pending Phone Changes";
 
 // Added 2026-09-02, Aaron's direct request, closing a real gap: there was no
@@ -2124,6 +2133,112 @@ async function handleQuoMessageWebhook(request, env) {
   }
 }
 
+// Triage notifications for missed calls / unreplied texts, added 2026-09-05
+// -- replaces a 15-min polling watch-script on the NanoClaw side (item #5
+// of that project's backlog) with real Quo webhooks, zero polling. Deliberately
+// its own route + its own signing secret, entirely independent of
+// handleQuoMessageWebhook above (a different purpose -- phone/email change
+// confirmation) -- neither can break the other.
+//
+// Field-name assumption, flagged rather than silently trusted: the
+// message.received shape (payload.type, data.object.from/text) is confirmed
+// from a real captured payload (see handleQuoMessageWebhook's own comment).
+// call.completed's shape is inferred from the REST /v1/calls response shape
+// (status/direction/participants), NOT yet confirmed from a real delivered
+// webhook -- verify with Quo's "send a test event to a webhook" endpoint
+// right after this deploys, and correct the field paths below if the real
+// payload differs.
+async function handleQuoTriageWebhook(request, env) {
+  const rawBody = await request.text();
+
+  // Two separate Quo webhook subscriptions (calls, messages) both point at
+  // this one route -- each got its own distinct signing key at creation
+  // (confirmed live, not assumed), so this checks against both known
+  // secrets rather than picking one; either matching is a valid signature.
+  const candidateSecrets = [env.QUO_TRIAGE_MESSAGES_SECRET, env.QUO_TRIAGE_CALLS_SECRET].filter(Boolean);
+  if (candidateSecrets.length === 0) {
+    return jsonResponse({ error: "webhook not configured" }, 500);
+  }
+  let validSignature = false;
+  for (const secret of candidateSecrets) {
+    if (await verifyQuoWebhookSignature(request, rawBody, secret)) {
+      validSignature = true;
+      break;
+    }
+  }
+  if (!validSignature) {
+    return jsonResponse({ error: "invalid signature" }, 401);
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON" }, 400);
+  }
+
+  const resource = (payload.data && payload.data.object) || {};
+  const nowIso = () => new Date().toISOString();
+
+  // Accumulate-then-digest, added 2026-09-05 (Aaron's explicit request: no
+  // per-event ping, one daily Momentum rollup instead). Writes a plain row
+  // to the "Pending Follow-ups" tab in the Agent System Database Sheet
+  // (same GCP service account already used against the Filling Sheet
+  // above -- confirmed shared access, no new credential). A separate daily
+  // job on the NanoClaw side reads this tab, composes one digest, and
+  // marks rows Done -- see watch-scripts/quo-followup-digest.ts.
+  //
+  // Deliberately NOT calling Quo's call-summary/nextSteps here: that
+  // endpoint summarizes a real, completed conversation -- a genuinely
+  // missed/no-answer/abandoned call has no conversation to summarize by
+  // definition. call-summary IS a real, useful future enhancement for
+  // reviewing ANSWERED calls that might still need a follow-up, but that's
+  // a different, broader feature than "missed calls / unreplied texts" --
+  // flag it to Aaron as a real option later rather than build it blind now.
+  let row = null;
+
+  if (payload.type === "message.received") {
+    const from = resource.from || (payload.data && payload.data.context && payload.data.context.from) || "unknown";
+    const body = (resource.text || resource.content || resource.body || "").trim().slice(0, 500);
+    row = ["Unreplied Text", from, body, "", "Open", resource.phoneNumberId || ""];
+  } else if (payload.type === "call.completed") {
+    const direction = resource.direction;
+    const status = resource.status;
+    if (direction === "incoming" && status && status !== "completed") {
+      // The other party's number isn't cleanly separated from Aaron's own
+      // Quo number in the REST /calls shape (both just sit in
+      // `participants`) -- best-effort join rather than guessing which
+      // index is which; correct this once the real webhook payload is seen
+      // (flagged in this function's own top comment).
+      const from = resource.from || (Array.isArray(resource.participants) ? resource.participants.join(" / ") : "unknown");
+      row = ["Missed Call", from, `Status: ${status}`, "", "Open", resource.phoneNumberId || ""];
+    }
+  }
+
+  if (row) {
+    try {
+      const accessToken = await getSheetsAccessToken(env);
+      const range = encodeURIComponent("Pending Follow-ups!A:G");
+      const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${DB_SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+      const appendRes = await fetch(appendUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ values: [[nowIso(), ...row]] }),
+      });
+      if (!appendRes.ok) {
+        // Log-and-continue, not throw -- Quo doesn't need a 500 for this;
+        // a lost row here is recoverable (Aaron can be told directly), a
+        // broken webhook ack could cause Quo to retry/disable the sub.
+        console.error("Pending Follow-ups append failed:", await appendRes.text());
+      }
+    } catch (e) {
+      console.error("Pending Follow-ups append threw:", String(e));
+    }
+  }
+
+  return jsonResponse({ ok: true });
+}
+
 // Real per-request CORS fix, added 2026-08-31 (multi-origin bug found the
 // day of the instantapprovalhomes.com domain cutover -- the site started
 // loading from the new domain, but every internal response still hardcoded
@@ -2216,6 +2331,14 @@ async function route(request, env) {
     return handleQuoMessageWebhook(request, env);
   }
 
+  // Separate Quo webhook route for Triage notifications (missed calls /
+  // unreplied texts) -- added 2026-09-05, own secret, own handler, see
+  // handleQuoTriageWebhook's own comment for why this stays independent
+  // of the route above.
+  if (url.pathname === "/quo-triage-webhook" && request.method === "POST") {
+    return handleQuoTriageWebhook(request, env);
+  }
+
   if (request.method === "GET") {
     const listingId = url.searchParams.get("id");
     if (!listingId) return jsonResponse({ error: "missing id" }, 400);
@@ -2242,3 +2365,4 @@ export default {
   },
 };
 
+
