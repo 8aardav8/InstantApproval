@@ -832,8 +832,18 @@ function extractCoBuyerIdLink(raw) {
 }
 
 async function handleMyInfo(request, env) {
-  const url = new URL(request.url);
-  const email = (url.searchParams.get("email") || "").trim();
+  // Changed from GET ?email= to POST body 2026-09-06 (gate-check finding,
+  // confirmed real): a plain URL query string lands in Cloudflare's own
+  // access logs on every request, so a visitor's email was being logged
+  // just by them opening the My Info tab. No behavior change otherwise --
+  // same lookup, same response shape.
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
   if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
 
   try {
@@ -1076,11 +1086,25 @@ async function handleUploadCoBuyerId(request, env) {
 // (Dropbox URL never reaches the browser) without paying that cost on
 // every repeat view.
 async function handleIdPhoto(request, env) {
-  const url = new URL(request.url);
-  const email = (url.searchParams.get("email") || "").trim();
+  // Changed from GET ?email=/&coBuyerSlot= to POST body 2026-09-06, same
+  // gate-check finding as handleMyInfo/handleMyAppointments. Browsers can't
+  // POST from a plain <img src>, so the frontend now fetches this via
+  // fetch()+POST and assigns the returned image as a blob object URL
+  // instead of pointing <img> straight at the endpoint -- see app.js's
+  // loadIdPhotoThumbnail. The cache key below is built as an explicit GET
+  // request regardless of the real request's method, since Cache API only
+  // matches/stores GET -- passing the real (now POST) request as init here
+  // would have silently broken this cache and re-hit Dropbox on every view.
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
   // Optional -- added 2026-09-02 for co-buyer ID thumbnails. Absent/blank
   // means the primary buyer's own ID (column F), same as before.
-  const coBuyerSlot = (url.searchParams.get("coBuyerSlot") || "").trim();
+  const coBuyerSlot = (body.coBuyerSlot || "").trim();
   if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
   if (coBuyerSlot && coBuyerSlot !== "1" && coBuyerSlot !== "2") {
     return jsonResponse({ error: "invalid coBuyerSlot" }, 400);
@@ -1088,7 +1112,7 @@ async function handleIdPhoto(request, env) {
 
   const cache = caches.default;
   const cacheSuffix = coBuyerSlot ? `-cobuyer${coBuyerSlot}` : "";
-  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent(email.toLowerCase())}${cacheSuffix}`, request);
+  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent(email.toLowerCase())}${cacheSuffix}`, { method: "GET" });
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
@@ -1614,8 +1638,15 @@ async function addAppointment(accessToken, row, address, date) {
 }
 
 async function handleMyAppointments(request, env) {
-  const url = new URL(request.url);
-  const email = (url.searchParams.get("email") || "").trim();
+  // Changed from GET ?email= to POST body 2026-09-06, same reasoning as
+  // handleMyInfo above -- gate-check flagged this real PII-in-URL pattern.
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid JSON body" }, 400);
+  }
+  const email = (body.email || "").trim();
   if (!email) return jsonResponse({ error: "missing email" }, 400);
   try {
     const accessToken = await getSheetsAccessToken(env);
@@ -2273,7 +2304,7 @@ async function route(request, env) {
     return handleUploadId(request, env);
   }
 
-  if (url.pathname === "/my-appointments" && request.method === "GET") {
+  if (url.pathname === "/my-appointments" && request.method === "POST") {
     return handleMyAppointments(request, env);
   }
 
@@ -2293,11 +2324,11 @@ async function route(request, env) {
     return handleFavoriteCounts(request, env);
   }
 
-  if (url.pathname === "/id-photo" && request.method === "GET") {
+  if (url.pathname === "/id-photo" && request.method === "POST") {
     return handleIdPhoto(request, env);
   }
 
-  if (url.pathname === "/my-info" && request.method === "GET") {
+  if (url.pathname === "/my-info" && request.method === "POST") {
     return handleMyInfo(request, env);
   }
 

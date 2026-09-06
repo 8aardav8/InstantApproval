@@ -1040,7 +1040,13 @@ function populateGetStartedPropertyDropdown() {
 async function fetchMyInfo(email) {
   if (!email) return null;
   try {
-    const res = await fetch(`${ADMIN_API_URL}/my-info?email=${encodeURIComponent(email)}`);
+    // POST-with-body 2026-09-06, was GET ?email= -- moved off the URL so
+    // Cloudflare's own access logs stop recording every visitor's email.
+    const res = await fetch(`${ADMIN_API_URL}/my-info`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
     if (res.status === 404) return { staleIdentity: true };
     if (!res.ok) return null;
     const data = await res.json();
@@ -1145,7 +1151,13 @@ async function refreshMyAppointments() {
     return;
   }
   try {
-    const res = await fetch(`${MY_APPOINTMENTS_ENDPOINT}?email=${encodeURIComponent(email)}`);
+    // POST-with-body 2026-09-06, was GET ?email= -- same reasoning as
+    // fetchMyInfo above.
+    const res = await fetch(MY_APPOINTMENTS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const today = localTodayISO();
@@ -1814,6 +1826,35 @@ function initMyInfoUI() {
   });
 }
 
+// Added 2026-09-06, replacing a plain <img src="${ADMIN_API_URL}/id-photo?email=...">
+// assignment. Browsers can only ever GET an <img src> -- there's no way to
+// POST from one -- but /id-photo moved to POST-with-body the same day (gate-check
+// flagged the email/coBuyerSlot living in the URL, same as my-info/my-appointments
+// above). So this fetches the photo itself via POST, then hands the image
+// bytes to the <img> as a local blob: URL instead of pointing it at the
+// endpoint directly. Revokes the previous blob: URL first (if any) so
+// repeated tab refreshes don't leak memory.
+async function loadIdPhotoThumbnail(imgEl, email, coBuyerSlot) {
+  const prevUrl = imgEl.dataset.blobUrl;
+  if (prevUrl) URL.revokeObjectURL(prevUrl);
+  imgEl.removeAttribute("src");
+  delete imgEl.dataset.blobUrl;
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/id-photo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(coBuyerSlot ? { email, coBuyerSlot } : { email }),
+    });
+    if (!res.ok) return; // no ID on file / server hiccup -- leave the <img> blank rather than break the tab
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    imgEl.dataset.blobUrl = objectUrl;
+    imgEl.src = objectUrl;
+  } catch (e) {
+    // Network hiccup -- same "leave it blank" fallback as the res.ok check above.
+  }
+}
+
 async function refreshMyInfoTab() {
   const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
   const notGated = document.getElementById("my-info-not-gated");
@@ -1851,7 +1892,7 @@ async function refreshMyInfoTab() {
   if (data.idOnFile) {
     hasId.classList.remove("hidden");
     missingId.classList.add("hidden");
-    document.getElementById("my-info-id-thumbnail").src = `${ADMIN_API_URL}/id-photo?email=${encodeURIComponent(email)}`;
+    loadIdPhotoThumbnail(document.getElementById("my-info-id-thumbnail"), email, null);
   } else {
     hasId.classList.add("hidden");
     missingId.classList.remove("hidden");
@@ -1872,8 +1913,7 @@ async function refreshMyInfoTab() {
     const coHasId = document.getElementById(`my-info-cobuyer${slot}-id-has-file`);
     if (co && co.idOnFile) {
       coHasId.classList.remove("hidden");
-      document.getElementById(`my-info-cobuyer${slot}-id-thumbnail`).src =
-        `${ADMIN_API_URL}/id-photo?email=${encodeURIComponent(email)}&coBuyerSlot=${slot}`;
+      loadIdPhotoThumbnail(document.getElementById(`my-info-cobuyer${slot}-id-thumbnail`), email, String(slot));
     } else {
       coHasId.classList.add("hidden");
     }
