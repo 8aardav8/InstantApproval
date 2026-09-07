@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T19:06:44.085921+00:00",
+  "generatedAt": "2026-09-07T19:07:22.895756+00:00",
   "listings": [
     {
       "id": "503-e-poplar-st-west-frankfort-il-62896",
@@ -6549,11 +6549,11 @@
     {
       "id": "2820-ralph-street-granite-city-il-62040",
       "address": "2820 Ralph Street, Granite City, IL 62040",
-      "onMarketDate": "12/31/2025",
-      "lastUpdate": "6/10/2026",
+      "onMarketDate": "9/6/2026",
+      "lastUpdate": "9/6/2026",
       "area": "IL - East St Louis",
-      "down": "$800",
-      "monthly": "$400",
+      "down": "$1,000",
+      "monthly": "$650",
       "picsLink": "https://drive.google.com/drive/folders/1rNhRliQWh_AgRuncUb2CLobDTsnYuuI4?usp=sharing",
       "beds": "2",
       "baths": "1",
