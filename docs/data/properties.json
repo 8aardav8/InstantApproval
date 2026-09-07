@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:34:37.363025+00:00",
+  "generatedAt": "2026-09-07T18:36:04.505794+00:00",
   "listings": [
     {
       "id": "923-w-king-st-decatur-il-62522",
@@ -141,7 +141,7 @@
       "id": "1828-w-latrobe-st-peoria-il-61605",
       "address": "1828 W Latrobe St, Peoria, IL 61605",
       "onMarketDate": "9/3",
-      "lastUpdate": "9/3",
+      "lastUpdate": "9/5",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$800",
@@ -685,7 +685,7 @@
       "id": "1739-n-gulick-ave-decatur-il-62-526",
       "address": "1739 N Gulick Ave Decatur IL 62,526",
       "onMarketDate": "8/16",
-      "lastUpdate": "8/16",
+      "lastUpdate": "9/5",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$950",
@@ -693,7 +693,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8596692,
       "lng": -88.9717967
