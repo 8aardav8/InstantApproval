@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T19:11:16.673036+00:00",
+  "generatedAt": "2026-09-07T19:12:07.990265+00:00",
   "listings": [
     {
       "id": "973-parkwood-court-montgomery-al-36109",
@@ -10,9 +10,9 @@
       "down": "$7,000",
       "monthly": "$1,101",
       "picsLink": "https://1drv.ms/f/c/70878C0518BFE0B6/IgC24L8YBYyHIIBwno4BAAAAAfP2LzMZQhAlrbowIIDevDs?e=MWrRGB",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1827",
       "status": "Available",
       "livability": 0,
       "lat": 32.400707,
@@ -2997,7 +2997,7 @@
       "id": "238-w-peoria-ave-decatur-il-62526",
       "address": "238 W Peoria Ave, Decatur, IL 62526",
       "onMarketDate": "6/23/2026",
-      "lastUpdate": "8/8/2026",
+      "lastUpdate": "9/7/2026",
       "area": "IL - Decatur",
       "down": "$1,800",
       "monthly": "$795",
