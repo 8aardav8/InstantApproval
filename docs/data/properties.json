@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-06T16:49:20.945764+00:00",
+  "generatedAt": "2026-09-07T16:44:31.128449+00:00",
   "listings": [
     {
       "id": "3002-arizona-ave-flint-mi-48506",
@@ -24621,7 +24621,7 @@
       "id": "1553-e-walnut-st-decatur-il-62526",
       "address": "1553 E Walnut St, Decatur, IL 62526",
       "onMarketDate": "8/4/2026",
-      "lastUpdate": "8/22/2026",
+      "lastUpdate": "9/4/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$795",
@@ -24629,7 +24629,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "960",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8582519,
       "lng": -88.9352253
