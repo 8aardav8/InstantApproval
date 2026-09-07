@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T17:00:46.260387+00:00",
+  "generatedAt": "2026-09-07T17:01:57.048368+00:00",
   "listings": [
     {
       "id": "752-s-miller-ct-decatur-il-62521",
@@ -923,7 +923,7 @@
       "id": "1034-s-tonti-cir-peoria-il-61605",
       "address": "1034 S Tonti Cir. Peoria IL 61605",
       "onMarketDate": "8/3",
-      "lastUpdate": "8/3",
+      "lastUpdate": "9/4",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$750",
@@ -931,7 +931,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.67725720000001,
       "lng": -89.6441207
