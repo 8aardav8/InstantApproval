@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-07T17:47:56.847252+00:00",
+  "generatedAt": "2026-09-07T17:48:42.924444+00:00",
   "listings": [
+    {
+      "id": "10135-baron-drive-st-louis-mo-63136",
+      "address": "10135 Baron Drive St. Louis MO 63136",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/094D22pYoTb9jWyINfOpnpM1w",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.754681,
+      "lng": -90.2501164
+    },
     {
       "id": "752-s-miller-ct-decatur-il-62521",
       "address": "752 S Miller Ct, Decatur, IL 62521",
