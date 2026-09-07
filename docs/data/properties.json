@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T16:44:31.128449+00:00",
+  "generatedAt": "2026-09-07T16:52:47.124394+00:00",
   "listings": [
     {
       "id": "3002-arizona-ave-flint-mi-48506",
@@ -5207,7 +5207,7 @@
       "id": "1553-e-hickory-st-decatur-il-62526",
       "address": "1553 E HICKORY ST DECATUR IL 62526",
       "onMarketDate": "5/18/2026",
-      "lastUpdate": "8/1/2026",
+      "lastUpdate": "9/4/2026",
       "area": "IL - Decatur",
       "down": "$1,500",
       "monthly": "$775",
@@ -5215,7 +5215,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "672",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8572452,
       "lng": -88.9351971
