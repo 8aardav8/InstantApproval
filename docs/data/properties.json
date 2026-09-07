@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:33:27.062534+00:00",
+  "generatedAt": "2026-09-07T18:34:37.363025+00:00",
   "listings": [
     {
       "id": "923-w-king-st-decatur-il-62522",
@@ -10715,7 +10715,7 @@
       "id": "5721-acme-ave-saint-louis-mo-63136",
       "address": "5721 Acme Ave, Saint Louis, MO 63136",
       "onMarketDate": "9/4/2026",
-      "lastUpdate": "9/4/2026",
+      "lastUpdate": "9/5/2026",
       "area": "MO - St. Louis",
       "down": "$3,500",
       "monthly": "$1,095",
@@ -10723,7 +10723,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "825",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.7124522,
       "lng": -90.2570331
