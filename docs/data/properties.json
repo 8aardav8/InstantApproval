@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:51:04.293654+00:00",
+  "generatedAt": "2026-09-07T18:51:43.243605+00:00",
   "listings": [
     {
       "id": "923-w-king-st-decatur-il-62522",
@@ -141,7 +141,7 @@
       "id": "1828-w-latrobe-st-peoria-il-61605",
       "address": "1828 W Latrobe St, Peoria, IL 61605",
       "onMarketDate": "9/3",
-      "lastUpdate": "9/5",
+      "lastUpdate": "9/6",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$800",
@@ -149,7 +149,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.6730106,
       "lng": -89.6224834
@@ -1586,7 +1586,7 @@
       "id": "8554-oriole-ave-st-louis-mo-63147",
       "address": "8554 Oriole Ave, St. Louis, MO 63147",
       "onMarketDate": "7/6",
-      "lastUpdate": "9/5/2026",
+      "lastUpdate": "9/6/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$675",
