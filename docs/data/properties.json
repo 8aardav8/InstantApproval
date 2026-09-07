@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T17:07:36.160033+00:00",
+  "generatedAt": "2026-09-07T17:11:58.779603+00:00",
   "listings": [
     {
       "id": "752-s-miller-ct-decatur-il-62521",
@@ -10686,7 +10686,7 @@
       "down": "$3,500",
       "monthly": "$1,095",
       "picsLink": "https://share.icloud.com/photos/0bc0ANJNX4-_hu1ikYpTzyXGQ",
-      "beds": "2",
+      "beds": "3",
       "baths": "2",
       "sqft": "825",
       "status": "Available",
@@ -24918,7 +24918,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.849989,
       "lng": -88.9698351
