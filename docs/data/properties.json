@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-07T19:10:00.070912+00:00",
+  "generatedAt": "2026-09-07T19:10:42.179115+00:00",
   "listings": [
+    {
+      "id": "973-parkwood-court-montgomery-al-36109",
+      "address": "973 Parkwood Court Montgomery AL 36109",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://1drv.ms/f/c/70878C0518BFE0B6/IgC24L8YBYyHIIBwno4BAAAAAfP2LzMZQhAlrbowIIDevDs?e=MWrRGB",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 32.400707,
+      "lng": -86.26511339999999
+    },
     {
       "id": "503-e-poplar-st-west-frankfort-il-62896",
       "address": "503 E Poplar St West Frankfort IL 62896",
