@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T16:56:21.882522+00:00",
+  "generatedAt": "2026-09-07T17:00:46.260387+00:00",
   "listings": [
     {
       "id": "752-s-miller-ct-decatur-il-62521",
@@ -10,9 +10,9 @@
       "down": "$1,000",
       "monthly": "$575",
       "picsLink": "https://share.icloud.com/photos/0e3WmBaeA8PtoqNtGX_bX-aPQ",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "900",
       "status": "Available",
       "livability": 0,
       "lat": 39.83449050000001,
@@ -1433,7 +1433,7 @@
       "id": "803-e-whitmer-st-decatur-il-62521",
       "address": "803 E Whitmer St Decatur IL 62521",
       "onMarketDate": "4/19/2026",
-      "lastUpdate": "7/23/2026",
+      "lastUpdate": "9/4/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$890",
@@ -1441,7 +1441,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "900",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.834522,
       "lng": -88.946153
