@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:52:14.439611+00:00",
+  "generatedAt": "2026-09-07T19:00:53.260433+00:00",
   "listings": [
     {
       "id": "923-w-king-st-decatur-il-62522",
@@ -16320,6 +16320,23 @@
       "livability": 0,
       "lat": 39.8601608,
       "lng": -88.91548379999999
+    },
+    {
+      "id": "209-central-ave-st-david-il-61563-usa",
+      "address": "209 Central Ave, St David, IL 61563, USA",
+      "onMarketDate": "12/8/2025",
+      "lastUpdate": "1/24/2026",
+      "area": "IL - Peoria",
+      "down": "$2,000",
+      "monthly": "$775",
+      "picsLink": "https://drive.google.com/drive/folders/1bOhXwEGBKuuGLDTH5JdjRPJL8lNhHK5p",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.489912,
+      "lng": -90.0554961
     },
     {
       "id": "303-cedar-st-harvel-il-62538",
