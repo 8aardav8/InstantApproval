@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-07T19:03:26.477746+00:00",
+  "generatedAt": "2026-09-07T19:03:57.725471+00:00",
   "listings": [
+    {
+      "id": "503-e-poplar-st-west-frankfort-il-62896",
+      "address": "503 E Poplar St West Frankfort IL 62896",
+      "onMarketDate": "9/6",
+      "lastUpdate": "9/6",
+      "area": "IL - Rural",
+      "down": "$3,000",
+      "monthly": "$1,200",
+      "picsLink": "https://drive.google.com/drive/folders/1FlM3F4vGi27XcCgBoI5NNRPbJ28wBKif?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.8990872,
+      "lng": -88.9222085
+    },
     {
       "id": "923-w-king-st-decatur-il-62522",
       "address": "923 W King St Decatur ,IL 62522",
