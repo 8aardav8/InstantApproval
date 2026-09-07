@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-07T16:55:16.965459+00:00",
+  "generatedAt": "2026-09-07T16:55:49.805751+00:00",
   "listings": [
+    {
+      "id": "752-s-miller-ct-decatur-il-62521",
+      "address": "752 S Miller Ct, Decatur, IL 62521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/0e3WmBaeA8PtoqNtGX_bX-aPQ",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.83449050000001,
+      "lng": -88.9282484
+    },
     {
       "id": "3002-arizona-ave-flint-mi-48506",
       "address": "3002 Arizona Ave. Flint MI 48506",
