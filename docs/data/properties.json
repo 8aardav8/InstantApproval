@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T19:05:27.505666+00:00",
+  "generatedAt": "2026-09-07T19:05:56.344199+00:00",
   "listings": [
     {
       "id": "503-e-poplar-st-west-frankfort-il-62896",
@@ -17361,13 +17361,13 @@
     {
       "id": "556-wimmer-pl-east-saint-louis-il-62205",
       "address": "556 Wimmer Pl, East Saint Louis, IL 62205",
-      "onMarketDate": "5/17/2025",
-      "lastUpdate": "1/5/2026",
+      "onMarketDate": "9/6/2026",
+      "lastUpdate": "9/6/2026",
       "area": "IL - East St Louis",
-      "down": "$500",
-      "monthly": "$250",
+      "down": "$1,000",
+      "monthly": "$595",
       "picsLink": "https://share.icloud.com/photos/0420nsZv5L1bBkmbItfJObZbQ",
-      "beds": "1",
+      "beds": "2",
       "baths": "1",
       "sqft": "825",
       "status": "Available",
