@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:10:29.875530+00:00",
+  "generatedAt": "2026-09-07T18:25:42.452935+00:00",
   "listings": [
     {
       "id": "10135-baron-drive-st-louis-mo-63136",
@@ -2312,6 +2312,23 @@
       "livability": 3,
       "lat": 38.7122563,
       "lng": -90.1595142
+    },
+    {
+      "id": "612-n-cherry-st-hartford-city-in-47348",
+      "address": "612 N Cherry St Hartford City IN 47348",
+      "onMarketDate": "7/17",
+      "lastUpdate": "8/21",
+      "area": "IL - Rural",
+      "down": "$3,000",
+      "monthly": "$875",
+      "picsLink": "https://drive.google.com/drive/folders/1iOcl6p70RdEjmS-bO_q2Wr-0SnEcG_x2?usp=sharing",
+      "beds": "3",
+      "baths": "1.5",
+      "sqft": "1592",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.4560661,
+      "lng": -85.3710071
     },
     {
       "id": "431-finch-st-johnstown-pa-15-905",
