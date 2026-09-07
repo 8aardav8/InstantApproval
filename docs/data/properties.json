@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:28:58.490120+00:00",
+  "generatedAt": "2026-09-07T18:31:37.507439+00:00",
   "listings": [
     {
       "id": "923-w-king-st-decatur-il-62522",
@@ -12053,23 +12053,6 @@
       "livability": 0,
       "lat": 39.8624189,
       "lng": -88.965603
-    },
-    {
-      "id": "1531-s-lydia-ave-peoria-il-61605",
-      "address": "1531 S Lydia Ave, Peoria, IL 61605",
-      "onMarketDate": "7/17/2025",
-      "lastUpdate": "3/16/2026",
-      "area": "IL - Peoria",
-      "down": "$1,500",
-      "monthly": "$650",
-      "picsLink": "https://photos.app.goo.gl/vWkpQzVsjM6Cy5r27",
-      "beds": "2",
-      "baths": "1",
-      "sqft": "1012",
-      "status": "Available",
-      "livability": 0,
-      "lat": 40.6708976,
-      "lng": -89.6271041
     },
     {
       "id": "1534-n-55th-st-east-saint-louis-il-62204",
