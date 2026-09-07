@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T16:52:47.124394+00:00",
+  "generatedAt": "2026-09-07T16:53:33.202739+00:00",
   "listings": [
     {
       "id": "3002-arizona-ave-flint-mi-48506",
@@ -311,7 +311,7 @@
       "id": "605-e-stewart-ave-flint-mi-48505",
       "address": "605 E Stewart Ave, Flint MI 48505",
       "onMarketDate": "8/26",
-      "lastUpdate": "8/26",
+      "lastUpdate": "9/4",
       "area": "MI",
       "down": "$2,000",
       "monthly": "$889",
@@ -319,7 +319,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 43.05446,
       "lng": -83.6965407
