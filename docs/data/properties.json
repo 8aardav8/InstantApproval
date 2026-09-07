@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T19:03:57.725471+00:00",
+  "generatedAt": "2026-09-07T19:04:49.874276+00:00",
   "listings": [
     {
       "id": "503-e-poplar-st-west-frankfort-il-62896",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,200",
       "picsLink": "https://drive.google.com/drive/folders/1FlM3F4vGi27XcCgBoI5NNRPbJ28wBKif?usp=drive_link",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "2027",
       "status": "Available",
       "livability": 0,
       "lat": 37.8990872,
@@ -17370,7 +17370,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "825",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6174799,
       "lng": -90.13559699999999
