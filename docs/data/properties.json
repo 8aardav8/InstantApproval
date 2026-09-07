@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T18:26:18.620227+00:00",
+  "generatedAt": "2026-09-07T18:27:10.620182+00:00",
   "listings": [
     {
       "id": "10135-baron-drive-st-louis-mo-63136",
@@ -4046,23 +4046,6 @@
       "livability": 0,
       "lat": 39.8479765,
       "lng": -88.97648889999999
-    },
-    {
-      "id": "59-jarvis-pl-east-saint-louis-il-62207",
-      "address": "59 Jarvis Pl. East Saint louis IL 62207",
-      "onMarketDate": "5/11/2026",
-      "lastUpdate": "8/27/2026",
-      "area": "IL - East St Louis",
-      "down": "$2,500",
-      "monthly": "$795",
-      "picsLink": "https://photos.app.goo.gl/Z4Z1Q3hT13W4FVHz5",
-      "beds": "2",
-      "baths": "1",
-      "sqft": "780",
-      "status": "Available",
-      "livability": 3,
-      "lat": 38.5828558,
-      "lng": -90.1149453
     },
     {
       "id": "1729-n-woodford-st-decatur-il-62526",
@@ -12449,7 +12432,7 @@
       "id": "225-n-63rd-st-east-st-louis-il-62203-7",
       "address": "225 N 63rd St, East St Louis, IL 62203",
       "onMarketDate": "3/8/2026",
-      "lastUpdate": "3/10/2026",
+      "lastUpdate": "9/4/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
       "monthly": "$1,175",
@@ -12457,7 +12440,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Sold",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.598555,
       "lng": -90.0897786
