@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08T19:24:01.683900+00:00",
+  "generatedAt": "2026-09-08T19:24:49.615454+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
@@ -1657,7 +1657,7 @@
       "lastUpdate": "9/8/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
-      "monthly": "$675",
+      "monthly": "$725",
       "picsLink": "https://photos.app.goo.gl/YRZwqdpHUMJmeiWL6",
       "beds": "2",
       "baths": "1",
@@ -12695,7 +12695,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
       "lat": 38.7216971,
       "lng": -90.26240159999999
