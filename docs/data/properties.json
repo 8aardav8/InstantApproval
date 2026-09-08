@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-09-08T19:11:38.984255+00:00",
+  "generatedAt": "2026-09-08T19:13:35.870850+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
       "address": "136 Illinois St East Alton IL 62024",
       "onMarketDate": "9/7",
       "lastUpdate": "9/7",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "area": "IL - East St Louis",
+      "down": "$2,500",
+      "monthly": "$1,150",
       "picsLink": "https://drive.google.com/drive/folders/1-MQ9buqivpSsz2s-4Say3ERfDBtdKtfR?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
