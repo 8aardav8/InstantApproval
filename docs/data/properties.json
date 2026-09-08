@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08T18:16:38.270953+00:00",
+  "generatedAt": "2026-09-08T19:00:49.687247+00:00",
   "listings": [
     {
       "id": "973-parkwood-court-montgomery-al-36109",
@@ -2368,7 +2368,7 @@
       "id": "612-n-cherry-st-hartford-city-in-47348",
       "address": "612 N Cherry St Hartford City IN 47348",
       "onMarketDate": "7/17",
-      "lastUpdate": "9/4",
+      "lastUpdate": "9/7",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$925",
@@ -2376,7 +2376,7 @@
       "beds": "3",
       "baths": "1.5",
       "sqft": "1592",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.4560661,
       "lng": -85.3710071
