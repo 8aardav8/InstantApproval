@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-08T19:07:02.732033+00:00",
+  "generatedAt": "2026-09-08T19:07:31.581028+00:00",
   "listings": [
+    {
+      "id": "1709-s-faraday-peoria-il-61605",
+      "address": "1709 S Faraday Peoria IL 61605",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1a6vja29i4eC5IH0vNf153IqzArq9ocgw?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.6691609,
+      "lng": -89.6259517
+    },
     {
       "id": "973-parkwood-court-montgomery-al-36109",
       "address": "973 Parkwood Court Montgomery AL 36109",
