@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08T17:09:51.608949+00:00",
+  "generatedAt": "2026-09-08T18:16:38.270953+00:00",
   "listings": [
     {
       "id": "973-parkwood-court-montgomery-al-36109",
@@ -549,7 +549,7 @@
       "id": "514-n-walnut-st-centralia-il-62801",
       "address": "514 N Walnut St Centralia IL 62801",
       "onMarketDate": "8/21",
-      "lastUpdate": "9/1",
+      "lastUpdate": "9/7",
       "area": "IL - Rural",
       "down": "$2,500",
       "monthly": "$950",
@@ -557,7 +557,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1160",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.5332455,
       "lng": -89.1369244
