@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-08T19:10:54.563709+00:00",
+  "generatedAt": "2026-09-08T19:11:38.984255+00:00",
   "listings": [
+    {
+      "id": "136-illinois-st-east-alton-il-62024",
+      "address": "136 Illinois St East Alton IL 62024",
+      "onMarketDate": "9/7",
+      "lastUpdate": "9/7",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1-MQ9buqivpSsz2s-4Say3ERfDBtdKtfR?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.88493709999999,
+      "lng": -90.1201956
+    },
     {
       "id": "1709-s-faraday-peoria-il-61605",
       "address": "1709 S Faraday Peoria IL 61605",
