@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T18:09:06.780811+00:00",
+  "generatedAt": "2026-09-09T18:09:37.533177+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
@@ -2402,7 +2402,7 @@
       "id": "612-n-cherry-st-hartford-city-in-47348",
       "address": "612 N Cherry St Hartford City IN 47348",
       "onMarketDate": "7/17",
-      "lastUpdate": "9/7",
+      "lastUpdate": "9/8",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$925",
@@ -2410,7 +2410,7 @@
       "beds": "3",
       "baths": "1.5",
       "sqft": "1592",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.4560661,
       "lng": -85.3710071
