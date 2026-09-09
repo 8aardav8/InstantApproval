@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T18:47:06.877679+00:00",
+  "generatedAt": "2026-09-09T18:47:36.870389+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
@@ -90,7 +90,7 @@
       "id": "10135-baron-drive-st-louis-mo-63136",
       "address": "10135 Baron Drive St. Louis MO 63136",
       "onMarketDate": "9/4",
-      "lastUpdate": "9/4",
+      "lastUpdate": "9/9",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$850",
@@ -4008,7 +4008,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 4,
       "lat": 38.7206107,
       "lng": -90.26508439999999
