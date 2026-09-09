@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T18:20:04.399050+00:00",
+  "generatedAt": "2026-09-09T18:20:37.416514+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
@@ -10434,7 +10434,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "2500",
-      "status": "Pending",
+      "status": "Available",
       "livability": 3,
       "lat": 38.6700794,
       "lng": -90.2604142
