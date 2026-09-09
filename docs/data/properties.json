@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T18:08:24.668899+00:00",
+  "generatedAt": "2026-09-09T18:09:06.780811+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
@@ -557,7 +557,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1221",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.7079152,
       "lng": -90.267326
@@ -4000,7 +4000,7 @@
       "id": "8315-eton-pl-saint-louis-mo-63136",
       "address": "8315 Eton Pl, Saint Louis, MO 63136",
       "onMarketDate": "1/26/2026",
-      "lastUpdate": "8/27/2026",
+      "lastUpdate": "9/8/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -4008,7 +4008,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.7206107,
       "lng": -90.26508439999999
