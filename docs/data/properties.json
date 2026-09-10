@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-10T16:58:34.479649+00:00",
+  "generatedAt": "2026-09-10T16:59:27.233082+00:00",
   "listings": [
+    {
+      "id": "2528-avis-st-jennings-mo-63136",
+      "address": "2528 Avis St, Jennings, MO 63136",
+      "onMarketDate": "9/9",
+      "lastUpdate": "9/9",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/04bDR4y6svjno8TtOsFy3ss8g",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7236719,
+      "lng": -90.26715039999999
+    },
     {
       "id": "136-illinois-st-east-alton-il-62024",
       "address": "136 Illinois St East Alton IL 62024",
