@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T18:26:11.222040+00:00",
+  "generatedAt": "2026-09-10T18:40:47.909281+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -685,7 +685,7 @@
       "id": "648-linden-ave-johnstown-pa-15902",
       "address": "648 Linden Ave Johnstown PA 15902",
       "onMarketDate": "8/19",
-      "lastUpdate": "9/8",
+      "lastUpdate": "9/9",
       "area": "PA",
       "down": "$2,000",
       "monthly": "$799",
@@ -693,7 +693,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.29386179999999,
       "lng": -78.90762579999999
