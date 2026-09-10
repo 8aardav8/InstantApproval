@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T18:54:06.983616+00:00",
+  "generatedAt": "2026-09-10T18:54:47.764988+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -25402,15 +25402,15 @@
     {
       "id": "231-w-grand-ave-decatur-il-62522",
       "address": "231 W Grand Ave, Decatur, IL 62522",
-      "onMarketDate": "",
-      "lastUpdate": "",
+      "onMarketDate": "9/9/2026",
+      "lastUpdate": "9/9/2026",
       "area": "IL - Decatur",
-      "down": "$1,500",
-      "monthly": "$750",
+      "down": "$3,000",
+      "monthly": "$950",
       "picsLink": "https://photos.app.goo.gl/GZJ8Nycp5w5cQss19",
       "beds": "3",
       "baths": "1",
-      "sqft": "",
+      "sqft": "1189",
       "status": "Available",
       "livability": 0,
       "lat": 39.8546423,
