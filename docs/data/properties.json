@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T19:16:18.794665+00:00",
+  "generatedAt": "2026-09-10T19:17:18.225657+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -3082,7 +3082,7 @@
       "id": "238-w-peoria-ave-decatur-il-62526",
       "address": "238 W Peoria Ave, Decatur, IL 62526",
       "onMarketDate": "6/23/2026",
-      "lastUpdate": "9/7/2026",
+      "lastUpdate": "9/10/2026",
       "area": "IL - Decatur",
       "down": "$1,800",
       "monthly": "$795",
@@ -3090,7 +3090,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "884",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8613662,
       "lng": -88.95850779999999
@@ -3507,7 +3507,7 @@
       "id": "5617-warren-ave-east-saint-louis-il-62204",
       "address": "5617 Warren Ave, East Saint Louis, IL 62204",
       "onMarketDate": "1/25/2026",
-      "lastUpdate": "7/11/2026",
+      "lastUpdate": "9/10/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
       "monthly": "$750",
