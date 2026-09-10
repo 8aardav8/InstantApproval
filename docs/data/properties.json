@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T19:14:42.847270+00:00",
+  "generatedAt": "2026-09-10T19:15:21.314880+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -5687,7 +5687,7 @@
       "area": "IL - Rural",
       "down": "$1,500",
       "monthly": "$875",
-      "picsLink": "https://drive.google.com/drive/folders/1o_5jph9vbEhsdLvINwQ55lvOvCrBTfQr",
+      "picsLink": "602 18th Avenue, , Fulton IL 61252",
       "beds": "2",
       "baths": "1.5",
       "sqft": "",
@@ -5700,7 +5700,7 @@
       "id": "2028-e-prairie-ave-saint-louis-mo-63107",
       "address": "2028 E Prairie Ave, Saint Louis, MO 63107",
       "onMarketDate": "3/30/2026",
-      "lastUpdate": "8/31/2026",
+      "lastUpdate": "9/10/2026",
       "area": "MO - St. Louis",
       "down": "$1,600",
       "monthly": "$635",
@@ -22028,7 +22028,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1156",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 40.7201344,
       "lng": -89.5609061
