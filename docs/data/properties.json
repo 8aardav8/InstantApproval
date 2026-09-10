@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-09-10T16:59:27.233082+00:00",
+  "generatedAt": "2026-09-10T16:59:52.481933+00:00",
   "listings": [
     {
       "id": "2528-avis-st-jennings-mo-63136",
       "address": "2528 Avis St, Jennings, MO 63136",
       "onMarketDate": "9/9",
       "lastUpdate": "9/9",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$795",
       "picsLink": "https://share.icloud.com/photos/04bDR4y6svjno8TtOsFy3ss8g",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
