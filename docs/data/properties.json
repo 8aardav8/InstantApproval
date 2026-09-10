@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T18:25:41.391616+00:00",
+  "generatedAt": "2026-09-10T18:26:11.222040+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -7,12 +7,12 @@
       "onMarketDate": "9/9",
       "lastUpdate": "9/9",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$950",
       "picsLink": "https://photos.app.goo.gl/Twyxi4xFn6Cz5AwSA",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "672",
       "status": "Available",
       "livability": 0,
       "lat": 39.8604628,
