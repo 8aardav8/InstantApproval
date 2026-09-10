@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T18:12:23.644332+00:00",
+  "generatedAt": "2026-09-10T18:15:02.445653+00:00",
   "listings": [
     {
       "id": "10516-baron-dr-st-louis-mo-63136",
@@ -14739,6 +14739,23 @@
       "livability": 0,
       "lat": 36.8170797,
       "lng": -76.3311821
+    },
+    {
+      "id": "19-n-harvey-ave-saint-louis-mo-63135",
+      "address": "19 N Harvey Ave, Saint Louis, MO 63135",
+      "onMarketDate": "5/31/2025",
+      "lastUpdate": "2/21/2026",
+      "area": "MO - St. Louis",
+      "down": "$1,700",
+      "monthly": "$750",
+      "picsLink": "https://drive.google.com/drive/folders/1NPUAUioRox1qvWLvOgUEaRC3FSUc4UAr",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Available",
+      "livability": 3,
+      "lat": 38.7449549,
+      "lng": -90.3129233
     },
     {
       "id": "2510-clower-street-montgomery-al-36107",
