@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-10T18:25:09.513566+00:00",
+  "generatedAt": "2026-09-10T18:25:41.391616+00:00",
   "listings": [
+    {
+      "id": "1749-n-college-st-decatur-il-62526",
+      "address": "1749 N College St Decatur, IL 62526",
+      "onMarketDate": "9/9",
+      "lastUpdate": "9/9",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/Twyxi4xFn6Cz5AwSA",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8604628,
+      "lng": -88.9625535
+    },
     {
       "id": "10516-baron-dr-st-louis-mo-63136",
       "address": "10516 Baron Dr, St. Louis, MO 63136",
