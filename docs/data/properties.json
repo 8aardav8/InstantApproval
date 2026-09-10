@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T18:55:29.280802+00:00",
+  "generatedAt": "2026-09-10T18:56:22.832764+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -175,7 +175,7 @@
       "id": "3002-arizona-ave-flint-mi-48506",
       "address": "3002 Arizona Ave. Flint MI 48506",
       "onMarketDate": "9/4",
-      "lastUpdate": "9/4",
+      "lastUpdate": "9/9",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$935",
@@ -183,7 +183,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "886",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.0462137,
       "lng": -83.65215649999999
@@ -11092,7 +11092,7 @@
       "lastUpdate": "9/9/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
-      "monthly": "$311",
+      "monthly": "$290",
       "picsLink": "https://drive.google.com/drive/folders/1DwTEnd39EKqu2UzI4TI_3FgTcijhMv3y?usp=drive_link",
       "beds": "1",
       "baths": "1",
