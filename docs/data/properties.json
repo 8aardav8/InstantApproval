@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T16:53:08.054894+00:00",
+  "generatedAt": "2026-09-10T16:56:18.537466+00:00",
   "listings": [
     {
       "id": "136-illinois-st-east-alton-il-62024",
@@ -29726,8 +29726,8 @@
       "down": "$1,000",
       "monthly": "$625",
       "picsLink": "https://share.icloud.com/photos/0257r5HpoTCHHhPewBS_oHh9g",
-      "beds": "",
-      "baths": "",
+      "beds": "1",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
