@@ -716,6 +716,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-badges { display: flex; gap: 6px; }
 .buyer-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #eef2ff; color: var(--blue); }
 .buyer-badge.showing-badge { background: #fff7ed; color: #9a3412; }
+.buyer-badge.login-badge { background: #f0fdf4; color: #166534; }
 
 .buyers-back-btn {
   background: #eef2ff; color: var(--navy); border: none; border-radius: 8px;
@@ -736,8 +737,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .shown-property-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .shown-remove-btn { flex: 0 0 auto; background: none; border: none; color: #b91c1c; font-size: 12px; cursor: pointer; padding: 2px 6px; }
 .shown-add-row { display: flex; gap: 8px; margin-top: 6px; }
-.shown-add-row input { flex: 1 1 auto; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; min-width: 0; }
+.shown-add-row .autocomplete-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
+.shown-add-row input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; box-sizing: border-box; }
 .shown-add-row button { flex: 0 0 auto; font-size: 12px; padding: 8px 12px; }
+
+/* Custom autocomplete dropdown, added 2026-09-11 (replaces a native
+   <datalist>, which rendered inconsistently on mobile -- see the
+   Shown Properties section's own comment in app.js). */
+.autocomplete-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.autocomplete-option { padding: 8px 10px; font-size: 13px; cursor: pointer; }
+.autocomplete-option:hover { background: #eef2ff; }
 
 .buyer-message { padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
 .buyer-message.incoming { background: #eef2ff; }

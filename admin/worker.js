@@ -1442,6 +1442,52 @@ function nameTokensFromSheetName(name) {
   return (name || "").toLowerCase().split(/[^a-z]+/).filter((t) => t.length > 1);
 }
 
+// Shared by handleSuggestedIdMatches and handleRenameIdFiles -- both need
+// the exact same "files in the folder fuzzy-matched against buyers with
+// no ID Link yet" computation, just do different things with the result
+// (surface for confirmation vs. actually rename).
+async function computeSuggestedIdMatches(env) {
+  const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
+  const [files, sheetRes] = await Promise.all([
+    listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER),
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!B:F`)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+  ]);
+  if (!sheetRes.ok) throw new Error(`logins read failed: ${await sheetRes.text()}`);
+  const rows = (await sheetRes.json()).values || [];
+
+  // B:F -> index 0=Email 1=? 2=Phone 3=Name 4=ID Link. Only buyers with
+  // no ID Link yet are candidates -- one with a real link already isn't
+  // missing anything, whatever Aaron dropped in the folder for them.
+  const needsId = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const phone = (row[2] || "").trim();
+    const name = (row[3] || "").trim();
+    const idLink = (row[4] || "").trim();
+    if (phone && name && !idLink) needsId.push({ row: i + 1, phone, name, tokens: nameTokensFromSheetName(name) });
+  }
+
+  const matches = [];
+  for (const file of files) {
+    const fileTokens = nameTokensFromFilename(file.name);
+    if (fileTokens.length < 2) continue; // need at least a first + last token to judge anything
+    for (const buyer of needsId) {
+      if (buyer.tokens.length < 2) continue;
+      const overlap = buyer.tokens.filter((t) => fileTokens.includes(t)).length;
+      // Require both the buyer's first and last name token to appear in
+      // the filename -- deliberately strict (see the header comment on
+      // why a false match here is worse than missing a real one).
+      if (overlap >= 2) {
+        matches.push({ dropboxPath: file.path_display, filename: file.name, buyerRow: buyer.row, buyerPhone: buyer.phone, buyerName: buyer.name });
+        break; // one filename shouldn't be offered against more than one buyer
+      }
+    }
+  }
+  return { matches, filesScanned: files.length, buyersNeedingId: needsId.length };
+}
+
 async function handleSuggestedIdMatches(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -1450,45 +1496,52 @@ async function handleSuggestedIdMatches(request, env) {
   if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
   try {
-    const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
-    const [files, sheetRes] = await Promise.all([
-      listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER),
-      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!B:F`)}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }),
-    ]);
-    if (!sheetRes.ok) throw new Error(`logins read failed: ${await sheetRes.text()}`);
-    const rows = (await sheetRes.json()).values || [];
+    return jsonResponse(await computeSuggestedIdMatches(env));
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
 
-    // B:F -> index 0=Email 1=? 2=Phone 3=Name 4=ID Link. Only buyers with
-    // no ID Link yet are candidates -- one with a real link already isn't
-    // missing anything, whatever Aaron dropped in the folder for them.
-    const needsId = [];
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const phone = (row[2] || "").trim();
-      const name = (row[3] || "").trim();
-      const idLink = (row[4] || "").trim();
-      if (phone && name && !idLink) needsId.push({ row: i + 1, phone, name, tokens: nameTokensFromSheetName(name) });
-    }
+// "Rename all ID files loaded into the Dropbox folder," added 2026-09-11
+// per Aaron's direct request -- normalizes manually-dropped files onto
+// the same "<Last>, <First> - <last4>.<ext>" convention buildIdFilename
+// already uses for site-uploaded ones. Deliberately scoped to ONLY the
+// same candidate set as computeSuggestedIdMatches (files fuzzy-matched to
+// a buyer with no ID Link yet) -- a file that's already linked has a real
+// shared link + Sheet reference pointing at its current path, and
+// renaming it isn't guaranteed to carry that link over safely. This never
+// touches an already-linked file, only ones nothing points to yet.
+async function handleRenameIdFiles(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
-    const matches = [];
-    for (const file of files) {
-      const fileTokens = nameTokensFromFilename(file.name);
-      if (fileTokens.length < 2) continue; // need at least a first + last token to judge anything
-      for (const buyer of needsId) {
-        if (buyer.tokens.length < 2) continue;
-        const overlap = buyer.tokens.filter((t) => fileTokens.includes(t)).length;
-        // Require both the buyer's first and last name token to appear in
-        // the filename -- deliberately strict (see the header comment on
-        // why a false match here is worse than missing a real one).
-        if (overlap >= 2) {
-          matches.push({ dropboxPath: file.path_display, filename: file.name, buyerRow: buyer.row, buyerPhone: buyer.phone, buyerName: buyer.name });
-          break; // one filename shouldn't be offered against more than one buyer
-        }
+  try {
+    const { matches } = await computeSuggestedIdMatches(env);
+    const dropboxToken = await getDropboxAccessToken(env);
+    const renamed = [];
+    const skipped = [];
+    const errors = [];
+
+    for (const m of matches) {
+      const targetName = buildIdFilename(m.buyerName, m.buyerPhone, m.filename);
+      if (targetName === m.filename) { skipped.push({ filename: m.filename, reason: "already matches the convention" }); continue; }
+      const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
+      try {
+        const res = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ from_path: m.dropboxPath, to_path: targetPath, autorename: false }),
+        });
+        if (!res.ok) { errors.push({ filename: m.filename, detail: await res.text() }); continue; }
+        renamed.push({ from: m.filename, to: targetName, buyerName: m.buyerName });
+      } catch (e) {
+        errors.push({ filename: m.filename, detail: String(e) });
       }
     }
-    return jsonResponse({ matches, filesScanned: files.length, buyersNeedingId: needsId.length });
+    return jsonResponse({ renamed, skipped, errors });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -1561,6 +1614,73 @@ async function handleMarkShown(request, env) {
     });
     if (!putRes.ok) throw new Error(`shown-properties write failed: ${await putRes.text()}`);
     return jsonResponse({ ok: true, shown: next });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Admin version of handleIdPhoto above, for the Buyers tab -- real bug
+// found 2026-09-11: that tab's <img src="${lm.idLink}"> pointed straight
+// at the raw Dropbox shared link, which doesn't render as an image at all
+// embedded like that (Dropbox serves an HTML preview page at that URL,
+// not raw image bytes) -- same reason handleIdPhoto/loadIdPhotoThumbnail
+// exists for the visitor-facing My Info tab, just never wired up for this
+// admin view. Google-OAuth gated (matching every other admin buyers
+// endpoint) rather than reusing handleIdPhoto's email-based gate, which
+// is deliberately weak to match the rest of the visitor-facing site --
+// an admin view showing potentially any buyer's ID needs the stronger bar.
+// Takes the Dropbox link directly (the admin worker already has it, from
+// loginsMatch.idLink) rather than re-deriving it from a row, and caches
+// by a hash of the link itself.
+async function handleAdminIdPhoto(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const sharedLink = (body.dropboxLink || "").trim();
+  if (!sharedLink) return jsonResponse({ error: "missing dropboxLink" }, 400);
+
+  const cache = caches.default;
+  const cacheKey = new Request(`https://admin-id-photo-cache.internal/${encodeURIComponent(sharedLink)}`, { method: "GET" });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const dropboxToken = await getDropboxAccessToken(env);
+    const fileRes = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxToken}`,
+        "Dropbox-API-Arg": JSON.stringify({ url: sharedLink }),
+      },
+    });
+    if (!fileRes.ok) throw new Error(`dropbox file fetch failed: ${await fileRes.text()}`);
+
+    // Same real Dropbox quirk as handleIdPhoto -- always octet-stream,
+    // infer the real type from the filename in the result header instead.
+    let contentType = "image/jpeg";
+    const apiResultHeader = fileRes.headers.get("dropbox-api-result");
+    if (apiResultHeader) {
+      try {
+        const meta = JSON.parse(apiResultHeader);
+        const ext = (meta.name || "").split(".").pop().toLowerCase();
+        const extMap = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", heic: "image/heic" };
+        if (extMap[ext]) contentType = extMap[ext];
+      } catch (e) {
+        // fall through to the default above
+      }
+    }
+    const bytes = await fileRes.arrayBuffer();
+    const response = new Response(bytes, {
+      status: 200,
+      headers: { "Content-Type": contentType, "Cache-Control": "private, max-age=3600", ...corsHeaders() },
+    });
+    await cache.put(cacheKey, response.clone());
+    return response;
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2504,8 +2624,16 @@ async function route(request, env) {
     return handleConfirmIdMatch(request, env);
   }
 
+  if (url.pathname === "/rename-id-files" && request.method === "POST") {
+    return handleRenameIdFiles(request, env);
+  }
+
   if (url.pathname === "/mark-shown" && request.method === "POST") {
     return handleMarkShown(request, env);
+  }
+
+  if (url.pathname === "/admin-id-photo" && request.method === "POST") {
+    return handleAdminIdPhoto(request, env);
   }
 
   if (url.pathname === "/my-appointments" && request.method === "POST") {

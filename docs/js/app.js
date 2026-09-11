@@ -2670,6 +2670,10 @@ let BUYERS_SORT = "area";
 // fixed taxonomy Aaron defined, not something to infer from the buyer
 // population itself.
 const BUYERS_CANONICAL_AREAS = ["East St Louis, IL", "St Louis, MO", "Little Rock, AR", "Springfield, IL", "West Memphis, AR"];
+// Populated fresh each renderBuyerDetail() call -- see its own comment at
+// the Shown Properties section for why this replaced a native <datalist>.
+let SHOWN_AVAILABLE_ADDRESSES = [];
+
 let BUYERS_FILTER = {
   down: null, monthly: null, beds: null, areas: [],
   // Added 2026-09-11 per Aaron's direct request.
@@ -2923,6 +2927,7 @@ function renderBuyersList() {
       <span class="buyer-row-badges">
         ${b.loginsMatch && b.loginsMatch.idLink ? `<span class="buyer-badge id-badge" title="ID on file">🪪 ID</span>` : ""}
         ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
+        ${b.loginsMatch && b.loginsMatch.firstLogin ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
       </span>
     `;
     rows.push(`
@@ -2974,8 +2979,14 @@ function renderBuyerDetail(buyer) {
   const lm = buyer.loginsMatch;
   const container = document.getElementById("buyers-detail-content");
 
+  // Real bug, fixed 2026-09-11: a raw Dropbox shared link doesn't render
+  // as an image via a plain <img src> -- it's an HTML preview page, not
+  // image bytes. Same reason the visitor-facing My Info tab never does
+  // this either (see loadIdPhotoThumbnail) -- render a blank <img> here
+  // and fill it in via loadAdminIdPhoto() below, after this HTML is in
+  // the DOM, same fetch+blob-URL pattern.
   const idPhoto = lm && lm.idLink
-    ? `<a href="${escapeAttr(lm.idLink)}" target="_blank" rel="noopener"><img src="${escapeAttr(lm.idLink)}" class="buyer-id-photo" alt="ID on file"></a>`
+    ? `<a href="${escapeAttr(lm.idLink)}" target="_blank" rel="noopener"><img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(lm.idLink)}" alt="ID on file"></a>`
     : `<p class="buyer-no-id">No ID on file.</p>`;
 
   // Background image scan (see IMAGES_CACHE_KEY server-side) found images
@@ -3020,20 +3031,22 @@ function renderBuyerDetail(buyer) {
   // Shown Properties -- Aaron's own admin-side record of what he's
   // personally shown/let this buyer into, added 2026-09-11 per his direct
   // request. Editable here (unlike Viewed above): a text input backed by
-  // a <datalist> of ALL_LISTINGS addresses -- type-to-autocomplete, not a
-  // plain <select> (reverted 2026-09-11 per Aaron's explicit follow-up:
-  // "I need to be able to type into shown properties and it will auto
-  // complete" -- a <select> doesn't support that, a datalist-backed input
-  // natively does). Already-shown addresses excluded from the options so
-  // it only ever suggests something new to add. Needs lm.row (the buyer's
-  // real Sheet row, added server-side 2026-09-11) -- if that's somehow
-  // missing, the add control just doesn't render rather than posting a
-  // request with no way to target a row.
+  // A custom JS-driven suggestion dropdown, not a native <datalist> --
+  // reverted 2026-09-11 per Aaron's follow-up report that the native
+  // datalist rendered its suggestions "in the keyboard" rather than as a
+  // real dropdown (a known real limitation: mobile Safari/Chrome render
+  // <datalist> inconsistently, sometimes as a thin strip competing with
+  // the keyboard instead of a proper list). initShownPropertyAutocomplete()
+  // below builds the actual dropdown, filtered live against
+  // SHOWN_AVAILABLE_ADDRESSES as you type. Already-shown addresses
+  // excluded so it only ever suggests something new to add. Needs lm.row
+  // (the buyer's real Sheet row, added server-side 2026-09-11) -- if
+  // that's somehow missing, the add control just doesn't render rather
+  // than posting a request with no way to target a row.
   const alreadyShown = new Set(lm && lm.shown ? lm.shown : []);
-  const shownAddressOptions = (ALL_LISTINGS || [])
+  SHOWN_AVAILABLE_ADDRESSES = (ALL_LISTINGS || [])
     .filter((l) => !alreadyShown.has(l.address))
-    .map((l) => `<option value="${escapeAttr(l.address)}">`)
-    .join("");
+    .map((l) => l.address);
   const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => `
     <div class="buyer-list-item shown-property-item">
       <span>${escapeHtml(address)}</span>
@@ -3042,8 +3055,10 @@ function renderBuyerDetail(buyer) {
   `).join("");
   const shownAddHtml = lm && lm.row ? `
     <div class="shown-add-row">
-      <input type="text" id="shown-property-input" list="shown-property-options" placeholder="Type an address…" autocomplete="off">
-      <datalist id="shown-property-options">${shownAddressOptions}</datalist>
+      <div class="autocomplete-wrap">
+        <input type="text" id="shown-property-input" placeholder="Type an address…" autocomplete="off">
+        <div id="shown-property-suggestions" class="autocomplete-dropdown hidden"></div>
+      </div>
       <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark shown</button>
     </div>
   ` : "";
@@ -3068,7 +3083,7 @@ function renderBuyerDetail(buyer) {
           <div class="detail-field"><span class="label">Name</span><span class="value">${escapeHtml(c.name)}</span></div>
           ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${escapeHtml(c.phone)}</span></div>` : ""}
           ${c.email ? `<div class="detail-field"><span class="label">Email</span><span class="value">${escapeHtml(c.email)}</span></div>` : ""}
-          ${c.idLink ? `<a href="${escapeAttr(c.idLink)}" target="_blank" rel="noopener"><img src="${escapeAttr(c.idLink)}" class="buyer-id-photo" alt="Co-buyer ID"></a>` : `<p class="buyer-no-id">No ID on file.</p>`}
+          ${c.idLink ? `<a href="${escapeAttr(c.idLink)}" target="_blank" rel="noopener"><img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(c.idLink)}" alt="Co-buyer ID"></a>` : `<p class="buyer-no-id">No ID on file.</p>`}
         </div>`).join("")}</div>`
     : "";
 
@@ -3128,6 +3143,11 @@ function renderBuyerDetail(buyer) {
   });
   document.getElementById("buyer-send-btn").addEventListener("click", (e) => sendBuyerMessage(e.target.dataset.phone));
 
+  // Fill in the placeholder <img> elements -- see idPhoto's own comment
+  // above for why this can't just be a plain src= attribute.
+  container.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
+  initShownPropertyAutocomplete();
+
   const shownAddBtn = document.getElementById("shown-add-btn");
   if (shownAddBtn) shownAddBtn.addEventListener("click", () => {
     const input = document.getElementById("shown-property-input");
@@ -3144,6 +3164,52 @@ function renderBuyerDetail(buyer) {
 // handleMarkShown in admin/worker.js. Re-renders the buyer detail view
 // from the refreshed buyer list on success, so the list stays the source
 // of truth rather than hand-patching the DOM.
+// Custom autocomplete dropdown for the Shown Properties input -- see that
+// section's own comment for why this replaced a native <datalist>. Shows
+// up to 8 matching addresses as the visitor types, click (or Enter on the
+// first match) to select. No-op if the input isn't on the page (e.g. this
+// buyer has no lm.row, so the add control never rendered).
+const AUTOCOMPLETE_MAX_RESULTS = 8;
+function initShownPropertyAutocomplete() {
+  const input = document.getElementById("shown-property-input");
+  const dropdown = document.getElementById("shown-property-suggestions");
+  if (!input || !dropdown) return;
+
+  function renderSuggestions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    const matches = SHOWN_AVAILABLE_ADDRESSES.filter((a) => a.toLowerCase().includes(q)).slice(0, AUTOCOMPLETE_MAX_RESULTS);
+    if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    dropdown.innerHTML = matches.map((a) => `<div class="autocomplete-option" data-address="${escapeAttr(a)}">${escapeHtml(a)}</div>`).join("");
+    dropdown.classList.remove("hidden");
+    dropdown.querySelectorAll(".autocomplete-option").forEach((opt) => {
+      // mousedown, not click -- fires before the input's blur handler
+      // below would otherwise hide the dropdown first and swallow the tap.
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = opt.dataset.address;
+        dropdown.classList.add("hidden");
+        dropdown.innerHTML = "";
+      });
+    });
+  }
+
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => { if (input.value.trim()) renderSuggestions(input.value); });
+  input.addEventListener("blur", () => { dropdown.classList.add("hidden"); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { dropdown.classList.add("hidden"); return; }
+    if (e.key === "Enter") {
+      const first = dropdown.querySelector(".autocomplete-option");
+      if (first && !dropdown.classList.contains("hidden")) {
+        e.preventDefault();
+        input.value = first.dataset.address;
+        dropdown.classList.add("hidden");
+      }
+    }
+  });
+}
+
 async function markShown(row, address, action, phone) {
   const token = getStoredAdminToken();
   try {
@@ -3159,6 +3225,30 @@ async function markShown(row, address, action, phone) {
     if (refreshed) renderBuyerDetail(refreshed);
   } catch (err) {
     alert(`Couldn't update shown properties: ${err}`);
+  }
+}
+
+// Admin equivalent of loadIdPhotoThumbnail (My Info tab) -- see idPhoto's
+// own comment above for the real bug this fixes (a raw Dropbox link
+// doesn't render via a plain <img src>). Same fetch+POST+blob-URL
+// pattern, just against /admin-id-photo with Google OAuth instead of
+// /id-photo's email gate.
+async function loadAdminIdPhoto(imgEl, dropboxLink) {
+  if (!dropboxLink) return;
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin-id-photo`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ dropboxLink }),
+    });
+    if (!res.ok) return; // leave the <img> blank rather than break the page
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    imgEl.dataset.blobUrl = objectUrl;
+    imgEl.src = objectUrl;
+  } catch (e) {
+    // network hiccup -- same "leave it blank" fallback
   }
 }
 
@@ -3289,6 +3379,9 @@ function initBuyersTab() {
 
   const checkIdBtn = document.getElementById("buyers-check-id-matches-btn");
   if (checkIdBtn) checkIdBtn.addEventListener("click", loadSuggestedIdMatches);
+
+  const renameBtn = document.getElementById("buyers-rename-id-files-btn");
+  if (renameBtn) renameBtn.addEventListener("click", renameIdFiles);
 }
 
 // ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------
@@ -3343,6 +3436,35 @@ async function confirmIdMatch(match, btn) {
     loadBuyers(); // refresh so the buyer's ID-on-file state is current if reopened
   } catch (err) {
     btn.textContent = `Failed: ${err}`;
+  }
+}
+
+// "Rename ID files in Dropbox," added 2026-09-11 per Aaron's direct
+// request -- normalizes manually-dropped files onto the standard naming
+// convention. Scoped server-side to ONLY files matched to a buyer with no
+// ID Link yet (see handleRenameIdFiles's own comment) -- an already-linked
+// file is never touched, so this can't break an existing shared link. A
+// real, if scoped-conservatively, bulk write -- confirm before firing.
+async function renameIdFiles() {
+  if (!confirm("Rename ID files in the Dropbox folder to match buyers' names? Only files not yet linked to a buyer are touched.")) return;
+  const token = getStoredAdminToken();
+  const panel = document.getElementById("buyers-id-matches-panel");
+  panel.classList.remove("hidden");
+  panel.innerHTML = "<p>Renaming…</p>";
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/rename-id-files`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't rename files: ${data.error || res.status}</p>`; return; }
+    const parts = [];
+    if (data.renamed.length) parts.push(`<p><strong>Renamed ${data.renamed.length}:</strong></p>` + data.renamed.map((r) => `<div class="buyer-list-item">${escapeHtml(r.from)} → ${escapeHtml(r.to)}</div>`).join(""));
+    if (data.skipped.length) parts.push(`<p>${data.skipped.length} already matched the convention.</p>`);
+    if (data.errors.length) parts.push(`<p><strong>${data.errors.length} failed:</strong></p>` + data.errors.map((e) => `<div class="buyer-list-item">${escapeHtml(e.filename)}: ${escapeHtml(e.detail)}</div>`).join(""));
+    panel.innerHTML = parts.join("") || "<p>Nothing to rename.</p>";
+  } catch (err) {
+    panel.innerHTML = `<p>Couldn't rename files: ${err}</p>`;
   }
 }
 
