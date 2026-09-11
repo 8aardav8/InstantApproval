@@ -874,6 +874,43 @@
             <option value="5">5+</option>
           </select>
         </label>
+        <!-- Added 2026-09-11 per Aaron's direct request -->
+        <label>ID on File
+          <select id="bf-id">
+            <option value="" selected>Any</option>
+            <option value="yes">Has ID on file</option>
+            <option value="no">No ID on file</option>
+          </select>
+        </label>
+        <label>Favorites
+          <select id="bf-favorites">
+            <option value="" selected>Any</option>
+            <option value="yes">Has favorites</option>
+            <option value="no">No favorites</option>
+          </select>
+        </label>
+        <label>Login Status
+          <select id="bf-loggedin">
+            <option value="" selected>Any</option>
+            <option value="yes">Has logged in</option>
+            <option value="no">Hasn't logged in</option>
+          </select>
+        </label>
+        <label>Last Contact
+          <div class="last-contact-filter">
+            <select id="bf-contact-op">
+              <option value="" selected>Any time</option>
+              <option value="before">Before</option>
+              <option value="after">After</option>
+            </select>
+            <select id="bf-contact-period">
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
+        </label>
         <div class="area-filter">
           <span class="area-filter-label">Area</span>
           <!-- Populated from the 5 canonical areas -- see

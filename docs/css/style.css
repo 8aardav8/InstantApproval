@@ -760,6 +760,8 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Buyers filter panel (mirrors the homes search .filter-panel) + the
    Dropbox ID-match checker, added 2026-09-11 */
 .buyers-filter-panel { margin-bottom: 12px; }
+.last-contact-filter { display: flex; gap: 6px; }
+.last-contact-filter select { flex: 1 1 0; min-width: 0; }
 .buyers-id-matches-toolbar { margin-bottom: 10px; }
 #buyers-id-matches-panel { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 13px; }
 .id-match-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }

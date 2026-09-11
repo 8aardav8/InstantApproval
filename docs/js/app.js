@@ -2670,7 +2670,32 @@ let BUYERS_SORT = "area";
 // fixed taxonomy Aaron defined, not something to infer from the buyer
 // population itself.
 const BUYERS_CANONICAL_AREAS = ["East St Louis, IL", "St Louis, MO", "Little Rock, AR", "Springfield, IL", "West Memphis, AR"];
-let BUYERS_FILTER = { down: null, monthly: null, beds: null, areas: [] };
+let BUYERS_FILTER = {
+  down: null, monthly: null, beds: null, areas: [],
+  // Added 2026-09-11 per Aaron's direct request.
+  idOnFile: null, // null | "yes" | "no"
+  hasFavorites: null, // null | "yes" | "no"
+  loggedIn: null, // null | "yes" | "no"
+  contactOp: null, // null | "before" | "after"
+  contactPeriod: "week", // "week" | "month" | "quarter" | "year" -- only applied when contactOp is set
+};
+
+// Start-of-period boundary for the Last Contact filter, in the visitor's
+// own local time (matches how "this week/month/..." reads to a human,
+// not a UTC-aligned boundary). Week starts Monday.
+function periodStartDate(period) {
+  const now = new Date();
+  if (period === "week") {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const day = d.getDay(); // 0 = Sunday
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    return d;
+  }
+  if (period === "month") return new Date(now.getFullYear(), now.getMonth(), 1);
+  if (period === "quarter") return new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+  if (period === "year") return new Date(now.getFullYear(), 0, 1);
+  return null;
+}
 
 function renderBuyersAreaCheckboxes() {
   const container = document.getElementById("buyers-area-checkboxes");
@@ -2700,6 +2725,31 @@ function buyerMatchesFilters(b) {
     const bySearch = lmFilters && lmFilters.areas && f.areas.some((a) => lmFilters.areas.toLowerCase().includes(a.toLowerCase()));
     if (!byTag && !bySearch) return false;
   }
+  const lm = b.loginsMatch;
+  if (f.idOnFile === "yes" && !(lm && lm.idLink)) return false;
+  if (f.idOnFile === "no" && lm && lm.idLink) return false;
+  if (f.hasFavorites === "yes" && !(lm && lm.favorites && lm.favorites.length)) return false;
+  if (f.hasFavorites === "no" && lm && lm.favorites && lm.favorites.length) return false;
+  // "Logged in" means a real first-login timestamp on file, not merely
+  // having a matching Sheet row (a row can exist from other activity).
+  if (f.loggedIn === "yes" && !(lm && lm.firstLogin)) return false;
+  if (f.loggedIn === "no" && lm && lm.firstLogin) return false;
+  if (f.contactOp) {
+    // Last contact = most recent of texted or called (Quo activity) --
+    // deliberately NOT login, which has its own separate filter above.
+    const candidates = [b.lastActivityAt, b.lastCallAt].filter(Boolean).map((d) => new Date(d));
+    const boundary = periodStartDate(f.contactPeriod);
+    if (candidates.length === 0) {
+      // Never contacted at all -- counts as "before" any period (nothing
+      // to be "after"), so this correctly fails an "after" filter and
+      // passes a "before" one.
+      if (f.contactOp === "after") return false;
+    } else {
+      const lastContact = new Date(Math.max(...candidates));
+      if (f.contactOp === "before" && !(lastContact < boundary)) return false;
+      if (f.contactOp === "after" && !(lastContact >= boundary)) return false;
+    }
+  }
   return true;
 }
 
@@ -2725,6 +2775,10 @@ function activeBuyersFilterCount() {
   if (f.monthly != null) n++;
   if (f.beds != null) n++;
   if (f.areas.length > 0) n++;
+  if (f.idOnFile) n++;
+  if (f.hasFavorites) n++;
+  if (f.loggedIn) n++;
+  if (f.contactOp) n++;
   return n;
 }
 function updateBuyersFilterBadge() {
@@ -2741,6 +2795,11 @@ function applyBuyersFilters() {
     monthly: parseFloat(document.getElementById("bf-monthly").value) || null,
     beds: parseInt(document.getElementById("bf-beds").value, 10) || null,
     areas: [...document.querySelectorAll("#buyers-area-checkboxes input:checked")].map((cb) => cb.value),
+    idOnFile: document.getElementById("bf-id").value || null,
+    hasFavorites: document.getElementById("bf-favorites").value || null,
+    loggedIn: document.getElementById("bf-loggedin").value || null,
+    contactOp: document.getElementById("bf-contact-op").value || null,
+    contactPeriod: document.getElementById("bf-contact-period").value || "week",
   };
   updateBuyersFilterBadge();
   renderBuyersList();
@@ -2751,6 +2810,11 @@ function clearBuyersFilters() {
   document.getElementById("bf-monthly").value = "";
   document.getElementById("bf-beds").value = "";
   document.querySelectorAll("#buyers-area-checkboxes input:checked").forEach((cb) => { cb.checked = false; });
+  document.getElementById("bf-id").value = "";
+  document.getElementById("bf-favorites").value = "";
+  document.getElementById("bf-loggedin").value = "";
+  document.getElementById("bf-contact-op").value = "";
+  document.getElementById("bf-contact-period").value = "week";
   applyBuyersFilters();
 }
 
@@ -3216,7 +3280,7 @@ function initBuyersTab() {
   // comment at its call site in loadBuyers() for why calling it eagerly at
   // page-load time (this function runs before this section's own consts
   // are initialized) is what broke the whole page on 2026-09-11.
-  ["bf-down", "bf-monthly", "bf-beds"].forEach((id) => {
+  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyBuyersFilters);
   });
