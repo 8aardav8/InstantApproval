@@ -1615,6 +1615,7 @@ function initGetStartedForm() {
 const TAB_LABELS = {
   properties: "HOMES", steps: "HOW IT WORKS", approved: "APPROVED!",
   "get-started": "MY SHOWINGS", favorites: "MY FAVORITES", "my-info": "MY INFO",
+  buyers: "BUYERS", appointments: "APPOINTMENTS",
 };
 
 function activateTab(tabName) {
@@ -1637,6 +1638,8 @@ function activateTab(tabName) {
   // reached, rather than depending on exactly one call site staying correct.
   if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); renderMyAppointmentCards(); }
   if (tabName === "my-info") refreshMyInfoTab();
+  if (tabName === "buyers") loadBuyers();
+  if (tabName === "appointments") { refreshAdminActivity().then(renderAppointmentsOverview); }
   closeDrawer();
 }
 
@@ -2268,6 +2271,11 @@ function updateAdminButtonState() {
   const signedIn = !!getStoredAdminToken();
   btn.classList.toggle("signed-in", signedIn);
   logoutBtn.classList.toggle("hidden", !signedIn);
+  // Buyers/Appointments tabs, added 2026-09-11 -- admin-only, same signedIn check.
+  for (const id of ["nav-buyers-top", "nav-buyers-drawer", "nav-appointments-top", "nav-appointments-drawer"]) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("hidden", !signedIn);
+  }
 }
 
 function handleAdminCredentialResponse(response) {
@@ -2549,6 +2557,7 @@ initInstallUI();
 initAppointmentsAccordionToggle();
 initPullToRefresh();
 initMyInfoUI();
+initBuyersTab();
 // initGetStartedForm() and initVisitorSync() both chained after loadData()
 // resolves, not called alongside it -- both need ALL_LISTINGS (property
 // dropdown / #area-checkboxes respectively) which only exist once
@@ -2568,4 +2577,309 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
+}
+
+// ---------- Admin: Buyers tab (added 2026-09-11) ----------
+// Aaron's own request: one page listing every potential term buyer (every
+// real conversation on the Filling number, not just the ~half already
+// tagged in Quo), sortable, click-through to a full CRM-style detail view
+// (ID photo, co-buyers, favorited properties, appointments, search
+// filters). Talks to the standalone iah-buyers Worker -- deliberately
+// separate from ADMIN_API_URL/super-frost-1dbb, so nothing here can affect
+// the live listings site or its existing admin features.
+//
+// This file is meant to be pasted into docs/js/app.js (its functions use
+// the same globals -- getStoredAdminToken(), ADMIN_OAUTH_CLIENT_ID -- already
+// defined there) and this tab's markup into docs/index.html, both spots
+// marked in the README. Kept as its own file for review before merging.
+
+const BUYERS_API_URL = "https://iah-buyers.notactuallyit.workers.dev";
+
+let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on dropdown change
+let BUYERS_SORT = "area";
+
+async function loadBuyers() {
+  const token = getStoredAdminToken();
+  const listEl = document.getElementById("buyers-list");
+  if (!token) { listEl.innerHTML = "<p>Sign in as admin to view buyers.</p>"; return; }
+
+  listEl.innerHTML = "<p>Loading…</p>";
+  try {
+    const res = await fetch(`${BUYERS_API_URL}/buyers`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 403 || res.status === 401) {
+      listEl.innerHTML = "<p>Not authorized. Sign in again.</p>";
+      return;
+    }
+    const data = await res.json();
+    BUYERS_CACHE = data.buyers || [];
+    document.getElementById("buyers-count").textContent =
+      `${data.count} total — ${data.classifiedCount} area-tagged, ${data.count - data.classifiedCount} unclassified`;
+    renderBuyersList();
+  } catch (err) {
+    listEl.innerHTML = `<p>Couldn't load buyers: ${err}</p>`;
+  }
+}
+
+function sortedBuyers() {
+  const buyers = [...(BUYERS_CACHE || [])];
+  if (BUYERS_SORT === "name") {
+    buyers.sort((a, b) => (a.quoName || a.phone).localeCompare(b.quoName || b.phone));
+  } else if (BUYERS_SORT === "recent") {
+    buyers.sort((a, b) => new Date(b.lastActivityAt) - new Date(a.lastActivityAt));
+  }
+  // "area" sort is the API's own default order (classified-first, grouped
+  // alphabetically by area, most-recent-first within an unclassified group)
+  // -- nothing to redo client-side.
+  return buyers;
+}
+
+function renderBuyersList() {
+  const listEl = document.getElementById("buyers-list");
+  const buyers = sortedBuyers();
+  if (buyers.length === 0) { listEl.innerHTML = "<p>No conversations found.</p>"; return; }
+
+  let lastArea = undefined;
+  const rows = [];
+  for (const b of buyers) {
+    if (BUYERS_SORT === "area" && b.area !== lastArea) {
+      lastArea = b.area;
+      rows.push(`<div class="buyers-group-header">${escapeHtml(b.area || "Unclassified")}</div>`);
+    }
+    const label = b.quoName || b.phone;
+    const sub = b.area && BUYERS_SORT !== "area" ? b.area : (b.loginsMatch ? b.loginsMatch.email : "");
+    rows.push(`
+      <button class="buyer-row" data-phone="${escapeHtml(b.phone)}">
+        <span class="buyer-row-name">${escapeHtml(label)}</span>
+        ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+        <span class="buyer-row-date">${formatShortDate(b.lastActivityAt)}</span>
+      </button>
+    `);
+  }
+  listEl.innerHTML = rows.join("");
+  listEl.querySelectorAll(".buyer-row").forEach((btn) => {
+    btn.addEventListener("click", () => showBuyerDetail(btn.dataset.phone));
+  });
+}
+
+function formatShortDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function findBuyer(phone) {
+  return (BUYERS_CACHE || []).find((b) => b.phone === phone);
+}
+
+function showBuyerDetail(phone) {
+  const buyer = findBuyer(phone);
+  if (!buyer) return;
+  document.getElementById("buyers-list-view").classList.add("hidden");
+  document.getElementById("buyers-detail-view").classList.remove("hidden");
+  renderBuyerDetail(buyer);
+}
+
+function backToBuyersList() {
+  document.getElementById("buyers-detail-view").classList.add("hidden");
+  document.getElementById("buyers-list-view").classList.remove("hidden");
+}
+
+function renderBuyerDetail(buyer) {
+  const lm = buyer.loginsMatch;
+  const container = document.getElementById("buyers-detail-content");
+
+  const idPhoto = lm && lm.idLink
+    ? `<a href="${escapeAttr(lm.idLink)}" target="_blank" rel="noopener"><img src="${escapeAttr(lm.idLink)}" class="buyer-id-photo" alt="ID on file"></a>`
+    : `<p class="buyer-no-id">No ID on file.</p>`;
+
+  const facts = [
+    ["Phone", buyer.phone],
+    ["Email", (lm && lm.email) || ""],
+    ["Area", buyer.area || "Not yet classified"],
+    ["First login", (lm && lm.firstLogin) || ""],
+    ["Last login", (lm && lm.lastLogin) || ""],
+    ["Agreed to terms", (lm && lm.agreed) || ""],
+    ["Last activity (Quo)", formatShortDate(buyer.lastActivityAt)],
+  ].filter(([, v]) => v);
+
+  const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("");
+
+  const favoritesHtml = lm && lm.favorites && lm.favorites.length
+    ? `<div class="buyer-section"><h3>Favorited Properties (${lm.favorites.length})</h3>${lm.favorites.map((f) => `<div class="buyer-list-item">${escapeHtml(f)}</div>`).join("")}</div>`
+    : "";
+
+  const apptsHtml = lm && lm.appointments && lm.appointments.length
+    ? `<div class="buyer-section"><h3>Appointments (${lm.appointments.length})</h3>${lm.appointments.map((a) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)}</div>`).join("")}</div>`
+    : "";
+
+  const coBuyersHtml = lm && lm.coBuyers && lm.coBuyers.length
+    ? `<div class="buyer-section"><h3>Co-Buyers</h3>${lm.coBuyers.map((c) => `
+        <div class="co-buyer-block">
+          <div class="detail-field"><span class="label">Name</span><span class="value">${escapeHtml(c.name)}</span></div>
+          ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${escapeHtml(c.phone)}</span></div>` : ""}
+          ${c.email ? `<div class="detail-field"><span class="label">Email</span><span class="value">${escapeHtml(c.email)}</span></div>` : ""}
+          ${c.idLink ? `<a href="${escapeAttr(c.idLink)}" target="_blank" rel="noopener"><img src="${escapeAttr(c.idLink)}" class="buyer-id-photo" alt="Co-buyer ID"></a>` : `<p class="buyer-no-id">No ID on file.</p>`}
+        </div>`).join("")}</div>`
+    : "";
+
+  const filtersHtml = lm && lm.filters && (lm.filters.maxDown || lm.filters.maxMonthly || lm.filters.minBeds || lm.filters.areas)
+    ? `<div class="buyer-section"><h3>Search Filters Used</h3>
+        ${lm.filters.areas ? `<div class="detail-field"><span class="label">Area(s)</span><span class="value">${escapeHtml(lm.filters.areas)}</span></div>` : ""}
+        ${lm.filters.maxDown ? `<div class="detail-field"><span class="label">Max Down</span><span class="value">${escapeHtml(lm.filters.maxDown)}</span></div>` : ""}
+        ${lm.filters.maxMonthly ? `<div class="detail-field"><span class="label">Max Monthly</span><span class="value">${escapeHtml(lm.filters.maxMonthly)}</span></div>` : ""}
+        ${lm.filters.minBeds ? `<div class="detail-field"><span class="label">Min Beds</span><span class="value">${escapeHtml(lm.filters.minBeds)}</span></div>` : ""}
+        ${lm.lastSearch ? `<div class="detail-field"><span class="label">Last Search</span><span class="value">${escapeHtml(lm.lastSearch)}</span></div>` : ""}
+      </div>`
+    : "";
+
+  const quoLinkHtml = buyer.quoUrl ? `<a href="${escapeAttr(buyer.quoUrl)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in Quo</a>` : "";
+
+  // Message feed + compose, added 2026-09-11 -- shown for every buyer now
+  // (previously only offered for unclassified contacts). Not auto-loaded on
+  // render: still an explicit tap, same "don't eagerly fetch messages for
+  // everyone" reasoning as before, just no longer gated by area status.
+  const snippetOptions = MESSAGE_SNIPPETS.map((s, i) => `<option value="${i}">${escapeHtml(s.label)}</option>`).join("");
+  const messagesHtml = `
+    <div class="buyer-section">
+      <h3>Messages</h3>
+      <button id="buyer-load-messages" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Load recent messages</button>
+      <div id="buyer-messages-list"></div>
+      <div class="buyer-compose">
+        <select id="buyer-snippet-select"><option value="">— Insert a saved reply —</option>${snippetOptions}</select>
+        <textarea id="buyer-compose-text" rows="3" placeholder="Type a message…"></textarea>
+        <button id="buyer-send-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Send</button>
+        <div id="buyer-send-status"></div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <h2>${escapeHtml(buyer.quoName || buyer.phone)}</h2>
+    ${quoLinkHtml}
+    <div class="buyer-id-section">${idPhoto}</div>
+    ${factsHtml}
+    ${favoritesHtml}
+    ${apptsHtml}
+    ${coBuyersHtml}
+    ${filtersHtml}
+    ${messagesHtml}
+  `;
+
+  document.getElementById("buyer-load-messages").addEventListener("click", (e) => loadBuyerMessages(e.target.dataset.phone));
+  document.getElementById("buyer-snippet-select").addEventListener("change", (e) => {
+    const idx = e.target.value;
+    if (idx === "") return;
+    document.getElementById("buyer-compose-text").value = MESSAGE_SNIPPETS[idx].text.replace("{name}", buyer.quoName ? buyer.quoName.split(" ")[0] : "there");
+    e.target.value = "";
+  });
+  document.getElementById("buyer-send-btn").addEventListener("click", (e) => sendBuyerMessage(e.target.dataset.phone));
+}
+
+async function loadBuyerMessages(phone) {
+  const token = getStoredAdminToken();
+  const el = document.getElementById("buyer-messages-list");
+  el.innerHTML = "<p>Loading…</p>";
+  try {
+    const res = await fetch(`${BUYERS_API_URL}/buyer-messages?participant=${encodeURIComponent(phone)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!data.messages || data.messages.length === 0) { el.innerHTML = "<p>No messages found.</p>"; return; }
+    // API returns newest-first; show oldest-first so it reads like a real
+    // conversation thread, most recent message at the bottom.
+    el.innerHTML = [...data.messages].reverse().map((m) => `
+      <div class="buyer-message ${m.direction === "incoming" ? "incoming" : "outgoing"}">
+        <span class="buyer-message-text">${escapeHtml(m.text)}</span>
+        <span class="buyer-message-date">${formatShortDate(m.createdAt)}</span>
+      </div>
+    `).join("");
+  } catch (err) {
+    el.innerHTML = `<p>Couldn't load messages: ${err}</p>`;
+  }
+}
+
+// Real Quo (OpenPhone) API has no "snippets"/canned-reply endpoint (checked
+// directly, 2026-09-11 -- /v1/snippets doesn't exist), so this is our own
+// simple saved-reply list, edited here rather than pulled from Quo. "{name}"
+// is replaced with the buyer's first name (from their Quo contact name) when
+// inserted, falling back to "there" if unknown.
+const MESSAGE_SNIPPETS = [
+  { label: "Following up", text: "Hi {name}, just following up on the home you were looking at — still interested? Happy to answer any questions." },
+  { label: "Appointment reminder", text: "Hi {name}, quick reminder about your upcoming appointment to view the property. Let me know if anything changes!" },
+  { label: "Send application link", text: "Hi {name}, here's the link to get started: instantapprovalhomes.com — let me know if you have trouble with anything." },
+  { label: "No longer available", text: "Hi {name}, thanks for your interest — that property is no longer available, but I have similar ones if you'd like to see them." },
+];
+
+async function sendBuyerMessage(phone) {
+  const token = getStoredAdminToken();
+  const textEl = document.getElementById("buyer-compose-text");
+  const statusEl = document.getElementById("buyer-send-status");
+  const content = textEl.value.trim();
+  if (!content) { statusEl.textContent = "Type a message first."; return; }
+
+  const buyer = findBuyer(phone);
+  const label = (buyer && (buyer.quoName || buyer.phone)) || phone;
+  if (!confirm(`Send this text to ${label} (${phone})?\n\n"${content}"`)) return;
+
+  statusEl.textContent = "Sending…";
+  try {
+    const res = await fetch(`${BUYERS_API_URL}/send-message`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ to: phone, content }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { statusEl.textContent = `Failed: ${(data && (data.error || JSON.stringify(data.detail))) || "unknown error"}`; return; }
+    statusEl.textContent = "Sent.";
+    textEl.value = "";
+    loadBuyerMessages(phone); // refresh the feed so the new message shows immediately
+  } catch (err) {
+    statusEl.textContent = `Failed: ${err}`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
+
+// Wired up once, on load -- sort dropdown + back button.
+function initBuyersTab() {
+  const sortSel = document.getElementById("buyers-sort");
+  if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; renderBuyersList(); });
+  const backBtn = document.getElementById("buyers-back-btn");
+  if (backBtn) backBtn.addEventListener("click", backToBuyersList);
+}
+
+// ---------- Upcoming Appointments (all buyers, one page) -- added 2026-09-11 ----------
+// Deliberately reuses data ALREADY fetched by the existing, live
+// refreshAdminActivity() (ADMIN_APPOINTMENTS_BY_ADDRESS, grouped by
+// property address) -- no new Worker, no new endpoint, this is purely a
+// different rendering of data the site already pulls for the admin
+// favorite/appointment badges. Flattens the by-address grouping into one
+// list sorted by date, filtered to today-or-later (same "only show
+// upcoming" rule already used for those badges).
+function renderAppointmentsOverview() {
+  const container = document.getElementById("appointments-list");
+  if (!container) return;
+  const today = localTodayISO(); // already defined in app.js
+  const all = [];
+  for (const [address, appts] of Object.entries(ADMIN_APPOINTMENTS_BY_ADDRESS || {})) {
+    for (const a of appts) {
+      if (a.date < today) continue;
+      all.push({ address, ...a });
+    }
+  }
+  all.sort((a, b) => a.date.localeCompare(b.date));
+
+  if (all.length === 0) { container.innerHTML = "<p>No upcoming appointments.</p>"; return; }
+  container.innerHTML = all.map((a) => `
+    <div class="appt-card">
+      <div class="appt-card-date">${escapeHtml(a.date)}</div>
+      <div class="appt-card-address">${escapeHtml(a.address)}</div>
+      <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
+      ${a.phone ? `<div class="appt-card-contact">${escapeHtml(a.phone)}${a.email ? " · " + escapeHtml(a.email) : ""}</div>` : ""}
+    </div>
+  `).join("");
 }

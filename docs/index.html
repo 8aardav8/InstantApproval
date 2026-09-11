@@ -112,6 +112,8 @@
          personal info, distinct from the person-icon already used for
          Showings' Your Info card. -->
     <button class="nav-btn" data-tab="my-info"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="10.5" r="2"/><path d="M5 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 9h5M14 13h5"/></svg></span>My Info</button>
+    <button class="nav-btn admin-only hidden" data-tab="buyers" id="nav-buyers-top"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Buyers</button>
+    <button class="nav-btn admin-only hidden" data-tab="appointments" id="nav-appointments-top"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Appointments</button>
     <!-- Persistent "Download App" menu item, added 2026-08-29 per Aaron's
          direct request -- stays in the header menu whenever the app isn't
          installed, independent of the banner's own dismiss/cooldown state
@@ -158,6 +160,8 @@
   <!-- "My Info" drawer copy -- see .top-tabs above for the full explanation
        of why this is deliberately absent from .bottom-nav. -->
   <button class="nav-btn" data-tab="my-info"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="10.5" r="2"/><path d="M5 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 9h5M14 13h5"/></svg></span>My Info</button>
+  <button class="nav-btn admin-only hidden" data-tab="buyers" id="nav-buyers-drawer"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Buyers</button>
+  <button class="nav-btn admin-only hidden" data-tab="appointments" id="nav-appointments-drawer"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Appointments</button>
   <!-- Persistent "Download App" menu item -- drawer's copy of the one in
        .top-tabs above, see that comment for the full explanation. -->
   <button id="drawer-install-btn" class="nav-btn hidden" type="button"><span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></span>Download App</button>
@@ -794,6 +798,29 @@
     <h1 class="page-title">My Favorites</h1>
     <div id="favorites-grid" class="card-grid"></div>
     <div id="favorites-empty-state" class="empty-state hidden">No favorites yet — tap the heart on any home to save it here.</div>
+  </section>
+
+  <section id="tab-buyers" class="tab-panel hidden">
+    <div id="buyers-list-view">
+      <div class="buyers-toolbar">
+        <select id="buyers-sort">
+          <option value="area">Sort: Area</option>
+          <option value="name">Sort: Name (A–Z)</option>
+          <option value="recent">Sort: Most Recent Activity</option>
+        </select>
+        <span id="buyers-count" class="buyers-count"></span>
+      </div>
+      <div id="buyers-list"></div>
+    </div>
+    <div id="buyers-detail-view" class="hidden">
+      <button id="buyers-back-btn" class="buyers-back-btn">&larr; Back to list</button>
+      <div id="buyers-detail-content"></div>
+    </div>
+  </section>
+
+  <section id="tab-appointments" class="tab-panel hidden">
+    <p class="appointments-intro">Every upcoming appointment across all buyers, soonest first.</p>
+    <div id="appointments-list"></div>
   </section>
 
 </main>

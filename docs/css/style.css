@@ -685,3 +685,68 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    here overrides those attrs to bump the bottom-nav icons specifically,
    per Aaron's request, without touching the smaller top-tabs/drawer icons. */
 .bottom-nav .nav-icon svg { width: 22px; height: 22px; }
+
+/* Buyers tab -- added 2026-09-11. Reuses existing tokens (--navy, --blue)
+   and existing class conventions (.detail-field, .co-buyer-block are
+   already defined in style.css and reused as-is here, not redefined). */
+
+.buyers-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; gap: 10px; }
+.buyers-toolbar select { padding: 6px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; }
+.buyers-count { font-size: 12px; color: var(--gray-text, #6b7280); }
+
+.buyers-group-header {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--blue); padding: 14px 4px 6px;
+}
+
+.buyer-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; text-align: left; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 6px; cursor: pointer; font: inherit;
+}
+.buyer-row:hover { border-color: var(--blue); }
+.buyer-row-name { font-weight: 700; color: var(--navy); flex: 1 1 auto; }
+.buyer-row-sub { font-size: 12px; color: var(--gray-text, #6b7280); }
+.buyer-row-date { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
+
+.buyers-back-btn {
+  background: #eef2ff; color: var(--navy); border: none; border-radius: 8px;
+  padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; margin-bottom: 14px;
+}
+
+#buyers-detail-content h2 { color: var(--navy); margin: 0 0 10px; }
+.buyer-quo-link { display: inline-block; margin-bottom: 14px; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+.buyer-id-section { margin: 10px 0; }
+.buyer-id-photo { max-width: 240px; border-radius: 10px; border: 1px solid #e5e7eb; display: block; }
+.buyer-no-id { font-size: 13px; color: #9ca3af; font-style: italic; }
+
+.buyer-section { margin-top: 20px; }
+.buyer-section h3 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--navy); margin: 0 0 8px; }
+.buyer-list-item { padding: 8px 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
+
+.buyer-message { padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+.buyer-message.incoming { background: #eef2ff; }
+.buyer-message.outgoing { background: #f3f4f6; margin-left: 20px; }
+.buyer-message-date { font-size: 10px; color: #9ca3af; }
+
+@media (max-width: 640px) {
+  .buyer-id-photo { max-width: 100%; }
+}
+
+/* Compose box (send-message), added 2026-09-11 */
+.buyer-compose { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.buyer-compose select, .buyer-compose textarea {
+  width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font: inherit; font-size: 13px;
+}
+.buyer-compose textarea { resize: vertical; }
+#buyer-send-status { font-size: 12px; color: var(--gray-text, #6b7280); min-height: 16px; }
+
+/* Appointments overview, added 2026-09-11 */
+.appointments-intro { font-size: 13px; color: var(--gray-text, #6b7280); margin: 10px 0; }
+.appt-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+}
+.appt-card-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
+.appt-card-address { font-weight: 700; color: var(--navy); margin-top: 2px; }
+.appt-card-visitor { font-size: 13px; margin-top: 4px; }
+.appt-card-contact { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
