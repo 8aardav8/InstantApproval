@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-11T16:32:12.723729+00:00",
+  "generatedAt": "2026-09-11T16:35:24.977846+00:00",
   "listings": [
+    {
+      "id": "210-n-17th-stl-mo-63103",
+      "address": "210 N 17th STL MO 63103",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6306584,
+      "lng": -90.20424229999999
+    },
     {
       "id": "1749-n-college-st-decatur-il-62526",
       "address": "1749 N College St Decatur, IL 62526",
