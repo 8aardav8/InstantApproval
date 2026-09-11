@@ -2765,9 +2765,14 @@ let BUYERS_SEARCH = "";
 function buyerMatchesSearch(b) {
   if (!BUYERS_SEARCH) return true;
   const lm = b.loginsMatch;
+  const li = b.leadInfo;
   const haystack = [
     b.quoName, b.phone, b.area,
     lm && lm.email, lm && lm.name, lm && lm.filters && lm.filters.areas,
+    // BUYERS-tab lead info, added 2026-09-11 -- some buyers only exist via
+    // this source (no Quo/App:Logins match at all), so it has to be
+    // searchable too, not just displayed.
+    li && li.contactName, li && li.companyName, li && li.email, li && li.city, li && li.state,
   ].filter(Boolean).join(" ").toLowerCase();
   return haystack.includes(BUYERS_SEARCH);
 }
@@ -2870,7 +2875,8 @@ async function loadBuyers() {
 function sortedBuyers() {
   const buyers = (BUYERS_CACHE || []).filter((b) => buyerMatchesFilters(b) && buyerMatchesSearch(b));
   if (BUYERS_SORT === "name") {
-    buyers.sort((a, b) => (a.quoName || a.phone).localeCompare(b.quoName || b.phone));
+    const nameOf = (x) => x.quoName || (x.leadInfo && x.leadInfo.contactName) || x.phone;
+    buyers.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   } else if (BUYERS_SORT === "last-message") {
     // Renamed from "recent" 2026-09-11 (same underlying date, Quo
     // conversation activity) -- now one of three explicit last-contact
@@ -2902,7 +2908,11 @@ function renderBuyersList() {
       lastArea = b.area;
       rows.push(`<div class="buyers-group-header">${escapeHtml(b.area || "Unclassified")}</div>`);
     }
-    const label = (b.quoName || b.phone) + (b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "");
+    // Fall back to the BUYERS-tab lead's contact name for buyers with no
+    // Quo contact at all (standalone entries added 2026-09-11, see the
+    // worker-side comment on why some leads never show up as a Quo
+    // conversation participant).
+    const label = (b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone) + (b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "");
     const sub = b.area && BUYERS_SORT !== "area" ? b.area : (b.loginsMatch ? b.loginsMatch.email : "");
     // Last login (App: Logins sheet, via loginsMatch) and last texted (Quo
     // conversation activity) are two different signals -- a buyer can log
@@ -3016,6 +3026,33 @@ function renderBuyerDetail(buyer) {
 
   const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("");
 
+  // Lead info from the Filling Sheet's separate "BUYERS" tab (rating,
+  // preferences, company/landlord, which Quo number they came in on) --
+  // added 2026-09-11 per Aaron's direct request. A distinct data source
+  // from loginsMatch above (that's the site's own App: Logins), so its
+  // own section rather than folded into factsHtml.
+  const li = buyer.leadInfo;
+  const leadFacts = li ? [
+    ["Contact Name", li.contactName],
+    ["Company", li.companyName],
+    ["Landlord", li.landlord ? "Yes" : ""],
+    ["Rating", li.rating],
+    ["Location", [li.city, li.state].filter(Boolean).join(", ")],
+    ["Min Beds", li.minBeds],
+    ["Min Baths", li.minBaths],
+    ["Max Monthly", li.maxMonthly],
+    ["Other Preferences", li.otherPreferences],
+    ["First Contact Address", li.firstContactAddress],
+    ["Date Added", li.dateAdded],
+  ].filter(([, v]) => v) : [];
+  const leadInfoHtml = leadFacts.length ? `
+    <div class="buyer-section">
+      <h3>Lead Info</h3>
+      ${leadFacts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("")}
+      ${li.openphoneLink ? `<a href="${escapeAttr(li.openphoneLink)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in OpenPhone</a>` : ""}
+    </div>
+  ` : "";
+
   const favoritesHtml = lm && lm.favorites && lm.favorites.length
     ? `<div class="buyer-section"><h3>Favorited Properties (${lm.favorites.length})</h3>${lm.favorites.map((f) => `<div class="buyer-list-item">${escapeHtml(f)}</div>`).join("")}</div>`
     : "";
@@ -3119,11 +3156,12 @@ function renderBuyerDetail(buyer) {
   `;
 
   container.innerHTML = `
-    <h2>${escapeHtml(buyer.quoName || buyer.phone)}</h2>
+    <h2>${escapeHtml(buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || buyer.phone)}</h2>
     ${quoLinkHtml}
     <div class="buyer-id-section">${idPhoto}</div>
     ${possibleIdHtml}
     ${factsHtml}
+    ${leadInfoHtml}
     ${favoritesHtml}
     ${viewedHtml}
     ${shownHtml}
