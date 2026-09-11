@@ -1209,6 +1209,40 @@ async function findLoginsRowByEmail(accessToken, email) {
   return null;
 }
 
+// Added 2026-09-11 alongside the suggested-ID-matches fix -- most buyers
+// with no App: Logins row at all can still need an ID filed against them
+// (see computeSuggestedIdMatches' own comment). Reads D (Phone) directly
+// rather than A:B like findLoginsRowByEmail above.
+async function findLoginsRowByPhone(accessToken, phone) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!D:D`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`logins phone read failed: ${await res.text()}`);
+  const col = (await res.json()).values || [];
+  const target = toE164(phone);
+  for (let i = 1; i < col.length; i++) {
+    if (toE164((col[i][0] || "").trim()) === target) return i + 1; // 1-indexed sheet row
+  }
+  return null;
+}
+
+// Appends a brand-new App: Logins row for a buyer who has none at all
+// (the common case now that suggested-ID-matches is scoped to the full
+// buyer list, not just existing Sheet rows) -- only Phone (D), Name (E),
+// and ID Link (F) populated, everything else left blank since this
+// wasn't a real site login. INSERT_ROWS via :append, not values.update
+// with a guessed row number -- avoids a race against a concurrent append.
+async function appendLoginsRow(accessToken, phone, name, idLink) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!A:F`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!A:F`, values: [["", "", "", phone, name, idLink]] }),
+  });
+  if (!res.ok) throw new Error(`logins row append failed: ${await res.text()}`);
+}
+
 async function handleSyncVisitor(request, env) {
   let body;
   try {
@@ -1446,28 +1480,35 @@ function nameTokensFromSheetName(name) {
 // the exact same "files in the folder fuzzy-matched against buyers with
 // no ID Link yet" computation, just do different things with the result
 // (surface for confirmation vs. actually rename).
-async function computeSuggestedIdMatches(env) {
-  const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
-  const [files, sheetRes] = await Promise.all([
-    listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER),
-    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!B:F`)}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
+// Real gap found 2026-09-11 (Aaron noticed the count was suspiciously
+// low -- "why only check against 8?"): this used to source its "needs an
+// ID" population from App: Logins rows alone, which only exist for
+// buyers who actually used the site's own login gate. Most buyers in the
+// real buyer list come from Quo conversations and never touch that gate
+// at all -- invisible to this check entirely, not just uncounted. Fixed
+// by sourcing the population from the SAME full buyer list the Buyers tab
+// itself shows (the standalone iah-buyers Worker's own /buyers endpoint,
+// forwarding this same admin's auth token -- both workers verify against
+// the same Google OAuth client), filtered to no ID Link, matched by
+// quoName (or the BUYERS-tab lead's contactName as a fallback) since
+// App: Logins' own Name column is usually blank for these buyers.
+async function computeSuggestedIdMatches(env, idToken) {
+  const [dropboxToken, buyersRes] = await Promise.all([
+    getDropboxAccessToken(env),
+    fetch("https://iah-buyers.notactuallyit.workers.dev/buyers", { headers: { Authorization: `Bearer ${idToken}` } }),
   ]);
-  if (!sheetRes.ok) throw new Error(`logins read failed: ${await sheetRes.text()}`);
-  const rows = (await sheetRes.json()).values || [];
+  const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
+  if (!buyersRes.ok) throw new Error(`buyers list read failed: ${await buyersRes.text()}`);
+  const buyersData = await buyersRes.json();
+  if (buyersData.error) throw new Error(`buyers list error: ${buyersData.error}`);
 
-  // B:F -> index 0=Email 1=? 2=Phone 3=Name 4=ID Link. Only buyers with
-  // no ID Link yet are candidates -- one with a real link already isn't
-  // missing anything, whatever Aaron dropped in the folder for them.
-  const needsId = [];
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const phone = (row[2] || "").trim();
-    const name = (row[3] || "").trim();
-    const idLink = (row[4] || "").trim();
-    if (phone && name && !idLink) needsId.push({ row: i + 1, phone, name, tokens: nameTokensFromSheetName(name) });
-  }
+  const needsId = (buyersData.buyers || [])
+    .filter((b) => !(b.loginsMatch && b.loginsMatch.idLink))
+    .map((b) => {
+      const name = b.quoName || (b.leadInfo && b.leadInfo.contactName) || "";
+      return { phone: b.phone, name, tokens: nameTokensFromSheetName(name) };
+    })
+    .filter((b) => b.name);
 
   const matches = [];
   for (const file of files) {
@@ -1480,7 +1521,7 @@ async function computeSuggestedIdMatches(env) {
       // the filename -- deliberately strict (see the header comment on
       // why a false match here is worse than missing a real one).
       if (overlap >= 2) {
-        matches.push({ dropboxPath: file.path_display, filename: file.name, buyerRow: buyer.row, buyerPhone: buyer.phone, buyerName: buyer.name });
+        matches.push({ dropboxPath: file.path_display, filename: file.name, buyerPhone: buyer.phone, buyerName: buyer.name });
         break; // one filename shouldn't be offered against more than one buyer
       }
     }
@@ -1496,7 +1537,7 @@ async function handleSuggestedIdMatches(request, env) {
   if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
   try {
-    return jsonResponse(await computeSuggestedIdMatches(env));
+    return jsonResponse(await computeSuggestedIdMatches(env, idToken));
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -1519,7 +1560,7 @@ async function handleRenameIdFiles(request, env) {
   if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
   try {
-    const { matches } = await computeSuggestedIdMatches(env);
+    const { matches } = await computeSuggestedIdMatches(env, idToken);
     const dropboxToken = await getDropboxAccessToken(env);
     const renamed = [];
     const skipped = [];
@@ -1557,13 +1598,19 @@ async function handleConfirmIdMatch(request, env) {
   let body;
   try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
   const dropboxPath = (body.dropboxPath || "").trim();
-  const row = Number(body.buyerRow);
-  if (!dropboxPath || !row) return jsonResponse({ error: "missing dropboxPath or buyerRow" }, 400);
+  const buyerPhone = (body.buyerPhone || "").trim();
+  const buyerName = (body.buyerName || "").trim();
+  if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
     const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
     const idLink = await createOrReuseSharedLink(dropboxToken, dropboxPath);
-    await writeIdLink(accessToken, row, idLink);
+    // Most matched buyers have no App: Logins row at all (see
+    // computeSuggestedIdMatches' own comment) -- find one if it exists,
+    // otherwise create a minimal new row rather than requiring one.
+    const row = await findLoginsRowByPhone(accessToken, buyerPhone);
+    if (row) await writeIdLink(accessToken, row, idLink);
+    else await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
     return jsonResponse({ ok: true, idLink });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);

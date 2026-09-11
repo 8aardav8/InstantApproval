@@ -3482,7 +3482,7 @@ async function confirmIdMatch(match, btn) {
     const res = await fetch(`${ADMIN_API_URL}/confirm-id-match`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ dropboxPath: match.dropboxPath, buyerRow: match.buyerRow }),
+      body: JSON.stringify({ dropboxPath: match.dropboxPath, buyerPhone: match.buyerPhone, buyerName: match.buyerName }),
     });
     const data = await res.json();
     if (!res.ok || !data.ok) { btn.textContent = `Failed: ${(data && data.error) || "unknown error"}`; return; }
