@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-11T17:17:14.843983+00:00",
+  "generatedAt": "2026-09-11T17:18:15.619405+00:00",
   "listings": [
+    {
+      "id": "1315-e-decatur-st-decatur-il-62521",
+      "address": "1315 E Decatur St Decatur IL 62521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/b4UWGtthDRCDsM1D8",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.83684849999999,
+      "lng": -88.9389145
+    },
     {
       "id": "7028-dawson-pl-st-louis-mo-63136",
       "address": "7028 Dawson Pl, St. Louis, MO 63136",
