@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T17:08:00.982816+00:00",
+  "generatedAt": "2026-09-11T17:08:39.882450+00:00",
   "listings": [
     {
       "id": "7028-dawson-pl-st-louis-mo-63136",
@@ -10,8 +10,8 @@
       "down": "$2,000",
       "monthly": "$795",
       "picsLink": "https://drive.google.com/drive/folders/1upsRel256Imjhr2-ezrVdUJvZK9PFgWC?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "1",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
