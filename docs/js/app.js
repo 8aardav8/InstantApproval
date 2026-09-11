@@ -3452,7 +3452,7 @@ async function loadSuggestedIdMatches() {
   try {
     const res = await fetch(`${ADMIN_API_URL}/suggested-id-matches`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
-    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't check for matches: ${data.error || res.status}</p>`; return; }
+    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't check for matches: ${data.error || res.status}${data.detail ? ` — ${escapeHtml(data.detail)}` : ""}</p>`; return; }
     if (!data.matches || data.matches.length === 0) {
       panel.innerHTML = `<p>No new matches found (scanned ${data.filesScanned} file(s) in the ID folder against ${data.buyersNeedingId} buyer(s) with no ID on file).</p>`;
       return;
@@ -3511,7 +3511,7 @@ async function renameIdFiles() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't rename files: ${data.error || res.status}</p>`; return; }
+    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't rename files: ${data.error || res.status}${data.detail ? ` — ${escapeHtml(data.detail)}` : ""}</p>`; return; }
     const parts = [];
     if (data.renamed.length) parts.push(`<p><strong>Renamed ${data.renamed.length}:</strong></p>` + data.renamed.map((r) => `<div class="buyer-list-item">${escapeHtml(r.from)} → ${escapeHtml(r.to)}</div>`).join(""));
     if (data.skipped.length) parts.push(`<p>${data.skipped.length} already matched the convention.</p>`);
