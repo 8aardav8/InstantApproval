@@ -2685,7 +2685,7 @@ function updateSortDirToggleLabel(btn) {
 // area checkboxes, which come from real property data) since this is a
 // fixed taxonomy Aaron defined, not something to infer from the buyer
 // population itself.
-const BUYERS_CANONICAL_AREAS = ["East St Louis, IL", "St Louis, MO", "Little Rock, AR", "Springfield, IL", "West Memphis, AR"];
+const BUYERS_CANONICAL_AREAS = ["IL - East St Louis", "MO - St. Louis", "AR - Little Rock", "AR - West Memphis", "IL - Springfield"];
 // Populated fresh each renderBuyerDetail() call -- see its own comment at
 // the Shown Properties section for why this replaced a native <datalist>.
 let SHOWN_AVAILABLE_ADDRESSES = [];
@@ -2737,11 +2737,11 @@ function buyerMatchesFilters(b) {
   if (f.monthly != null && parseFloat((lmFilters && lmFilters.maxMonthly) || "") !== f.monthly) return false;
   if (f.beds != null && parseInt((lmFilters && lmFilters.minBeds) || "", 10) !== f.beds) return false;
   if (f.areas.length > 0) {
-    // A buyer counts as matching a checked area either by their own
-    // classified area (b.area, from the TB name tag) OR by what they
-    // literally typed into the site's own area search field -- either is
-    // a real signal of interest in that area.
-    const byTag = b.area && f.areas.includes(b.area);
+    // A buyer counts as matching a checked area either by any of their own
+    // classified areas (b.areas -- can now be more than one, per Aaron's
+    // 2026-09-11 request) OR by what they literally typed into the site's
+    // own area search field -- either is a real signal of interest in that area.
+    const byTag = b.areas && b.areas.length > 0 && f.areas.some((a) => b.areas.includes(a));
     const bySearch = lmFilters && lmFilters.areas && f.areas.some((a) => lmFilters.areas.toLowerCase().includes(a.toLowerCase()));
     if (!byTag && !bySearch) return false;
   }
@@ -2783,7 +2783,7 @@ function buyerMatchesSearch(b) {
   const lm = b.loginsMatch;
   const li = b.leadInfo;
   const haystack = [
-    b.quoName, b.phone, b.area,
+    b.quoName, b.phone, b.areas && b.areas.join(" "),
     lm && lm.email, lm && lm.name, lm && lm.filters && lm.filters.areas,
     // BUYERS-tab lead info, added 2026-09-11 -- some buyers only exist via
     // this source (no Quo/App:Logins match at all), so it has to be
@@ -2931,8 +2931,9 @@ function sortedBuyers() {
     // to reverse. Same tie-break composition as before: classified before
     // unclassified, then A-Z by area, then most-recent-first within a group.
     buyers.sort((a, b) => {
-      if (!!a.area !== !!b.area) return dir * (a.area ? -1 : 1);
-      if (a.area && b.area && a.area !== b.area) return dir * a.area.localeCompare(b.area);
+      const aHas = a.areas && a.areas.length > 0, bHas = b.areas && b.areas.length > 0;
+      if (aHas !== bHas) return dir * (aHas ? -1 : 1);
+      if (aHas && bHas && a.areas[0] !== b.areas[0]) return dir * a.areas[0].localeCompare(b.areas[0]);
       return dir * (new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
     });
   }
@@ -2952,16 +2953,20 @@ function renderBuyersList() {
   let lastArea = undefined;
   const rows = [];
   for (const b of buyers) {
-    if (BUYERS_SORT === "area" && b.area !== lastArea) {
-      lastArea = b.area;
-      rows.push(`<div class="buyers-group-header">${escapeHtml(b.area || "Unclassified")}</div>`);
+    // Group by the FIRST area when a buyer has more than one -- same
+    // tie-break the area sort itself uses, so the grouping stays consistent
+    // with sort order. Updated 2026-09-11: areas is now an array.
+    const groupArea = b.areas && b.areas.length > 0 ? b.areas[0] : null;
+    if (BUYERS_SORT === "area" && groupArea !== lastArea) {
+      lastArea = groupArea;
+      rows.push(`<div class="buyers-group-header">${escapeHtml(groupArea || "Unclassified")}</div>`);
     }
     // Fall back to the BUYERS-tab lead's contact name for buyers with no
     // Quo contact at all (standalone entries added 2026-09-11, see the
     // worker-side comment on why some leads never show up as a Quo
     // conversation participant).
     const label = (b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone) + (b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "");
-    const sub = b.area && BUYERS_SORT !== "area" ? b.area : (b.loginsMatch ? b.loginsMatch.email : "");
+    const sub = b.areas && b.areas.length > 0 && BUYERS_SORT !== "area" ? b.areas.join(", ") : (b.loginsMatch ? b.loginsMatch.email : "");
     // Last login (App: Logins sheet, via loginsMatch) and last texted (Quo
     // conversation activity) are two different signals -- a buyer can log
     // in without texting, or text without ever logging in -- so show both
@@ -3089,7 +3094,7 @@ function renderBuyerDetail(buyer) {
   const facts = [
     ["Phone", buyer.phone],
     ["Email", (lm && lm.email) || ""],
-    ["Area", buyer.area || "Not yet classified"],
+    ["Areas", (buyer.areas && buyer.areas.length > 0) ? buyer.areas.join(", ") : "Not yet classified"],
     ["First login", (lm && lm.firstLogin) || ""],
     ["Last login", (lm && lm.lastLogin) || ""],
     // Cross-referenced from a Glide-app login with no phone on its own
