@@ -810,6 +810,60 @@
         </select>
         <span id="buyers-count" class="buyers-count"></span>
       </div>
+      <!-- Mirrors the homes search filter panel (f-down/f-monthly/f-beds/
+           area-checkboxes) -- but filters the BUYER list by which buyers'
+           OWN saved site-search filters match these, not properties. Added
+           2026-09-11 per Aaron's direct request. -->
+      <div id="buyers-filter-panel" class="filter-panel buyers-filter-panel">
+        <label>Max Down Payment
+          <select id="bf-down">
+            <option value="" selected>Any amount</option>
+            <option value="1000">Under $1,000</option>
+            <option value="1500">Under $1,500</option>
+            <option value="2000">Under $2,000</option>
+            <option value="2500">Under $2,500</option>
+            <option value="3000">Under $3,000</option>
+            <option value="4000">Under $4,000</option>
+            <option value="5000">Under $5,000</option>
+          </select>
+        </label>
+        <label>Max Monthly Payment
+          <select id="bf-monthly">
+            <option value="" selected>Any amount</option>
+            <option value="500">Under $500/mo</option>
+            <option value="600">Under $600/mo</option>
+            <option value="700">Under $700/mo</option>
+            <option value="800">Under $800/mo</option>
+            <option value="900">Under $900/mo</option>
+            <option value="1000">Under $1,000/mo</option>
+            <option value="1200">Under $1,200/mo</option>
+            <option value="1500">Under $1,500/mo</option>
+          </select>
+        </label>
+        <label>Min Bedrooms
+          <select id="bf-beds">
+            <option value="" selected>Any</option>
+            <option value="1">1+</option>
+            <option value="2">2+</option>
+            <option value="3">3+</option>
+            <option value="4">4+</option>
+            <option value="5">5+</option>
+          </select>
+        </label>
+        <div class="area-filter">
+          <span class="area-filter-label">Area</span>
+          <!-- Populated from the 5 canonical areas -- see
+               renderBuyersAreaCheckboxes() in app.js. -->
+          <div id="buyers-area-checkboxes" class="area-checkboxes"></div>
+        </div>
+        <div class="filter-actions">
+          <button id="buyers-filter-clear" class="btn-outline" type="button">Clear filters</button>
+        </div>
+      </div>
+      <div class="buyers-id-matches-toolbar">
+        <button id="buyers-check-id-matches-btn" class="btn-outline" type="button">Check for ID photo matches</button>
+      </div>
+      <div id="buyers-id-matches-panel" class="hidden"></div>
       <div id="buyers-list"></div>
     </div>
     <div id="buyers-detail-view" class="hidden">

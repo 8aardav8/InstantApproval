@@ -2631,6 +2631,63 @@ const BUYERS_API_URL = "https://iah-buyers.notactuallyit.workers.dev";
 let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on dropdown change
 let BUYERS_SORT = "area";
 
+// Same 5 areas admin-buyers-worker.js's own CANONICAL_AREAS canonicalizes
+// onto -- kept as a plain list here (not derived live like the homes-page
+// area checkboxes, which come from real property data) since this is a
+// fixed taxonomy Aaron defined, not something to infer from the buyer
+// population itself.
+const BUYERS_CANONICAL_AREAS = ["East St Louis, IL", "St Louis, MO", "Little Rock, AR", "Springfield, IL", "West Memphis, AR"];
+let BUYERS_FILTER = { down: null, monthly: null, beds: null, areas: [] };
+
+function renderBuyersAreaCheckboxes() {
+  const container = document.getElementById("buyers-area-checkboxes");
+  if (!container) return;
+  container.innerHTML = BUYERS_CANONICAL_AREAS.map((area) => `
+    <label class="area-checkbox"><input type="checkbox" value="${escapeAttr(area)}">${escapeHtml(area)}</label>
+  `).join("");
+  container.querySelectorAll("input[type=checkbox]").forEach((cb) => cb.addEventListener("change", applyBuyersFilters));
+}
+
+// Filters the BUYER list by whether THEIR OWN saved site-search filters
+// (loginsMatch.filters, written when they searched the homes list) match
+// what's selected here -- mirrors the homes search UI but filters people,
+// not properties. Added 2026-09-11 per Aaron's direct request.
+function buyerMatchesFilters(b) {
+  const f = BUYERS_FILTER;
+  const lmFilters = (b.loginsMatch && b.loginsMatch.filters) || null;
+  if (f.down != null && parseFloat((lmFilters && lmFilters.maxDown) || "") !== f.down) return false;
+  if (f.monthly != null && parseFloat((lmFilters && lmFilters.maxMonthly) || "") !== f.monthly) return false;
+  if (f.beds != null && parseInt((lmFilters && lmFilters.minBeds) || "", 10) !== f.beds) return false;
+  if (f.areas.length > 0) {
+    // A buyer counts as matching a checked area either by their own
+    // classified area (b.area, from the TB name tag) OR by what they
+    // literally typed into the site's own area search field -- either is
+    // a real signal of interest in that area.
+    const byTag = b.area && f.areas.includes(b.area);
+    const bySearch = lmFilters && lmFilters.areas && f.areas.some((a) => lmFilters.areas.toLowerCase().includes(a.toLowerCase()));
+    if (!byTag && !bySearch) return false;
+  }
+  return true;
+}
+
+function applyBuyersFilters() {
+  BUYERS_FILTER = {
+    down: parseFloat(document.getElementById("bf-down").value) || null,
+    monthly: parseFloat(document.getElementById("bf-monthly").value) || null,
+    beds: parseInt(document.getElementById("bf-beds").value, 10) || null,
+    areas: [...document.querySelectorAll("#buyers-area-checkboxes input:checked")].map((cb) => cb.value),
+  };
+  renderBuyersList();
+}
+
+function clearBuyersFilters() {
+  document.getElementById("bf-down").value = "";
+  document.getElementById("bf-monthly").value = "";
+  document.getElementById("bf-beds").value = "";
+  document.querySelectorAll("#buyers-area-checkboxes input:checked").forEach((cb) => { cb.checked = false; });
+  applyBuyersFilters();
+}
+
 async function loadBuyers() {
   const token = getStoredAdminToken();
   const listEl = document.getElementById("buyers-list");
@@ -2664,7 +2721,7 @@ async function loadBuyers() {
 }
 
 function sortedBuyers() {
-  const buyers = [...(BUYERS_CACHE || [])];
+  const buyers = (BUYERS_CACHE || []).filter(buyerMatchesFilters);
   if (BUYERS_SORT === "name") {
     buyers.sort((a, b) => (a.quoName || a.phone).localeCompare(b.quoName || b.phone));
   } else if (BUYERS_SORT === "recent") {
@@ -2688,7 +2745,7 @@ function renderBuyersList() {
       lastArea = b.area;
       rows.push(`<div class="buyers-group-header">${escapeHtml(b.area || "Unclassified")}</div>`);
     }
-    const label = b.quoName || b.phone;
+    const label = (b.quoName || b.phone) + (b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "");
     const sub = b.area && BUYERS_SORT !== "area" ? b.area : (b.loginsMatch ? b.loginsMatch.email : "");
     // Last login (App: Logins sheet, via loginsMatch) and last texted (Quo
     // conversation activity) are two different signals -- a buyer can log
@@ -2698,6 +2755,11 @@ function renderBuyersList() {
     const lastLogin = b.loginsMatch ? b.loginsMatch.lastLogin : "";
     const loginDate = lastLogin ? formatShortDate(lastLogin) : "";
     const textedDate = formatShortDate(b.lastActivityAt);
+    // lastCallAt comes from the worker's separate, slower calls_cache (see
+    // its own comment server-side) -- absent/null until that background
+    // pass has actually reached this phone, in which case this just omits
+    // the "Called:" date rather than showing anything misleading.
+    const calledDate = b.lastCallAt ? formatShortDate(b.lastCallAt) : "";
     rows.push(`
       <button class="buyer-row" data-phone="${escapeHtml(b.phone)}">
         <span class="buyer-row-name">${escapeHtml(label)}</span>
@@ -2705,6 +2767,7 @@ function renderBuyersList() {
         <span class="buyer-row-dates">
           ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
           ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+          ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
         </span>
       </button>
     `);
@@ -2746,6 +2809,21 @@ function renderBuyerDetail(buyer) {
   const idPhoto = lm && lm.idLink
     ? `<a href="${escapeAttr(lm.idLink)}" target="_blank" rel="noopener"><img src="${escapeAttr(lm.idLink)}" class="buyer-id-photo" alt="ID on file"></a>`
     : `<p class="buyer-no-id">No ID on file.</p>`;
+
+  // Background image scan (see IMAGES_CACHE_KEY server-side) found images
+  // in this buyer's texts and they have no ID on file yet -- flagged for
+  // Aaron to actually look at, never auto-filed as their ID. Added
+  // 2026-09-11 per Aaron's direct request to search Quo conversations for
+  // ID photos, not just the Dropbox folder.
+  const possibleIdHtml = !(lm && lm.idLink) && buyer.possibleIdImages && buyer.possibleIdImages.length
+    ? `<div class="buyer-section possible-id-flag">
+        <h3>📷 Possible ID sent via text</h3>
+        <p>No ID on file yet, but this buyer sent ${buyer.possibleIdImages.length} image(s) in their texts. Check if one is their ID:</p>
+        <div class="possible-id-images">
+          ${buyer.possibleIdImages.map((url) => `<a href="${escapeAttr(url)}" target="_blank" rel="noopener"><img src="${escapeAttr(url)}" class="buyer-id-photo" alt="Possible ID from text"></a>`).join("")}
+        </div>
+      </div>`
+    : "";
 
   const facts = [
     ["Phone", buyer.phone],
@@ -2812,6 +2890,7 @@ function renderBuyerDetail(buyer) {
     <h2>${escapeHtml(buyer.quoName || buyer.phone)}</h2>
     ${quoLinkHtml}
     <div class="buyer-id-section">${idPhoto}</div>
+    ${possibleIdHtml}
     ${factsHtml}
     ${favoritesHtml}
     ${apptsHtml}
@@ -2841,13 +2920,29 @@ async function loadBuyerMessages(phone) {
     const data = await res.json();
     if (!data.messages || data.messages.length === 0) { el.innerHTML = "<p>No messages found.</p>"; return; }
     // API returns newest-first; show oldest-first so it reads like a real
-    // conversation thread, most recent message at the bottom.
-    el.innerHTML = [...data.messages].reverse().map((m) => `
-      <div class="buyer-message ${m.direction === "incoming" ? "incoming" : "outgoing"}">
-        <span class="buyer-message-text">${escapeHtml(m.text)}</span>
-        <span class="buyer-message-date">${formatShortDate(m.createdAt)}</span>
-      </div>
-    `).join("");
+    // conversation thread, most recent message at the bottom. Each event is
+    // either a text (`kind: "message"`, may carry `media` image URLs) or a
+    // call (`kind: "call"`, may carry an `aiSummary` when Quo's plan has
+    // one) -- added 2026-09-11 per Aaron's direct request to show calls in
+    // the thread and surface the AI summary when available.
+    el.innerHTML = [...data.messages].reverse().map((m) => {
+      if (m.kind === "call") {
+        const durationStr = typeof m.duration === "number" ? `${Math.floor(m.duration / 60)}:${String(m.duration % 60).padStart(2, "0")}` : "";
+        return `
+          <div class="buyer-message buyer-call ${m.direction === "incoming" ? "incoming" : "outgoing"}">
+            <span class="buyer-call-label">📞 ${m.direction === "incoming" ? "Incoming call" : "Outgoing call"}${m.status ? ` — ${escapeHtml(m.status)}` : ""}${durationStr ? ` (${durationStr})` : ""}</span>
+            ${m.aiSummary ? `<div class="buyer-call-summary"><strong>AI summary:</strong> ${escapeHtml(m.aiSummary)}</div>` : ""}
+            <span class="buyer-message-date">${formatShortDate(m.createdAt)}</span>
+          </div>`;
+      }
+      const mediaHtml = (m.media || []).map((url) => `<a href="${escapeAttr(url)}" target="_blank" rel="noopener"><img src="${escapeAttr(url)}" class="buyer-message-image" alt="Attached image"></a>`).join("");
+      return `
+        <div class="buyer-message ${m.direction === "incoming" ? "incoming" : "outgoing"}">
+          ${m.text ? `<span class="buyer-message-text">${escapeHtml(m.text)}</span>` : ""}
+          ${mediaHtml}
+          <span class="buyer-message-date">${formatShortDate(m.createdAt)}</span>
+        </div>`;
+    }).join("");
   } catch (err) {
     el.innerHTML = `<p>Couldn't load messages: ${err}</p>`;
   }
@@ -2898,12 +2993,79 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
 
-// Wired up once, on load -- sort dropdown + back button.
+// Wired up once, on load -- sort dropdown, back button, the filter panel
+// (added 2026-09-11), and the Dropbox-folder ID-match checker.
 function initBuyersTab() {
   const sortSel = document.getElementById("buyers-sort");
   if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; renderBuyersList(); });
   const backBtn = document.getElementById("buyers-back-btn");
   if (backBtn) backBtn.addEventListener("click", backToBuyersList);
+
+  renderBuyersAreaCheckboxes();
+  ["bf-down", "bf-monthly", "bf-beds"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", applyBuyersFilters);
+  });
+  const clearBtn = document.getElementById("buyers-filter-clear");
+  if (clearBtn) clearBtn.addEventListener("click", clearBuyersFilters);
+
+  const checkIdBtn = document.getElementById("buyers-check-id-matches-btn");
+  if (checkIdBtn) checkIdBtn.addEventListener("click", loadSuggestedIdMatches);
+}
+
+// ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------
+// Calls the PRODUCTION admin worker (ADMIN_API_URL), not BUYERS_API_URL --
+// this needs real Dropbox + Sheets WRITE access (to file a confirmed match
+// as the buyer's ID Link), which the standalone buyers Worker deliberately
+// doesn't have. See handleSuggestedIdMatches/handleConfirmIdMatch in
+// admin/worker.js for why this never auto-files anything on its own.
+async function loadSuggestedIdMatches() {
+  const token = getStoredAdminToken();
+  const panel = document.getElementById("buyers-id-matches-panel");
+  panel.classList.remove("hidden");
+  panel.innerHTML = "<p>Checking the ID folder…</p>";
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/suggested-id-matches`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't check for matches: ${data.error || res.status}</p>`; return; }
+    if (!data.matches || data.matches.length === 0) {
+      panel.innerHTML = `<p>No new matches found (scanned ${data.filesScanned} file(s) in the ID folder against ${data.buyersNeedingId} buyer(s) with no ID on file).</p>`;
+      return;
+    }
+    panel.innerHTML = `
+      <p>${data.matches.length} possible match(es) found -- review each before confirming:</p>
+      ${data.matches.map((m, i) => `
+        <div class="id-match-row">
+          <span>File "${escapeHtml(m.filename)}" looks like <strong>${escapeHtml(m.buyerName)}</strong> (${escapeHtml(m.buyerPhone)})</span>
+          <button class="btn-primary id-match-confirm-btn" data-index="${i}">Confirm &amp; link</button>
+        </div>
+      `).join("")}
+    `;
+    panel.querySelectorAll(".id-match-confirm-btn").forEach((btn) => {
+      btn.addEventListener("click", () => confirmIdMatch(data.matches[Number(btn.dataset.index)], btn));
+    });
+  } catch (err) {
+    panel.innerHTML = `<p>Couldn't check for matches: ${err}</p>`;
+  }
+}
+
+async function confirmIdMatch(match, btn) {
+  const token = getStoredAdminToken();
+  btn.disabled = true;
+  btn.textContent = "Linking…";
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/confirm-id-match`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ dropboxPath: match.dropboxPath, buyerRow: match.buyerRow }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { btn.textContent = `Failed: ${(data && data.error) || "unknown error"}`; return; }
+    btn.closest(".id-match-row").innerHTML = `<span>✅ Linked to ${escapeHtml(match.buyerName)}.</span>`;
+    loadBuyers(); // refresh so the buyer's ID-on-file state is current if reopened
+  } catch (err) {
+    btn.textContent = `Failed: ${err}`;
+  }
 }
 
 // ---------- Upcoming Appointments (all buyers, one page) -- added 2026-09-11 ----------
