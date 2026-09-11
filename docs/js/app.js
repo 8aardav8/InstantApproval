@@ -2877,6 +2877,17 @@ function sortedBuyers() {
   if (BUYERS_SORT === "name") {
     const nameOf = (x) => x.quoName || (x.leadInfo && x.leadInfo.contactName) || x.phone;
     buyers.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+  } else if (BUYERS_SORT === "last-contact") {
+    // Added 2026-09-11 per Aaron's direct request -- the most recent of
+    // texted, called, OR logged in, whichever is latest for each buyer.
+    // Same "missing data sorts to the bottom" convention as the
+    // individual sorts below (epoch 0 for anything absent).
+    const lastContactOf = (x) => Math.max(
+      new Date(x.lastActivityAt || 0),
+      new Date(x.lastCallAt || 0),
+      new Date((x.loginsMatch && x.loginsMatch.lastLogin) || 0),
+    );
+    buyers.sort((a, b) => lastContactOf(b) - lastContactOf(a));
   } else if (BUYERS_SORT === "last-message") {
     // Renamed from "recent" 2026-09-11 (same underlying date, Quo
     // conversation activity) -- now one of three explicit last-contact
