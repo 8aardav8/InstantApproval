@@ -2703,6 +2703,38 @@ function buyerMatchesFilters(b) {
   return true;
 }
 
+// Free-text search, added 2026-09-11 per Aaron's direct request -- matches
+// name, phone, email, and area (both the classified tag and whatever the
+// buyer typed into their own area search), same "search across the
+// obviously-relevant identity fields" scope as any contact search.
+let BUYERS_SEARCH = "";
+function buyerMatchesSearch(b) {
+  if (!BUYERS_SEARCH) return true;
+  const lm = b.loginsMatch;
+  const haystack = [
+    b.quoName, b.phone, b.area,
+    lm && lm.email, lm && lm.name, lm && lm.filters && lm.filters.areas,
+  ].filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes(BUYERS_SEARCH);
+}
+
+function activeBuyersFilterCount() {
+  const f = BUYERS_FILTER;
+  let n = 0;
+  if (f.down != null) n++;
+  if (f.monthly != null) n++;
+  if (f.beds != null) n++;
+  if (f.areas.length > 0) n++;
+  return n;
+}
+function updateBuyersFilterBadge() {
+  const badge = document.getElementById("buyers-filter-badge");
+  if (!badge) return;
+  const n = activeBuyersFilterCount();
+  badge.textContent = n;
+  badge.classList.toggle("hidden", n === 0);
+}
+
 function applyBuyersFilters() {
   BUYERS_FILTER = {
     down: parseFloat(document.getElementById("bf-down").value) || null,
@@ -2710,6 +2742,7 @@ function applyBuyersFilters() {
     beds: parseInt(document.getElementById("bf-beds").value, 10) || null,
     areas: [...document.querySelectorAll("#buyers-area-checkboxes input:checked")].map((cb) => cb.value),
   };
+  updateBuyersFilterBadge();
   renderBuyersList();
 }
 
@@ -2767,7 +2800,7 @@ async function loadBuyers() {
 }
 
 function sortedBuyers() {
-  const buyers = (BUYERS_CACHE || []).filter(buyerMatchesFilters);
+  const buyers = (BUYERS_CACHE || []).filter((b) => buyerMatchesFilters(b) && buyerMatchesSearch(b));
   if (BUYERS_SORT === "name") {
     buyers.sort((a, b) => (a.quoName || a.phone).localeCompare(b.quoName || b.phone));
   } else if (BUYERS_SORT === "last-message") {
@@ -3122,6 +3155,28 @@ function initBuyersTab() {
   if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; renderBuyersList(); });
   const backBtn = document.getElementById("buyers-back-btn");
   if (backBtn) backBtn.addEventListener("click", backToBuyersList);
+
+  // Search box + filter/sort toggle buttons -- mirrors the homes page's
+  // own search-row wiring (filter-toggle/sort-toggle, mutually exclusive
+  // panels) exactly, added 2026-09-11 per Aaron's direct request for
+  // layout consistency with the homes search.
+  const searchBox = document.getElementById("buyers-search-box");
+  if (searchBox) searchBox.addEventListener("input", () => {
+    BUYERS_SEARCH = searchBox.value.trim().toLowerCase();
+    renderBuyersList();
+  });
+  const filterToggle = document.getElementById("buyers-filter-toggle");
+  const sortToggle = document.getElementById("buyers-sort-toggle");
+  const filterPanel = document.getElementById("buyers-filter-panel");
+  const sortPanel = document.getElementById("buyers-sort-panel");
+  if (filterToggle && filterPanel && sortPanel) filterToggle.addEventListener("click", () => {
+    sortPanel.classList.add("hidden");
+    filterPanel.classList.toggle("hidden");
+  });
+  if (sortToggle && filterPanel && sortPanel) sortToggle.addEventListener("click", () => {
+    filterPanel.classList.add("hidden");
+    sortPanel.classList.toggle("hidden");
+  });
 
   // renderBuyersAreaCheckboxes() is deliberately NOT called here -- see the
   // comment at its call site in loadBuyers() for why calling it eagerly at

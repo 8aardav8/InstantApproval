@@ -802,21 +802,43 @@
 
   <section id="tab-buyers" class="tab-panel hidden">
     <div id="buyers-list-view">
+      <!-- Search/filter/sort layout mirrors the homes page's own
+           .search-row (search-input-wrap + filter-toggle/sort-toggle icon
+           buttons, each opening a panel below, mutually exclusive) --
+           added 2026-09-11 per Aaron's direct request for visual/
+           structural consistency with the homes search. -->
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input id="buyers-search-box" type="search" placeholder="Search buyers" aria-label="Search buyers">
+        </div>
+        <button id="buyers-filter-toggle" class="icon-btn-outline" aria-label="Filters">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+          <span id="buyers-filter-badge" class="count-badge hidden">0</span>
+        </button>
+        <button id="buyers-sort-toggle" class="icon-btn-outline" aria-label="Sort"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="4" x2="7" y2="20"/><polyline points="4 7 7 4 10 7"/><line x1="17" y1="20" x2="17" y2="4"/><polyline points="20 17 17 20 14 17"/></svg></button>
+      </div>
       <div class="buyers-toolbar">
-        <select id="buyers-sort">
-          <option value="area">Sort: Area</option>
-          <option value="name">Sort: Name (A–Z)</option>
-          <option value="last-login">Sort: Last Login</option>
-          <option value="last-message">Sort: Last Message</option>
-          <option value="last-call">Sort: Last Call</option>
-        </select>
         <span id="buyers-count" class="buyers-count"></span>
       </div>
+
+      <div id="buyers-sort-panel" class="filter-panel hidden">
+        <label>Sort by
+          <select id="buyers-sort">
+            <option value="area">Area</option>
+            <option value="name">Name (A–Z)</option>
+            <option value="last-login">Last Login</option>
+            <option value="last-message">Last Message</option>
+            <option value="last-call">Last Call</option>
+          </select>
+        </label>
+      </div>
+
       <!-- Mirrors the homes search filter panel (f-down/f-monthly/f-beds/
            area-checkboxes) -- but filters the BUYER list by which buyers'
            OWN saved site-search filters match these, not properties. Added
            2026-09-11 per Aaron's direct request. -->
-      <div id="buyers-filter-panel" class="filter-panel buyers-filter-panel">
+      <div id="buyers-filter-panel" class="filter-panel hidden">
         <label>Max Down Payment
           <select id="bf-down">
             <option value="" selected>Any amount</option>
