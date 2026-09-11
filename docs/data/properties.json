@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T16:12:40.274427+00:00",
+  "generatedAt": "2026-09-11T16:30:37.621103+00:00",
   "listings": [
     {
       "id": "1749-n-college-st-decatur-il-62526",
@@ -85,23 +85,6 @@
       "livability": 0,
       "lat": 40.6691609,
       "lng": -89.6259517
-    },
-    {
-      "id": "973-parkwood-court-montgomery-al-36109",
-      "address": "973 Parkwood Court Montgomery AL 36109",
-      "onMarketDate": "9/7",
-      "lastUpdate": "9/7",
-      "area": "AL",
-      "down": "$7,000",
-      "monthly": "$1,101",
-      "picsLink": "https://1drv.ms/f/c/70878C0518BFE0B6/IgC24L8YBYyHIIBwno4BAAAAAfP2LzMZQhAlrbowIIDevDs?e=MWrRGB",
-      "beds": "3",
-      "baths": "2",
-      "sqft": "1827",
-      "status": "Available",
-      "livability": 0,
-      "lat": 32.400707,
-      "lng": -86.26511339999999
     },
     {
       "id": "503-e-poplar-st-west-frankfort-il-62896",
