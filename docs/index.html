@@ -836,6 +836,12 @@
             <option value="last-call">Last Call</option>
           </select>
         </label>
+        <!-- Reverses whichever sort is selected above -- added 2026-09-11
+             per Aaron's direct request ("toggle A-Z or Z-A for anything").
+             Label is generic (not literally "A-Z"/"Z-A") since it applies
+             to date sorts too, not just Name -- see
+             updateSortDirToggleLabel() in app.js. -->
+        <button id="buyers-sort-dir-toggle" class="btn-outline" type="button"></button>
       </div>
 
       <!-- Mirrors the homes search filter panel (f-down/f-monthly/f-beds/

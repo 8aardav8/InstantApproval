@@ -2663,6 +2663,19 @@ const BUYERS_API_URL = "https://iah-buyers.notactuallyit.workers.dev";
 
 let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on dropdown change
 let BUYERS_SORT = "area";
+// 1 = today's real default order for whichever sort is selected, -1 =
+// reversed. Reset to 1 whenever the sort TYPE changes (see initBuyersTab)
+// so switching sorts always starts from its own sensible default, not
+// whatever direction was left over from a different sort.
+let BUYERS_SORT_DIR = 1;
+// Labels are generic ("Reverse order"), not literally "A-Z"/"Z-A" --
+// applies to date-based sorts too, where that framing wouldn't make
+// sense. Shows the direction that CLICKING would produce, matching how
+// the homes page's own sort/filter toggles read (an action, not a
+// current-state readout).
+function updateSortDirToggleLabel(btn) {
+  btn.textContent = BUYERS_SORT_DIR === 1 ? "↓ Reverse order" : "↑ Default order";
+}
 
 // Same 5 areas admin-buyers-worker.js's own CANONICAL_AREAS canonicalizes
 // onto -- kept as a plain list here (not derived live like the homes-page
@@ -2872,11 +2885,20 @@ async function loadBuyers() {
   }
 }
 
+// Reversible sort, added 2026-09-11 per Aaron's direct request ("Sort
+// should be able to toggle A-Z or Z-A for anything"). Each branch below
+// is unchanged from before (still today's real default order at
+// BUYERS_SORT_DIR's default value, 1) -- BUYERS_SORT_DIR just multiplies
+// the whole comparator's result, which is enough to reverse an entire
+// sort (including its own nested tie-breaks, e.g. area's own
+// classified-first / most-recent-within-group ordering) without having
+// to hand-flip every line individually.
 function sortedBuyers() {
   const buyers = (BUYERS_CACHE || []).filter((b) => buyerMatchesFilters(b) && buyerMatchesSearch(b));
+  const dir = BUYERS_SORT_DIR;
   if (BUYERS_SORT === "name") {
     const nameOf = (x) => x.quoName || (x.leadInfo && x.leadInfo.contactName) || x.phone;
-    buyers.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+    buyers.sort((a, b) => dir * nameOf(a).localeCompare(nameOf(b)));
   } else if (BUYERS_SORT === "last-contact") {
     // Added 2026-09-11 per Aaron's direct request -- the most recent of
     // texted, called, OR logged in, whichever is latest for each buyer.
@@ -2887,29 +2909,38 @@ function sortedBuyers() {
       new Date(x.lastCallAt || 0),
       new Date((x.loginsMatch && x.loginsMatch.lastLogin) || 0),
     );
-    buyers.sort((a, b) => lastContactOf(b) - lastContactOf(a));
+    buyers.sort((a, b) => dir * (lastContactOf(b) - lastContactOf(a)));
   } else if (BUYERS_SORT === "last-message") {
     // Renamed from "recent" 2026-09-11 (same underlying date, Quo
     // conversation activity) -- now one of three explicit last-contact
     // sorts instead of one vague "Most Recent Activity" option.
-    buyers.sort((a, b) => new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
+    buyers.sort((a, b) => dir * (new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0)));
   } else if (BUYERS_SORT === "last-login") {
-    buyers.sort((a, b) => new Date((b.loginsMatch && b.loginsMatch.lastLogin) || 0) - new Date((a.loginsMatch && a.loginsMatch.lastLogin) || 0));
+    buyers.sort((a, b) => dir * (new Date((b.loginsMatch && b.loginsMatch.lastLogin) || 0) - new Date((a.loginsMatch && a.loginsMatch.lastLogin) || 0)));
   } else if (BUYERS_SORT === "last-call") {
     // lastCallAt comes from the worker's separate, slower calls_cache --
     // a buyer this hasn't reached yet just sorts to the bottom (epoch 0),
     // same as anyone genuinely never called.
-    buyers.sort((a, b) => new Date(b.lastCallAt || 0) - new Date(a.lastCallAt || 0));
+    buyers.sort((a, b) => dir * (new Date(b.lastCallAt || 0) - new Date(a.lastCallAt || 0)));
+  } else if (BUYERS_SORT === "area") {
+    // Used to arrive pre-sorted from the API and need no client-side work
+    // -- now sorted here explicitly so the direction toggle has something
+    // to reverse. Same tie-break composition as before: classified before
+    // unclassified, then A-Z by area, then most-recent-first within a group.
+    buyers.sort((a, b) => {
+      if (!!a.area !== !!b.area) return dir * (a.area ? -1 : 1);
+      if (a.area && b.area && a.area !== b.area) return dir * a.area.localeCompare(b.area);
+      return dir * (new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
+    });
   }
-  // "area" sort is the API's own default order (classified-first, grouped
-  // alphabetically by area, most-recent-first within an unclassified group)
-  // -- nothing to redo client-side.
   return buyers;
 }
 
 function renderBuyersList() {
   const dateModeBtn = document.getElementById("buyers-date-mode-toggle");
   if (dateModeBtn) updateDateModeToggleLabel(dateModeBtn);
+  const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
+  if (sortDirBtn) updateSortDirToggleLabel(sortDirBtn);
 
   const listEl = document.getElementById("buyers-list");
   const buyers = sortedBuyers();
@@ -3421,7 +3452,9 @@ function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
 // (added 2026-09-11), and the Dropbox-folder ID-match checker.
 function initBuyersTab() {
   const sortSel = document.getElementById("buyers-sort");
-  if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; renderBuyersList(); });
+  if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; BUYERS_SORT_DIR = 1; renderBuyersList(); });
+  const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
+  if (sortDirBtn) sortDirBtn.addEventListener("click", () => { BUYERS_SORT_DIR *= -1; renderBuyersList(); });
   const backBtn = document.getElementById("buyers-back-btn");
   if (backBtn) backBtn.addEventListener("click", backToBuyersList);
 
