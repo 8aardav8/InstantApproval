@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T17:05:33.373860+00:00",
+  "generatedAt": "2026-09-11T17:06:06.782087+00:00",
   "listings": [
     {
       "id": "210-n-17th-stl-mo-63103",
@@ -14778,7 +14778,7 @@
       "id": "19-n-harvey-ave-saint-louis-mo-63135",
       "address": "19 N Harvey Ave, Saint Louis, MO 63135",
       "onMarketDate": "9/9/2026",
-      "lastUpdate": "9/9/2026",
+      "lastUpdate": "9/10/2026",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$1,095",
@@ -14786,7 +14786,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.7449549,
       "lng": -90.3129233
