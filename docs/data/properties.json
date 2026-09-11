@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T17:32:34.219837+00:00",
+  "generatedAt": "2026-09-11T17:34:25.070684+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -10153,16 +10153,16 @@
     {
       "id": "7310-jenwood-ave-st-louis-mo-63136",
       "address": "7310 Jenwood Ave., St. Louis, MO 63136",
-      "onMarketDate": "3/20/2026",
-      "lastUpdate": "4/22/2026",
+      "onMarketDate": "9/11/2026",
+      "lastUpdate": "9/11/2026",
       "area": "MO - St. Louis",
       "down": "$4,000",
       "monthly": "$1,195",
-      "picsLink": "https://www.dropbox.com/scl/fo/waq265pqenh2o12vgouqe/ANHNEmROOKoHsF3Fdu1kpB8?rlkey=v98ndzmjaj41xzed6q0ksdh6u&st=uxw2vakn&dl=0",
+      "picsLink": "https://www.dropbox.com/scl/fo/qiboihzpfex70z0j5zxzs/AHvoZ1rT1AQTN-wiF_hrkm0?rlkey=vuw0gybib29hp8vs924wkmcro&st=wcnk64wf&dl=0",
       "beds": "2",
       "baths": "1",
       "sqft": "864",
-      "status": "Sold",
+      "status": "Available",
       "livability": 5,
       "lat": 38.7193756,
       "lng": -90.2701089
@@ -26615,9 +26615,9 @@
       "down": "$2,000",
       "monthly": "$795",
       "picsLink": "https://drive.google.com/drive/folders/1Y8AT45b2IpnzYoSViKfZJhwCZkFF5D7u?usp=sha",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1400",
       "status": "Available",
       "livability": 0,
       "lat": 40.71652599999999,
