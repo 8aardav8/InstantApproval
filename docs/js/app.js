@@ -2908,6 +2908,9 @@ function sortedBuyers() {
 }
 
 function renderBuyersList() {
+  const dateModeBtn = document.getElementById("buyers-date-mode-toggle");
+  if (dateModeBtn) updateDateModeToggleLabel(dateModeBtn);
+
   const listEl = document.getElementById("buyers-list");
   const buyers = sortedBuyers();
   if (buyers.length === 0) { listEl.innerHTML = "<p>No conversations found.</p>"; return; }
@@ -2931,13 +2934,13 @@ function renderBuyersList() {
     // rather than collapsing to one date. Added 2026-09-11 per Aaron's
     // request to see this at a glance on the list, not just in the detail view.
     const lastLogin = b.loginsMatch ? b.loginsMatch.lastLogin : "";
-    const loginDate = lastLogin ? formatShortDate(lastLogin) : "";
-    const textedDate = formatShortDate(b.lastActivityAt);
+    const loginDate = lastLogin ? formatBuyerDate(lastLogin) : "";
+    const textedDate = formatBuyerDate(b.lastActivityAt);
     // lastCallAt comes from the worker's separate, slower calls_cache (see
     // its own comment server-side) -- absent/null until that background
     // pass has actually reached this phone, in which case this just omits
     // the "Called:" date rather than showing anything misleading.
-    const calledDate = b.lastCallAt ? formatShortDate(b.lastCallAt) : "";
+    const calledDate = b.lastCallAt ? formatBuyerDate(b.lastCallAt) : "";
     // At-a-glance badges, added 2026-09-11 per Aaron's direct request --
     // ID on file, and how many showings are actually booked (today or
     // later; a past-dated appointment doesn't count as "booked" here, see
@@ -2977,6 +2980,30 @@ function formatShortDate(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// "Days since" toggle for Texted/Called/Login on the buyer list, added
+// 2026-09-11 per Aaron's direct request. Persisted in localStorage --
+// same "remembered per-device convenience" pattern as favorites/viewed
+// above, not something synced to the Sheet.
+const BUYERS_DATE_MODE_STORAGE_KEY = "iah_buyers_date_mode";
+let BUYERS_DATE_MODE = (() => {
+  try { return localStorage.getItem(BUYERS_DATE_MODE_STORAGE_KEY) || "date"; } catch (e) { return "date"; }
+})();
+function formatDaysSince(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "1d ago";
+  return `${days}d ago`;
+}
+// Picks formatShortDate or formatDaysSince based on the current toggle
+// state -- single call site for every Texted/Called/Login date so the
+// toggle affects all three at once, consistently.
+function formatBuyerDate(iso) {
+  return BUYERS_DATE_MODE === "days" ? formatDaysSince(iso) : formatShortDate(iso);
 }
 
 function findBuyer(phone) {
@@ -3436,6 +3463,28 @@ function initBuyersTab() {
 
   const renameBtn = document.getElementById("buyers-rename-id-files-btn");
   if (renameBtn) renameBtn.addEventListener("click", renameIdFiles);
+
+  // updateDateModeToggleLabel() is deliberately NOT called here -- this
+  // function runs at page-load time, before BUYERS_DATE_MODE (declared
+  // further down, since this whole section is appended after the main
+  // init sequence) has initialized. Same TDZ shape as the
+  // renderBuyersAreaCheckboxes() bug fixed earlier -- caught this time by
+  // the same jsdom check before ever deploying it. The label gets set
+  // from renderBuyersList() instead, which -- like every other buyers-tab
+  // entry point -- only ever runs lazily, well after the whole script has
+  // finished executing once.
+  const dateModeBtn = document.getElementById("buyers-date-mode-toggle");
+  if (dateModeBtn) {
+    dateModeBtn.addEventListener("click", () => {
+      BUYERS_DATE_MODE = BUYERS_DATE_MODE === "days" ? "date" : "days";
+      try { localStorage.setItem(BUYERS_DATE_MODE_STORAGE_KEY, BUYERS_DATE_MODE); } catch (e) {}
+      renderBuyersList();
+    });
+  }
+}
+
+function updateDateModeToggleLabel(btn) {
+  btn.textContent = BUYERS_DATE_MODE === "days" ? "Show dates" : "Show days since";
 }
 
 // ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------

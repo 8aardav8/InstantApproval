@@ -1,0 +1,13 @@
+name = "super-frost-1dbb"
+main = "admin/worker.js"
+compatibility_date = "2026-09-01"
+
+# Read-only access to the same buyer-list cache iah-buyers itself serves
+# from -- added 2026-09-11 after Cloudflare error 1042 confirmed a Worker
+# can't fetch() another *.workers.dev Worker directly (a platform
+# restriction, not something fixable in the request itself). Reading the
+# KV value directly instead avoids that restriction entirely, and is
+# simpler/faster than a service binding would be for a single read.
+[[kv_namespaces]]
+binding = "BUYERS_KV"
+id = "13fb166935504b7abf7bfc860bb03fae"

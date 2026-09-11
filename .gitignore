@@ -5,3 +5,6 @@
 # dev run). See generate_properties.py's own comment for why this file
 # exists at all.
 .raw_properties_snapshot.json
+
+# Local wrangler build/deploy cache -- never meant to be committed
+.wrangler/

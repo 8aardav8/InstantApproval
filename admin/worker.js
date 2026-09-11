@@ -1492,15 +1492,14 @@ function nameTokensFromSheetName(name) {
 // the same Google OAuth client), filtered to no ID Link, matched by
 // quoName (or the BUYERS-tab lead's contactName as a fallback) since
 // App: Logins' own Name column is usually blank for these buyers.
-async function computeSuggestedIdMatches(env, idToken) {
-  const [dropboxToken, buyersRes] = await Promise.all([
+async function computeSuggestedIdMatches(env) {
+  const [dropboxToken, cached] = await Promise.all([
     getDropboxAccessToken(env),
-    fetch("https://iah-buyers.notactuallyit.workers.dev/buyers", { headers: { Authorization: `Bearer ${idToken}` } }),
+    env.BUYERS_KV.get('buyers_cache'), // same key iah-buyers itself writes/serves from -- see wrangler-admin.toml's own comment on why this is a KV read, not a fetch() to that Worker
   ]);
   const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
-  if (!buyersRes.ok) throw new Error(`buyers list read failed: ${await buyersRes.text()}`);
-  const buyersData = await buyersRes.json();
-  if (buyersData.error) throw new Error(`buyers list error: ${buyersData.error}`);
+  if (!cached) throw new Error('buyers cache not ready yet -- the background sync has not completed its first cycle');
+  const buyersData = JSON.parse(cached);
 
   const needsId = (buyersData.buyers || [])
     .filter((b) => !(b.loginsMatch && b.loginsMatch.idLink))
@@ -1537,7 +1536,7 @@ async function handleSuggestedIdMatches(request, env) {
   if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
   try {
-    return jsonResponse(await computeSuggestedIdMatches(env, idToken));
+    return jsonResponse(await computeSuggestedIdMatches(env));
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -1560,7 +1559,7 @@ async function handleRenameIdFiles(request, env) {
   if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
   try {
-    const { matches } = await computeSuggestedIdMatches(env, idToken);
+    const { matches } = await computeSuggestedIdMatches(env);
     const dropboxToken = await getDropboxAccessToken(env);
     const renamed = [];
     const skipped = [];
