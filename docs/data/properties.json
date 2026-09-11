@@ -1,8 +1,25 @@
 {
-  "generatedAt": "2026-09-11T16:55:30.964069+00:00",
+  "generatedAt": "2026-09-11T16:56:01.816095+00:00",
   "listings": [
     {
       "id": "210-n-17th-stl-mo-63103",
+      "address": "210 N 17th STL MO 63103",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6306584,
+      "lng": -90.20424229999999
+    },
+    {
+      "id": "210-n-17th-stl-mo-63103-1",
       "address": "210 N 17th STL MO 63103",
       "onMarketDate": "9/10",
       "lastUpdate": "9/10",
@@ -2586,7 +2603,7 @@
       "lng": -90.2335028
     },
     {
-      "id": "2228-e-brown-st-springfield-il-62703-1",
+      "id": "2228-e-brown-st-springfield-il-62703-2",
       "address": "2228 E Brown St., Springfield IL 62703",
       "onMarketDate": "6/20",
       "lastUpdate": "7/17/2026",
@@ -2654,7 +2671,7 @@
       "lng": -88.9665093
     },
     {
-      "id": "2317-grand-ave-granite-city-il-62040-2",
+      "id": "2317-grand-ave-granite-city-il-62040-3",
       "address": "2317 Grand Ave, Granite City, IL 62040",
       "onMarketDate": "8/24/2025",
       "lastUpdate": "7/17/2026",
@@ -6751,7 +6768,7 @@
       "lng": -83.69472
     },
     {
-      "id": "521-n-davis-street-carbondale-il-62-901-3",
+      "id": "521-n-davis-street-carbondale-il-62-901-4",
       "address": "521 N. Davis Street Carbondale IL 62,901",
       "onMarketDate": "6/3",
       "lastUpdate": "6/8/2026",
@@ -9505,7 +9522,7 @@
       "lng": -89.6443785
     },
     {
-      "id": "514-brookside-ave-alton-il-62002-4",
+      "id": "514-brookside-ave-alton-il-62002-5",
       "address": "514 Brookside Ave, Alton, IL 62002",
       "onMarketDate": "",
       "lastUpdate": "4/29/2026",
@@ -11256,7 +11273,7 @@
       "lng": -90.1234523
     },
     {
-      "id": "800-s-greenlawn-ave-peoria-il-61605-5",
+      "id": "800-s-greenlawn-ave-peoria-il-61605-6",
       "address": "800 S Greenlawn Ave Peoria IL 61605",
       "onMarketDate": "3/31/2026",
       "lastUpdate": "3/31/2026",
@@ -12293,7 +12310,7 @@
       "lng": -88.9286434
     },
     {
-      "id": "7150-garesche-ave-jennings-mo-63136-6",
+      "id": "7150-garesche-ave-jennings-mo-63136-7",
       "address": "7150 Garesche Ave, Jennings, MO 63136",
       "onMarketDate": "10/2/2025",
       "lastUpdate": "3/14/2026",
@@ -12548,7 +12565,7 @@
       "lng": -89.5592013
     },
     {
-      "id": "225-n-63rd-st-east-st-louis-il-62203-7",
+      "id": "225-n-63rd-st-east-st-louis-il-62203-8",
       "address": "225 N 63rd St, East St Louis, IL 62203",
       "onMarketDate": "3/8/2026",
       "lastUpdate": "9/4/2026",
@@ -13245,7 +13262,7 @@
       "lng": -89.3535527
     },
     {
-      "id": "1112-e-garfield-ave-decatur-il-62526-8",
+      "id": "1112-e-garfield-ave-decatur-il-62526-9",
       "address": "1112 E Garfield Ave, Decatur, IL 62526",
       "onMarketDate": "10/29/2025",
       "lastUpdate": "3/5/2026",
@@ -14299,7 +14316,7 @@
       "lng": -83.55790379999999
     },
     {
-      "id": "1524-n-summit-ave-decatur-il-62526-9",
+      "id": "1524-n-summit-ave-decatur-il-62526-10",
       "address": "1524 N Summit Ave, Decatur, IL 62526",
       "onMarketDate": "2/19/2026",
       "lastUpdate": "8/28/2026",
@@ -19501,7 +19518,7 @@
       "lng": -90.23168539999999
     },
     {
-      "id": "1110-bailey-ln-benton-il-62812-10",
+      "id": "1110-bailey-ln-benton-il-62812-11",
       "address": "1110 Bailey Ln, Benton, IL 62812",
       "onMarketDate": "5/7/2025",
       "lastUpdate": "11/10/2025",
@@ -19841,7 +19858,7 @@
       "lng": -90.262946
     },
     {
-      "id": "428-w-washington-st-macomb-il-61455-11",
+      "id": "428-w-washington-st-macomb-il-61455-12",
       "address": "428 W Washington St, Macomb, IL 61455",
       "onMarketDate": "9/3/2025",
       "lastUpdate": "11/1/2025",
@@ -20283,7 +20300,7 @@
       "lng": -90.2479005
     },
     {
-      "id": "5639-wilborn-dr-saint-louis-mo-63136-12",
+      "id": "5639-wilborn-dr-saint-louis-mo-63136-13",
       "address": "5639 Wilborn Dr, Saint Louis, MO 63136",
       "onMarketDate": "9/17/2025",
       "lastUpdate": "10/20/2025",
@@ -20878,7 +20895,7 @@
       "lng": -90.11135039999999
     },
     {
-      "id": "2421-w-garden-st-peoria-il-61605-13",
+      "id": "2421-w-garden-st-peoria-il-61605-14",
       "address": "2421 W Garden St, Peoria, IL 61605",
       "onMarketDate": "7/16/2025",
       "lastUpdate": "9/29/2025",
@@ -23955,7 +23972,7 @@
       "lng": -89.6148923
     },
     {
-      "id": "1235-e-walnut-st-decatur-il-62526-14",
+      "id": "1235-e-walnut-st-decatur-il-62526-15",
       "address": "1235 E Walnut St, Decatur, IL 62526",
       "onMarketDate": "7/11/2025",
       "lastUpdate": "",
@@ -27304,7 +27321,7 @@
       "lng": -90.26489509999999
     },
     {
-      "id": "1105-shawnee-st-mount-vernon-il-62864-15",
+      "id": "1105-shawnee-st-mount-vernon-il-62864-16",
       "address": "1105 Shawnee St, Mount Vernon, IL 62864",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -27882,7 +27899,7 @@
       "lng": -90.13800909999999
     },
     {
-      "id": "6725-schofield-pl-saint-louis-mo-63133-16",
+      "id": "6725-schofield-pl-saint-louis-mo-63133-17",
       "address": "6725 Schofield Pl, Saint Louis, MO 63133",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -27950,7 +27967,7 @@
       "lng": -90.2302121
     },
     {
-      "id": "2964-iowa-st-granite-city-il-62040-17",
+      "id": "2964-iowa-st-granite-city-il-62040-18",
       "address": "2964 Iowa St, Granite City, IL 62040",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -28919,7 +28936,7 @@
       "lng": -90.15514209999999
     },
     {
-      "id": "5445-robin-ave-saint-louis-mo-63120-18",
+      "id": "5445-robin-ave-saint-louis-mo-63120-19",
       "address": "5445 Robin Ave, Saint Louis, MO, 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -29191,7 +29208,7 @@
       "lng": -90.0194786
     },
     {
-      "id": "14-s-beard-st-danville-il-61832-19",
+      "id": "14-s-beard-st-danville-il-61832-20",
       "address": "14 S Beard St, Danville, IL 61832",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30398,7 +30415,7 @@
       "lng": -76.33330959999999
     },
     {
-      "id": "1127-31st-st-newport-news-va-23607-20",
+      "id": "1127-31st-st-newport-news-va-23607-21",
       "address": "1127 31st St, Newport News, VA 23607",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30534,7 +30551,7 @@
       "lng": -76.3411186
     },
     {
-      "id": "5338-claxton-ave-saint-louis-mo-63120-21",
+      "id": "5338-claxton-ave-saint-louis-mo-63120-22",
       "address": "5338 Claxton Ave, Saint Louis, MO 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30585,7 +30602,7 @@
       "lng": -76.56196550000001
     },
     {
-      "id": "108-n-10th-st-suffolk-va-23434-22",
+      "id": "108-n-10th-st-suffolk-va-23434-23",
       "address": "108 N 10th St, Suffolk, VA 23434",
       "onMarketDate": "",
       "lastUpdate": "",
