@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T17:46:26.089372+00:00",
+  "generatedAt": "2026-09-11T17:46:58.149011+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -150,7 +150,7 @@
       "baths": "1",
       "sqft": "",
       "status": "Available",
-      "livability": 0,
+      "livability": 3,
       "lat": 38.88493709999999,
       "lng": -90.1201956
     },
