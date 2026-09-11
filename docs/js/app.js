@@ -2849,10 +2849,25 @@ function renderBuyersList() {
     // pass has actually reached this phone, in which case this just omits
     // the "Called:" date rather than showing anything misleading.
     const calledDate = b.lastCallAt ? formatShortDate(b.lastCallAt) : "";
+    // At-a-glance badges, added 2026-09-11 per Aaron's direct request --
+    // ID on file, and how many showings are actually booked (today or
+    // later; a past-dated appointment doesn't count as "booked" here, see
+    // the detail view's Scheduled/Past split for the full history).
+    const today = localTodayISO();
+    const upcomingCount = (b.loginsMatch && b.loginsMatch.appointments ? b.loginsMatch.appointments : []).filter((a) => a.date >= today).length;
+    const badgesHtml = `
+      <span class="buyer-row-badges">
+        ${b.loginsMatch && b.loginsMatch.idLink ? `<span class="buyer-badge id-badge" title="ID on file">🪪 ID</span>` : ""}
+        ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
+      </span>
+    `;
     rows.push(`
       <button class="buyer-row" data-phone="${escapeHtml(b.phone)}">
-        <span class="buyer-row-name">${escapeHtml(label)}</span>
-        ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+        <div class="buyer-row-main">
+          <span class="buyer-row-name">${escapeHtml(label)}</span>
+          ${badgesHtml}
+          ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+        </div>
         <span class="buyer-row-dates">
           ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
           ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
@@ -2939,13 +2954,20 @@ function renderBuyerDetail(buyer) {
     : "";
 
   // Shown Properties -- Aaron's own admin-side record of what he's
-  // personally shown this buyer, added 2026-09-11 per his direct request.
-  // Editable here (unlike Viewed above): a datalist-backed address picker
-  // (real ALL_LISTINGS addresses, not free text) plus a remove button per
-  // entry. Needs lm.row (the buyer's real Sheet row, added server-side
-  // 2026-09-11) -- if that's somehow missing, the add control just doesn't
-  // render rather than posting a request with no way to target a row.
-  const shownAddressOptions = (ALL_LISTINGS || []).map((l) => `<option value="${escapeAttr(l.address)}">`).join("");
+  // personally shown/let this buyer into, added 2026-09-11 per his direct
+  // request. Editable here (unlike Viewed above): a real <select> dropdown
+  // of ALL_LISTINGS addresses (per Aaron's explicit "choose properties
+  // from a dropdown" -- changed 2026-09-11 from an earlier text+datalist
+  // input to an actual <select>), already-shown addresses excluded from
+  // the options so the list only ever offers something new to add. Needs
+  // lm.row (the buyer's real Sheet row, added server-side 2026-09-11) --
+  // if that's somehow missing, the add control just doesn't render rather
+  // than posting a request with no way to target a row.
+  const alreadyShown = new Set(lm && lm.shown ? lm.shown : []);
+  const shownAddressOptions = (ALL_LISTINGS || [])
+    .filter((l) => !alreadyShown.has(l.address))
+    .map((l) => `<option value="${escapeAttr(l.address)}">${escapeHtml(l.address)}</option>`)
+    .join("");
   const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => `
     <div class="buyer-list-item shown-property-item">
       <span>${escapeHtml(address)}</span>
@@ -2954,15 +2976,26 @@ function renderBuyerDetail(buyer) {
   `).join("");
   const shownAddHtml = lm && lm.row ? `
     <div class="shown-add-row">
-      <input type="text" id="shown-property-input" list="shown-property-options" placeholder="Type or pick an address…">
-      <datalist id="shown-property-options">${shownAddressOptions}</datalist>
+      <select id="shown-property-input">
+        <option value="" selected disabled>Choose a property…</option>
+        ${shownAddressOptions}
+      </select>
       <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark shown</button>
     </div>
   ` : "";
   const shownHtml = `<div class="buyer-section"><h3>Shown Properties${lm && lm.shown && lm.shown.length ? ` (${lm.shown.length})` : ""}</h3>${shownListHtml}${shownAddHtml}</div>`;
 
-  const apptsHtml = lm && lm.appointments && lm.appointments.length
-    ? `<div class="buyer-section"><h3>Appointments (${lm.appointments.length})</h3>${lm.appointments.map((a) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)}</div>`).join("")}</div>`
+  // Split into Scheduled (today or later) vs Past, added 2026-09-11 per
+  // Aaron's direct request -- previously one flat list with no distinction.
+  const todayForAppts = localTodayISO();
+  const scheduledAppts = (lm && lm.appointments ? lm.appointments : []).filter((a) => a.date >= todayForAppts);
+  const pastAppts = (lm && lm.appointments ? lm.appointments : []).filter((a) => a.date < todayForAppts);
+  const apptItem = (a) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)}</div>`;
+  const scheduledHtml = scheduledAppts.length
+    ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map(apptItem).join("")}</div>`
+    : "";
+  const pastHtml = pastAppts.length
+    ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map(apptItem).join("")}</div>`
     : "";
 
   const coBuyersHtml = lm && lm.coBuyers && lm.coBuyers.length
@@ -3015,7 +3048,8 @@ function renderBuyerDetail(buyer) {
     ${favoritesHtml}
     ${viewedHtml}
     ${shownHtml}
-    ${apptsHtml}
+    ${scheduledHtml}
+    ${pastHtml}
     ${coBuyersHtml}
     ${filtersHtml}
     ${messagesHtml}
