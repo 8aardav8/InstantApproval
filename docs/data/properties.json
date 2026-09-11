@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-11T17:07:14.740457+00:00",
+  "generatedAt": "2026-09-11T17:07:46.874664+00:00",
   "listings": [
+    {
+      "id": "7028-dawson-pl-st-louis-mo-63136",
+      "address": "7028 Dawson Pl, St. Louis, MO 63136",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1upsRel256Imjhr2-ezrVdUJvZK9PFgWC?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7079148,
+      "lng": -90.2700136
+    },
     {
       "id": "210-n-17th-stl-mo-63103",
       "address": "210 N 17th STL MO 63103",
