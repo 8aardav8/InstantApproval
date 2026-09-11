@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T17:18:46.109417+00:00",
+  "generatedAt": "2026-09-11T17:19:19.782060+00:00",
   "listings": [
     {
       "id": "1315-e-decatur-st-decatur-il-62521",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$950",
       "picsLink": "https://photos.app.goo.gl/b4UWGtthDRCDsM1D8",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1000",
       "status": "Available",
       "livability": 0,
       "lat": 39.83684849999999,
