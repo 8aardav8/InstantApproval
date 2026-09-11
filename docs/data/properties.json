@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-09-11T17:18:15.619405+00:00",
+  "generatedAt": "2026-09-11T17:18:46.109417+00:00",
   "listings": [
     {
       "id": "1315-e-decatur-st-decatur-il-62521",
       "address": "1315 E Decatur St Decatur IL 62521",
-      "onMarketDate": "",
-      "lastUpdate": "",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "onMarketDate": "9/10",
+      "lastUpdate": "9/10",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "$950",
       "picsLink": "https://photos.app.goo.gl/b4UWGtthDRCDsM1D8",
       "beds": "",
       "baths": "",
