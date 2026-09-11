@@ -3020,6 +3020,11 @@ function renderBuyerDetail(buyer) {
     ["Area", buyer.area || "Not yet classified"],
     ["First login", (lm && lm.firstLogin) || ""],
     ["Last login", (lm && lm.lastLogin) || ""],
+    // Cross-referenced from a Glide-app login with no phone on its own
+    // App: Logins row -- added 2026-09-11 per Aaron's direct request. See
+    // matchEmailToContact's own comment server-side for how the identity
+    // was recovered.
+    ["Login Source", lm && lm.viaGlide ? "Glide App" : ""],
     ["Agreed to terms", (lm && lm.agreed) || ""],
     ["Last activity (Quo)", formatShortDate(buyer.lastActivityAt)],
   ].filter(([, v]) => v);
