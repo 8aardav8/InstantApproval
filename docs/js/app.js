@@ -3019,18 +3019,20 @@ function renderBuyerDetail(buyer) {
 
   // Shown Properties -- Aaron's own admin-side record of what he's
   // personally shown/let this buyer into, added 2026-09-11 per his direct
-  // request. Editable here (unlike Viewed above): a real <select> dropdown
-  // of ALL_LISTINGS addresses (per Aaron's explicit "choose properties
-  // from a dropdown" -- changed 2026-09-11 from an earlier text+datalist
-  // input to an actual <select>), already-shown addresses excluded from
-  // the options so the list only ever offers something new to add. Needs
-  // lm.row (the buyer's real Sheet row, added server-side 2026-09-11) --
-  // if that's somehow missing, the add control just doesn't render rather
-  // than posting a request with no way to target a row.
+  // request. Editable here (unlike Viewed above): a text input backed by
+  // a <datalist> of ALL_LISTINGS addresses -- type-to-autocomplete, not a
+  // plain <select> (reverted 2026-09-11 per Aaron's explicit follow-up:
+  // "I need to be able to type into shown properties and it will auto
+  // complete" -- a <select> doesn't support that, a datalist-backed input
+  // natively does). Already-shown addresses excluded from the options so
+  // it only ever suggests something new to add. Needs lm.row (the buyer's
+  // real Sheet row, added server-side 2026-09-11) -- if that's somehow
+  // missing, the add control just doesn't render rather than posting a
+  // request with no way to target a row.
   const alreadyShown = new Set(lm && lm.shown ? lm.shown : []);
   const shownAddressOptions = (ALL_LISTINGS || [])
     .filter((l) => !alreadyShown.has(l.address))
-    .map((l) => `<option value="${escapeAttr(l.address)}">${escapeHtml(l.address)}</option>`)
+    .map((l) => `<option value="${escapeAttr(l.address)}">`)
     .join("");
   const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => `
     <div class="buyer-list-item shown-property-item">
@@ -3040,10 +3042,8 @@ function renderBuyerDetail(buyer) {
   `).join("");
   const shownAddHtml = lm && lm.row ? `
     <div class="shown-add-row">
-      <select id="shown-property-input">
-        <option value="" selected disabled>Choose a property…</option>
-        ${shownAddressOptions}
-      </select>
+      <input type="text" id="shown-property-input" list="shown-property-options" placeholder="Type an address…" autocomplete="off">
+      <datalist id="shown-property-options">${shownAddressOptions}</datalist>
       <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark shown</button>
     </div>
   ` : "";
