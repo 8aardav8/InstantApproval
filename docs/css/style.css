@@ -708,6 +708,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-name { font-weight: 700; color: var(--navy); flex: 1 1 auto; }
 .buyer-row-sub { font-size: 12px; color: var(--gray-text, #6b7280); }
 .buyer-row-date { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
+.buyer-row-dates { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: 0 0 auto; }
 
 .buyers-back-btn {
   background: #eef2ff; color: var(--navy); border: none; border-radius: 8px;

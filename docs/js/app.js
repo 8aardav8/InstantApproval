@@ -2611,6 +2611,16 @@ async function loadBuyers() {
       return;
     }
     const data = await res.json();
+    // The worker returns { error, detail } (no `buyers` field) on a server
+    // error (502) -- surface that plainly instead of silently falling
+    // through to an empty list with "undefined total ... NaN unclassified"
+    // (real bug found 2026-09-11: a Promise.all failure inside the worker's
+    // /buyers handler was rendering exactly that misleading text).
+    if (!res.ok || data.error) {
+      listEl.innerHTML = `<p>Couldn't load buyers: ${data.error || res.status}${data.detail ? ` — ${data.detail}` : ""}</p>`;
+      document.getElementById("buyers-count").textContent = "";
+      return;
+    }
     BUYERS_CACHE = data.buyers || [];
     document.getElementById("buyers-count").textContent =
       `${data.count} total — ${data.classifiedCount} area-tagged, ${data.count - data.classifiedCount} unclassified`;
@@ -2647,11 +2657,22 @@ function renderBuyersList() {
     }
     const label = b.quoName || b.phone;
     const sub = b.area && BUYERS_SORT !== "area" ? b.area : (b.loginsMatch ? b.loginsMatch.email : "");
+    // Last login (App: Logins sheet, via loginsMatch) and last texted (Quo
+    // conversation activity) are two different signals -- a buyer can log
+    // in without texting, or text without ever logging in -- so show both
+    // rather than collapsing to one date. Added 2026-09-11 per Aaron's
+    // request to see this at a glance on the list, not just in the detail view.
+    const lastLogin = b.loginsMatch ? b.loginsMatch.lastLogin : "";
+    const loginDate = lastLogin ? formatShortDate(lastLogin) : "";
+    const textedDate = formatShortDate(b.lastActivityAt);
     rows.push(`
       <button class="buyer-row" data-phone="${escapeHtml(b.phone)}">
         <span class="buyer-row-name">${escapeHtml(label)}</span>
         ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
-        <span class="buyer-row-date">${formatShortDate(b.lastActivityAt)}</span>
+        <span class="buyer-row-dates">
+          ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
+          ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+        </span>
       </button>
     `);
   }
