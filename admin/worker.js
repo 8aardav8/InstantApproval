@@ -1587,6 +1587,77 @@ async function handleRenameIdFiles(request, env) {
   }
 }
 
+// ---------- Internal ID-photo OCR tooling, added 2026-09-11 ----------
+// Supports a one-off local script (run by Claude Code, not a standing
+// pipeline -- local Ollama vision can't run inside a Cloudflare Worker)
+// that reads the actual name printed on each ID photo and cross-
+// references it against Quo contacts, per Aaron's direct request: "Can
+// we name the id files in db based on the name on the id itself, and
+// then fuzzy match to quo contacts?" Gated by a shared secret
+// (INTERNAL_TOOLS_SECRET), not Google OAuth -- this is an internal tool
+// Claude Code runs directly, not something the admin UI calls, same
+// ?key= pattern already used by appointment-notifier-worker.js's own
+// manual-trigger endpoint. Read-only: lists files and streams bytes,
+// never renames/writes anything itself -- that still goes through the
+// existing OAuth-gated /confirm-id-match / /rename-id-files endpoints
+// once Aaron reviews what the script finds.
+function checkInternalToolsSecret(request, env) {
+  const url = new URL(request.url);
+  return url.searchParams.get("key") === env.INTERNAL_TOOLS_SECRET && !!env.INTERNAL_TOOLS_SECRET;
+}
+
+async function handleInternalListIdFiles(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const dropboxToken = await getDropboxAccessToken(env);
+    const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
+    return jsonResponse({ files: files.map((f) => ({ path: f.path_display, name: f.name, size: f.size })) });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Streams raw bytes for one file BY PATH (files/download, not
+// sharing/get_shared_link_file -- most of these files have no shared
+// link yet, that's the whole point of this tool).
+async function handleInternalIdFileBytes(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const path = url.searchParams.get("path");
+  if (!path) return jsonResponse({ error: "missing path" }, 400);
+  try {
+    const dropboxToken = await getDropboxAccessToken(env);
+    const fileRes = await fetch("https://content.dropboxapi.com/2/files/download", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${dropboxToken}`, "Dropbox-API-Arg": JSON.stringify({ path }) },
+    });
+    if (!fileRes.ok) throw new Error(`dropbox download failed: ${await fileRes.text()}`);
+    const bytes = await fileRes.arrayBuffer();
+    return new Response(bytes, { status: 200, headers: { "Content-Type": "application/octet-stream" } });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Full Quo contact list (name + phone), for the local script's own
+// fuzzy-match against an OCR-extracted name -- not scoped to "no ID yet"
+// like computeSuggestedIdMatches, since OCR-based matching is meant to
+// catch cases filename-matching misses too.
+async function handleInternalContacts(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const cached = await env.BUYERS_KV.get("buyers_cache");
+    if (!cached) return jsonResponse({ error: "buyers cache not ready yet" }, 503);
+    const data = JSON.parse(cached);
+    const contacts = (data.buyers || [])
+      .filter((b) => b.quoName || (b.leadInfo && b.leadInfo.contactName))
+      .map((b) => ({ phone: b.phone, name: b.quoName || b.leadInfo.contactName, hasId: !!(b.loginsMatch && b.loginsMatch.idLink) }));
+    return jsonResponse({ contacts });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleConfirmIdMatch(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -2672,6 +2743,16 @@ async function route(request, env) {
 
   if (url.pathname === "/rename-id-files" && request.method === "POST") {
     return handleRenameIdFiles(request, env);
+  }
+
+  if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
+    return handleInternalListIdFiles(request, env);
+  }
+  if (url.pathname === "/internal/id-file-bytes" && request.method === "GET") {
+    return handleInternalIdFileBytes(request, env);
+  }
+  if (url.pathname === "/internal/contacts" && request.method === "GET") {
+    return handleInternalContacts(request, env);
   }
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
