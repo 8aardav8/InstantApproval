@@ -1266,6 +1266,23 @@ async function handleSyncVisitor(request, env) {
       if (!favRes.ok) throw new Error(`favorites sync write failed: ${await favRes.text()}`);
     }
 
+    // Viewed Properties (column AC), added 2026-09-11 per Aaron's direct
+    // request -- "houses they have viewed," distinct from Favorites (an
+    // explicit heart-tap) and from Shown Properties (column AB, Aaron's
+    // own admin-side record of what he's shown them -- see
+    // handleMarkShown below). Same guarded/full-list-every-time pattern
+    // as favorites above.
+    if (Array.isArray(body.viewed)) {
+      const viewedRange = encodeURIComponent(`${LOGINS_TAB}!AC${row}:AC${row}`);
+      const viewedUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${viewedRange}?valueInputOption=RAW`;
+      const viewedRes = await fetch(viewedUrl, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `${LOGINS_TAB}!AC${row}:AC${row}`, values: [[body.viewed.join(" | ")]] }),
+      });
+      if (!viewedRes.ok) throw new Error(`viewed sync write failed: ${await viewedRes.text()}`);
+    }
+
     return jsonResponse({ ok: true, action: "updated", row });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -1495,6 +1512,55 @@ async function handleConfirmIdMatch(request, env) {
     const idLink = await createOrReuseSharedLink(dropboxToken, dropboxPath);
     await writeIdLink(accessToken, row, idLink);
     return jsonResponse({ ok: true, idLink });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// "Houses I've shown them" -- Aaron's own admin-side record, column AB,
+// added 2026-09-11 per his direct request. Deliberately a read-then-write
+// (not a blind overwrite like Favorites/Viewed above, which the CLIENT
+// already owns the full authoritative list for) -- Aaron doesn't have the
+// current list loaded client-side when he marks one shown, so this reads
+// the cell fresh, adds/removes just the one address, and writes back,
+// same "re-read immediately before writing" discipline already used by
+// writeIdLink's callers elsewhere in this file to avoid clobbering a
+// concurrent edit.
+async function handleMarkShown(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const row = Number(body.buyerRow);
+  const address = (body.address || "").trim();
+  const action = body.action === "remove" ? "remove" : "add";
+  if (!row || !address) return jsonResponse({ error: "missing buyerRow or address" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!AB${row}:AB${row}`);
+    const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!getRes.ok) throw new Error(`shown-properties read failed: ${await getRes.text()}`);
+    const current = (((await getRes.json()).values || [[]])[0] || [])[0] || "";
+    const list = current ? current.split(" | ").map((s) => s.trim()).filter(Boolean) : [];
+    const next = action === "remove"
+      ? list.filter((a) => a !== address)
+      : list.includes(address) ? list : [...list, address];
+
+    const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+    const putRes = await fetch(putUrl, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!AB${row}:AB${row}`, values: [[next.join(" | ")]] }),
+    });
+    if (!putRes.ok) throw new Error(`shown-properties write failed: ${await putRes.text()}`);
+    return jsonResponse({ ok: true, shown: next });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2436,6 +2502,10 @@ async function route(request, env) {
 
   if (url.pathname === "/confirm-id-match" && request.method === "POST") {
     return handleConfirmIdMatch(request, env);
+  }
+
+  if (url.pathname === "/mark-shown" && request.method === "POST") {
+    return handleMarkShown(request, env);
   }
 
   if (url.pathname === "/my-appointments" && request.method === "POST") {

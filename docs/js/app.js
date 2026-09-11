@@ -445,6 +445,36 @@ function getFavoriteAddresses() {
     .filter(Boolean)
     .map((l) => l.address);
 }
+
+// "Houses they've viewed," added 2026-09-11 per Aaron's direct request --
+// same shape as favorites (local device list of IDs, synced to the Sheet
+// as addresses), but tracks every property detail opened, not just
+// hearted ones. See showDetail()'s own call site for where this gets
+// recorded.
+const VIEWED_STORAGE_KEY = "iah_viewed";
+function getViewed() {
+  try {
+    return JSON.parse(localStorage.getItem(VIEWED_STORAGE_KEY) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+function recordViewed(id) {
+  const viewed = getViewed();
+  if (viewed.includes(id)) return; // already recorded -- opening it again isn't a new signal
+  viewed.push(id);
+  localStorage.setItem(VIEWED_STORAGE_KEY, JSON.stringify(viewed));
+  // Immediate, not debounced -- same reasoning as toggleFavorite: opening a
+  // listing is one deliberate action, not rapid-fire typing. Silently a
+  // no-op if this browser never passed the gate.
+  if (typeof syncVisitorNow === "function") syncVisitorNow();
+}
+function getViewedAddresses() {
+  return getViewed()
+    .map((id) => ALL_LISTINGS.find((l) => l.id === id))
+    .filter(Boolean)
+    .map((l) => l.address);
+}
 // Added 2026-08-29 alongside the stale-heart bug fix -- a listing can have
 // up to three separate heart-button DOM elements alive at once (its
 // Properties-grid card, its Favorites-grid card if favorited, and the
@@ -549,6 +579,7 @@ function showDetail(id) {
   const detail = document.getElementById("view-detail");
   detail.classList.remove("hidden");
   window.location.hash = `listing/${id}`;
+  recordViewed(id); // "houses they've viewed," added 2026-09-11 -- see recordViewed()'s own comment
 
   const ICON_CHAT = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4A9 9 0 0 1 4 18l-2 1 1-3.2A8.4 8.4 0 1 1 21 11.5z"/></svg>';
   const ICON_LINK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 1 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 1 0 5.66 5.66l1-1"/></svg>';
@@ -2229,6 +2260,8 @@ function currentFilterSyncPayload() {
     // Added 2026-08-29 -- always the FULL current list, same "resend
     // everything, not a diff" approach already used for filters above.
     favorites: getFavoriteAddresses(),
+    // Added 2026-09-11, same "full list every time" convention.
+    viewed: getViewedAddresses(),
   };
 }
 
@@ -2737,8 +2770,18 @@ function sortedBuyers() {
   const buyers = (BUYERS_CACHE || []).filter(buyerMatchesFilters);
   if (BUYERS_SORT === "name") {
     buyers.sort((a, b) => (a.quoName || a.phone).localeCompare(b.quoName || b.phone));
-  } else if (BUYERS_SORT === "recent") {
-    buyers.sort((a, b) => new Date(b.lastActivityAt) - new Date(a.lastActivityAt));
+  } else if (BUYERS_SORT === "last-message") {
+    // Renamed from "recent" 2026-09-11 (same underlying date, Quo
+    // conversation activity) -- now one of three explicit last-contact
+    // sorts instead of one vague "Most Recent Activity" option.
+    buyers.sort((a, b) => new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
+  } else if (BUYERS_SORT === "last-login") {
+    buyers.sort((a, b) => new Date((b.loginsMatch && b.loginsMatch.lastLogin) || 0) - new Date((a.loginsMatch && a.loginsMatch.lastLogin) || 0));
+  } else if (BUYERS_SORT === "last-call") {
+    // lastCallAt comes from the worker's separate, slower calls_cache --
+    // a buyer this hasn't reached yet just sorts to the bottom (epoch 0),
+    // same as anyone genuinely never called.
+    buyers.sort((a, b) => new Date(b.lastCallAt || 0) - new Date(a.lastCallAt || 0));
   }
   // "area" sort is the API's own default order (classified-first, grouped
   // alphabetically by area, most-recent-first within an unclassified group)
@@ -2854,6 +2897,37 @@ function renderBuyerDetail(buyer) {
     ? `<div class="buyer-section"><h3>Favorited Properties (${lm.favorites.length})</h3>${lm.favorites.map((f) => `<div class="buyer-list-item">${escapeHtml(f)}</div>`).join("")}</div>`
     : "";
 
+  // Viewed Properties -- passive, every detail page this buyer opened on
+  // the site (see recordViewed() in showDetail()). Read-only here, same
+  // as Favorites/Appointments -- this is the buyer's own browsing
+  // activity, not something Aaron edits.
+  const viewedHtml = lm && lm.viewed && lm.viewed.length
+    ? `<div class="buyer-section"><h3>Viewed Properties (${lm.viewed.length})</h3>${lm.viewed.map((v) => `<div class="buyer-list-item">${escapeHtml(v)}</div>`).join("")}</div>`
+    : "";
+
+  // Shown Properties -- Aaron's own admin-side record of what he's
+  // personally shown this buyer, added 2026-09-11 per his direct request.
+  // Editable here (unlike Viewed above): a datalist-backed address picker
+  // (real ALL_LISTINGS addresses, not free text) plus a remove button per
+  // entry. Needs lm.row (the buyer's real Sheet row, added server-side
+  // 2026-09-11) -- if that's somehow missing, the add control just doesn't
+  // render rather than posting a request with no way to target a row.
+  const shownAddressOptions = (ALL_LISTINGS || []).map((l) => `<option value="${escapeAttr(l.address)}">`).join("");
+  const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => `
+    <div class="buyer-list-item shown-property-item">
+      <span>${escapeHtml(address)}</span>
+      ${lm && lm.row ? `<button type="button" class="shown-remove-btn" data-row="${lm.row}" data-address="${escapeAttr(address)}">Remove</button>` : ""}
+    </div>
+  `).join("");
+  const shownAddHtml = lm && lm.row ? `
+    <div class="shown-add-row">
+      <input type="text" id="shown-property-input" list="shown-property-options" placeholder="Type or pick an address…">
+      <datalist id="shown-property-options">${shownAddressOptions}</datalist>
+      <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark shown</button>
+    </div>
+  ` : "";
+  const shownHtml = `<div class="buyer-section"><h3>Shown Properties${lm && lm.shown && lm.shown.length ? ` (${lm.shown.length})` : ""}</h3>${shownListHtml}${shownAddHtml}</div>`;
+
   const apptsHtml = lm && lm.appointments && lm.appointments.length
     ? `<div class="buyer-section"><h3>Appointments (${lm.appointments.length})</h3>${lm.appointments.map((a) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)}</div>`).join("")}</div>`
     : "";
@@ -2906,6 +2980,8 @@ function renderBuyerDetail(buyer) {
     ${possibleIdHtml}
     ${factsHtml}
     ${favoritesHtml}
+    ${viewedHtml}
+    ${shownHtml}
     ${apptsHtml}
     ${coBuyersHtml}
     ${filtersHtml}
@@ -2920,6 +2996,39 @@ function renderBuyerDetail(buyer) {
     e.target.value = "";
   });
   document.getElementById("buyer-send-btn").addEventListener("click", (e) => sendBuyerMessage(e.target.dataset.phone));
+
+  const shownAddBtn = document.getElementById("shown-add-btn");
+  if (shownAddBtn) shownAddBtn.addEventListener("click", () => {
+    const input = document.getElementById("shown-property-input");
+    const address = input.value.trim();
+    if (!address) return;
+    markShown(Number(shownAddBtn.dataset.row), address, "add", buyer.phone);
+  });
+  container.querySelectorAll(".shown-remove-btn").forEach((btn) => {
+    btn.addEventListener("click", () => markShown(Number(btn.dataset.row), btn.dataset.address, "remove", buyer.phone));
+  });
+}
+
+// Calls the PRODUCTION admin worker (needs Sheets write) -- see
+// handleMarkShown in admin/worker.js. Re-renders the buyer detail view
+// from the refreshed buyer list on success, so the list stays the source
+// of truth rather than hand-patching the DOM.
+async function markShown(row, address, action, phone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/mark-shown`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ buyerRow: row, address, action }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't update shown properties: ${(data && data.error) || res.status}`); return; }
+    await loadBuyers(); // refresh BUYERS_CACHE so the change is reflected
+    const refreshed = findBuyer(phone);
+    if (refreshed) renderBuyerDetail(refreshed);
+  } catch (err) {
+    alert(`Couldn't update shown properties: ${err}`);
+  }
 }
 
 async function loadBuyerMessages(phone) {
