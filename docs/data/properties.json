@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T17:35:20.014518+00:00",
+  "generatedAt": "2026-09-11T17:36:12.673024+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -6397,7 +6397,7 @@
       "id": "1700-w-grand-ave-decatur-il-62522",
       "address": "1700 W Grand Ave, Decatur, IL 62522",
       "onMarketDate": "4/26/2026",
-      "lastUpdate": "8/28/2026",
+      "lastUpdate": "9/11/2026",
       "area": "IL - Decatur",
       "down": "$850",
       "monthly": "$600",
@@ -16529,7 +16529,7 @@
       "id": "209-central-ave-st-david-il-61563-usa",
       "address": "209 Central Ave, St David, IL 61563, USA",
       "onMarketDate": "9/6/2026",
-      "lastUpdate": "9/6/2026",
+      "lastUpdate": "9/11/2026",
       "area": "IL - Peoria",
       "down": "$2,500",
       "monthly": "$800",
@@ -16537,7 +16537,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "872",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.489912,
       "lng": -90.0554961
