@@ -2693,6 +2693,19 @@ async function loadBuyers() {
   const listEl = document.getElementById("buyers-list");
   if (!token) { listEl.innerHTML = "<p>Sign in as admin to view buyers.</p>"; return; }
 
+  // Real bug, fixed 2026-09-11: this used to be called eagerly from
+  // initBuyersTab(), which runs at page load time -- BEFORE this file's
+  // own BUYERS_CANONICAL_AREAS/BUYERS_API_URL/etc. consts (declared
+  // further down, since this whole section is appended after the main
+  // init sequence) have executed. That threw a TDZ ReferenceError
+  // ("Cannot access 'BUYERS_API_URL' before initialization") which,
+  // uncaught, aborted the ENTIRE top-level script before loadData() ever
+  // ran -- taking the property listings down with it, not just Buyers.
+  // Calling it here instead is safe: loadBuyers() only ever runs lazily,
+  // in response to a real tab click, which happens well after the whole
+  // script has finished executing once.
+  renderBuyersAreaCheckboxes();
+
   listEl.innerHTML = "<p>Loading…</p>";
   try {
     const res = await fetch(`${BUYERS_API_URL}/buyers`, { headers: { Authorization: `Bearer ${token}` } });
@@ -3001,7 +3014,10 @@ function initBuyersTab() {
   const backBtn = document.getElementById("buyers-back-btn");
   if (backBtn) backBtn.addEventListener("click", backToBuyersList);
 
-  renderBuyersAreaCheckboxes();
+  // renderBuyersAreaCheckboxes() is deliberately NOT called here -- see the
+  // comment at its call site in loadBuyers() for why calling it eagerly at
+  // page-load time (this function runs before this section's own consts
+  // are initialized) is what broke the whole page on 2026-09-11.
   ["bf-down", "bf-monthly", "bf-beds"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyBuyersFilters);
