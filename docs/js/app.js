@@ -1235,6 +1235,29 @@ function initAppointmentsAccordionToggle() {
 // not a partial re-fetch of just one piece of state.
 const PULL_REFRESH_THRESHOLD = 70; // px of downward drag needed to trigger a reload
 const PULL_REFRESH_MAX = 100; // visual cap so the indicator can't be dragged indefinitely
+const PULL_REFRESH_RESTORE_TAB_KEY = "pullRefreshRestoreTab";
+
+function getActiveTabName() {
+  // All three nav instances (top-tabs/drawer/bottom-nav) stay in sync on
+  // every activateTab() call, and "properties" starts .active in the raw
+  // markup itself -- so this reads correctly even before activateTab has
+  // ever run (e.g. right after a fresh page load).
+  const active = document.querySelector(".nav-btn.active[data-tab]");
+  return active ? active.dataset.tab : null;
+}
+
+// Called once, after the page's own default-tab setup (loadData()) has
+// resolved, so a restored non-Homes tab that depends on ALL_LISTINGS (e.g.
+// favorites, get-started) has real data to render against instead of an
+// empty state. Restoring a tab that doesn't need listings at all (buyers,
+// appointments, my-info) works fine at this point too.
+function restoreTabAfterPullRefresh() {
+  const saved = sessionStorage.getItem(PULL_REFRESH_RESTORE_TAB_KEY);
+  if (!saved) return;
+  sessionStorage.removeItem(PULL_REFRESH_RESTORE_TAB_KEY);
+  if (document.getElementById(`tab-${saved}`)) activateTab(saved);
+}
+
 function initPullToRefresh() {
   const indicator = document.getElementById("pull-refresh-indicator");
   const text = document.getElementById("pull-refresh-text");
@@ -1297,6 +1320,15 @@ function initPullToRefresh() {
     if (!pulling) return;
     if (currentPull >= PULL_REFRESH_THRESHOLD) {
       text.textContent = "↻ Refreshing...";
+      // Real location.reload() resets to whichever tab-panel's markup
+      // defaults to visible (Homes) -- stash the tab the visitor was
+      // actually on so it can be restored after reload instead of always
+      // bouncing back to Homes. sessionStorage (not localStorage): this is
+      // a one-shot "restore after this specific reload" signal, not a
+      // standing preference -- a fresh visit/tab should still land on
+      // Homes normally. Added 2026-09-11 per Aaron's direct request.
+      const active = getActiveTabName();
+      if (active) sessionStorage.setItem(PULL_REFRESH_RESTORE_TAB_KEY, active);
       location.reload();
       return; // leave the indicator showing through the reload
     }
@@ -2565,6 +2597,7 @@ initBuyersTab();
 loadData().then(() => {
   initGetStartedForm();
   initVisitorSync();
+  restoreTabAfterPullRefresh();
 });
 
 // PWA install support (2026-08-27) -- minimal service worker, exists mainly
