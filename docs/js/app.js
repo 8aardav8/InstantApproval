@@ -2662,7 +2662,10 @@ if ("serviceWorker" in navigator) {
 const BUYERS_API_URL = "https://iah-buyers.notactuallyit.workers.dev";
 
 let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on dropdown change
-let BUYERS_SORT = "area";
+// Default sort, changed 2026-09-11 per Aaron's direct request ("Buyers
+// should be default sorted by most recent contact/login, etc.") -- was
+// "area".
+let BUYERS_SORT = "last-contact";
 // 1 = today's real default order for whichever sort is selected, -1 =
 // reversed. Reset to 1 whenever the sort TYPE changes (see initBuyersTab)
 // so switching sorts always starts from its own sensible default, not
