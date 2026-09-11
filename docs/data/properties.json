@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-11T17:19:57.073723+00:00",
+  "generatedAt": "2026-09-11T17:20:28.280480+00:00",
   "listings": [
+    {
+      "id": "1484-e-clay-street-decatur-il-62521",
+      "address": "1484 E Clay Street Decatur IL 62521",
+      "onMarketDate": "9/10",
+      "lastUpdate": "9/10",
+      "area": "IL - Decatur",
+      "down": "$4,000",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/u/1/folders/1yjJiutYFXqwhrTqH-_Ngj9c9RjYK5T9q\nhttps://drive.google.com/file/d/1YKx3rfDaK0yksKv99BuWxDPjWw7X0uAi/view?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8401922,
+      "lng": -88.93648069999999
+    },
     {
       "id": "1315-e-decatur-st-decatur-il-62521",
       "address": "1315 E Decatur St Decatur IL 62521",
