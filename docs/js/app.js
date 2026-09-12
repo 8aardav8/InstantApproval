@@ -3381,9 +3381,21 @@ function initBuyerDetailSwipe() {
   }, { passive: true });
 }
 
+// Real bug fixed 2026-09-12, found by Aaron directly: this used to just
+// toggle visibility, never re-rendering the list -- so a sentiment/stage
+// change made from the TOP of a buyer's detail page (setBuyerSentiment/
+// setBuyerStage there mutate the shared BUYERS_CACHE object fine, but only
+// re-render the detail view itself, via their onDone callback) never
+// showed up on that buyer's own list card until something else happened
+// to reload the whole list (switching tabs away and back). The list-card
+// controls' own writes were never affected (they already call
+// renderBuyersList() themselves) -- this was a one-way gap, not a data
+// problem: BUYERS_CACHE was always current, the list's rendered DOM
+// underneath just wasn't refreshed to match it.
 function backToBuyersList() {
   document.getElementById("buyers-detail-view").classList.add("hidden");
   document.getElementById("buyers-list-view").classList.remove("hidden");
+  renderBuyersList();
 }
 
 // Two links: the openphone:// scheme (documented at
