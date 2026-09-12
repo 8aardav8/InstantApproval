@@ -3190,16 +3190,17 @@ function renderBuyersList() {
     // (which color). Falls back to a neutral gray if they have an
     // appointment but no stage set yet, rather than no outline at all.
     const stageOutlineColor = upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
-    // Card layout redesigned 2026-09-12 per Aaron's direct request: the ID
-    // thumbnail is now a real left-1/3 column (not a small fixed square,
-    // and no longer collapsing in landscape -- CSS grid columns don't
-    // care about orientation the way the old flex layout's fixed pixel
-    // size effectively did), and the sentiment/stage status bar moved to
-    // its own full-width row at the BOTTOM of the card instead of sitting
-    // inline with the name. buyer-row-top holds everything that used to
-    // be direct children (name/badges/sub/dates), now grid-arranged
-    // alongside the thumbnail; buyer-row-quick-status spans the full card
-    // width below both.
+    // Card layout, redesigned again 2026-09-12 per Aaron's direct
+    // follow-up (his own screenshot showed the name/phone overlapping the
+    // Texted/Called text) -- now a real 3-equal-column grid, two rows on
+    // the right side:
+    //   "thumb top    top"     <- ID (spans both rows) | name/email/badges, full 2/3 width
+    //   "thumb status dates"   <- (ID continues)        | smiley+stage    | texted/called/login
+    // Each of thumb/status/dates is exactly 1/3 of the card width; top
+    // spans the other two columns. buyer-row-dates moved out of
+    // buyer-row-top (where it was colliding with the name) into its own
+    // grid area, right-aligned, next to the stage control instead of
+    // above it.
     //
     // Switched from <button> to a clickable <div> 2026-09-12 -- a <select>
     // and buttons (sentiment emoji, stage dropdown) can't validly nest
@@ -3215,13 +3216,13 @@ function renderBuyersList() {
             ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
             ${idNameMismatchHtml}
           </div>
-          <span class="buyer-row-dates">
-            ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
-            ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
-            ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
-          </span>
         </div>
         ${quickStatusHtml}
+        <span class="buyer-row-dates">
+          ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
+          ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+          ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
+        </span>
       </div>
     `);
   }

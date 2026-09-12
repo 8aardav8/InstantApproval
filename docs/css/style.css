@@ -746,27 +746,37 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
      "thumb top"     <- thumbnail | name/badges/sub + dates
      "status status" <- sentiment/stage, full width
 */
+/* 3 equal columns, redesigned again 2026-09-12 per Aaron's direct
+   follow-up (his own screenshot showed the name/phone overlapping the
+   Texted/Called text -- that pair used to share the top row with the
+   name, side by side, and collided on longer names). Now:
+     "thumb top    top"     <- ID (spans both rows) | name/email/badges, full 2/3 width
+     "thumb status dates"   <- (ID continues)        | smiley+stage | texted/called/login
+   thumb/status/dates are each exactly 1/3 of the card width; top spans
+   the other two columns above them. */
 .buyer-row {
-  display: grid; grid-template-columns: 1fr 2fr; grid-template-rows: auto auto;
-  grid-template-areas: "thumb top" "status status";
+  display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto;
+  grid-template-areas: "thumb top top" "thumb status dates";
   gap: 4px 12px;
   width: 100%; text-align: left; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
   padding: 16px 18px; margin-bottom: 8px; cursor: pointer; font: inherit;
 }
 .buyer-row:hover { border-color: var(--blue); }
 .buyer-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.buyer-row-top { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
-.buyer-row-main { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 0; }
+.buyer-row-top { grid-area: top; min-width: 0; }
+.buyer-row-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .buyer-row-name { font-weight: 700; font-size: 15px; color: var(--navy); }
 .buyer-row-sub { font-size: 12px; color: var(--gray-text, #6b7280); }
-.buyer-row-date { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
-.buyer-row-dates { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: 0 0 auto; }
+.buyer-row-date { font-size: 11px; color: #9ca3af; }
+/* Moved out from beside the name (where it was colliding, see above) into
+   its own bottom-right grid cell, next to the stage control instead of
+   above it. */
+.buyer-row-dates { grid-area: dates; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; padding-top: 10px; border-top: 1px solid #f3f4f6; }
 
 /* Sentiment emoji + Stage dropdown, added 2026-09-12 per Aaron's direct
-   request -- quick per-buyer notes right on the card, now its own
-   full-width row along the bottom (moved off the middle of the card same
-   day, per Aaron's follow-up). */
-.buyer-row-quick-status { grid-area: status; display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-top: 10px; border-top: 1px solid #f3f4f6; flex-wrap: wrap; }
+   request -- now its own grid cell (middle column, bottom row), next to
+   the Texted/Called/Login info in the column beside it. */
+.buyer-row-quick-status { grid-area: status; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-top: 10px; border-top: 1px solid #f3f4f6; }
 /* Quo-name / ID-name mismatch flag, added 2026-09-12. */
 .buyer-row-idname-flag { font-size: 11px; font-weight: 700; color: #9a3412; background: #fff7ed; padding: 2px 8px; border-radius: 10px; width: fit-content; }
 .sentiment-picker { display: flex; gap: 2px; }
