@@ -2732,6 +2732,26 @@ const BUYER_STAGES = [
   "Multiple Showings", "Deposit Received", "Buyer", "Multiple Buyer",
 ];
 
+// One color per stage, same order as BUYER_STAGES -- a warm-to-cool
+// gradient (orange -> yellow -> green -> purple), added 2026-09-12 per
+// Aaron's direct request. Used for both the progress bar's own fill (each
+// segment colored by ITS stage, not one flat color) and the card outline
+// color below (a buyer's current-stage color, replacing a flat red).
+const STAGE_COLORS = [
+  "#f97316", // First Contact -- orange
+  "#f59e0b", // ID Verified -- amber
+  "#eab308", // Showing Scheduled -- yellow
+  "#84cc16", // First Showing Done -- lime
+  "#22c55e", // Multiple Showings -- green
+  "#14b8a6", // Deposit Received -- teal
+  "#3b82f6", // Buyer -- blue
+  "#a855f7", // Multiple Buyer -- purple
+];
+function stageColorFor(stage) {
+  const idx = stage ? BUYER_STAGES.indexOf(stage) : -1;
+  return idx >= 0 ? STAGE_COLORS[idx] : null;
+}
+
 // Sentiment emojis, added 2026-09-12 -- Aaron's own personal-impression
 // note per buyer. Stored server-side as one of these three keys (or "" for
 // unset); the emoji itself is purely a client-side rendering choice.
@@ -2757,7 +2777,15 @@ function renderStageSelectHtml(buyer) {
 // stage set yet renders all segments empty rather than guessing a start.
 function renderStageProgressBarHtml(buyer) {
   const currentIdx = buyer.stage ? BUYER_STAGES.indexOf(buyer.stage) : -1;
-  const segments = BUYER_STAGES.map((s, i) => `<span class="stage-progress-segment${i <= currentIdx ? " stage-progress-filled" : ""}" title="${escapeAttr(s)}"></span>`).join("");
+  // Each FILLED segment takes on its OWN stage's color (STAGE_COLORS),
+  // not one flat fill color -- reads as a real gradient sweeping through
+  // orange/yellow/green/purple as it fills, added 2026-09-12 per Aaron's
+  // direct request.
+  const segments = BUYER_STAGES.map((s, i) => {
+    const filled = i <= currentIdx;
+    const style = filled ? ` style="background:${STAGE_COLORS[i]}"` : "";
+    return `<span class="stage-progress-segment${filled ? " stage-progress-filled" : ""}"${style} title="${escapeAttr(s)}"></span>`;
+  }).join("");
   return `
     <div class="stage-progress-bar">${segments}</div>
     <div class="stage-progress-label">${buyer.stage ? escapeHtml(buyer.stage) : "No stage set"}</div>
@@ -3154,30 +3182,46 @@ function renderBuyersList() {
         ${renderStageSelectHtml(b)}
       </div>
     `;
-    // Red outline for an upcoming appointment, added 2026-09-12 per
-    // Aaron's direct request ("circled in Red so that I know they have an
-    // appointment coming up") -- same upcomingCount > 0 signal the 📅
-    // badge above already uses.
+    // Outline color, changed 2026-09-12 per Aaron's direct follow-up --
+    // was a flat red for any upcoming appointment; now uses that buyer's
+    // OWN current-stage color (STAGE_COLORS/stageColorFor) instead, so the
+    // card border tells you both "there's a showing coming up" (whether
+    // it's outlined at all) AND roughly where they are in the pipeline
+    // (which color). Falls back to a neutral gray if they have an
+    // appointment but no stage set yet, rather than no outline at all.
+    const stageOutlineColor = upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
+    // Card layout redesigned 2026-09-12 per Aaron's direct request: the ID
+    // thumbnail is now a real left-1/3 column (not a small fixed square,
+    // and no longer collapsing in landscape -- CSS grid columns don't
+    // care about orientation the way the old flex layout's fixed pixel
+    // size effectively did), and the sentiment/stage status bar moved to
+    // its own full-width row at the BOTTOM of the card instead of sitting
+    // inline with the name. buyer-row-top holds everything that used to
+    // be direct children (name/badges/sub/dates), now grid-arranged
+    // alongside the thumbnail; buyer-row-quick-status spans the full card
+    // width below both.
     //
     // Switched from <button> to a clickable <div> 2026-09-12 -- a <select>
-    // and buttons (sentiment emoji, stage dropdown above) can't validly
-    // nest inside a <button>'s content model. role="button" + tabindex
-    // keep it reachable/activatable via keyboard.
+    // and buttons (sentiment emoji, stage dropdown) can't validly nest
+    // inside a <button>'s content model. role="button" + tabindex keep it
+    // reachable/activatable via keyboard.
     rows.push(`
-      <div class="buyer-row${upcomingCount > 0 ? " buyer-row-has-appointment" : ""}" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0">
-        ${idThumbHtml}
-        <div class="buyer-row-main">
-          <span class="buyer-row-name">${escapeHtml(label)}</span>
-          ${badgesHtml}
-          ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
-          ${idNameMismatchHtml}
-          ${quickStatusHtml}
+      <div class="buyer-row" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${stageOutlineColor ? ` style="border-color:${stageOutlineColor};border-width:2px"` : ""}>
+        ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
+        <div class="buyer-row-top">
+          <div class="buyer-row-main">
+            <span class="buyer-row-name">${escapeHtml(label)}</span>
+            ${badgesHtml}
+            ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+            ${idNameMismatchHtml}
+          </div>
+          <span class="buyer-row-dates">
+            ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
+            ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+            ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
+          </span>
         </div>
-        <span class="buyer-row-dates">
-          ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
-          ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
-          ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
-        </span>
+        ${quickStatusHtml}
       </div>
     `);
   }

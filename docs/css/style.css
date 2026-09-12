@@ -54,19 +54,23 @@ body {
   background: var(--navy);
   color: #fff;
   padding: 10px 16px;
+  /* max-width + centering added 2026-09-12, corrected same day -- real
+     reported bug: .topbar had no max-width at all, so it always spanned
+     the full physical viewport while main/.profile-bar cap at 640px
+     (900px in landscape, see that media query below) -- invisible in
+     portrait (viewport's already under 640px, so the cap never bit
+     either box), but a real, visible mismatch in landscape/tablet widths
+     ("the menu extends all the way across, the content column doesn't").
+     First attempt only centered the INNER nav row (.masthead-row/
+     .top-tabs) inside a still-full-bleed bar -- Aaron's direct follow-up
+     ("still not bound... make it the same as the rest of the page")
+     confirmed that wasn't enough; the whole bar's own box needs to match
+     main's width, not just its content floating centered inside it. Same
+     base 640px as main's own rule; the landscape query bumps both
+     together so they can never drift apart again. */
+  max-width: 640px;
+  margin: 0 auto;
 }
-/* max-width + centering added 2026-09-12 -- real reported bug: .topbar
-   itself is a deliberate full-bleed colored bar (no max-width, by design),
-   but its CONTENT never matched main/.profile-bar's own constrained width
-   the way it should -- invisible in portrait (viewport is under 640px
-   anyway, so the cap never bit), but landscape widens main/.profile-bar to
-   900px (see the landscape media query below) while the topbar's content
-   stayed unconstrained at the full physical viewport width, which on a
-   landscape phone or a tablet is often noticeably WIDER than 900px --
-   "the menu extends all the way across" while the content column beneath
-   it doesn't. Same base 640px as main's own rule; the landscape query
-   bumps both together so they can never drift apart again. */
-.masthead-row, .top-tabs { max-width: 640px; margin: 0 auto; }
 .masthead-row { display: flex; align-items: center; gap: 12px; }
 .masthead-title { font-size: 18px; font-weight: 800; margin: 0; flex: 1; }
 .mobile-current-tab { display: none; flex: 1; text-align: center; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; }
@@ -264,7 +268,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    regardless of how much real landscape width is available. */
 @media (orientation: landscape) and (min-width: 640px) {
   .card-grid { grid-template-columns: repeat(3, 1fr); }
-  main, .profile-bar, .masthead-row, .top-tabs { max-width: 900px; }
+  main, .profile-bar, .topbar { max-width: 900px; }
 }
 .card {
   position: relative; /* anchors .card-heart's absolute positioning, added 2026-08-29 */
@@ -724,19 +728,25 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   color: var(--blue); padding: 14px 4px 6px;
 }
 
+/* Redesigned as a CSS grid 2026-09-12 per Aaron's direct request: ID
+   thumbnail as a real left-1/3 column (regardless of portrait/landscape --
+   a grid column fraction doesn't care about orientation the way the old
+   flex layout's fixed-pixel thumbnail effectively did), main info+dates
+   in the remaining 2/3, and the sentiment/stage status bar as its own
+   full-width row along the bottom. Grid areas:
+     "thumb top"     <- thumbnail | name/badges/sub + dates
+     "status status" <- sentiment/stage, full width
+*/
 .buyer-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: grid; grid-template-columns: 1fr 2fr; grid-template-rows: auto auto;
+  grid-template-areas: "thumb top" "status status";
+  gap: 4px 12px;
   width: 100%; text-align: left; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-  /* Slightly bigger, added 2026-09-11 per Aaron's direct request. */
   padding: 16px 18px; margin-bottom: 8px; cursor: pointer; font: inherit;
 }
 .buyer-row:hover { border-color: var(--blue); }
 .buyer-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-/* Upcoming-appointment highlight, added 2026-09-12 per Aaron's direct
-   request ("circled in Red"). !important on the border color keeps this
-   visible even on :hover (blue) -- an upcoming appointment is the more
-   important signal in that moment. */
-.buyer-row-has-appointment { border: 2px solid #dc2626 !important; padding: 15px 17px; }
+.buyer-row-top { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
 .buyer-row-main { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 0; }
 .buyer-row-name { font-weight: 700; font-size: 15px; color: var(--navy); }
 .buyer-row-sub { font-size: 12px; color: var(--gray-text, #6b7280); }
@@ -744,8 +754,10 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-dates { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: 0 0 auto; }
 
 /* Sentiment emoji + Stage dropdown, added 2026-09-12 per Aaron's direct
-   request -- quick per-buyer notes right on the card. */
-.buyer-row-quick-status { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+   request -- quick per-buyer notes right on the card, now its own
+   full-width row along the bottom (moved off the middle of the card same
+   day, per Aaron's follow-up). */
+.buyer-row-quick-status { grid-area: status; display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-top: 10px; border-top: 1px solid #f3f4f6; flex-wrap: wrap; }
 /* Quo-name / ID-name mismatch flag, added 2026-09-12. */
 .buyer-row-idname-flag { font-size: 11px; font-weight: 700; color: #9a3412; background: #fff7ed; padding: 2px 8px; border-radius: 10px; width: fit-content; }
 .sentiment-picker { display: flex; gap: 2px; }
@@ -760,16 +772,19 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   border-radius: 6px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer;
 }
 
-/* Card ID thumbnail, added 2026-09-12 per Aaron's direct request -- small,
-   fixed-size, never lets a tall/portrait ID photo blow out the row height.
-   object-fit: cover crops rather than squishes. Blank until
-   loadAdminIdPhoto's blob fetch resolves (see app.js) -- background color
-   avoids an ugly "broken image" glyph flashing in the meantime. */
+/* Card ID thumbnail, redesigned 2026-09-12 per Aaron's direct request --
+   a real left-1/3 grid column (see .buyer-row above) instead of a small
+   fixed square, stretching to fill that column's full height in both
+   portrait and landscape. object-fit: cover crops rather than squishes.
+   Blank until loadAdminIdPhoto's blob fetch resolves (see app.js) --
+   background color avoids an ugly "broken image" glyph flashing in the
+   meantime. .buyer-row-no-thumb is the placeholder for a buyer with no ID
+   on file yet, so the grid column still holds its shape. */
 .buyer-row-thumb {
-  /* Bumped 44px -> 64px 2026-09-12 per Aaron's direct request. */
-  width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
-  border: 1px solid #e5e7eb; background: #f3f4f6; flex: 0 0 auto;
+  grid-area: thumb; width: 100%; height: 100%; min-height: 72px;
+  border-radius: 8px; object-fit: cover; border: 1px solid #e5e7eb; background: #f3f4f6;
 }
+.buyer-row-no-thumb { background: #f3f4f6; }
 
 /* Row badges (ID on file / showings booked), added 2026-09-11 */
 .buyer-row-badges { display: flex; gap: 6px; }
