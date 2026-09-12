@@ -3569,12 +3569,30 @@ function cssEscapeAttrValue(value) {
 // one he'll actually tap on his phone) is now the blue/primary one, the
 // browser fallback white/outline. Wrapped in .buyer-quo-links so the two
 // sit side by side (added same day -- see .buyer-quo-links in style.css).
+// Real bug fixed 2026-09-13, found by Aaron directly: this used to bail
+// out entirely -- BOTH buttons -- whenever webUrl (buyer.quoUrl) was
+// missing. webUrl only ever gets set from a matched Quo CONTACT record
+// (see admin-buyers-worker.js: `quoUrl: contact ? .../contacts/${contact.id}
+// : null`), so a phone number Aaron has genuinely texted/called before but
+// that was never saved as a named Quo contact had no quoUrl -- and lost
+// both links entirely, even though the app deep link only ever needed the
+// phone number itself, never a contact ID. Confirmed against Quo's own
+// deep-linking docs (support.quo.com/core-concepts/integrations/
+// deep-linking): the openphone://message?number= scheme takes a bare
+// phone number, no contact lookup involved server-side. The browser link
+// genuinely has no equivalent without a contact ID -- that same doc page
+// states "Deep linking is available for mobile apps only. Web and desktop
+// applications are not supported" -- so it's the one still omitted when
+// webUrl is missing, not both.
 function quoAppAndWebLinks(phone, webUrl) {
-  if (!webUrl) return "";
+  if (!phone && !webUrl) return "";
   const appHtml = phone
     ? `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="btn-primary buyer-quo-link">Open in Quo app</a>`
     : "";
-  return `<div class="buyer-quo-links">${appHtml}<a href="${escapeAttr(webUrl)}" target="_blank" rel="noopener" class="btn-outline buyer-quo-link">Open in Quo (browser)</a></div>`;
+  const webHtml = webUrl
+    ? `<a href="${escapeAttr(webUrl)}" target="_blank" rel="noopener" class="btn-outline buyer-quo-link">Open in Quo (browser)</a>`
+    : "";
+  return `<div class="buyer-quo-links">${appHtml}${webHtml}</div>`;
 }
 
 function renderBuyerDetail(buyer) {
