@@ -821,6 +821,64 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 
 #buyers-detail-content h2 { color: var(--navy); margin: 0 0 10px; }
+/* Swipe-between-buyers visual feedback, added 2026-09-12 per Aaron's
+   direct request ("I have accidentally swiped before and didn't know I
+   was on a new page"). Toast names who you landed on; the flash gives a
+   quick directional cue even without reading it. */
+.swipe-toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  background: var(--navy); color: #fff; font-size: 13px; font-weight: 700;
+  padding: 8px 16px; border-radius: 20px; z-index: 70; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: swipe-toast-fade 1s ease forwards;
+  pointer-events: none; max-width: 80vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+@keyframes swipe-toast-fade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.swipe-flash-left { animation: swipe-flash-left 0.35s ease; }
+.swipe-flash-right { animation: swipe-flash-right 0.35s ease; }
+@keyframes swipe-flash-left {
+  0% { transform: translateX(14px); opacity: 0.4; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes swipe-flash-right {
+  0% { transform: translateX(-14px); opacity: 0.4; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+/* Click-to-edit name, added 2026-09-12 per Aaron's direct request (replaces
+   the old standalone Edit section's Name field). */
+.buyer-name-editable { cursor: pointer; border-bottom: 1px dashed transparent; }
+.buyer-name-editable:hover, .buyer-name-editable:focus-visible { border-bottom-color: var(--blue); outline: none; }
+.buyer-name-edit-input {
+  display: block; font-size: 22px; font-weight: 700; color: var(--navy); font-family: inherit;
+  border: 1px solid var(--blue); border-radius: 8px; padding: 4px 8px; margin: 0 0 10px; width: 100%; max-width: 320px;
+}
+
+/* Click-to-edit areas, added 2026-09-12 per Aaron's direct request
+   (replaces the old standalone Edit section's area checkboxes). */
+.buyer-areas-editable { cursor: pointer; }
+.buyer-areas-editable .value { border-bottom: 1px dashed #d1d5db; }
+.buyer-areas-edit-panel { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+/* Click-to-view/upload ID, added 2026-09-12 per Aaron's direct request
+   (replaces the old plain link-out and the standalone upload button). */
+.buyer-id-photo-clickable, .buyer-no-id-clickable { cursor: pointer; }
+.buyer-no-id-clickable {
+  font-size: 13px; color: var(--gray-text, #6b7280); font-style: italic;
+  padding: 20px; border: 1px dashed #d1d5db; border-radius: 10px; text-align: center;
+}
+.id-lightbox-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 60;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.id-lightbox-content { background: #fff; border-radius: 12px; padding: 16px; max-width: 90vw; max-height: 90vh; overflow: auto; text-align: center; }
+.id-lightbox-img { max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 0 auto; }
+.id-lightbox-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.id-lightbox-upload-label { cursor: pointer; }
+.id-lightbox-status { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 8px; }
 /* Side by side, added 2026-09-12 per Aaron's direct request (were stacked
    above/below each other before). */
 .buyer-quo-links { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -862,6 +920,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .autocomplete-option { padding: 8px 10px; font-size: 13px; cursor: pointer; }
 .autocomplete-option:hover { background: #eef2ff; }
+
+/* Quick-jump buyer search at the top of the buyer detail page, added 2026-09-12. */
+.buyer-detail-search-wrap { margin: 0 0 12px; }
+.buyer-detail-search-wrap input {
+  width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db;
+  font-size: 14px; box-sizing: border-box;
+}
+.buyer-search-option-sub { display: block; font-size: 11px; color: #6b7280; }
 
 .buyer-message { padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
 .buyer-message.incoming { background: #eef2ff; }

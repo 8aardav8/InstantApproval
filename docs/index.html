@@ -965,6 +965,15 @@
     </div>
     <div id="buyers-detail-view" class="hidden">
       <button id="buyers-back-btn" class="buyers-back-btn">&larr; Back to list</button>
+      <!-- Added 2026-09-12 per Aaron's direct request: "a search bar at
+           the top of every buyers page that allows me to quickly tap it
+           and search for buyers to go directly to" -- same idea as
+           swiping between cards, but for jumping straight to someone by
+           name/phone/email instead of stepping one at a time. -->
+      <div class="autocomplete-wrap buyer-detail-search-wrap">
+        <input type="text" id="buyer-detail-search-input" placeholder="Search buyers…" autocomplete="off">
+        <div id="buyer-detail-search-suggestions" class="autocomplete-dropdown hidden"></div>
+      </div>
       <div id="buyers-detail-content"></div>
     </div>
   </section>

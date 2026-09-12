@@ -3396,7 +3396,30 @@ function showAdjacentBuyer(direction) {
   if (idx === -1) return; // current buyer got filtered out from under us -- nothing sane to step to
   const nextIdx = idx + direction;
   if (nextIdx < 0 || nextIdx >= list.length) return; // at an edge -- no wraparound
-  showBuyerDetail(list[nextIdx].phone);
+  const next = list[nextIdx];
+  showBuyerDetail(next.phone);
+  // Visual confirmation, added 2026-09-12 per Aaron's direct request ("I
+  // have accidentally swiped before and didn't know that I was on a new
+  // page") -- a brief slide-in toast naming who you just landed on and
+  // which direction, plus a quick flash on the whole page content so a
+  // swipe is unmistakably felt even if you don't read the toast text.
+  flashSwipeIndicator(direction, next.quoName || (next.leadInfo && next.leadInfo.contactName) || next.phone);
+}
+
+function flashSwipeIndicator(direction, name) {
+  const container = document.getElementById("buyers-detail-content");
+  if (container) {
+    container.classList.remove("swipe-flash-left", "swipe-flash-right");
+    void container.offsetWidth; // force reflow so the animation restarts on back-to-back swipes
+    container.classList.add(direction > 0 ? "swipe-flash-left" : "swipe-flash-right");
+  }
+  const existing = document.querySelector(".swipe-toast");
+  if (existing) existing.remove();
+  const toast = document.createElement("div");
+  toast.className = "swipe-toast";
+  toast.textContent = `${direction > 0 ? "→" : "←"} ${name}`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1000);
 }
 
 let CURRENT_BUYER_DETAIL_PHONE = null;
@@ -3472,9 +3495,15 @@ function renderBuyerDetail(buyer) {
   // this either (see loadIdPhotoThumbnail) -- render a blank <img> here
   // and fill it in via loadAdminIdPhoto() below, after this HTML is in
   // the DOM, same fetch+blob-URL pattern.
+  // Click-to-view/upload, added 2026-09-12 per Aaron's direct request
+  // ("click on the ID photo to update ID or add id... or see it in full
+  // screen") -- replaces the plain link-to-Dropbox. Clicking the photo
+  // (or the empty placeholder, if there's no ID yet) opens a lightbox
+  // (openIdLightbox) with the full-size image and an "Upload new ID"
+  // action in the same place, whether or not one's on file yet.
   const idPhoto = lm && lm.idLink
-    ? `<a href="${escapeAttr(lm.idLink)}" target="_blank" rel="noopener"><img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(lm.idLink)}" alt="ID on file"></a>`
-    : `<p class="buyer-no-id">No ID on file.</p>`;
+    ? `<img class="buyer-id-photo admin-id-photo buyer-id-photo-clickable" data-dropbox-link="${escapeAttr(lm.idLink)}" data-phone="${escapeAttr(buyer.phone)}" alt="ID on file (click to view or replace)">`
+    : `<div class="buyer-no-id-clickable" data-phone="${escapeAttr(buyer.phone)}">No ID on file. Click to add one.</div>`;
 
   // Background image scan (see IMAGES_CACHE_KEY server-side) found images
   // in this buyer's texts and they have no ID on file yet -- flagged for
@@ -3497,13 +3526,17 @@ function renderBuyerDetail(buyer) {
   // genuinely disagree (a garbage/placeholder Quo name is a real example
   // found the same day: Angela McDonald's Quo contact was literally named
   // "WMTB CHURCH ST NO NAME" even though her real ID OCR'd cleanly).
+  // "Quo Name" and "Areas" removed from this plain list 2026-09-12 --
+  // Quo Name is now the page's own <h2> (click to edit, see
+  // buyer-name-editable below), and Areas gets its own clickable block
+  // right after it (buyer-areas-editable) -- both to save space (per
+  // Aaron's direct request) and because they're editable now, unlike
+  // everything else still in this read-only list.
   const facts = [
-    ["Quo Name", buyer.quoName || ""],
     ["Login Name (IAH)", (lm && lm.name) || ""],
     ["ID Name (OCR)", (lm && lm.idName) || ""],
     ["Phone", buyer.phone],
     ["Email", (lm && lm.email) || ""],
-    ["Areas", (buyer.areas && buyer.areas.length > 0) ? buyer.areas.join(", ") : "Not yet classified"],
     ["First login", (lm && lm.firstLogin) || ""],
     ["Last login", (lm && lm.lastLogin) || ""],
     // Cross-referenced from a Glide-app login with no phone on its own
@@ -3697,62 +3730,25 @@ function renderBuyerDetail(buyer) {
   // Aaron also uses this from a laptop.
   const quoLinkHtml = quoAppAndWebLinks(buyer.phone, buyer.quoUrl);
 
-  // Edit section, added 2026-09-12 per Aaron's direct request: "I'd like to
-  // be able to update the contacts from their page on the buyer site, eg
-  // associate them with areas, upload id which would go to Dropbox and be
-  // renamed with ocr, update Quo contact name, etc." Areas and Quo-name
-  // are really the SAME write (an area is just a TB-tagged suffix on the
-  // Quo contact's own display name, see BUYERS_CANONICAL_AREAS/
-  // parseAreasFromName server-side) -- the checkboxes here are purely a
-  // convenience that composes into the one name field before saving, not a
-  // separate field anywhere. ID upload skips OCR entirely on this path --
-  // the buyer is already known (that's which page Aaron is on), so the
-  // file gets named directly, same as the public site's own upload form.
-  // OCR only matters for a file dropped with no buyer context at all (see
-  // id-photo-watch.ts).
-  const currentName = buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "";
-  const personalName = stripAreaTagsFromName(currentName);
-  const areaCheckboxesHtml = BUYERS_CANONICAL_AREAS.map((area, i) => `
-    <label class="edit-area-checkbox">
-      <input type="checkbox" class="buyer-edit-area" value="${escapeAttr(area)}" ${buyer.areas && buyer.areas.includes(area) ? "checked" : ""}>
-      ${escapeHtml(area)}
-    </label>
-  `).join("");
-  const editSectionHtml = `
-    <div class="buyer-section buyer-edit-section">
-      <h3>Edit</h3>
-      <label class="edit-label">Name<input type="text" id="buyer-edit-name" value="${escapeAttr(personalName)}" placeholder="First Last"></label>
-      <div class="edit-areas">${areaCheckboxesHtml}</div>
-      <label class="edit-area-checkbox edit-quo-sync-checkbox">
-        <input type="checkbox" id="buyer-edit-sync-quo" checked>
-        Also update Quo contact name
-      </label>
-      <button id="buyer-edit-save-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Save</button>
-      <div id="buyer-edit-status"></div>
-      <label class="edit-label">Upload ID photo<input type="file" id="buyer-edit-id-file" accept="image/*"></label>
-      <button id="buyer-edit-upload-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-outline">Upload</button>
-      <div id="buyer-upload-status"></div>
-    </div>
-  `;
-
-  // Message feed + compose, added 2026-09-11 -- shown for every buyer now
-  // (previously only offered for unclassified contacts). Not auto-loaded on
-  // render: still an explicit tap, same "don't eagerly fetch messages for
-  // everyone" reasoning as before, just no longer gated by area status.
-  const snippetOptions = MESSAGE_SNIPPETS.map((s, i) => `<option value="${i}">${escapeHtml(s.label)}</option>`).join("");
-  const messagesHtml = `
-    <div class="buyer-section">
-      <h3>Messages</h3>
-      <button id="buyer-load-messages" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Load recent messages</button>
-      <div id="buyer-messages-list"></div>
-      <div class="buyer-compose">
-        <select id="buyer-snippet-select"><option value="">— Insert a saved reply —</option>${snippetOptions}</select>
-        <textarea id="buyer-compose-text" rows="3" placeholder="Type a message…"></textarea>
-        <button id="buyer-send-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Send</button>
-        <div id="buyer-send-status"></div>
-      </div>
-    </div>
-  `;
+  // Standalone Edit section + Messages section both REMOVED 2026-09-12 per
+  // Aaron's direct request, to save space on the page:
+  // - Name is now editable by clicking the <h2> itself (see
+  //   buyer-name-editable below) -- Quo-rename only, no longer bundled
+  //   with areas.
+  // - Areas are now editable by clicking the Areas fact row itself (see
+  //   buyer-areas-editable below) -- set-areas only, no longer bundled
+  //   with a Quo rename.
+  // - ID upload/view is now the ID photo itself, click to open a
+  //   fullscreen lightbox with an "Upload new ID" action in it (see
+  //   idPhoto below and openIdLightbox).
+  // - Messages/compose section removed outright -- "since I now have the
+  //   Quo app button, which takes me directly to a conversation, I don't
+  //   even think that I need to be able to render the quo conversations
+  //   at the bottom of every Buyer page anymore." loadBuyerMessages/
+  //   sendBuyerMessage are left defined but unwired, same as the ID-match
+  //   buttons removed earlier today -- trivial to bring back a button if
+  //   ever wanted.
+  const personalName = stripAreaTagsFromName(buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "");
 
   // Header block, added 2026-09-12 per Aaron's direct request: Quo links
   // side by side (moved into quoAppAndWebLinks's own wrapper div, see its
@@ -3770,12 +3766,46 @@ function renderBuyerDetail(buyer) {
     </div>
   `;
 
+  // Click-to-edit name, added 2026-09-12 per Aaron's direct request ("just
+  // be able to click on the Quo name to edit it") -- replaces the
+  // standalone Edit section's Name field + Save button. Click the
+  // heading, it becomes a text input pre-filled with the name (tag
+  // stripped, same as before); Enter or blur saves via
+  // /admin/update-contact-name (Quo rename only -- areas are their own
+  // click target now, see below, not bundled into this write anymore).
+  const nameHeadingHtml = `
+    <h2 class="buyer-name-editable" data-phone="${escapeAttr(buyer.phone)}" data-personal-name="${escapeAttr(personalName)}" tabindex="0" title="Click to edit">
+      ${escapeHtml(buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || buyer.phone)}
+    </h2>
+  `;
+
+  // Click-to-edit areas, added 2026-09-12 per Aaron's direct request
+  // ("click on the area to add areas") -- replaces the Edit section's
+  // area checkboxes. Click the fact, it becomes the same checkbox list
+  // inline; each checkbox saves immediately via /admin/set-areas (no
+  // separate Save button, no Quo-name bundling -- that's the name click
+  // target's own job now).
+  const areasDisplayHtml = (buyer.areas && buyer.areas.length > 0) ? escapeHtml(buyer.areas.join(", ")) : "Not yet classified";
+  const areasCheckboxesHtml = BUYERS_CANONICAL_AREAS.map((area) => `
+    <label class="edit-area-checkbox">
+      <input type="checkbox" class="buyer-areas-checkbox" value="${escapeAttr(area)}" ${buyer.areas && buyer.areas.includes(area) ? "checked" : ""}>
+      ${escapeHtml(area)}
+    </label>
+  `).join("");
+  const areasBlockHtml = `
+    <div class="detail-field buyer-areas-editable" data-phone="${escapeAttr(buyer.phone)}" tabindex="0" title="Click to edit">
+      <span class="label">Areas</span>
+      <span class="value buyer-areas-display">${areasDisplayHtml}</span>
+      <div class="buyer-areas-edit-panel hidden">${areasCheckboxesHtml}</div>
+    </div>
+  `;
+
   container.innerHTML = `
-    <h2>${escapeHtml(buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || buyer.phone)}</h2>
+    ${nameHeadingHtml}
     ${detailHeaderHtml}
     <div class="buyer-id-section">${idPhoto}</div>
     ${possibleIdHtml}
-    ${editSectionHtml}
+    ${areasBlockHtml}
     ${factsHtml}
     ${leadInfoHtml}
     ${favoritesHtml}
@@ -3786,19 +3816,64 @@ function renderBuyerDetail(buyer) {
     ${pastHtml}
     ${coBuyersHtml}
     ${filtersHtml}
-    ${messagesHtml}
   `;
 
-  document.getElementById("buyer-load-messages").addEventListener("click", (e) => loadBuyerMessages(e.target.dataset.phone));
-  document.getElementById("buyer-snippet-select").addEventListener("change", (e) => {
-    const idx = e.target.value;
-    if (idx === "") return;
-    document.getElementById("buyer-compose-text").value = MESSAGE_SNIPPETS[idx].text.replace("{name}", buyer.quoName ? buyer.quoName.split(" ")[0] : "there");
-    e.target.value = "";
-  });
-  document.getElementById("buyer-send-btn").addEventListener("click", (e) => sendBuyerMessage(e.target.dataset.phone));
-  document.getElementById("buyer-edit-save-btn").addEventListener("click", (e) => saveBuyerNameAreas(e.target.dataset.phone));
-  document.getElementById("buyer-edit-upload-btn").addEventListener("click", (e) => uploadBuyerId(e.target.dataset.phone));
+  // Click-to-edit name -- click the heading, it becomes a text input;
+  // Enter or blur saves (Escape cancels without saving). Renders back to
+  // plain text either way afterward.
+  const nameHeading = container.querySelector(".buyer-name-editable");
+  if (nameHeading) {
+    const startEditingName = () => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "buyer-name-edit-input";
+      input.value = nameHeading.dataset.personalName;
+      nameHeading.replaceWith(input);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = async (save) => {
+        if (done) return;
+        done = true;
+        const newName = input.value.trim();
+        if (save && newName && newName !== nameHeading.dataset.personalName) {
+          await saveBuyerName(nameHeading.dataset.phone, newName, () => renderBuyerDetail(findBuyer(nameHeading.dataset.phone)));
+        } else {
+          renderBuyerDetail(findBuyer(nameHeading.dataset.phone));
+        }
+      };
+      input.addEventListener("blur", () => finish(true));
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); finish(true); }
+        if (e.key === "Escape") { e.preventDefault(); finish(false); }
+      });
+    };
+    nameHeading.addEventListener("click", startEditingName);
+    nameHeading.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startEditingName(); } });
+  }
+
+  // Click-to-edit areas -- click the fact row, its checkbox panel opens
+  // inline; each checkbox saves immediately on change.
+  const areasField = container.querySelector(".buyer-areas-editable");
+  if (areasField) {
+    areasField.addEventListener("click", (e) => {
+      if (e.target.closest(".buyer-areas-checkbox")) return; // let the checkbox click do its own thing below
+      areasField.querySelector(".buyer-areas-edit-panel").classList.toggle("hidden");
+    });
+    areasField.querySelectorAll(".buyer-areas-checkbox").forEach((cb) => {
+      cb.addEventListener("click", (e) => e.stopPropagation());
+      cb.addEventListener("change", () => {
+        const checked = [...areasField.querySelectorAll(".buyer-areas-checkbox:checked")].map((c) => c.value);
+        saveBuyerAreas(areasField.dataset.phone, checked, () => renderBuyerDetail(findBuyer(areasField.dataset.phone)));
+      });
+    });
+  }
+
+  // Click-to-view/upload ID -- see openIdLightbox for the lightbox itself.
+  const idClickTarget = container.querySelector(".buyer-id-photo-clickable, .buyer-no-id-clickable");
+  if (idClickTarget) {
+    idClickTarget.addEventListener("click", () => openIdLightbox(idClickTarget.dataset.phone, idClickTarget.dataset.dropboxLink || null));
+  }
 
   // Sentiment/stage controls at the top of the page, added 2026-09-12 --
   // same handlers as the list card, but re-render THIS page afterward
@@ -3928,6 +4003,65 @@ function initApptPropertyAutocomplete() {
   });
 }
 
+// Quick-jump search at the top of the buyer detail page, added 2026-09-12
+// per Aaron's direct request. initBuyersTab() (the sole caller) only runs
+// once at page load, so this only needs to wire its listeners once too --
+// BUYERS_CACHE is read fresh on every keystroke, not captured once, so this
+// works correctly no matter which buyer you're currently viewing or how
+// BUYERS_CACHE has changed since the page first loaded.
+function initBuyerDetailSearch() {
+  const input = document.getElementById("buyer-detail-search-input");
+  const dropdown = document.getElementById("buyer-detail-search-suggestions");
+  if (!input || !dropdown) return;
+
+  function matchesFor(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return (BUYERS_CACHE || [])
+      .filter((b) => {
+        const name = b.quoName || (b.leadInfo && b.leadInfo.contactName) || "";
+        const email = (b.loginsMatch && b.loginsMatch.email) || "";
+        return name.toLowerCase().includes(q) || b.phone.includes(q) || email.toLowerCase().includes(q);
+      })
+      .slice(0, AUTOCOMPLETE_MAX_RESULTS);
+  }
+  function renderSuggestions(query) {
+    const matches = matchesFor(query);
+    if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    dropdown.innerHTML = matches.map((b) => `
+      <div class="autocomplete-option" data-phone="${escapeAttr(b.phone)}">
+        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}
+        <span class="buyer-search-option-sub">${escapeHtml(b.phone)}</span>
+      </div>
+    `).join("");
+    dropdown.classList.remove("hidden");
+    dropdown.querySelectorAll(".autocomplete-option").forEach((opt) => {
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = "";
+        dropdown.classList.add("hidden");
+        dropdown.innerHTML = "";
+        showBuyerDetail(opt.dataset.phone);
+      });
+    });
+  }
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => { if (input.value.trim()) renderSuggestions(input.value); });
+  input.addEventListener("blur", () => { dropdown.classList.add("hidden"); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { dropdown.classList.add("hidden"); return; }
+    if (e.key === "Enter") {
+      const first = dropdown.querySelector(".autocomplete-option");
+      if (first && !dropdown.classList.contains("hidden")) {
+        e.preventDefault();
+        input.value = "";
+        dropdown.classList.add("hidden");
+        showBuyerDetail(first.dataset.phone);
+      }
+    }
+  });
+}
+
 async function scheduleAppointment(phone) {
   const addressInput = document.getElementById("appt-property-input");
   const dateInput = document.getElementById("appt-date-input");
@@ -4030,82 +4164,113 @@ function stripAreaTagsFromName(name) {
   return parts.join(" ");
 }
 
-// Areas are ALWAYS saved (Manual Area Override column, independent of
-// Quo) -- the "Also update Quo contact name" checkbox (default ON, added
-// 2026-09-12 per Aaron's direct request) controls only whether the Quo
-// contact's own display name gets renamed to match, a separate opt-in
-// write against a real third-party record.
-async function saveBuyerNameAreas(phone) {
-  const nameInput = document.getElementById("buyer-edit-name");
-  const statusEl = document.getElementById("buyer-edit-status");
-  const syncQuoCheckbox = document.getElementById("buyer-edit-sync-quo");
-  const personalName = nameInput.value.trim();
-  const checkedAreas = [...document.querySelectorAll(".buyer-edit-area:checked")].map((cb) => cb.value);
-  const syncQuo = syncQuoCheckbox.checked;
-  if (!personalName) { statusEl.textContent = "Name can't be blank."; return; }
-  const tagSuffix = checkedAreas.map((a) => AREA_TAG_TOKENS[a]).filter(Boolean).join(" ");
-  const fullName = tagSuffix ? `${personalName} ${tagSuffix}` : personalName;
-  const confirmMsg = syncQuo
-    ? `Save areas and rename this Quo contact to "${fullName}"?`
-    : `Save areas (${checkedAreas.length ? checkedAreas.join(", ") : "none"})? The Quo contact's own name will NOT be changed.`;
-  if (!confirm(confirmMsg)) return;
-  statusEl.textContent = "Saving…";
+// Click-to-edit versions, added 2026-09-12 per Aaron's direct request to
+// save page space -- replace the old standalone Edit section's combined
+// Save button (saveBuyerNameAreas) and Upload button (uploadBuyerId).
+// Name and Areas are now two SEPARATE triggers/writes (click the heading,
+// click the Areas fact), so there's no more "also update Quo" checkbox to
+// gate the name write -- clicking the name always means "rename this Quo
+// contact," clicking Areas always means "set the area override," and
+// neither touches the other anymore.
+async function saveBuyerName(phone, fullName, onDone) {
+  if (!confirm(`Rename this Quo contact to "${fullName}"?`)) { onDone(); return; }
   const token = getStoredAdminToken();
   try {
-    const areasRes = await fetch(`${ADMIN_API_URL}/admin/set-areas`, {
+    const res = await fetch(`${ADMIN_API_URL}/admin/update-contact-name`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, fullName: personalName, areas: checkedAreas }),
+      body: JSON.stringify({ phone, fullName }),
     });
-    const areasData = await areasRes.json();
-    if (!areasRes.ok || !areasData.ok) { statusEl.textContent = `Couldn't save areas: ${(areasData && areasData.error) || areasRes.status}`; return; }
-
-    if (syncQuo) {
-      const nameRes = await fetch(`${ADMIN_API_URL}/admin/update-contact-name`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, fullName }),
-      });
-      const nameData = await nameRes.json();
-      if (!nameRes.ok || !nameData.ok) { statusEl.textContent = `Areas saved, but couldn't rename the Quo contact: ${(nameData && nameData.error) || nameRes.status}`; return; }
-    }
-    statusEl.textContent = syncQuo
-      ? "Saved. (The buyers list picks up the new name/areas within ~15-20 min, once the background sync re-reads Quo.)"
-      : "Saved. (Areas pick up within ~15-20 min; Quo contact name left unchanged.)";
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't rename: ${(data && data.error) || res.status}`); onDone(); return; }
+    const buyer = findBuyer(phone);
+    if (buyer) buyer.quoName = fullName;
+    onDone();
   } catch (err) {
-    statusEl.textContent = `Couldn't save: ${err}`;
+    alert(`Couldn't rename: ${err}`);
+    onDone();
   }
 }
 
-async function uploadBuyerId(phone) {
-  const fileInput = document.getElementById("buyer-edit-id-file");
-  const statusEl = document.getElementById("buyer-upload-status");
-  const file = fileInput.files[0];
-  if (!file) { statusEl.textContent = "Choose a file first."; return; }
-  const buyer = findBuyer(phone);
-  const fullName = buyer ? (buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "") : "";
-  if (!confirm(`Upload this photo as ${fullName || phone}'s ID?`)) return;
-  statusEl.textContent = "Uploading…";
+async function saveBuyerAreas(phone, areas, onDone) {
   const token = getStoredAdminToken();
   try {
-    const form = new FormData();
-    form.set("phone", phone);
-    form.set("fullName", fullName);
-    form.set("idPhoto", file);
-    const res = await fetch(`${ADMIN_API_URL}/admin/upload-id`, {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-areas`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, fullName: "", areas }),
     });
     const data = await res.json();
-    if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't upload: ${(data && data.error) || res.status}`; return; }
-    statusEl.textContent = "Uploaded and linked.";
-    await loadBuyers();
-    const refreshed = findBuyer(phone);
-    if (refreshed) renderBuyerDetail(refreshed);
+    if (!res.ok || !data.ok) { alert(`Couldn't save areas: ${(data && data.error) || res.status}`); return; }
+    const buyer = findBuyer(phone);
+    if (buyer) buyer.areas = areas;
+    onDone();
   } catch (err) {
-    statusEl.textContent = `Couldn't upload: ${err}`;
+    alert(`Couldn't save areas: ${err}`);
   }
+}
+
+// Fullscreen ID lightbox + upload, added 2026-09-12 per Aaron's direct
+// request ("click on the ID photo to update ID or add id... or see it in
+// full screen") -- one click target does both: view the current ID
+// full-size (if there is one), or go straight to picking a replacement.
+// Skips OCR entirely, same reasoning as the old upload button did -- the
+// buyer is already known (that's which page this is), so the file gets
+// named directly via /admin/upload-id.
+function openIdLightbox(phone, dropboxLink) {
+  const buyer = findBuyer(phone);
+  const fullName = buyer ? (buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "") : "";
+  const overlay = document.createElement("div");
+  overlay.className = "id-lightbox-overlay";
+  overlay.innerHTML = `
+    <div class="id-lightbox-content">
+      ${dropboxLink ? `<img class="id-lightbox-img admin-id-photo" data-dropbox-link="${escapeAttr(dropboxLink)}" alt="ID full size">` : `<p class="buyer-no-id">No ID on file yet.</p>`}
+      <div class="id-lightbox-actions">
+        <label class="btn-primary id-lightbox-upload-label">
+          Upload new ID
+          <input type="file" accept="image/*" class="id-lightbox-file-input hidden">
+        </label>
+        <button type="button" class="btn-outline id-lightbox-close">Close</button>
+      </div>
+      <div class="id-lightbox-status"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  if (dropboxLink) {
+    const img = overlay.querySelector(".id-lightbox-img");
+    loadAdminIdPhoto(img, dropboxLink);
+  }
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector(".id-lightbox-close").addEventListener("click", close);
+  overlay.querySelector(".id-lightbox-file-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const statusEl = overlay.querySelector(".id-lightbox-status");
+    if (!confirm(`Upload this photo as ${fullName || phone}'s ID?`)) return;
+    statusEl.textContent = "Uploading…";
+    const token = getStoredAdminToken();
+    try {
+      const form = new FormData();
+      form.set("phone", phone);
+      form.set("fullName", fullName);
+      form.set("idPhoto", file);
+      const res = await fetch(`${ADMIN_API_URL}/admin/upload-id`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't upload: ${(data && data.error) || res.status}`; return; }
+      statusEl.textContent = "Uploaded and linked.";
+      await loadBuyers();
+      close();
+      const refreshed = findBuyer(phone);
+      if (refreshed) renderBuyerDetail(refreshed);
+    } catch (err) {
+      statusEl.textContent = `Couldn't upload: ${err}`;
+    }
+  });
 }
 
 async function loadBuyerMessages(phone) {
@@ -4252,6 +4417,7 @@ function initCopyableTextDelegation() {
 
 function initBuyersTab() {
   initCopyableTextDelegation();
+  initBuyerDetailSearch();
   const sortSel = document.getElementById("buyers-sort");
   if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; BUYERS_SORT_DIR = 1; renderBuyersList(); });
   const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
