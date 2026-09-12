@@ -706,6 +706,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   padding: 16px 18px; margin-bottom: 8px; cursor: pointer; font: inherit;
 }
 .buyer-row:hover { border-color: var(--blue); }
+.buyer-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 /* Upcoming-appointment highlight, added 2026-09-12 per Aaron's direct
    request ("circled in Red"). !important on the border color keeps this
    visible even on :hover (blue) -- an upcoming appointment is the more
@@ -716,6 +717,23 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-sub { font-size: 12px; color: var(--gray-text, #6b7280); }
 .buyer-row-date { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
 .buyer-row-dates { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: 0 0 auto; }
+
+/* Sentiment emoji + Stage dropdown, added 2026-09-12 per Aaron's direct
+   request -- quick per-buyer notes right on the card. */
+.buyer-row-quick-status { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+/* Quo-name / ID-name mismatch flag, added 2026-09-12. */
+.buyer-row-idname-flag { font-size: 11px; font-weight: 700; color: #9a3412; background: #fff7ed; padding: 2px 8px; border-radius: 10px; width: fit-content; }
+.sentiment-picker { display: flex; gap: 2px; }
+.sentiment-btn {
+  background: none; border: 1px solid transparent; border-radius: 6px; font-size: 16px;
+  line-height: 1; padding: 3px 5px; cursor: pointer; opacity: 0.35;
+}
+.sentiment-btn:hover { opacity: 0.7; }
+.sentiment-btn-selected { opacity: 1; border-color: #e5e7eb; background: #f9fafb; }
+.stage-select {
+  font-size: 11px; font-weight: 700; color: var(--navy); padding: 3px 6px;
+  border-radius: 6px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer;
+}
 
 /* Card ID thumbnail, added 2026-09-12 per Aaron's direct request -- small,
    fixed-size, never lets a tall/portrait ID photo blow out the row height.
@@ -828,6 +846,10 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   display: flex; align-items: stretch; gap: 12px;
   background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
 }
+/* Click-through to the buyer's own card, added 2026-09-12. */
+.appt-card-clickable { cursor: pointer; }
+.appt-card-clickable:hover { border-color: var(--blue); }
+.appt-card-clickable:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .appt-card-thumb {
   width: 33%; flex: 0 0 33%; border-radius: 8px; object-fit: cover;
   border: 1px solid #e5e7eb; background: #f3f4f6; min-height: 90px;

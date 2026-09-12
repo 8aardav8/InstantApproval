@@ -400,6 +400,20 @@ async function writeIdLink(accessToken, row, idLink) {
   if (!res.ok) throw new Error(`id-link write failed: ${await res.text()}`);
 }
 
+// ID Name (OCR) -- column AG, added 2026-09-12. See handleInternalAutoLinkId's
+// own comment for why this is kept separate from the Name column (E,
+// which is the IAH login name) and the Quo contact's own name.
+async function writeIdName(accessToken, row, idName) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AG${row}:AG${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AG${row}:AG${row}`, values: [[idName]] }),
+  });
+  if (!res.ok) throw new Error(`id-name write failed: ${await res.text()}`);
+}
+
 // "Manual Area Override" -- column AD, added 2026-09-12 per Aaron's direct
 // request to set a buyer's area WITHOUT necessarily also renaming their
 // Quo contact (see handleAdminSetAreas below). admin-buyers-worker.js's
@@ -418,6 +432,36 @@ async function writeManualAreaOverride(accessToken, row, areasCsv) {
     body: JSON.stringify({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[areasCsv]] }),
   });
   if (!res.ok) throw new Error(`area-override write failed: ${await res.text()}`);
+}
+
+// Sentiment (AE) and Stage (AF), added 2026-09-12 per Aaron's direct
+// request -- a personal-impression emoji and a pipeline stage per buyer,
+// both purely his own manual notes. Single-column writes, same pattern as
+// writeManualAreaOverride above.
+const SENTIMENT_VALUES = new Set(["smile", "neutral", "frown"]);
+const STAGE_VALUES = [
+  "First Contact", "ID Verified", "Showing Scheduled", "First Showing Done",
+  "Multiple Showings", "Deposit Received", "Buyer", "Multiple Buyer",
+];
+async function writeSentiment(accessToken, row, sentiment) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AE${row}:AE${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AE${row}:AE${row}`, values: [[sentiment]] }),
+  });
+  if (!res.ok) throw new Error(`sentiment write failed: ${await res.text()}`);
+}
+async function writeStage(accessToken, row, stage) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AF${row}:AF${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AF${row}:AF${row}`, values: [[stage]] }),
+  });
+  if (!res.ok) throw new Error(`stage write failed: ${await res.text()}`);
 }
 
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
@@ -1750,6 +1794,73 @@ async function handleAdminAddAppointment(request, env) {
   }
 }
 
+// Sets (or clears, with sentiment: "") a buyer's personal-impression
+// sentiment. Added 2026-09-12 per Aaron's direct request -- purely his own
+// note, no confirmation dialog needed client-side (unlike areas/name,
+// this never touches Quo or anything a third party would see).
+async function handleAdminSetSentiment(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const sentiment = (body.sentiment || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  if (sentiment && !SENTIMENT_VALUES.has(sentiment)) return jsonResponse({ error: "invalid sentiment" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await writeSentiment(accessToken, row, sentiment);
+    return jsonResponse({ ok: true, sentiment });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Sets (or clears, with stage: "") a buyer's pipeline stage. Same
+// no-confirmation-needed reasoning as sentiment above -- Aaron's own
+// tracking note, not a third-party-visible write.
+async function handleAdminSetStage(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const stage = (body.stage || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  if (stage && !STAGE_VALUES.includes(stage)) return jsonResponse({ error: "invalid stage" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await writeStage(accessToken, row, stage);
+    return jsonResponse({ ok: true, stage });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Renames a buyer's Quo contact -- a separate, OPT-IN action (see the
 // checkbox in the buyers-tab UI, default checked) from setting areas
 // above. The buyers-tab UI composes personal-name + area-tag-suffix into
@@ -1884,6 +1995,13 @@ async function handleInternalAutoLinkId(request, env) {
   const buyerPhone = (body.buyerPhone || "").trim();
   const buyerName = (body.buyerName || "").trim();
   const originalFilename = (body.filename || dropboxPath.split("/").pop() || "").trim();
+  // The name actually read off the ID itself (AAMVA field 1/2 parse, best
+  // effort -- see id-photo-watch.ts), added 2026-09-12 per Aaron's direct
+  // request to be able to tell a buyer's Quo name, IAH login name, and ID
+  // name apart on the page. Independent of buyerName above, which is only
+  // ever the MATCHED Quo contact's name (used for the file's own naming
+  // convention) -- this is a separate fact worth keeping even when they agree.
+  const idName = (body.idName || "").trim();
   if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
@@ -1904,8 +2022,16 @@ async function handleInternalAutoLinkId(request, env) {
 
     const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
     const row = await findLoginsRowByPhone(accessToken, buyerPhone);
-    if (row) await writeIdLink(accessToken, row, idLink);
-    else await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
+    if (row) {
+      await writeIdLink(accessToken, row, idLink);
+      if (idName) await writeIdName(accessToken, row, idName);
+    } else {
+      await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
+      if (idName) {
+        const newRow = await findLoginsRowByPhone(accessToken, buyerPhone);
+        if (newRow) await writeIdName(accessToken, newRow, idName);
+      }
+    }
 
     return jsonResponse({ ok: true, renamedTo: finalPath, idLink });
   } catch (e) {
@@ -3010,6 +3136,12 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/add-appointment" && request.method === "POST") {
     return handleAdminAddAppointment(request, env);
+  }
+  if (url.pathname === "/admin/set-sentiment" && request.method === "POST") {
+    return handleAdminSetSentiment(request, env);
+  }
+  if (url.pathname === "/admin/set-stage" && request.method === "POST") {
+    return handleAdminSetStage(request, env);
   }
 
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
