@@ -400,6 +400,26 @@ async function writeIdLink(accessToken, row, idLink) {
   if (!res.ok) throw new Error(`id-link write failed: ${await res.text()}`);
 }
 
+// "Manual Area Override" -- column AD, added 2026-09-12 per Aaron's direct
+// request to set a buyer's area WITHOUT necessarily also renaming their
+// Quo contact (see handleAdminSetAreas below). admin-buyers-worker.js's
+// own area-merge pass already reads this same tab's "Filter: Area(s)"
+// column (self-reported search filter) and unions it into b.areas -- this
+// is a DIFFERENT column on purpose, so Aaron's manual override never
+// overwrites/loses whatever a buyer actually typed into the site's own
+// area search. iah-buyers' buyer-list builder needs one added line to
+// also read+merge THIS column -- see that Worker's own comment.
+async function writeManualAreaOverride(accessToken, row, areasCsv) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AD${row}:AD${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[areasCsv]] }),
+  });
+  if (!res.ok) throw new Error(`area-override write failed: ${await res.text()}`);
+}
+
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
 // Same auth/base URL, same "PATCH replaces defaultFields wholesale, always
 // fetch-then-merge" gotcha, same firstName-required-on-create gotcha, same
@@ -1645,14 +1665,54 @@ async function handleAdminUploadId(request, env) {
   }
 }
 
-// Renames a buyer's Quo contact -- covers BOTH "fix a wrong/garbled name"
-// and "associate them with an area" in one action, since area classifying
-// is itself just a TB-tagged suffix on the Quo contact's own name (see
-// parseAreasFromName/CANONICAL_AREAS in admin-buyers-worker.js) -- there is
-// no separate "area" field anywhere to write. The buyers-tab UI is
-// responsible for composing personal-name + area-tag-suffix into the one
-// `fullName` string this takes; this endpoint only knows how to set a
-// Quo contact's display name, nothing area-specific.
+// Sets a buyer's area(s) via the Manual Area Override column (AD) --
+// independent of Quo entirely. Split out from the Quo-rename endpoint
+// below 2026-09-12 per Aaron's direct request: "I'd like to update the
+// areas associated but have a checkbox to opt in or out of updating the
+// quo name" -- so the buyers-tab UI always calls this one on Save, and
+// calls handleAdminUpdateContactName too only when that checkbox (default
+// ON) is checked. Areas were originally ONLY derivable from a TB-tagged
+// Quo name (see parseAreasFromName/CANONICAL_AREAS in
+// admin-buyers-worker.js) -- this column gives Aaron a way to set them
+// without touching Quo at all, merged additively into b.areas alongside
+// the TB-tag signal (see that Worker's own area-merge comment).
+async function handleAdminSetAreas(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim(); // used only if a brand-new row needs creating
+  const areas = Array.isArray(body.areas) ? body.areas.filter((a) => typeof a === "string" && a.trim()) : [];
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const areasCsv = areas.join(", ");
+    const row = await findLoginsRowByPhone(accessToken, phone);
+    if (row) await writeManualAreaOverride(accessToken, row, areasCsv);
+    else await appendLoginsRow(accessToken, toE164(phone), fullName, ""); // create the row first (no ID Link yet), then set areas on it
+    if (!row) {
+      const newRow = await findLoginsRowByPhone(accessToken, phone);
+      if (newRow) await writeManualAreaOverride(accessToken, newRow, areasCsv);
+    }
+    return jsonResponse({ ok: true, areas });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Renames a buyer's Quo contact -- a separate, OPT-IN action (see the
+// checkbox in the buyers-tab UI, default checked) from setting areas
+// above. The buyers-tab UI composes personal-name + area-tag-suffix into
+// the one `fullName` string this takes, for the cases where Aaron DOES
+// want the Quo contact's own display name kept in sync with the area
+// he just set; this endpoint only knows how to set a Quo contact's
+// display name, nothing area-specific.
 async function handleAdminUpdateContactName(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -2900,6 +2960,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/update-contact-name" && request.method === "POST") {
     return handleAdminUpdateContactName(request, env);
+  }
+  if (url.pathname === "/admin/set-areas" && request.method === "POST") {
+    return handleAdminSetAreas(request, env);
   }
 
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {

@@ -718,7 +718,8 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    loadAdminIdPhoto's blob fetch resolves (see app.js) -- background color
    avoids an ugly "broken image" glyph flashing in the meantime. */
 .buyer-row-thumb {
-  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+  /* Bumped 44px -> 64px 2026-09-12 per Aaron's direct request. */
+  width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
   border: 1px solid #e5e7eb; background: #f3f4f6; flex: 0 0 auto;
 }
 
@@ -811,6 +812,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .edit-areas { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; }
 .edit-area-checkbox { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 400; color: var(--gray-text, #6b7280); }
+.edit-quo-sync-checkbox { margin: 4px 0 10px; }
 #buyer-edit-status, #buyer-upload-status { font-size: 12px; color: var(--gray-text, #6b7280); min-height: 16px; margin-top: 6px; }
 
 /* Appointments overview, added 2026-09-11 */

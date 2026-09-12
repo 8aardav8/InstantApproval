@@ -3258,7 +3258,11 @@ function renderBuyerDetail(buyer) {
       <h3>Edit</h3>
       <label class="edit-label">Name<input type="text" id="buyer-edit-name" value="${escapeAttr(personalName)}" placeholder="First Last"></label>
       <div class="edit-areas">${areaCheckboxesHtml}</div>
-      <button id="buyer-edit-save-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Save name &amp; areas</button>
+      <label class="edit-area-checkbox edit-quo-sync-checkbox">
+        <input type="checkbox" id="buyer-edit-sync-quo" checked>
+        Also update Quo contact name
+      </label>
+      <button id="buyer-edit-save-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Save</button>
       <div id="buyer-edit-status"></div>
       <label class="edit-label">Upload ID photo<input type="file" id="buyer-edit-id-file" accept="image/*"></label>
       <button id="buyer-edit-upload-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-outline">Upload</button>
@@ -3448,26 +3452,48 @@ function stripAreaTagsFromName(name) {
   return parts.join(" ");
 }
 
+// Areas are ALWAYS saved (Manual Area Override column, independent of
+// Quo) -- the "Also update Quo contact name" checkbox (default ON, added
+// 2026-09-12 per Aaron's direct request) controls only whether the Quo
+// contact's own display name gets renamed to match, a separate opt-in
+// write against a real third-party record.
 async function saveBuyerNameAreas(phone) {
   const nameInput = document.getElementById("buyer-edit-name");
   const statusEl = document.getElementById("buyer-edit-status");
+  const syncQuoCheckbox = document.getElementById("buyer-edit-sync-quo");
   const personalName = nameInput.value.trim();
   const checkedAreas = [...document.querySelectorAll(".buyer-edit-area:checked")].map((cb) => cb.value);
+  const syncQuo = syncQuoCheckbox.checked;
   if (!personalName) { statusEl.textContent = "Name can't be blank."; return; }
   const tagSuffix = checkedAreas.map((a) => AREA_TAG_TOKENS[a]).filter(Boolean).join(" ");
   const fullName = tagSuffix ? `${personalName} ${tagSuffix}` : personalName;
-  if (!confirm(`Rename this Quo contact to "${fullName}"?`)) return;
+  const confirmMsg = syncQuo
+    ? `Save areas and rename this Quo contact to "${fullName}"?`
+    : `Save areas (${checkedAreas.length ? checkedAreas.join(", ") : "none"})? The Quo contact's own name will NOT be changed.`;
+  if (!confirm(confirmMsg)) return;
   statusEl.textContent = "Saving…";
   const token = getStoredAdminToken();
   try {
-    const res = await fetch(`${ADMIN_API_URL}/admin/update-contact-name`, {
+    const areasRes = await fetch(`${ADMIN_API_URL}/admin/set-areas`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, fullName }),
+      body: JSON.stringify({ phone, fullName: personalName, areas: checkedAreas }),
     });
-    const data = await res.json();
-    if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't save: ${(data && data.error) || res.status}`; return; }
-    statusEl.textContent = "Saved. (The buyers list picks up the new name/areas within ~15-20 min, once the background sync re-reads Quo.)";
+    const areasData = await areasRes.json();
+    if (!areasRes.ok || !areasData.ok) { statusEl.textContent = `Couldn't save areas: ${(areasData && areasData.error) || areasRes.status}`; return; }
+
+    if (syncQuo) {
+      const nameRes = await fetch(`${ADMIN_API_URL}/admin/update-contact-name`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, fullName }),
+      });
+      const nameData = await nameRes.json();
+      if (!nameRes.ok || !nameData.ok) { statusEl.textContent = `Areas saved, but couldn't rename the Quo contact: ${(nameData && nameData.error) || nameRes.status}`; return; }
+    }
+    statusEl.textContent = syncQuo
+      ? "Saved. (The buyers list picks up the new name/areas within ~15-20 min, once the background sync re-reads Quo.)"
+      : "Saved. (Areas pick up within ~15-20 min; Quo contact name left unchanged.)";
   } catch (err) {
     statusEl.textContent = `Couldn't save: ${err}`;
   }
