@@ -34,6 +34,7 @@ let GENERATED_AT = null;
 // separate visitor-side mechanism.
 let MY_APPOINTMENTS = [];
 let ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+let ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {}; // added 2026-09-12, upcoming AND past, for the Appointments tab's own Past section
 let ADMIN_FAVORITES_BY_ADDRESS = {};
 // Public "most popular" sort support, added 2026-08-29 per Aaron's direct
 // request. Deliberately NOT the same data as ADMIN_FAVORITES_BY_ADDRESS
@@ -1498,6 +1499,7 @@ async function refreshAdminActivity() {
   const token = getStoredAdminToken();
   if (!token) {
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+    ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_FAVORITES_BY_ADDRESS = {};
     return;
   }
@@ -1508,12 +1510,21 @@ async function refreshAdminActivity() {
     const today = localTodayISO();
 
     const groupedAppts = {};
+    const groupedAllAppts = {};
     for (const appt of data.appointments || []) {
+      // ADMIN_ALL_APPOINTMENTS_BY_ADDRESS, added 2026-09-12 -- the
+      // Appointments tab's own Past section (below) needs genuinely
+      // past-dated appointments too, which this loop otherwise discards
+      // for the property-card badge's sake (that one's correctly
+      // upcoming-only, unchanged).
+      (groupedAllAppts[appt.address] = groupedAllAppts[appt.address] || []).push(appt);
       if (appt.date < today) continue; // only count/show upcoming, matching the visitor-facing definition
       (groupedAppts[appt.address] = groupedAppts[appt.address] || []).push(appt);
     }
     for (const list of Object.values(groupedAppts)) list.sort((a, b) => a.date.localeCompare(b.date));
+    for (const list of Object.values(groupedAllAppts)) list.sort((a, b) => a.date.localeCompare(b.date));
     ADMIN_APPOINTMENTS_BY_ADDRESS = groupedAppts;
+    ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = groupedAllAppts;
 
     // Favorites have no date to filter by -- an unfavorite just removes
     // the entry entirely, so everything returned is, by definition, a
@@ -1525,6 +1536,7 @@ async function refreshAdminActivity() {
     ADMIN_FAVORITES_BY_ADDRESS = groupedFavs;
   } catch (err) {
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+    ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_FAVORITES_BY_ADDRESS = {};
   }
 }
@@ -1702,7 +1714,13 @@ function activateTab(tabName) {
   if (tabName === "get-started") { populateGetStartedPropertyDropdown(); prefillGetStartedContactFields(); renderMyAppointmentCards(); }
   if (tabName === "my-info") refreshMyInfoTab();
   if (tabName === "buyers") loadBuyers();
-  if (tabName === "appointments") { refreshAdminActivity().then(renderAppointmentsOverview); }
+  // Also loads buyers now (2026-09-12), not just the activity/appointments
+  // fetch -- the new Past-Appointments split needs each buyer's own
+  // "shown" list (BUYERS_CACHE) to tell whether a still-upcoming-dated
+  // appointment has already been manually marked done.
+  if (tabName === "appointments") {
+    Promise.all([refreshAdminActivity(), loadBuyers()]).then(renderAppointmentsOverview);
+  }
   closeDrawer();
 }
 
@@ -2479,6 +2497,7 @@ function initAdminUI() {
     // 2026-08-29 -- the badges/detail-page info shouldn't linger visible
     // for even one more render after signing out.
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
+    ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_FAVORITES_BY_ADDRESS = {};
     renderCardGrid();
     renderFavoritesGrid();
@@ -2700,6 +2719,7 @@ let BUYERS_FILTER = {
   contactOp: null, // null | "before" | "after"
   contactPeriod: "week", // "week" | "month" | "quarter" | "year" -- only applied when contactOp is set
   stages: [], // added 2026-09-12
+  sentiment: null, // added 2026-09-12 -- null | "smile" | "neutral" | "frown" | "none"
 };
 
 // Pipeline stages, added 2026-09-12 per Aaron's direct request -- kept as
@@ -2716,6 +2736,33 @@ const BUYER_STAGES = [
 // note per buyer. Stored server-side as one of these three keys (or "" for
 // unset); the emoji itself is purely a client-side rendering choice.
 const SENTIMENT_EMOJI = { smile: "😊", neutral: "😐", frown: "😟" };
+
+// Shared markup builders, added 2026-09-12 -- used on both the buyer list
+// card AND the top of the buyer detail page (Aaron's direct request to be
+// able to update these from either place), so both stay in sync rather
+// than duplicating slightly-different copies.
+function renderSentimentPickerHtml(buyer) {
+  const current = buyer.sentiment || "";
+  return Object.entries(SENTIMENT_EMOJI).map(([key, emoji]) => `
+    <button type="button" class="sentiment-btn${current === key ? " sentiment-btn-selected" : ""}" data-phone="${escapeAttr(buyer.phone)}" data-sentiment="${key}" title="${key}">${emoji}</button>
+  `).join("");
+}
+function renderStageSelectHtml(buyer) {
+  const options = `<option value=""${!buyer.stage ? " selected" : ""}>— Stage —</option>` +
+    BUYER_STAGES.map((s) => `<option value="${escapeAttr(s)}"${buyer.stage === s ? " selected" : ""}>${escapeHtml(s)}</option>`).join("");
+  return `<select class="stage-select" data-phone="${escapeAttr(buyer.phone)}">${options}</select>`;
+}
+// Segmented progress bar across the 8 pipeline stages -- one filled
+// segment per stage up to (and including) the buyer's current one. No
+// stage set yet renders all segments empty rather than guessing a start.
+function renderStageProgressBarHtml(buyer) {
+  const currentIdx = buyer.stage ? BUYER_STAGES.indexOf(buyer.stage) : -1;
+  const segments = BUYER_STAGES.map((s, i) => `<span class="stage-progress-segment${i <= currentIdx ? " stage-progress-filled" : ""}" title="${escapeAttr(s)}"></span>`).join("");
+  return `
+    <div class="stage-progress-bar">${segments}</div>
+    <div class="stage-progress-label">${buyer.stage ? escapeHtml(buyer.stage) : "No stage set"}</div>
+  `;
+}
 
 // Start-of-period boundary for the Last Contact filter, in the visitor's
 // own local time (matches how "this week/month/..." reads to a human,
@@ -2798,6 +2845,9 @@ function buyerMatchesFilters(b) {
     }
   }
   if (f.stages.length > 0 && !f.stages.includes(b.stage)) return false;
+  if (f.sentiment) {
+    if (f.sentiment === "none" ? !!b.sentiment : b.sentiment !== f.sentiment) return false;
+  }
   return true;
 }
 
@@ -2833,6 +2883,7 @@ function activeBuyersFilterCount() {
   if (f.loggedIn) n++;
   if (f.contactOp) n++;
   if (f.stages.length > 0) n++;
+  if (f.sentiment) n++;
   return n;
 }
 function updateBuyersFilterBadge() {
@@ -2855,6 +2906,7 @@ function applyBuyersFilters() {
     contactOp: document.getElementById("bf-contact-op").value || null,
     contactPeriod: document.getElementById("bf-contact-period").value || "week",
     stages: [...document.querySelectorAll("#buyers-stage-checkboxes input:checked")].map((cb) => cb.value),
+    sentiment: document.getElementById("bf-sentiment").value || null,
   };
   updateBuyersFilterBadge();
   renderBuyersList();
@@ -2871,6 +2923,7 @@ function clearBuyersFilters() {
   document.getElementById("bf-loggedin").value = "";
   document.getElementById("bf-contact-op").value = "";
   document.getElementById("bf-contact-period").value = "week";
+  document.getElementById("bf-sentiment").value = "";
   applyBuyersFilters();
 }
 
@@ -2995,6 +3048,22 @@ function sortedBuyers() {
       if (aHas && bHas && a.areas[0] !== b.areas[0]) return dir * a.areas[0].localeCompare(b.areas[0]);
       return dir * (new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
     });
+  } else if (BUYERS_SORT === "stage") {
+    // Added 2026-09-12 per Aaron's direct request -- pipeline order (First
+    // Contact through Multiple Buyer), same "set first, unset sorts to the
+    // bottom" convention as the other sorts.
+    const stageIndex = (s) => (s ? BUYER_STAGES.indexOf(s) : -1);
+    buyers.sort((a, b) => {
+      const aIdx = stageIndex(a.stage), bIdx = stageIndex(b.stage);
+      if (aIdx === -1 || bIdx === -1) { if (aIdx !== bIdx) return dir * (aIdx === -1 ? 1 : -1); }
+      return dir * (aIdx - bIdx);
+    });
+  } else if (BUYERS_SORT === "sentiment") {
+    // Added 2026-09-12 per Aaron's direct request -- frown, then neutral,
+    // then smile (most-to-least concerning); unset sorts to the bottom.
+    const order = { frown: 0, neutral: 1, smile: 2 };
+    const sentIndex = (s) => (s in order ? order[s] : 99);
+    buyers.sort((a, b) => dir * (sentIndex(a.sentiment) - sentIndex(b.sentiment)));
   }
   return buyers;
 }
@@ -3079,16 +3148,10 @@ function renderBuyersList() {
     // a wrapper with its own click handler that stops propagation, since
     // the row itself is clickable (opens detail) and these need to NOT
     // trigger that.
-    const currentSentiment = b.sentiment || "";
-    const sentimentHtml = Object.entries(SENTIMENT_EMOJI).map(([key, emoji]) => `
-      <button type="button" class="sentiment-btn${currentSentiment === key ? " sentiment-btn-selected" : ""}" data-phone="${escapeAttr(b.phone)}" data-sentiment="${key}" title="${key}">${emoji}</button>
-    `).join("");
-    const stageOptionsHtml = `<option value=""${!b.stage ? " selected" : ""}>— Stage —</option>` +
-      BUYER_STAGES.map((s) => `<option value="${escapeAttr(s)}"${b.stage === s ? " selected" : ""}>${escapeHtml(s)}</option>`).join("");
     const quickStatusHtml = `
       <div class="buyer-row-quick-status">
-        <span class="sentiment-picker">${sentimentHtml}</span>
-        <select class="stage-select" data-phone="${escapeAttr(b.phone)}">${stageOptionsHtml}</select>
+        <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
+        ${renderStageSelectHtml(b)}
       </div>
     `;
     // Red outline for an upcoming appointment, added 2026-09-12 per
@@ -3147,7 +3210,11 @@ function renderBuyersList() {
 // notes, never seen by a third party) -- update BUYERS_CACHE in place so
 // the card reflects the change without waiting on the next background
 // sync, then re-render.
-async function setBuyerSentiment(phone, sentiment) {
+// onDone, added 2026-09-12 -- these now also get called from the top of
+// the buyer detail page (not just the list card), which needs to
+// re-render ITSELF afterward, not the list underneath it. Defaults to the
+// original list-card behavior when omitted.
+async function setBuyerSentiment(phone, sentiment, onDone) {
   const token = getStoredAdminToken();
   try {
     const res = await fetch(`${ADMIN_API_URL}/admin/set-sentiment`, {
@@ -3159,13 +3226,13 @@ async function setBuyerSentiment(phone, sentiment) {
     if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
     const buyer = findBuyer(phone);
     if (buyer) buyer.sentiment = sentiment;
-    renderBuyersList();
+    if (onDone) onDone(); else renderBuyersList();
   } catch (err) {
     alert(`Couldn't save: ${err}`);
   }
 }
 
-async function setBuyerStage(phone, stage) {
+async function setBuyerStage(phone, stage, onDone) {
   const token = getStoredAdminToken();
   try {
     const res = await fetch(`${ADMIN_API_URL}/admin/set-stage`, {
@@ -3177,7 +3244,7 @@ async function setBuyerStage(phone, stage) {
     if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
     const buyer = findBuyer(phone);
     if (buyer) buyer.stage = stage;
-    renderBuyersList();
+    if (onDone) onDone(); else renderBuyersList();
   } catch (err) {
     alert(`Couldn't save: ${err}`);
   }
@@ -3284,12 +3351,16 @@ function backToBuyersList() {
 // to deep-link straight to a contact/conversation BY ID, only by phone
 // number, so this is the closest real equivalent to "open this buyer in
 // the app."
+// Colors swapped 2026-09-12 per Aaron's direct request -- app link (the
+// one he'll actually tap on his phone) is now the blue/primary one, the
+// browser fallback white/outline. Wrapped in .buyer-quo-links so the two
+// sit side by side (added same day -- see .buyer-quo-links in style.css).
 function quoAppAndWebLinks(phone, webUrl) {
   if (!webUrl) return "";
   const appHtml = phone
-    ? `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="btn-outline buyer-quo-link">Open in Quo app</a>`
+    ? `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="btn-primary buyer-quo-link">Open in Quo app</a>`
     : "";
-  return `${appHtml}<a href="${escapeAttr(webUrl)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in Quo (browser)</a>`;
+  return `<div class="buyer-quo-links">${appHtml}<a href="${escapeAttr(webUrl)}" target="_blank" rel="noopener" class="btn-outline buyer-quo-link">Open in Quo (browser)</a></div>`;
 }
 
 function renderBuyerDetail(buyer) {
@@ -3402,11 +3473,15 @@ function renderBuyerDetail(buyer) {
   // that's somehow missing, the add control just doesn't render rather
   // than posting a request with no way to target a row.
   const alreadyShown = new Set(lm && lm.shown ? lm.shown : []);
-  // Available-only, added 2026-09-12 per Aaron's direct request -- same
-  // filter getStartedAvailableListings() already applies on the visitor-
-  // facing side, just missing here until now.
+  // Deliberately NOT Available-only, per Aaron's direct follow-up
+  // (2026-09-12) -- this is a historical record of what he's actually
+  // shown someone, which can genuinely include a property that's since
+  // gone Pending/Sold. A same-day-earlier change had restricted this to
+  // Available-only (reasonable for scheduling a NEW showing, wrong for
+  // logging a past one) -- reverted here; Schedule a Showing below keeps
+  // its own Available-only filter, that one's correct as-is.
   SHOWN_AVAILABLE_ADDRESSES = (ALL_LISTINGS || [])
-    .filter((l) => l.status === "Available" && !alreadyShown.has(l.address))
+    .filter((l) => !alreadyShown.has(l.address))
     .map((l) => l.address);
   const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => `
     <div class="buyer-list-item shown-property-item">
@@ -3445,18 +3520,37 @@ function renderBuyerDetail(buyer) {
   // Showings list above both pick it up automatically, no separate
   // rendering needed.
   APPOINTMENT_AVAILABLE_ADDRESSES = (ALL_LISTINGS || []).filter((l) => l.status === "Available").map((l) => l.address);
+  // Restyled 2026-09-12 per Aaron's direct request ("make it look more
+  // like the other things on the page") to match the visitor-facing Get
+  // Started form's own .form-card look (docs/index.html) instead of the
+  // plain buyer-section it started as. Date field switched from a native
+  // <input type="date"> to the SAME closed <select> Get Started already
+  // uses (buildDateOptions(), next 10 days) -- the real, previously-fixed
+  // reason: several mobile browsers ignore an <input type="date">'s
+  // min= entirely and show a full calendar anyway, so "only certain days
+  // schedulable" needs the closed-option-list approach, not min=/max=.
+  const apptDateOptionsHtml = buildDateOptions()
+    .map(({ value, label }) => `<option value="${value}">${escapeHtml(label)}</option>`)
+    .join("");
   const scheduleApptHtml = lm && lm.row ? `
     <div class="buyer-section">
       <h3>Schedule a Showing</h3>
-      <div class="schedule-appt-row">
-        <div class="autocomplete-wrap">
-          <input type="text" id="appt-property-input" placeholder="Type an address…" autocomplete="off">
-          <div id="appt-property-suggestions" class="autocomplete-dropdown hidden"></div>
-        </div>
-        <input type="date" id="appt-date-input" min="${localTodayISO()}">
-        <button type="button" id="appt-schedule-btn" data-phone="${escapeAttr(buyer.phone)}" data-row="${lm.row}" class="btn-outline">Schedule</button>
+      <div class="form-card schedule-appt-card">
+        <label>Property Address
+          <div class="autocomplete-wrap">
+            <input type="text" id="appt-property-input" placeholder="Type an address…" autocomplete="off">
+            <div id="appt-property-suggestions" class="autocomplete-dropdown hidden"></div>
+          </div>
+        </label>
+        <label>Date
+          <select id="appt-date-input">
+            <option value="" disabled selected>Choose a date</option>
+            ${apptDateOptionsHtml}
+          </select>
+        </label>
+        <button type="button" id="appt-schedule-btn" data-phone="${escapeAttr(buyer.phone)}" data-row="${lm.row}" class="btn-primary">Schedule</button>
+        <div id="appt-schedule-status"></div>
       </div>
-      <div id="appt-schedule-status"></div>
     </div>
   ` : "";
 
@@ -3557,9 +3651,25 @@ function renderBuyerDetail(buyer) {
     </div>
   `;
 
+  // Header block, added 2026-09-12 per Aaron's direct request: Quo links
+  // side by side (moved into quoAppAndWebLinks's own wrapper div, see its
+  // comment), a stage progress bar, and the SAME sentiment/stage controls
+  // the list card has -- all updatable from the top of the page, not just
+  // from the list.
+  const detailHeaderHtml = `
+    <div class="buyer-detail-header">
+      ${quoLinkHtml}
+      ${renderStageProgressBarHtml(buyer)}
+      <div class="buyer-detail-quick-status">
+        <span class="sentiment-picker">${renderSentimentPickerHtml(buyer)}</span>
+        ${renderStageSelectHtml(buyer)}
+      </div>
+    </div>
+  `;
+
   container.innerHTML = `
     <h2>${escapeHtml(buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || buyer.phone)}</h2>
-    ${quoLinkHtml}
+    ${detailHeaderHtml}
     <div class="buyer-id-section">${idPhoto}</div>
     ${possibleIdHtml}
     ${editSectionHtml}
@@ -3586,6 +3696,21 @@ function renderBuyerDetail(buyer) {
   document.getElementById("buyer-send-btn").addEventListener("click", (e) => sendBuyerMessage(e.target.dataset.phone));
   document.getElementById("buyer-edit-save-btn").addEventListener("click", (e) => saveBuyerNameAreas(e.target.dataset.phone));
   document.getElementById("buyer-edit-upload-btn").addEventListener("click", (e) => uploadBuyerId(e.target.dataset.phone));
+
+  // Sentiment/stage controls at the top of the page, added 2026-09-12 --
+  // same handlers as the list card, but re-render THIS page afterward
+  // (onDone), not the list underneath it.
+  container.querySelectorAll(".sentiment-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selected = btn.classList.contains("sentiment-btn-selected");
+      setBuyerSentiment(btn.dataset.phone, selected ? "" : btn.dataset.sentiment, () => renderBuyerDetail(findBuyer(btn.dataset.phone)));
+    });
+  });
+  container.querySelectorAll(".stage-select").forEach((sel) => {
+    sel.addEventListener("change", (e) => {
+      setBuyerStage(e.target.dataset.phone, e.target.value, () => renderBuyerDetail(findBuyer(e.target.dataset.phone)));
+    });
+  });
 
   // Fill in the placeholder <img> elements -- see idPhoto's own comment
   // above for why this can't just be a plain src= attribute.
@@ -3729,7 +3854,12 @@ async function scheduleAppointment(phone) {
   }
 }
 
-async function markShown(row, address, action, phone) {
+// onDone, added 2026-09-12 -- optional override for what to re-render
+// after a successful change, since this is now also called from the
+// Appointments overview (marking an appointment "shown" from there should
+// re-render THAT list, not the buyer detail page underneath it). Defaults
+// to the original buyer-detail-page behavior when omitted.
+async function markShown(row, address, action, phone, onDone) {
   const token = getStoredAdminToken();
   try {
     const res = await fetch(`${ADMIN_API_URL}/mark-shown`, {
@@ -3740,6 +3870,7 @@ async function markShown(row, address, action, phone) {
     const data = await res.json();
     if (!res.ok || !data.ok) { alert(`Couldn't update shown properties: ${(data && data.error) || res.status}`); return; }
     await loadBuyers(); // refresh BUYERS_CACHE so the change is reflected
+    if (onDone) { onDone(); return; }
     const refreshed = findBuyer(phone);
     if (refreshed) renderBuyerDetail(refreshed);
   } catch (err) {
@@ -3994,7 +4125,7 @@ function initBuyersTab() {
   // comment at its call site in loadBuyers() for why calling it eagerly at
   // page-load time (this function runs before this section's own consts
   // are initialized) is what broke the whole page on 2026-09-11.
-  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period"].forEach((id) => {
+  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyBuyersFilters);
   });
@@ -4122,45 +4253,84 @@ async function renameIdFiles() {
 // favorite/appointment badges. Flattens the by-address grouping into one
 // list sorted by date, filtered to today-or-later (same "only show
 // upcoming" rule already used for those badges).
-function renderAppointmentsOverview() {
-  const container = document.getElementById("appointments-list");
-  if (!container) return;
-  const today = localTodayISO(); // already defined in app.js
-  const all = [];
-  for (const [address, appts] of Object.entries(ADMIN_APPOINTMENTS_BY_ADDRESS || {})) {
-    for (const a of appts) {
-      if (a.date < today) continue;
-      all.push({ address, ...a });
-    }
-  }
-  all.sort((a, b) => a.date.localeCompare(b.date));
-
-  if (all.length === 0) { container.innerHTML = "<p>No upcoming appointments.</p>"; return; }
-  // Clickable through to the buyer's own card, added 2026-09-12 per
-  // Aaron's direct request -- only when there's a real phone to look the
-  // buyer up by (role="button"/tabindex for the same reason buyer-row
-  // switched off <button>: this card's date/address text is plain
-  // phrasing content, nothing else interactive nested inside it here, so
-  // either element shape would work, but div stays consistent with the
-  // buyer-row convention above).
-  container.innerHTML = all.map((a) => `
-    <div class="appt-card${a.phone ? " appt-card-clickable" : ""}"${a.phone ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
+// Builds one appt-card's HTML. `showMarkShown` controls whether the
+// "Mark as shown" checkbox renders -- only on the Upcoming list, added
+// 2026-09-12 per Aaron's direct request: clicking it marks that showing
+// done (adds the address to the buyer's own Shown Properties, the SAME
+// write the buyer-detail page's own "Mark shown" button already makes --
+// no new endpoint), which is also what moves the card down into Past
+// below on the next render, no separate "done" flag needed anywhere.
+function renderApptCard(a, showMarkShown) {
+  const clickable = !!a.phone;
+  return `
+    <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
       <div class="appt-card-info">
         <div class="appt-card-date">${escapeHtml(a.date)}</div>
         <div class="appt-card-address">${escapeHtml(a.address)}</div>
         <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
         ${a.phone ? `<div class="appt-card-contact">${escapeHtml(a.phone)}${a.email ? " · " + escapeHtml(a.email) : ""}</div>` : ""}
+        ${showMarkShown && a.row ? `
+          <label class="appt-mark-shown-label">
+            <input type="checkbox" class="appt-mark-shown-checkbox" data-row="${a.row}" data-address="${escapeAttr(a.address)}" data-phone="${escapeAttr(a.phone)}">
+            Mark as shown
+          </label>` : ""}
       </div>
     </div>
-  `).join("");
-  // Same blob-fetch as everywhere else an admin-id-photo placeholder
-  // appears -- a raw Dropbox share link can't go straight into <img src>.
-  container.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
-  container.querySelectorAll(".appt-card-clickable").forEach((el) => {
-    el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goToBuyerFromAppointment(el.dataset.phone); } });
-  });
+  `;
+}
+
+function renderAppointmentsOverview() {
+  const container = document.getElementById("appointments-list");
+  const pastContainer = document.getElementById("appointments-past-list");
+  const pastHeading = document.getElementById("appointments-past-heading");
+  if (!container) return;
+  const today = localTodayISO(); // already defined in app.js
+
+  const upcoming = [];
+  const past = [];
+  for (const [address, appts] of Object.entries(ADMIN_ALL_APPOINTMENTS_BY_ADDRESS || {})) {
+    for (const a of appts) {
+      const buyer = a.phone ? findBuyer(a.phone) : null;
+      const row = buyer && buyer.loginsMatch ? buyer.loginsMatch.row : null;
+      const alreadyShown = !!(buyer && buyer.loginsMatch && buyer.loginsMatch.shown && buyer.loginsMatch.shown.includes(address));
+      const entry = { address, ...a, row };
+      if (a.date < today || alreadyShown) past.push(entry);
+      else upcoming.push(entry);
+    }
+  }
+  upcoming.sort((a, b) => a.date.localeCompare(b.date));
+  past.sort((a, b) => b.date.localeCompare(a.date)); // most-recently-past first
+
+  container.innerHTML = upcoming.length
+    ? upcoming.map((a) => renderApptCard(a, true)).join("")
+    : "<p>No upcoming appointments.</p>";
+  if (pastContainer) {
+    pastHeading.classList.toggle("hidden", past.length === 0);
+    pastContainer.innerHTML = past.map((a) => renderApptCard(a, false)).join("");
+  }
+
+  const both = [container, pastContainer].filter(Boolean);
+  for (const c of both) {
+    // Same blob-fetch as everywhere else an admin-id-photo placeholder
+    // appears -- a raw Dropbox share link can't go straight into <img src>.
+    c.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
+    c.querySelectorAll(".appt-card-clickable").forEach((el) => {
+      // stopPropagation on the checkbox's own label below keeps a
+      // "Mark as shown" tap from ALSO navigating to the buyer's page.
+      el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goToBuyerFromAppointment(el.dataset.phone); } });
+    });
+    c.querySelectorAll(".appt-mark-shown-label").forEach((label) => {
+      label.addEventListener("click", (e) => e.stopPropagation());
+    });
+    c.querySelectorAll(".appt-mark-shown-checkbox").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        if (!cb.checked) return; // one-way -- unchecking doesn't un-mark, same as the buyer-page Remove button being the only way back
+        markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, renderAppointmentsOverview);
+      });
+    });
+  }
 }
 
 // Jumps from an appointment card straight to that buyer's own page --

@@ -55,6 +55,18 @@ body {
   color: #fff;
   padding: 10px 16px;
 }
+/* max-width + centering added 2026-09-12 -- real reported bug: .topbar
+   itself is a deliberate full-bleed colored bar (no max-width, by design),
+   but its CONTENT never matched main/.profile-bar's own constrained width
+   the way it should -- invisible in portrait (viewport is under 640px
+   anyway, so the cap never bit), but landscape widens main/.profile-bar to
+   900px (see the landscape media query below) while the topbar's content
+   stayed unconstrained at the full physical viewport width, which on a
+   landscape phone or a tablet is often noticeably WIDER than 900px --
+   "the menu extends all the way across" while the content column beneath
+   it doesn't. Same base 640px as main's own rule; the landscape query
+   bumps both together so they can never drift apart again. */
+.masthead-row, .top-tabs { max-width: 640px; margin: 0 auto; }
 .masthead-row { display: flex; align-items: center; gap: 12px; }
 .masthead-title { font-size: 18px; font-weight: 800; margin: 0; flex: 1; }
 .mobile-current-tab { display: none; flex: 1; text-align: center; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; }
@@ -252,7 +264,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    regardless of how much real landscape width is available. */
 @media (orientation: landscape) and (min-width: 640px) {
   .card-grid { grid-template-columns: repeat(3, 1fr); }
-  main, .profile-bar { max-width: 900px; }
+  main, .profile-bar, .masthead-row, .top-tabs { max-width: 900px; }
 }
 .card {
   position: relative; /* anchors .card-heart's absolute positioning, added 2026-08-29 */
@@ -572,6 +584,19 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 #get-started-form input, #get-started-form select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff; }
 .full-width { width: 100%; margin-top: 20px; }
 .form-status { margin-top: 12px; font-size: 14px; }
+
+/* Schedule a Showing (admin buyers-tab), restyled 2026-09-12 per Aaron's
+   direct request to match the Get Started form's own .form-card look --
+   same label/input shape as #get-started-form above, just scoped to this
+   card instead of that form's id. */
+.schedule-appt-card label { display: block; margin: 0 0 4px; font-weight: 600; font-size: 14px; }
+.schedule-appt-card label + label { margin-top: 16px; }
+.schedule-appt-card input, .schedule-appt-card select {
+  width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+  margin-top: 4px; font-family: inherit; font-size: 14px; background: #fff;
+}
+.schedule-appt-card .btn-primary { margin-top: 16px; width: 100%; }
+.schedule-appt-card #appt-schedule-status { margin-top: 10px; }
 .get-started-id-status { margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #1a8a4a; }
 
 /* My Info tab, added 2026-09-03 -- real reported gap: #my-info-content
@@ -758,7 +783,21 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 
 #buyers-detail-content h2 { color: var(--navy); margin: 0 0 10px; }
-.buyer-quo-link { display: inline-block; margin-bottom: 14px; margin-right: 8px; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+/* Side by side, added 2026-09-12 per Aaron's direct request (were stacked
+   above/below each other before). */
+.buyer-quo-links { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.buyer-quo-link { display: inline-block; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+
+/* Detail-page header block (Quo links, stage progress, sentiment/stage
+   controls), added 2026-09-12 per Aaron's direct request. */
+.buyer-detail-header { margin-bottom: 16px; }
+.stage-progress-bar { display: flex; gap: 3px; margin-bottom: 4px; }
+.stage-progress-segment { flex: 1 1 0; height: 6px; border-radius: 3px; background: #e5e7eb; }
+.stage-progress-filled { background: var(--blue); }
+.stage-progress-label { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+.buyer-detail-quick-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.buyer-detail-quick-status .sentiment-picker { display: flex; gap: 2px; }
+
 .buyer-id-section { margin: 10px 0; }
 .buyer-id-photo { max-width: 240px; border-radius: 10px; border: 1px solid #e5e7eb; display: block; }
 .buyer-no-id { font-size: 13px; color: #9ca3af; font-style: italic; }
@@ -840,6 +879,9 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* Appointments overview, added 2026-09-11 */
 .appointments-intro { font-size: 13px; color: var(--gray-text, #6b7280); margin: 10px 0; }
+/* Past Appointments split, added 2026-09-12 per Aaron's direct request. */
+.appointments-past-heading { font-size: 15px; font-weight: 800; color: var(--navy); margin: 24px 0 10px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+.appt-mark-shown-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--blue); margin-top: 6px; cursor: pointer; }
 .appt-card {
   /* Switched to a row layout 2026-09-12 per Aaron's direct request -- ID
      thumbnail taking ~1/3 of the card, info taking the rest. */

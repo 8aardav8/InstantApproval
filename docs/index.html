@@ -830,6 +830,8 @@
           <select id="buyers-sort">
             <option value="appointments">Appointments (soonest first)</option>
             <option value="area">Area</option>
+            <option value="stage">Stage</option>
+            <option value="sentiment">Sentiment</option>
             <option value="name">Name (A–Z)</option>
             <option value="last-contact" selected>Last Contact (any)</option>
             <option value="last-login">Last Login</option>
@@ -900,6 +902,16 @@
             <option value="no">No favorites</option>
           </select>
         </label>
+        <!-- Added 2026-09-12 per Aaron's direct request. -->
+        <label>Sentiment
+          <select id="bf-sentiment">
+            <option value="" selected>Any</option>
+            <option value="smile">😊</option>
+            <option value="neutral">😐</option>
+            <option value="frown">😟</option>
+            <option value="none">Not set</option>
+          </select>
+        </label>
         <label>Login Status
           <select id="bf-loggedin">
             <option value="" selected>Any</option>
@@ -954,6 +966,12 @@
   <section id="tab-appointments" class="tab-panel hidden">
     <p class="appointments-intro">Every upcoming appointment across all buyers, soonest first.</p>
     <div id="appointments-list"></div>
+    <!-- Past Appointments, added 2026-09-12 per Aaron's direct request --
+         populated by renderAppointmentsOverview() in app.js. Below the
+         upcoming list, so scrolling down reaches it -- an appointment
+         marked "shown" from the Upcoming list above moves down here. -->
+    <h3 class="appointments-past-heading hidden" id="appointments-past-heading">Past Appointments</h3>
+    <div id="appointments-past-list"></div>
   </section>
 
 </main>
