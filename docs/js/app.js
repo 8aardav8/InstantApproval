@@ -2993,8 +2993,18 @@ function renderBuyersList() {
         ${b.loginsMatch && b.loginsMatch.firstLogin ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
       </span>
     `;
+    // Card thumbnail, added 2026-09-12 per Aaron's direct request -- same
+    // admin-id-photo blob-fetch as the detail view's full-size photo (a raw
+    // Dropbox share link can't go straight into a plain <img src>, see
+    // loadAdminIdPhoto's own comment), just rendered small via CSS. Wired
+    // up below, same querySelectorAll(".admin-id-photo") pass the detail
+    // view already uses.
+    const idThumbHtml = b.loginsMatch && b.loginsMatch.idLink
+      ? `<img class="buyer-row-thumb admin-id-photo" data-dropbox-link="${escapeAttr(b.loginsMatch.idLink)}" alt="ID on file">`
+      : "";
     rows.push(`
       <button class="buyer-row" data-phone="${escapeHtml(b.phone)}">
+        ${idThumbHtml}
         <div class="buyer-row-main">
           <span class="buyer-row-name">${escapeHtml(label)}</span>
           ${badgesHtml}
@@ -3012,6 +3022,10 @@ function renderBuyersList() {
   listEl.querySelectorAll(".buyer-row").forEach((btn) => {
     btn.addEventListener("click", () => showBuyerDetail(btn.dataset.phone));
   });
+  // Load card thumbnails lazily, same admin-id-photo wiring the detail view
+  // uses -- deliberately AFTER the click-handler wiring above, so a slow
+  // thumbnail fetch never blocks the list from being interactive.
+  listEl.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
 }
 
 function formatShortDate(iso) {
@@ -3218,6 +3232,40 @@ function renderBuyerDetail(buyer) {
 
   const quoLinkHtml = buyer.quoUrl ? `<a href="${escapeAttr(buyer.quoUrl)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in Quo</a>` : "";
 
+  // Edit section, added 2026-09-12 per Aaron's direct request: "I'd like to
+  // be able to update the contacts from their page on the buyer site, eg
+  // associate them with areas, upload id which would go to Dropbox and be
+  // renamed with ocr, update Quo contact name, etc." Areas and Quo-name
+  // are really the SAME write (an area is just a TB-tagged suffix on the
+  // Quo contact's own display name, see BUYERS_CANONICAL_AREAS/
+  // parseAreasFromName server-side) -- the checkboxes here are purely a
+  // convenience that composes into the one name field before saving, not a
+  // separate field anywhere. ID upload skips OCR entirely on this path --
+  // the buyer is already known (that's which page Aaron is on), so the
+  // file gets named directly, same as the public site's own upload form.
+  // OCR only matters for a file dropped with no buyer context at all (see
+  // id-photo-watch.ts).
+  const currentName = buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "";
+  const personalName = stripAreaTagsFromName(currentName);
+  const areaCheckboxesHtml = BUYERS_CANONICAL_AREAS.map((area, i) => `
+    <label class="edit-area-checkbox">
+      <input type="checkbox" class="buyer-edit-area" value="${escapeAttr(area)}" ${buyer.areas && buyer.areas.includes(area) ? "checked" : ""}>
+      ${escapeHtml(area)}
+    </label>
+  `).join("");
+  const editSectionHtml = `
+    <div class="buyer-section buyer-edit-section">
+      <h3>Edit</h3>
+      <label class="edit-label">Name<input type="text" id="buyer-edit-name" value="${escapeAttr(personalName)}" placeholder="First Last"></label>
+      <div class="edit-areas">${areaCheckboxesHtml}</div>
+      <button id="buyer-edit-save-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Save name &amp; areas</button>
+      <div id="buyer-edit-status"></div>
+      <label class="edit-label">Upload ID photo<input type="file" id="buyer-edit-id-file" accept="image/*"></label>
+      <button id="buyer-edit-upload-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-outline">Upload</button>
+      <div id="buyer-upload-status"></div>
+    </div>
+  `;
+
   // Message feed + compose, added 2026-09-11 -- shown for every buyer now
   // (previously only offered for unclassified contacts). Not auto-loaded on
   // render: still an explicit tap, same "don't eagerly fetch messages for
@@ -3242,6 +3290,7 @@ function renderBuyerDetail(buyer) {
     ${quoLinkHtml}
     <div class="buyer-id-section">${idPhoto}</div>
     ${possibleIdHtml}
+    ${editSectionHtml}
     ${factsHtml}
     ${leadInfoHtml}
     ${favoritesHtml}
@@ -3262,6 +3311,8 @@ function renderBuyerDetail(buyer) {
     e.target.value = "";
   });
   document.getElementById("buyer-send-btn").addEventListener("click", (e) => sendBuyerMessage(e.target.dataset.phone));
+  document.getElementById("buyer-edit-save-btn").addEventListener("click", (e) => saveBuyerNameAreas(e.target.dataset.phone));
+  document.getElementById("buyer-edit-upload-btn").addEventListener("click", (e) => uploadBuyerId(e.target.dataset.phone));
 
   // Fill in the placeholder <img> elements -- see idPhoto's own comment
   // above for why this can't just be a plain src= attribute.
@@ -3369,6 +3420,87 @@ async function loadAdminIdPhoto(imgEl, dropboxLink) {
     imgEl.src = objectUrl;
   } catch (e) {
     // network hiccup -- same "leave it blank" fallback
+  }
+}
+
+// ---------- Buyer editing (name / areas / ID upload), added 2026-09-12 ----------
+// Area labels resolve onto the same fused "<CITY>TB" tokens the server's
+// own CANONICAL_AREAS regexes look for (parseAreasFromName, admin-buyers-
+// worker.js) -- keep this map in sync with that list if either changes.
+const AREA_TAG_TOKENS = {
+  "IL - East St Louis": "ESTLTB",
+  "MO - St. Louis": "STLTB",
+  "AR - Little Rock": "LRTB",
+  "AR - West Memphis": "WMTB",
+  "IL - Springfield": "SPRINGFIELDTB",
+};
+
+// Strips any trailing area-tag tokens (and any bare "TB") from a Quo
+// display name so the edit field shows just the person's actual name --
+// the area checkboxes re-add the right tag(s) on save, so re-typing a name
+// never means re-typing "WMTB" by hand too.
+function stripAreaTagsFromName(name) {
+  const tagTokens = new Set(Object.values(AREA_TAG_TOKENS).map((t) => t.toLowerCase()));
+  const parts = (name || "").trim().split(/\s+/);
+  while (parts.length && (tagTokens.has(parts[parts.length - 1].toLowerCase()) || /^tb$/i.test(parts[parts.length - 1]))) {
+    parts.pop();
+  }
+  return parts.join(" ");
+}
+
+async function saveBuyerNameAreas(phone) {
+  const nameInput = document.getElementById("buyer-edit-name");
+  const statusEl = document.getElementById("buyer-edit-status");
+  const personalName = nameInput.value.trim();
+  const checkedAreas = [...document.querySelectorAll(".buyer-edit-area:checked")].map((cb) => cb.value);
+  if (!personalName) { statusEl.textContent = "Name can't be blank."; return; }
+  const tagSuffix = checkedAreas.map((a) => AREA_TAG_TOKENS[a]).filter(Boolean).join(" ");
+  const fullName = tagSuffix ? `${personalName} ${tagSuffix}` : personalName;
+  if (!confirm(`Rename this Quo contact to "${fullName}"?`)) return;
+  statusEl.textContent = "Saving…";
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/update-contact-name`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, fullName }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't save: ${(data && data.error) || res.status}`; return; }
+    statusEl.textContent = "Saved. (The buyers list picks up the new name/areas within ~15-20 min, once the background sync re-reads Quo.)";
+  } catch (err) {
+    statusEl.textContent = `Couldn't save: ${err}`;
+  }
+}
+
+async function uploadBuyerId(phone) {
+  const fileInput = document.getElementById("buyer-edit-id-file");
+  const statusEl = document.getElementById("buyer-upload-status");
+  const file = fileInput.files[0];
+  if (!file) { statusEl.textContent = "Choose a file first."; return; }
+  const buyer = findBuyer(phone);
+  const fullName = buyer ? (buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "") : "";
+  if (!confirm(`Upload this photo as ${fullName || phone}'s ID?`)) return;
+  statusEl.textContent = "Uploading…";
+  const token = getStoredAdminToken();
+  try {
+    const form = new FormData();
+    form.set("phone", phone);
+    form.set("fullName", fullName);
+    form.set("idPhoto", file);
+    const res = await fetch(`${ADMIN_API_URL}/admin/upload-id`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't upload: ${(data && data.error) || res.status}`; return; }
+    statusEl.textContent = "Uploaded and linked.";
+    await loadBuyers();
+    const refreshed = findBuyer(phone);
+    if (refreshed) renderBuyerDetail(refreshed);
+  } catch (err) {
+    statusEl.textContent = `Couldn't upload: ${err}`;
   }
 }
 

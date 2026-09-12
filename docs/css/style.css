@@ -712,6 +712,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-date { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
 .buyer-row-dates { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: 0 0 auto; }
 
+/* Card ID thumbnail, added 2026-09-12 per Aaron's direct request -- small,
+   fixed-size, never lets a tall/portrait ID photo blow out the row height.
+   object-fit: cover crops rather than squishes. Blank until
+   loadAdminIdPhoto's blob fetch resolves (see app.js) -- background color
+   avoids an ugly "broken image" glyph flashing in the meantime. */
+.buyer-row-thumb {
+  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+  border: 1px solid #e5e7eb; background: #f3f4f6; flex: 0 0 auto;
+}
+
 /* Row badges (ID on file / showings booked), added 2026-09-11 */
 .buyer-row-badges { display: flex; gap: 6px; }
 .buyer-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #eef2ff; color: var(--blue); }
@@ -792,6 +802,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .buyer-compose textarea { resize: vertical; }
 #buyer-send-status { font-size: 12px; color: var(--gray-text, #6b7280); min-height: 16px; }
+
+/* Buyer editing (name/areas/ID upload), added 2026-09-12 */
+.buyer-edit-section { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
+.edit-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--navy); margin: 10px 0 6px; }
+.edit-label input[type="text"], .edit-label input[type="file"] {
+  font: inherit; font-size: 13px; font-weight: 400; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db;
+}
+.edit-areas { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; }
+.edit-area-checkbox { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 400; color: var(--gray-text, #6b7280); }
+#buyer-edit-status, #buyer-upload-status { font-size: 12px; color: var(--gray-text, #6b7280); min-height: 16px; margin-top: 6px; }
 
 /* Appointments overview, added 2026-09-11 */
 .appointments-intro { font-size: 13px; color: var(--gray-text, #6b7280); margin: 10px 0; }

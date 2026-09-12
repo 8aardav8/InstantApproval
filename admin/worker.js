@@ -1587,20 +1587,121 @@ async function handleRenameIdFiles(request, env) {
   }
 }
 
-// ---------- Internal ID-photo OCR tooling, added 2026-09-11 ----------
-// Supports a one-off local script (run by Claude Code, not a standing
-// pipeline -- local Ollama vision can't run inside a Cloudflare Worker)
-// that reads the actual name printed on each ID photo and cross-
-// references it against Quo contacts, per Aaron's direct request: "Can
-// we name the id files in db based on the name on the id itself, and
-// then fuzzy match to quo contacts?" Gated by a shared secret
-// (INTERNAL_TOOLS_SECRET), not Google OAuth -- this is an internal tool
-// Claude Code runs directly, not something the admin UI calls, same
-// ?key= pattern already used by appointment-notifier-worker.js's own
-// manual-trigger endpoint. Read-only: lists files and streams bytes,
-// never renames/writes anything itself -- that still goes through the
-// existing OAuth-gated /confirm-id-match / /rename-id-files endpoints
-// once Aaron reviews what the script finds.
+// ---------- Buyer-page editing (admin UI), added 2026-09-12 ----------
+// Per Aaron's direct request: "I'd like to be able to update the contacts
+// from their page on the buyer site, eg associate them with areas, upload
+// id which would go to Dropbox and be renamed with ocr, update Quo contact
+// name, etc." Two endpoints below. Both OAuth-gated (same admin sign-in as
+// everything else here, not the shared-secret internal tier) since these
+// are real writes triggered by Aaron directly clicking something on the
+// page, same trust level as the existing message-send feature.
+//
+// "Renamed with OCR" doesn't apply to THIS upload path specifically --
+// when Aaron uploads a photo from a buyer's own page, the buyer is already
+// known (that's literally which page he's on), so there's no name to read
+// off the image at all; buildIdFilename runs directly off the known
+// buyer's name and phone, same as the public site's own upload-my-id flow.
+// OCR only matters for the OTHER path -- a file dropped straight into the
+// Dropbox folder with no buyer context at all (id-photo-watch.ts).
+async function handleAdminUploadId(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let form;
+  try { form = await request.formData(); } catch { return jsonResponse({ error: "invalid form data" }, 400); }
+  const phone = (form.get("phone") || "").toString().trim();
+  const fullName = (form.get("fullName") || "").toString().trim();
+  const idPhoto = form.get("idPhoto");
+  const hasIdPhoto = !!idPhoto && typeof idPhoto !== "string" && idPhoto.size > 0;
+  if (!phone || !hasIdPhoto) return jsonResponse({ error: "missing phone or idPhoto" }, 400);
+
+  try {
+    const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
+    const filename = buildIdFilename(fullName, phone, idPhoto.name);
+    const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
+    const fileBytes = await idPhoto.arrayBuffer();
+    const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxToken}`,
+        "Dropbox-API-Arg": JSON.stringify({ path: destPath, mode: "overwrite", mute: false }),
+        "Content-Type": "application/octet-stream",
+      },
+      body: fileBytes,
+    });
+    if (!uploadRes.ok) return jsonResponse({ error: "dropbox upload failed", detail: await uploadRes.text() }, 500);
+
+    const idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+    const row = await findLoginsRowByPhone(accessToken, phone);
+    if (row) await writeIdLink(accessToken, row, idLink);
+    else await appendLoginsRow(accessToken, toE164(phone), fullName, idLink);
+
+    return jsonResponse({ ok: true, idLink, filename });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Renames a buyer's Quo contact -- covers BOTH "fix a wrong/garbled name"
+// and "associate them with an area" in one action, since area classifying
+// is itself just a TB-tagged suffix on the Quo contact's own name (see
+// parseAreasFromName/CANONICAL_AREAS in admin-buyers-worker.js) -- there is
+// no separate "area" field anywhere to write. The buyers-tab UI is
+// responsible for composing personal-name + area-tag-suffix into the one
+// `fullName` string this takes; this endpoint only knows how to set a
+// Quo contact's display name, nothing area-specific.
+async function handleAdminUpdateContactName(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  if (!phone || !fullName) return jsonResponse({ error: "missing phone or fullName" }, 400);
+
+  try {
+    const e164Phone = toE164(phone);
+    const existing = await quoFindContactByPhone(env, e164Phone);
+    if (!existing) return jsonResponse({ error: "no Quo contact found for this phone" }, 404);
+
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    const firstName = parts[0] || null;
+    const lastName = parts.length > 1 ? parts.slice(1).join(" ") : null;
+    const data = await quoWrite(env, `/contacts/${existing.id}`, "PATCH", {
+      defaultFields: { ...existing.defaultFields, firstName, lastName },
+    });
+    return jsonResponse({ ok: true, contact: data.data || data });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// ---------- Internal ID-photo OCR tooling, added 2026-09-11, extended 2026-09-12 ----------
+// Supports a standing local watch-script (id-photo-watch.ts in nanoclaw,
+// run on Aaron's own Mac -- local macOS Vision OCR can't run inside a
+// Cloudflare Worker) that reads the actual name printed on each ID photo
+// dropped into the Buyer IDs Dropbox folder and cross-references it
+// against Quo contacts, per Aaron's direct request: "Can we name the id
+// files in db based on the name on the id itself, and then fuzzy match to
+// quo contacts?" -- then, per his follow-up request 2026-09-12 ("can we
+// have this done automatically"), actually link a confident match without
+// waiting for a click. Gated by a shared secret (INTERNAL_TOOLS_SECRET),
+// not Google OAuth -- this tier is for the internal script, not the admin
+// UI, same ?key= pattern already used by appointment-notifier-worker.js's
+// own manual-trigger endpoint. Read-only except for
+// handleInternalAutoLinkId below, which the local script calls ONLY once
+// its own OCR + name-matching has already decided a match is confident
+// (see id-photo-watch.ts's own matching threshold) -- an ambiguous file is
+// never sent here, it gets a Telegram flag instead. The original
+// OAuth-gated /confirm-id-match / /rename-id-files endpoints still exist
+// unchanged, for anything Aaron wants to review by hand from the admin UI.
 function checkInternalToolsSecret(request, env) {
   const url = new URL(request.url);
   return url.searchParams.get("key") === env.INTERNAL_TOOLS_SECRET && !!env.INTERNAL_TOOLS_SECRET;
@@ -1653,6 +1754,56 @@ async function handleInternalContacts(request, env) {
       .filter((b) => b.quoName || (b.leadInfo && b.leadInfo.contactName))
       .map((b) => ({ phone: b.phone, name: b.quoName || b.leadInfo.contactName, hasId: !!(b.loginsMatch && b.loginsMatch.idLink) }));
     return jsonResponse({ contacts });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// "Auto-link one OCR-matched ID file," added 2026-09-12 per Aaron's direct
+// request to make the Dropbox-dropped-ID workflow fully automatic instead
+// of requiring a click through /suggested-id-matches + /confirm-id-match +
+// /rename-id-files every time. Shared-secret gated (INTERNAL_TOOLS_SECRET),
+// same tier as the read-only /internal/* tools above -- but unlike those,
+// THIS one writes (renames the Dropbox file, writes ID Link) on Aaron's own
+// explicit go-ahead to automate this, not silently. The actual OCR + name-
+// matching judgment call happens in the calling script (id-photo-watch.ts,
+// via macOS Vision -- can't run in a Worker); this endpoint just performs
+// the two writes once that script has already decided a match is
+// confident. Deliberately a single-file call, not a batch like
+// /rename-id-files -- the caller already knows exactly which file goes
+// with which buyer, no server-side matching to redo.
+async function handleInternalAutoLinkId(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const dropboxPath = (body.dropboxPath || "").trim();
+  const buyerPhone = (body.buyerPhone || "").trim();
+  const buyerName = (body.buyerName || "").trim();
+  const originalFilename = (body.filename || dropboxPath.split("/").pop() || "").trim();
+  if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
+
+  try {
+    const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
+
+    const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
+    const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
+    let finalPath = dropboxPath;
+    if (targetName !== originalFilename) {
+      const moveRes = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from_path: dropboxPath, to_path: targetPath, autorename: false }),
+      });
+      if (!moveRes.ok) return jsonResponse({ error: "rename failed", detail: await moveRes.text() }, 500);
+      finalPath = targetPath;
+    }
+
+    const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
+    const row = await findLoginsRowByPhone(accessToken, buyerPhone);
+    if (row) await writeIdLink(accessToken, row, idLink);
+    else await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
+
+    return jsonResponse({ ok: true, renamedTo: finalPath, idLink });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2744,6 +2895,12 @@ async function route(request, env) {
   if (url.pathname === "/rename-id-files" && request.method === "POST") {
     return handleRenameIdFiles(request, env);
   }
+  if (url.pathname === "/admin/upload-id" && request.method === "POST") {
+    return handleAdminUploadId(request, env);
+  }
+  if (url.pathname === "/admin/update-contact-name" && request.method === "POST") {
+    return handleAdminUpdateContactName(request, env);
+  }
 
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
     return handleInternalListIdFiles(request, env);
@@ -2753,6 +2910,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/contacts" && request.method === "GET") {
     return handleInternalContacts(request, env);
+  }
+  if (url.pathname === "/internal/auto-link-id" && request.method === "POST") {
+    return handleInternalAutoLinkId(request, env);
   }
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
