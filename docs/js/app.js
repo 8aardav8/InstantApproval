@@ -3076,6 +3076,23 @@ function backToBuyersList() {
   document.getElementById("buyers-list-view").classList.remove("hidden");
 }
 
+// Two links: the openphone:// scheme (documented at
+// https://support.quo.com/core-concepts/integrations/deep-linking) opens
+// that phone number's conversation directly in the Quo mobile app if
+// installed -- silently does nothing on a device with no handler for it
+// (desktop, or the app not installed), which is why the plain web URL
+// stays alongside it rather than replacing it. There's no documented way
+// to deep-link straight to a contact/conversation BY ID, only by phone
+// number, so this is the closest real equivalent to "open this buyer in
+// the app."
+function quoAppAndWebLinks(phone, webUrl) {
+  if (!webUrl) return "";
+  const appHtml = phone
+    ? `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="btn-outline buyer-quo-link">Open in Quo app</a>`
+    : "";
+  return `${appHtml}<a href="${escapeAttr(webUrl)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in Quo (browser)</a>`;
+}
+
 function renderBuyerDetail(buyer) {
   const lm = buyer.loginsMatch;
   const container = document.getElementById("buyers-detail-content");
@@ -3145,7 +3162,7 @@ function renderBuyerDetail(buyer) {
     <div class="buyer-section">
       <h3>Lead Info</h3>
       ${leadFacts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("")}
-      ${li.openphoneLink ? `<a href="${escapeAttr(li.openphoneLink)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in OpenPhone</a>` : ""}
+      ${li.openphoneLink ? quoAppAndWebLinks(buyer.phone, li.openphoneLink) : ""}
     </div>
   ` : "";
 
@@ -3230,7 +3247,18 @@ function renderBuyerDetail(buyer) {
       </div>`
     : "";
 
-  const quoLinkHtml = buyer.quoUrl ? `<a href="${escapeAttr(buyer.quoUrl)}" target="_blank" rel="noopener" class="btn-primary buyer-quo-link">Open in Quo</a>` : "";
+  // Two links, added 2026-09-12 per Aaron's direct request ("open the app
+  // on my phone, or only the browser url?"): Quo's own deep-linking is
+  // documented (https://support.quo.com/core-concepts/integrations/
+  // deep-linking) for dial/message-by-phone-number only -- there is no
+  // "open this contact/conversation by ID" scheme, so `openphone://
+  // message?number=...` (opens that phone's conversation thread in the
+  // app) is the closest real equivalent to "open this buyer in Quo," not
+  // a documented contact-page deep link. Desktop/web has no handler for
+  // openphone:// at all (Quo's own docs: "available for mobile apps
+  // only") -- kept as a second button rather than the only one, since
+  // Aaron also uses this from a laptop.
+  const quoLinkHtml = quoAppAndWebLinks(buyer.phone, buyer.quoUrl);
 
   // Edit section, added 2026-09-12 per Aaron's direct request: "I'd like to
   // be able to update the contacts from their page on the buyer site, eg

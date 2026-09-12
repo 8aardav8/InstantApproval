@@ -735,7 +735,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 
 #buyers-detail-content h2 { color: var(--navy); margin: 0 0 10px; }
-.buyer-quo-link { display: inline-block; margin-bottom: 14px; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+.buyer-quo-link { display: inline-block; margin-bottom: 14px; margin-right: 8px; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; }
 .buyer-id-section { margin: 10px 0; }
 .buyer-id-photo { max-width: 240px; border-radius: 10px; border: 1px solid #e5e7eb; display: block; }
 .buyer-no-id { font-size: 13px; color: #9ca3af; font-style: italic; }
