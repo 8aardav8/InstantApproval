@@ -2355,10 +2355,21 @@ function updateAdminButtonState() {
   btn.classList.toggle("signed-in", signedIn);
   logoutBtn.classList.toggle("hidden", !signedIn);
   // Buyers/Appointments tabs, added 2026-09-11 -- admin-only, same signedIn check.
-  for (const id of ["nav-buyers-top", "nav-buyers-drawer", "nav-appointments-top", "nav-appointments-drawer"]) {
+  // "-bottom" ids added 2026-09-13 (footer copies, see index.html).
+  for (const id of ["nav-buyers-top", "nav-buyers-drawer", "nav-buyers-bottom", "nav-appointments-top", "nav-appointments-drawer", "nav-appointments-bottom"]) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("hidden", !signedIn);
   }
+  // Footer-only decluttering, added 2026-09-13 per Aaron's direct request:
+  // while signed in as admin, the FOOTER specifically should show just
+  // Homes/Buyers/Appointments -- the buyer-facing tabs stay reachable via
+  // .top-tabs/.nav-drawer (unaffected by this), just hidden from the
+  // footer's own row so it isn't cluttered with tabs Aaron doesn't use
+  // while working the admin view. Reverts the moment signedIn goes false
+  // (sign-out), same single toggle either way.
+  document.querySelectorAll(".bottom-nav-buyer-tab").forEach((el) => {
+    el.classList.toggle("hidden", signedIn);
+  });
 }
 
 function handleAdminCredentialResponse(response) {
