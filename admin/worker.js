@@ -805,7 +805,17 @@ async function handleAdminActivity(request, env) {
     for (let i = 1; i < rows.length; i++) { // row 0 is the header
       const row = rows[i];
       const email = (row[0] || "").trim();
-      const phone = (row[2] || "").trim();
+      // Real bug found and fixed 2026-09-12: this used to be the RAW Sheet
+      // cell, un-normalized -- most rows already have a leading "+1", but
+      // at least one real row on file doesn't (a plain "3143498711"). The
+      // client matches this appointment's phone against BUYERS_CACHE
+      // (always E.164) to find the buyer's row and render the "Mark as
+      // shown" checkbox -- a raw, non-E.164 phone here silently failed
+      // that match for that one buyer, and the checkbox just never
+      // rendered for her, with no error anywhere to notice. toE164() is
+      // the same normalizer every other phone comparison in this file
+      // already uses.
+      const phone = toE164((row[2] || "").trim());
       const name = (row[3] || "").trim();
       const idLink = (row[4] || "").trim(); // added 2026-09-12, for the Appointments-tab card thumbnail
       for (let slot = 0; slot < 10; slot++) {

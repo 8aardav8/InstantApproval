@@ -773,6 +773,12 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Quo-name / ID-name mismatch flag, added 2026-09-12. */
 .buyer-row-idname-flag { font-size: 11px; font-weight: 700; color: #9a3412; background: #fff7ed; padding: 2px 8px; border-radius: 10px; width: fit-content; }
 
+/* Copy-to-clipboard, added 2026-09-12 per Aaron's direct request. Dotted
+   underline signals "clickable, but not a link" (a solid underline reads
+   as "navigates somewhere," which this doesn't). */
+.copyable-text { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.copyable-text:hover { color: var(--blue); }
+
 /* Bottom section, "the status bar" -- full card width, three equal
    thirds. Added/redone 2026-09-12 per Aaron's direct request. */
 .buyer-row-status-bar { display: flex; gap: 10px; padding-top: 10px; border-top: 1px solid #f3f4f6; }

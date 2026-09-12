@@ -3121,8 +3121,16 @@ function renderBuyersList() {
     // Quo contact at all (standalone entries added 2026-09-11, see the
     // worker-side comment on why some leads never show up as a Quo
     // conversation participant).
-    const label = (b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone) + (b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "");
-    const sub = b.areas && b.areas.length > 0 && BUYERS_SORT !== "area" ? b.areas.join(", ") : (b.loginsMatch ? b.loginsMatch.email : "");
+    const realName = b.quoName || (b.leadInfo && b.leadInfo.contactName);
+    const photoFlag = b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "";
+    // Copy-to-clipboard, added 2026-09-12 per Aaron's direct request
+    // ("anywhere ... a phone number or email is displayed") -- only the
+    // phone-as-name fallback and the email sub-line are actually a raw
+    // phone/email; a real name/area list isn't, so those stay plain text.
+    const labelHtml = realName ? escapeHtml(realName) + photoFlag : copyableTextHtml(b.phone) + photoFlag;
+    const showEmailSub = !(b.areas && b.areas.length > 0 && BUYERS_SORT !== "area");
+    const subEmail = showEmailSub && b.loginsMatch ? b.loginsMatch.email : "";
+    const sub = showEmailSub ? "" : b.areas.join(", ");
     // Flags a mismatch between the Quo contact's own name and the name
     // actually read off their ID -- added 2026-09-12 per Aaron's direct
     // request to distinguish the two at a glance, not just on the detail
@@ -3207,9 +3215,9 @@ function renderBuyersList() {
           </div>
           <div class="buyer-row-top-half buyer-row-top-info-half">
             <div class="buyer-row-main">
-              <span class="buyer-row-name">${escapeHtml(label)}</span>
+              <span class="buyer-row-name">${labelHtml}</span>
               ${badgesHtml}
-              ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+              ${subEmail ? `<span class="buyer-row-sub">${copyableTextHtml(subEmail)}</span>` : sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
               ${idNameMismatchHtml}
             </div>
           </div>
@@ -3336,11 +3344,25 @@ function formatBuyerDate(iso) {
 // above was never built for (it assumes "since", producing a nonsense
 // negative-day "today" for anything not yet happened). This handles both
 // directions: "Today", "in Nd", or "Nd ago".
+// Real bug found and fixed 2026-09-12, Aaron caught it directly: a
+// 2026-09-13 appointment showed as "Today" on 2026-09-12. Cause: `new
+// Date(dateStr)` parses a bare "YYYY-MM-DD" as UTC MIDNIGHT, then this was
+// diffed against Date.now() (the current precise instant) -- late enough
+// in the day in a timezone behind UTC (Aaron's own America/Los_Angeles,
+// UTC-7/-8), "tomorrow at UTC midnight" is only a few hours away in real
+// time, and Math.round() collapsed that gap to 0 days. The fix: diff two
+// CALENDAR DATE strings against each other (both parsed the same way, as
+// UTC midnight), never against the live instant -- localTodayISO()
+// already exists for exactly this "what's today, in the viewer's own
+// timezone" concept, used elsewhere in this file for the same reason.
+function daysBetweenDateStrings(fromStr, toStr) {
+  const a = new Date(fromStr + "T00:00:00Z");
+  const b = new Date(toStr + "T00:00:00Z");
+  return Math.round((b - a) / 86400000);
+}
 function formatApptDate(dateStr) {
   if (BUYERS_DATE_MODE !== "days") return formatShortDate(dateStr);
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "";
-  const days = Math.round((d.getTime() - Date.now()) / 86400000);
+  const days = daysBetweenDateStrings(localTodayISO(), dateStr);
   if (days === 0) return "Today";
   if (days > 0) return days === 1 ? "in 1d" : `in ${days}d`;
   return days === -1 ? "1d ago" : `${-days}d ago`;
@@ -3493,7 +3515,11 @@ function renderBuyerDetail(buyer) {
     ["Last activity (Quo)", formatShortDate(buyer.lastActivityAt)],
   ].filter(([, v]) => v);
 
-  const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("");
+  // Phone/Email copy-to-clipboard, added 2026-09-12 per Aaron's direct
+  // request -- these two facts get the copyable-text treatment, everything
+  // else in this list stays plain escaped text.
+  const COPYABLE_FACT_LABELS = new Set(["Phone", "Email"]);
+  const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${COPYABLE_FACT_LABELS.has(k) ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
 
   // Lead info from the Filling Sheet's separate "BUYERS" tab (rating,
   // preferences, company/landlord, which Quo number they came in on) --
@@ -4168,7 +4194,64 @@ function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
 
 // Wired up once, on load -- sort dropdown, back button, the filter panel
 // (added 2026-09-11), and the Dropbox-folder ID-match checker.
+// Copy-to-clipboard for phone numbers/emails, added 2026-09-12 per Aaron's
+// direct request -- "anywhere ... on the buyers page or the appointments
+// page." Delegated (one listener, wired once here rather than re-wired on
+// every render) so it survives renderBuyersList()/renderAppointmentsOverview()
+// re-rendering their containers constantly -- matches copyableTextHtml's
+// own markup wherever it's used across both tabs.
+function copyableTextHtml(value) {
+  if (!value) return "";
+  return `<span class="copyable-text" data-copy-value="${escapeAttr(value)}" title="Click to copy">${escapeHtml(value)}</span>`;
+}
+async function copyTextToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    // Fallback for a browser/webview with no Clipboard API (or one that
+    // refuses it outside a fully-trusted context) -- same old-school
+    // textarea+execCommand trick, good enough as a last resort.
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return true;
+    } catch (e2) {
+      return false;
+    }
+  }
+}
+function initCopyableTextDelegation() {
+  // Capture phase (the `true` third arg), NOT the default bubble phase --
+  // real bug caught before ever shipping this: a copyable-text span
+  // usually sits INSIDE a clickable buyer-row/appt-card, whose own
+  // click-to-navigate listener is attached directly to that card element.
+  // In the bubble phase, the card's OWN listener fires first (bubbling
+  // goes target -> ... -> document, so document is always LAST), so
+  // calling stopPropagation() there is too late -- navigation would have
+  // already happened. Listening on document in the CAPTURE phase runs
+  // before the event ever reaches the card, so stopPropagation() there
+  // genuinely prevents the card's own handler from ever seeing the click.
+  document.addEventListener("click", async (e) => {
+    const el = e.target.closest(".copyable-text");
+    if (!el) return;
+    e.stopPropagation();
+    const ok = await copyTextToClipboard(el.dataset.copyValue);
+    const original = el.textContent;
+    el.textContent = ok ? "Copied!" : "Couldn't copy";
+    setTimeout(() => { el.textContent = original; }, 1200);
+  }, true);
+}
+
 function initBuyersTab() {
+  initCopyableTextDelegation();
   const sortSel = document.getElementById("buyers-sort");
   if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; BUYERS_SORT_DIR = 1; renderBuyersList(); });
   const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
@@ -4351,7 +4434,7 @@ function renderApptCard(a, showMarkShown) {
         <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
         <div class="appt-card-address">${escapeHtml(a.address)}</div>
         <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
-        ${a.phone ? `<div class="appt-card-contact">${escapeHtml(a.phone)}${a.email ? " · " + escapeHtml(a.email) : ""}</div>` : ""}
+        ${a.phone ? `<div class="appt-card-contact">${copyableTextHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
         ${showMarkShown && a.row ? `
           <label class="appt-mark-shown-label">
             <input type="checkbox" class="appt-mark-shown-checkbox" data-row="${a.row}" data-address="${escapeAttr(a.address)}" data-phone="${escapeAttr(a.phone)}">
