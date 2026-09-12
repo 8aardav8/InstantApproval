@@ -2689,6 +2689,7 @@ const BUYERS_CANONICAL_AREAS = ["IL - East St Louis", "MO - St. Louis", "AR - Li
 // Populated fresh each renderBuyerDetail() call -- see its own comment at
 // the Shown Properties section for why this replaced a native <datalist>.
 let SHOWN_AVAILABLE_ADDRESSES = [];
+let APPOINTMENT_AVAILABLE_ADDRESSES = []; // added 2026-09-12, same pattern, populated fresh each renderBuyerDetail() call
 
 let BUYERS_FILTER = {
   down: null, monthly: null, beds: null, areas: [],
@@ -2896,10 +2897,37 @@ async function loadBuyers() {
 // sort (including its own nested tie-breaks, e.g. area's own
 // classified-first / most-recent-within-group ordering) without having
 // to hand-flip every line individually.
+// Added 2026-09-12 per Aaron's direct request -- soonest upcoming
+// appointment date for a buyer, or null if they have none scheduled
+// (today or later; a past appointment doesn't count, same "Scheduled vs
+// Past" split the detail view already uses). Shared by the "Appointments"
+// sort and the buyer-row red-outline highlight below.
+function soonestUpcomingAppointmentDate(buyer) {
+  const appts = buyer.loginsMatch && buyer.loginsMatch.appointments ? buyer.loginsMatch.appointments : [];
+  const today = localTodayISO();
+  const upcoming = appts.filter((a) => a.date >= today).map((a) => a.date).sort();
+  return upcoming.length ? upcoming[0] : null;
+}
+
 function sortedBuyers() {
   const buyers = (BUYERS_CACHE || []).filter((b) => buyerMatchesFilters(b) && buyerMatchesSearch(b));
   const dir = BUYERS_SORT_DIR;
-  if (BUYERS_SORT === "name") {
+  if (BUYERS_SORT === "appointments") {
+    // Buyers with an upcoming appointment first (soonest date first), then
+    // everyone else falls back to Last Contact (any) so the list doesn't
+    // just go alphabetical/random underneath the appointment block.
+    const lastContactOf = (x) => Math.max(
+      new Date(x.lastActivityAt || 0),
+      new Date(x.lastCallAt || 0),
+      new Date((x.loginsMatch && x.loginsMatch.lastLogin) || 0),
+    );
+    buyers.sort((a, b) => {
+      const aDate = soonestUpcomingAppointmentDate(a), bDate = soonestUpcomingAppointmentDate(b);
+      if (aDate && bDate) return dir * aDate.localeCompare(bDate);
+      if (aDate !== bDate) return dir * (aDate ? -1 : 1);
+      return dir * (lastContactOf(b) - lastContactOf(a));
+    });
+  } else if (BUYERS_SORT === "name") {
     const nameOf = (x) => x.quoName || (x.leadInfo && x.leadInfo.contactName) || x.phone;
     buyers.sort((a, b) => dir * nameOf(a).localeCompare(nameOf(b)));
   } else if (BUYERS_SORT === "last-contact") {
@@ -3002,8 +3030,12 @@ function renderBuyersList() {
     const idThumbHtml = b.loginsMatch && b.loginsMatch.idLink
       ? `<img class="buyer-row-thumb admin-id-photo" data-dropbox-link="${escapeAttr(b.loginsMatch.idLink)}" alt="ID on file">`
       : "";
+    // Red outline for an upcoming appointment, added 2026-09-12 per
+    // Aaron's direct request ("circled in Red so that I know they have an
+    // appointment coming up") -- same upcomingCount > 0 signal the 📅
+    // badge above already uses.
     rows.push(`
-      <button class="buyer-row" data-phone="${escapeHtml(b.phone)}">
+      <button class="buyer-row${upcomingCount > 0 ? " buyer-row-has-appointment" : ""}" data-phone="${escapeHtml(b.phone)}">
         ${idThumbHtml}
         <div class="buyer-row-main">
           <span class="buyer-row-name">${escapeHtml(label)}</span>
@@ -3220,6 +3252,31 @@ function renderBuyerDetail(buyer) {
   const scheduledAppts = (lm && lm.appointments ? lm.appointments : []).filter((a) => a.date >= todayForAppts);
   const pastAppts = (lm && lm.appointments ? lm.appointments : []).filter((a) => a.date < todayForAppts);
   const apptItem = (a) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)}</div>`;
+  // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
+  // an appointment for a buyer for a property from their Buyer page
+  // myself"). Same autocomplete pattern as Shown Properties above, but
+  // against every real listing (not excluding already-shown ones -- a
+  // second showing at the same property is a normal thing to schedule).
+  // Writes through /admin/add-appointment into the SAME Appointment 1-10
+  // columns the public booking flow uses, so the property-card admin
+  // badge and this same buyer's own Scheduled Showings list above both
+  // pick it up automatically, no separate rendering needed.
+  APPOINTMENT_AVAILABLE_ADDRESSES = (ALL_LISTINGS || []).map((l) => l.address);
+  const scheduleApptHtml = lm && lm.row ? `
+    <div class="buyer-section">
+      <h3>Schedule a Showing</h3>
+      <div class="schedule-appt-row">
+        <div class="autocomplete-wrap">
+          <input type="text" id="appt-property-input" placeholder="Type an address…" autocomplete="off">
+          <div id="appt-property-suggestions" class="autocomplete-dropdown hidden"></div>
+        </div>
+        <input type="date" id="appt-date-input" min="${localTodayISO()}">
+        <button type="button" id="appt-schedule-btn" data-phone="${escapeAttr(buyer.phone)}" data-row="${lm.row}" class="btn-outline">Schedule</button>
+      </div>
+      <div id="appt-schedule-status"></div>
+    </div>
+  ` : "";
+
   const scheduledHtml = scheduledAppts.length
     ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map(apptItem).join("")}</div>`
     : "";
@@ -3328,6 +3385,7 @@ function renderBuyerDetail(buyer) {
     ${favoritesHtml}
     ${viewedHtml}
     ${shownHtml}
+    ${scheduleApptHtml}
     ${scheduledHtml}
     ${pastHtml}
     ${coBuyersHtml}
@@ -3350,6 +3408,7 @@ function renderBuyerDetail(buyer) {
   // above for why this can't just be a plain src= attribute.
   container.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
   initShownPropertyAutocomplete();
+  initApptPropertyAutocomplete();
 
   const shownAddBtn = document.getElementById("shown-add-btn");
   if (shownAddBtn) shownAddBtn.addEventListener("click", () => {
@@ -3358,6 +3417,9 @@ function renderBuyerDetail(buyer) {
     if (!address) return;
     markShown(Number(shownAddBtn.dataset.row), address, "add", buyer.phone);
   });
+
+  const apptScheduleBtn = document.getElementById("appt-schedule-btn");
+  if (apptScheduleBtn) apptScheduleBtn.addEventListener("click", (e) => scheduleAppointment(e.target.dataset.phone));
   container.querySelectorAll(".shown-remove-btn").forEach((btn) => {
     btn.addEventListener("click", () => markShown(Number(btn.dataset.row), btn.dataset.address, "remove", buyer.phone));
   });
@@ -3411,6 +3473,77 @@ function initShownPropertyAutocomplete() {
       }
     }
   });
+}
+
+// Same pattern as initShownPropertyAutocomplete above, against
+// APPOINTMENT_AVAILABLE_ADDRESSES instead (every listing, not just
+// not-yet-shown ones) -- added 2026-09-12 for the new Schedule a Showing
+// control.
+function initApptPropertyAutocomplete() {
+  const input = document.getElementById("appt-property-input");
+  const dropdown = document.getElementById("appt-property-suggestions");
+  if (!input || !dropdown) return;
+
+  function renderSuggestions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    const matches = APPOINTMENT_AVAILABLE_ADDRESSES.filter((a) => a.toLowerCase().includes(q)).slice(0, AUTOCOMPLETE_MAX_RESULTS);
+    if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    dropdown.innerHTML = matches.map((a) => `<div class="autocomplete-option" data-address="${escapeAttr(a)}">${escapeHtml(a)}</div>`).join("");
+    dropdown.classList.remove("hidden");
+    dropdown.querySelectorAll(".autocomplete-option").forEach((opt) => {
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = opt.dataset.address;
+        dropdown.classList.add("hidden");
+        dropdown.innerHTML = "";
+      });
+    });
+  }
+
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => { if (input.value.trim()) renderSuggestions(input.value); });
+  input.addEventListener("blur", () => { dropdown.classList.add("hidden"); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { dropdown.classList.add("hidden"); return; }
+    if (e.key === "Enter") {
+      const first = dropdown.querySelector(".autocomplete-option");
+      if (first && !dropdown.classList.contains("hidden")) {
+        e.preventDefault();
+        input.value = first.dataset.address;
+        dropdown.classList.add("hidden");
+      }
+    }
+  });
+}
+
+async function scheduleAppointment(phone) {
+  const addressInput = document.getElementById("appt-property-input");
+  const dateInput = document.getElementById("appt-date-input");
+  const statusEl = document.getElementById("appt-schedule-status");
+  const address = addressInput.value.trim();
+  const date = dateInput.value;
+  if (!address) { statusEl.textContent = "Type or pick an address first."; return; }
+  if (!date) { statusEl.textContent = "Pick a date first."; return; }
+  const buyer = findBuyer(phone);
+  const fullName = buyer ? (buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "") : "";
+  if (!confirm(`Schedule a showing at "${address}" on ${date}?`)) return;
+  statusEl.textContent = "Scheduling…";
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/add-appointment`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, fullName, address, date }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't schedule: ${(data && data.error) || res.status}`; return; }
+    statusEl.textContent = "Scheduled. (Shows up here and on the property card within ~15-20 min, once the background sync re-reads the Sheet.)";
+    addressInput.value = "";
+    dateInput.value = "";
+  } catch (err) {
+    statusEl.textContent = `Couldn't schedule: ${err}`;
+  }
 }
 
 async function markShown(row, address, action, phone) {
@@ -3822,10 +3955,16 @@ function renderAppointmentsOverview() {
   if (all.length === 0) { container.innerHTML = "<p>No upcoming appointments.</p>"; return; }
   container.innerHTML = all.map((a) => `
     <div class="appt-card">
-      <div class="appt-card-date">${escapeHtml(a.date)}</div>
-      <div class="appt-card-address">${escapeHtml(a.address)}</div>
-      <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
-      ${a.phone ? `<div class="appt-card-contact">${escapeHtml(a.phone)}${a.email ? " · " + escapeHtml(a.email) : ""}</div>` : ""}
+      ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
+      <div class="appt-card-info">
+        <div class="appt-card-date">${escapeHtml(a.date)}</div>
+        <div class="appt-card-address">${escapeHtml(a.address)}</div>
+        <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
+        ${a.phone ? `<div class="appt-card-contact">${escapeHtml(a.phone)}${a.email ? " · " + escapeHtml(a.email) : ""}</div>` : ""}
+      </div>
     </div>
   `).join("");
+  // Same blob-fetch as everywhere else an admin-id-photo placeholder
+  // appears -- a raw Dropbox share link can't go straight into <img src>.
+  container.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
 }

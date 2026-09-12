@@ -763,13 +763,14 @@ async function handleAdminActivity(request, env) {
       const email = (row[0] || "").trim();
       const phone = (row[2] || "").trim();
       const name = (row[3] || "").trim();
+      const idLink = (row[4] || "").trim(); // added 2026-09-12, for the Appointments-tab card thumbnail
       for (let slot = 0; slot < 10; slot++) {
         const raw = (row[13 + slot] || "").trim();
         if (!raw) continue;
         const parts = raw.split(" | ");
         const address = (parts[0] || "").trim();
         const date = (parts[1] || "").trim();
-        if (address && date) appointments.push({ address, date, name, email, phone });
+        if (address && date) appointments.push({ address, date, name, email, phone, idLink });
       }
       const favRaw = (row[23] || "").trim();
       if (favRaw) {
@@ -1701,6 +1702,49 @@ async function handleAdminSetAreas(request, env) {
       if (newRow) await writeManualAreaOverride(accessToken, newRow, areasCsv);
     }
     return jsonResponse({ ok: true, areas });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Lets Aaron schedule a showing for a buyer directly from their own
+// buyers-tab page, added 2026-09-12 per his direct request ("set an
+// appointment for a buyer for a property from their Buyer page... show on
+// the house thumbnails and all of their appointments would show as cards
+// on the Buyer page too"). Reuses addAppointment (see "job 5: appointment
+// scheduling" below) -- the SAME Sheet write the public Get Started
+// booking flow already makes, into the SAME Appointment 1-10 columns --
+// so nothing else needs to change: the property-card admin-appointment
+// badge (ADMIN_APPOINTMENTS_BY_ADDRESS, populated from this same data)
+// and the buyer detail page's own Scheduled Showings section both already
+// read from here and pick this up automatically once the buyers-cache
+// background sync re-reads the Sheet.
+async function handleAdminAddAppointment(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const address = (body.address || "").trim();
+  const date = (body.date || "").trim(); // "YYYY-MM-DD", same shape addAppointment/parseAppointmentCell already expect
+  if (!phone || !address || !date) return jsonResponse({ error: "missing phone, address, or date" }, 400);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return jsonResponse({ error: "date must be YYYY-MM-DD" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await addAppointment(accessToken, row, address, date);
+    return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2963,6 +3007,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-areas" && request.method === "POST") {
     return handleAdminSetAreas(request, env);
+  }
+  if (url.pathname === "/admin/add-appointment" && request.method === "POST") {
+    return handleAdminAddAppointment(request, env);
   }
 
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
