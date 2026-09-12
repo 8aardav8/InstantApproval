@@ -3136,11 +3136,12 @@ function renderBuyersList() {
     // conversation participant).
     const realName = b.quoName || (b.leadInfo && b.leadInfo.contactName);
     const photoFlag = b.possibleIdImages && b.possibleIdImages.length ? " 📷" : "";
-    // Copy-to-clipboard, added 2026-09-12 per Aaron's direct request
-    // ("anywhere ... a phone number or email is displayed") -- only the
-    // phone-as-name fallback and the email sub-line are actually a raw
-    // phone/email; a real name/area list isn't, so those stay plain text.
-    const labelHtml = realName ? escapeHtml(realName) + photoFlag : copyableTextHtml(b.phone) + photoFlag;
+    // Phone-as-name fallback opens the Quo conversation directly
+    // (phoneQuoLinkHtml, 2026-09-14) rather than copying to clipboard
+    // (copyableTextHtml, still used for the email sub-line below) -- a
+    // real name/area list isn't a phone/email at all, so that stays plain
+    // text either way.
+    const labelHtml = realName ? escapeHtml(realName) + photoFlag : phoneQuoLinkHtml(b.phone) + photoFlag;
     const showEmailSub = !(b.areas && b.areas.length > 0 && BUYERS_SORT !== "area");
     const subEmail = showEmailSub && b.loginsMatch ? b.loginsMatch.email : "";
     const sub = showEmailSub ? "" : b.areas.join(", ");
@@ -3188,22 +3189,6 @@ function renderBuyersList() {
         ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
       </span>
     `;
-    // Compact-card "last contact" -- added 2026-09-13 per Aaron's direct
-    // request: "just something that says last contact which would take the
-    // most recent of login texts and calls." Compares the three raw
-    // timestamps (not the already-formatted date strings above) so the
-    // actual most-recent one wins regardless of which channel it was.
-    const contactCandidates = [
-      { iso: lastLogin, label: "Login" },
-      { iso: b.lastActivityAt, label: "Texted" },
-      { iso: b.lastCallAt, label: "Called" },
-    ].filter((c) => c.iso);
-    let lastContactHtml = "";
-    if (contactCandidates.length > 0) {
-      contactCandidates.sort((a, c) => new Date(c.iso).getTime() - new Date(a.iso).getTime());
-      const mostRecent = contactCandidates[0];
-      lastContactHtml = `<span class="buyer-row-compact-contact" title="Most recent of login/text/call">Last contact: ${mostRecent.label} ${formatBuyerDate(mostRecent.iso)}</span>`;
-    }
     // Card thumbnail, added 2026-09-12 per Aaron's direct request -- same
     // admin-id-photo blob-fetch as the detail view's full-size photo (a raw
     // Dropbox share link can't go straight into a plain <img src>, see
@@ -3244,27 +3229,57 @@ function renderBuyersList() {
     // inside a <button>'s content model. role="button" + tabindex keep it
     // reachable/activatable via keyboard.
     const rowStyle = stageOutlineColor ? ` style="border-color:${stageOutlineColor};border-width:2px"` : "";
+    // Status bar (sentiment emoji | stage | last login/text/call), pulled
+    // out into a shared variable 2026-09-14 per Aaron's direct request
+    // ("include the status bar on the cards for both compact and detail
+    // views") -- previously detailed-card-only, now rendered identically
+    // in both. Its own click-to-stopPropagation/sentiment-btn/stage-select
+    // wiring below already targets these classes generically, so no
+    // separate wiring is needed for the compact copy.
+    const statusBarHtml = `
+      <div class="buyer-row-status-bar">
+        <div class="status-bar-third status-bar-sentiment">
+          <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
+        </div>
+        <div class="status-bar-third status-bar-stage">
+          ${renderStageSelectHtml(b)}
+        </div>
+        <div class="status-bar-third status-bar-dates">
+          ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
+          ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+          ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
+        </div>
+      </div>
+    `;
     if (BUYERS_CARD_MODE === "compact") {
-      // Compact card, added 2026-09-13 per Aaron's direct request: one or
-      // two lines -- name, area, ID-received/logged-in icons, and a single
-      // "last contact" line (the most recent of login/text/call, computed
-      // above as lastContactHtml). No thumbnail, no sentiment/stage
-      // controls -- open the buyer's own detail page for those.
+      // Compact card -- name + ID/login icons on line 1; area, email, and
+      // phone (in one place, all identifying info together) on line 2;
+      // the full status bar below. Redone 2026-09-14 per Aaron's direct
+      // request ("move the areas down to the second line... include email
+      // address and phone number... include the status bar") -- area used
+      // to sit on line 1 and there was no email/phone shown at all, a
+      // one-line "Last contact: <most recent>" summary stood in for the
+      // status bar's own more detailed Login/Texted/Called breakdown,
+      // which is why that summary is gone now -- the real status bar
+      // below already covers it, with more detail, not less.
       const areaText = b.areas && b.areas.length > 0 ? b.areas.join(", ") : "";
+      const compactEmail = b.loginsMatch ? b.loginsMatch.email : "";
       rows.push(`
         <div class="buyer-row buyer-row-compact" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
           <div class="buyer-row-compact-line1">
             <span class="buyer-row-name">${labelHtml}</span>
-            ${areaText ? `<span class="buyer-row-compact-area">${escapeHtml(areaText)}</span>` : ""}
             <span class="buyer-row-compact-icons">
               <span class="buyer-badge id-badge${hasId ? "" : " buyer-badge-off"}" title="${hasId ? "ID on file" : "No ID on file"}">🪪</span>
               <span class="buyer-badge login-badge${hasLoggedIn ? "" : " buyer-badge-off"}" title="${hasLoggedIn ? "Has logged in" : "Hasn't logged in"}">✅</span>
             </span>
           </div>
           <div class="buyer-row-compact-line2">
-            ${lastContactHtml || `<span class="buyer-row-compact-contact">No contact yet</span>`}
+            ${areaText ? `<span class="buyer-row-compact-area">${escapeHtml(areaText)}</span>` : ""}
+            ${compactEmail ? `<span class="buyer-row-compact-email">${copyableTextHtml(compactEmail)}</span>` : ""}
+            <span class="buyer-row-compact-phone">${phoneQuoLinkHtml(b.phone)}</span>
             ${idNameMismatchHtml}
           </div>
+          ${statusBarHtml}
         </div>
       `);
     } else {
@@ -3283,19 +3298,7 @@ function renderBuyersList() {
               </div>
             </div>
           </div>
-          <div class="buyer-row-status-bar">
-            <div class="status-bar-third status-bar-sentiment">
-              <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
-            </div>
-            <div class="status-bar-third status-bar-stage">
-              ${renderStageSelectHtml(b)}
-            </div>
-            <div class="status-bar-third status-bar-dates">
-              ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
-              ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
-              ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
-            </div>
-          </div>
+          ${statusBarHtml}
         </div>
       `);
     }
@@ -3559,40 +3562,34 @@ function cssEscapeAttrValue(value) {
 // Two links: the openphone:// scheme (documented at
 // https://support.quo.com/core-concepts/integrations/deep-linking) opens
 // that phone number's conversation directly in the Quo mobile app if
-// installed -- silently does nothing on a device with no handler for it
-// (desktop, or the app not installed), which is why the plain web URL
-// stays alongside it rather than replacing it. There's no documented way
-// to deep-link straight to a contact/conversation BY ID, only by phone
-// number, so this is the closest real equivalent to "open this buyer in
-// the app."
-// Colors swapped 2026-09-12 per Aaron's direct request -- app link (the
-// one he'll actually tap on his phone) is now the blue/primary one, the
-// browser fallback white/outline. Wrapped in .buyer-quo-links so the two
-// sit side by side (added same day -- see .buyer-quo-links in style.css).
-// Real bug fixed 2026-09-13, found by Aaron directly: this used to bail
-// out entirely -- BOTH buttons -- whenever webUrl (buyer.quoUrl) was
-// missing. webUrl only ever gets set from a matched Quo CONTACT record
-// (see admin-buyers-worker.js: `quoUrl: contact ? .../contacts/${contact.id}
-// : null`), so a phone number Aaron has genuinely texted/called before but
-// that was never saved as a named Quo contact had no quoUrl -- and lost
-// both links entirely, even though the app deep link only ever needed the
-// phone number itself, never a contact ID. Confirmed against Quo's own
-// deep-linking docs (support.quo.com/core-concepts/integrations/
-// deep-linking): the openphone://message?number= scheme takes a bare
-// phone number, no contact lookup involved server-side. The browser link
-// genuinely has no equivalent without a contact ID -- that same doc page
-// states "Deep linking is available for mobile apps only. Web and desktop
-// applications are not supported" -- so it's the one still omitted when
-// webUrl is missing, not both.
-function quoAppAndWebLinks(phone, webUrl) {
-  if (!phone && !webUrl) return "";
-  const appHtml = phone
-    ? `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="btn-primary buyer-quo-link">Open in Quo app</a>`
-    : "";
-  const webHtml = webUrl
-    ? `<a href="${escapeAttr(webUrl)}" target="_blank" rel="noopener" class="btn-outline buyer-quo-link">Open in Quo (browser)</a>`
-    : "";
-  return `<div class="buyer-quo-links">${appHtml}${webHtml}</div>`;
+// installed. The browser ("Open in Quo (browser)") button that used to
+// sit alongside this was REMOVED ENTIRELY 2026-09-14 per Aaron's direct
+// request -- he has the Quo app on his desktop too, so the browser
+// fallback (which also needed a saved Quo contact ID to build a URL at
+// all, unlike this app link) no longer serves any purpose for him. This
+// no longer takes a webUrl/quoUrl parameter at all -- see phoneQuoLinkHtml
+// just below for the same app-only link used inline wherever a bare phone
+// number is displayed (buyer rows, appt cards, detail-page facts), and
+// this wrapped/button version for the top-of-buyer-page placement.
+function quoAppLinkHtml(phone) {
+  if (!phone) return "";
+  return `<div class="buyer-quo-links"><a href="openphone://message?number=${encodeURIComponent(phone)}" class="btn-primary buyer-quo-link">Open in Quo app</a></div>`;
+}
+
+// Every phone number displayed anywhere (buyer rows -- compact AND
+// detailed --, appointment cards, buyer detail-page facts) opens that
+// number's Quo conversation directly when clicked, added 2026-09-14 per
+// Aaron's direct request. This REPLACES the earlier click-to-copy
+// behavior for phone numbers specifically (copyableTextHtml/
+// copyTextToClipboard below are still used for EMAIL addresses, which
+// have no Quo deep link) -- a real <a href="openphone://..."> needs no
+// JS to navigate on click, just a capture-phase stopPropagation so it
+// doesn't ALSO bubble up into whatever clickable card it sits inside (see
+// initPhoneQuoLinkDelegation below, same pattern initCopyableTextDelegation
+// already uses for the same reason).
+function phoneQuoLinkHtml(phone) {
+  if (!phone) return "";
+  return `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="phone-quo-link">${escapeHtml(phone)}</a>`;
 }
 
 function renderBuyerDetail(buyer) {
@@ -3661,8 +3658,11 @@ function renderBuyerDetail(buyer) {
   // Phone/Email copy-to-clipboard, added 2026-09-12 per Aaron's direct
   // request -- these two facts get the copyable-text treatment, everything
   // else in this list stays plain escaped text.
-  const COPYABLE_FACT_LABELS = new Set(["Phone", "Email"]);
-  const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${COPYABLE_FACT_LABELS.has(k) ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
+  // Phone opens the Quo conversation directly (phoneQuoLinkHtml), Email
+  // stays click-to-copy (copyableTextHtml) -- split 2026-09-14 per Aaron's
+  // direct request, see phoneQuoLinkHtml's own comment for why phones and
+  // emails are no longer treated the same way here.
+  const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
 
   // Lead info from the Filling Sheet's separate "BUYERS" tab (rating,
   // preferences, company/landlord, which Quo number they came in on) --
@@ -3687,7 +3687,7 @@ function renderBuyerDetail(buyer) {
     <div class="buyer-section">
       <h3>Lead Info</h3>
       ${leadFacts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("")}
-      ${li.openphoneLink ? quoAppAndWebLinks(buyer.phone, li.openphoneLink) : ""}
+      ${li.openphoneLink ? quoAppLinkHtml(buyer.phone) : ""}
     </div>
   ` : "";
 
@@ -3811,7 +3811,7 @@ function renderBuyerDetail(buyer) {
     ? `<div class="buyer-section"><h3>Co-Buyers</h3>${lm.coBuyers.map((c) => `
         <div class="co-buyer-block">
           <div class="detail-field"><span class="label">Name</span><span class="value">${escapeHtml(c.name)}</span></div>
-          ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${escapeHtml(c.phone)}</span></div>` : ""}
+          ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${phoneQuoLinkHtml(c.phone)}</span></div>` : ""}
           ${c.email ? `<div class="detail-field"><span class="label">Email</span><span class="value">${escapeHtml(c.email)}</span></div>` : ""}
           ${c.idLink ? `<a href="${escapeAttr(c.idLink)}" target="_blank" rel="noopener"><img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(c.idLink)}" alt="Co-buyer ID"></a>` : `<p class="buyer-no-id">No ID on file.</p>`}
         </div>`).join("")}</div>`
@@ -3827,18 +3827,11 @@ function renderBuyerDetail(buyer) {
       </div>`
     : "";
 
-  // Two links, added 2026-09-12 per Aaron's direct request ("open the app
-  // on my phone, or only the browser url?"): Quo's own deep-linking is
-  // documented (https://support.quo.com/core-concepts/integrations/
-  // deep-linking) for dial/message-by-phone-number only -- there is no
-  // "open this contact/conversation by ID" scheme, so `openphone://
-  // message?number=...` (opens that phone's conversation thread in the
-  // app) is the closest real equivalent to "open this buyer in Quo," not
-  // a documented contact-page deep link. Desktop/web has no handler for
-  // openphone:// at all (Quo's own docs: "available for mobile apps
-  // only") -- kept as a second button rather than the only one, since
-  // Aaron also uses this from a laptop.
-  const quoLinkHtml = quoAppAndWebLinks(buyer.phone, buyer.quoUrl);
+  // Just the app link now -- the browser button that used to sit next to
+  // this was removed 2026-09-14 per Aaron's direct request ("I have quo
+  // app even on my desktop computer, so let's just remove the quo browser
+  // link altogether from all pages"). See quoAppLinkHtml's own comment.
+  const quoLinkHtml = quoAppLinkHtml(buyer.phone);
 
   // Standalone Edit section + Messages section both REMOVED 2026-09-12 per
   // Aaron's direct request, to save space on the page:
@@ -3860,11 +3853,10 @@ function renderBuyerDetail(buyer) {
   //   ever wanted.
   const personalName = stripAreaTagsFromName(buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "");
 
-  // Header block, added 2026-09-12 per Aaron's direct request: Quo links
-  // side by side (moved into quoAppAndWebLinks's own wrapper div, see its
-  // comment), a stage progress bar, and the SAME sentiment/stage controls
-  // the list card has -- all updatable from the top of the page, not just
-  // from the list.
+  // Header block, added 2026-09-12 per Aaron's direct request: the Quo
+  // link (just the app button now, see quoAppLinkHtml's comment), a stage
+  // progress bar, and the SAME sentiment/stage controls the list card
+  // has -- all updatable from the top of the page, not just from the list.
   const detailHeaderHtml = `
     <div class="buyer-detail-header">
       ${quoLinkHtml}
@@ -4525,8 +4517,24 @@ function initCopyableTextDelegation() {
   }, true);
 }
 
+// Same capture-phase stopPropagation pattern as initCopyableTextDelegation
+// just above, and for the exact same reason (a phone-quo-link usually sits
+// inside a clickable buyer-row/appt-card) -- but this does NOT call
+// preventDefault(): the whole point is for the <a href="openphone://...">
+// itself to still navigate and open the Quo conversation, this just stops
+// that click from ALSO bubbling up into the card's own navigate-elsewhere
+// handler. Added 2026-09-14 per Aaron's direct request.
+function initPhoneQuoLinkDelegation() {
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest(".phone-quo-link");
+    if (!el) return;
+    e.stopPropagation();
+  }, true);
+}
+
 function initBuyersTab() {
   initCopyableTextDelegation();
+  initPhoneQuoLinkDelegation();
   initBuyerDetailSearch();
   const sortSel = document.getElementById("buyers-sort");
   if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; BUYERS_SORT_DIR = 1; renderBuyersList(); });
@@ -4739,7 +4747,7 @@ function renderApptCard(a, showMarkShown) {
   // name renders whenever a matching Quo contact has one.
   const namesHtml = (a.quoName || a.name)
     ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)}</div>` : ""}`
-    : escapeHtml(a.email || a.phone || "Unknown visitor");
+    : (a.email ? copyableTextHtml(a.email) : a.phone ? phoneQuoLinkHtml(a.phone) : "Unknown visitor");
   return `
     <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
@@ -4747,7 +4755,7 @@ function renderApptCard(a, showMarkShown) {
         <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
         <div class="appt-card-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
         <div class="appt-card-visitor">${namesHtml}</div>
-        ${a.phone ? `<div class="appt-card-contact">${copyableTextHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
+        ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
         ${showMarkShown && a.row ? `
           <label class="appt-mark-shown-label">
             <input type="checkbox" class="appt-mark-shown-checkbox" data-row="${a.row}" data-address="${escapeAttr(a.address)}" data-phone="${escapeAttr(a.phone)}">
