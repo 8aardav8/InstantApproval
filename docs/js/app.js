@@ -3325,6 +3325,22 @@ function formatBuyerDate(iso) {
   return BUYERS_DATE_MODE === "days" ? formatDaysSince(iso) : formatShortDate(iso);
 }
 
+// Same BUYERS_DATE_MODE toggle, extended 2026-09-12 per Aaron's direct
+// request to the Appointments tab's own date -- that one can be a FUTURE
+// date (an upcoming showing) as often as a past one, which formatDaysSince
+// above was never built for (it assumes "since", producing a nonsense
+// negative-day "today" for anything not yet happened). This handles both
+// directions: "Today", "in Nd", or "Nd ago".
+function formatApptDate(dateStr) {
+  if (BUYERS_DATE_MODE !== "days") return formatShortDate(dateStr);
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const days = Math.round((d.getTime() - Date.now()) / 86400000);
+  if (days === 0) return "Today";
+  if (days > 0) return days === 1 ? "in 1d" : `in ${days}d`;
+  return days === -1 ? "1d ago" : `${-days}d ago`;
+}
+
 function findBuyer(phone) {
   return (BUYERS_CACHE || []).find((b) => b.phone === phone);
 }
@@ -4188,11 +4204,9 @@ function initBuyersTab() {
   const clearBtn = document.getElementById("buyers-filter-clear");
   if (clearBtn) clearBtn.addEventListener("click", clearBuyersFilters);
 
-  const checkIdBtn = document.getElementById("buyers-check-id-matches-btn");
-  if (checkIdBtn) checkIdBtn.addEventListener("click", loadSuggestedIdMatches);
-
-  const renameBtn = document.getElementById("buyers-rename-id-files-btn");
-  if (renameBtn) renameBtn.addEventListener("click", renameIdFiles);
+  // "Check for ID photo matches" / "Rename ID files in Dropbox" button
+  // wiring removed 2026-09-12 -- see the removal comment in index.html for
+  // why (superseded by id-photo-watch.ts's automated OCR matching).
 
   // updateDateModeToggleLabel() is deliberately NOT called here -- this
   // function runs at page-load time, before BUYERS_DATE_MODE (declared
@@ -4203,14 +4217,21 @@ function initBuyersTab() {
   // from renderBuyersList() instead, which -- like every other buyers-tab
   // entry point -- only ever runs lazily, well after the whole script has
   // finished executing once.
-  const dateModeBtn = document.getElementById("buyers-date-mode-toggle");
-  if (dateModeBtn) {
-    dateModeBtn.addEventListener("click", () => {
-      BUYERS_DATE_MODE = BUYERS_DATE_MODE === "days" ? "date" : "days";
-      try { localStorage.setItem(BUYERS_DATE_MODE_STORAGE_KEY, BUYERS_DATE_MODE); } catch (e) {}
-      renderBuyersList();
-    });
+  // Shared BUYERS_DATE_MODE toggle -- both this button (buyers list) and
+  // the Appointments tab's own button (added 2026-09-12) flip the SAME
+  // state and re-render BOTH views, so whichever one you're not currently
+  // looking at is still correct the next time you switch to it, and the
+  // two never drift out of sync with each other.
+  function toggleDateMode() {
+    BUYERS_DATE_MODE = BUYERS_DATE_MODE === "days" ? "date" : "days";
+    try { localStorage.setItem(BUYERS_DATE_MODE_STORAGE_KEY, BUYERS_DATE_MODE); } catch (e) {}
+    renderBuyersList();
+    renderAppointmentsOverview();
   }
+  const dateModeBtn = document.getElementById("buyers-date-mode-toggle");
+  if (dateModeBtn) dateModeBtn.addEventListener("click", toggleDateMode);
+  const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
+  if (apptDateModeBtn) apptDateModeBtn.addEventListener("click", toggleDateMode);
 }
 
 function updateDateModeToggleLabel(btn) {
@@ -4322,7 +4343,7 @@ function renderApptCard(a, showMarkShown) {
     <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
       <div class="appt-card-info">
-        <div class="appt-card-date">${escapeHtml(a.date)}</div>
+        <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
         <div class="appt-card-address">${escapeHtml(a.address)}</div>
         <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
         ${a.phone ? `<div class="appt-card-contact">${escapeHtml(a.phone)}${a.email ? " · " + escapeHtml(a.email) : ""}</div>` : ""}
@@ -4341,6 +4362,8 @@ function renderAppointmentsOverview() {
   const pastContainer = document.getElementById("appointments-past-list");
   const pastHeading = document.getElementById("appointments-past-heading");
   if (!container) return;
+  const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
+  if (apptDateModeBtn) updateDateModeToggleLabel(apptDateModeBtn);
   const today = localTodayISO(); // already defined in app.js
 
   const upcoming = [];

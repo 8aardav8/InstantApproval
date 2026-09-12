@@ -950,11 +950,17 @@
           <button id="buyers-filter-clear" class="btn-outline" type="button">Clear filters</button>
         </div>
       </div>
-      <div class="buyers-id-matches-toolbar">
-        <button id="buyers-check-id-matches-btn" class="btn-outline" type="button">Check for ID photo matches</button>
-        <button id="buyers-rename-id-files-btn" class="btn-outline" type="button">Rename ID files in Dropbox</button>
-      </div>
-      <div id="buyers-id-matches-panel" class="hidden"></div>
+      <!-- "Check for ID photo matches" / "Rename ID files in Dropbox" buttons
+           removed 2026-09-12, per Aaron's direct question ("are these
+           necessary anymore?") -- both used filename-only matching
+           (computeSuggestedIdMatches, admin/worker.js), which the automated
+           id-photo-watch.ts watcher (real OCR of the ID photo itself,
+           auto-links a confident match, flags anything ambiguous to
+           Telegram) has superseded for the normal case. The underlying
+           /suggested-id-matches, /confirm-id-match, /rename-id-files
+           endpoints and their JS (loadSuggestedIdMatches/confirmIdMatch/
+           renameIdFiles in app.js) are left in place, unwired -- easy to
+           re-add a button here if a manual fallback is ever wanted again. -->
       <div id="buyers-list"></div>
     </div>
     <div id="buyers-detail-view" class="hidden">
@@ -965,6 +971,11 @@
 
   <section id="tab-appointments" class="tab-panel hidden">
     <p class="appointments-intro">Every upcoming appointment across all buyers, soonest first.</p>
+    <!-- Shares the SAME toggle/state as the buyers list's own "Show days
+         since" button (BUYERS_DATE_MODE) -- added 2026-09-12 per Aaron's
+         direct request, since appointment dates had no toggle at all
+         before. -->
+    <button id="appointments-date-mode-toggle" class="btn-outline" type="button">Show days since</button>
     <div id="appointments-list"></div>
     <!-- Past Appointments, added 2026-09-12 per Aaron's direct request --
          populated by renderAppointmentsOverview() in app.js. Below the

@@ -98,7 +98,16 @@ body {
   display: block; width: 100%; margin-top: 8px; padding: 6px; font-size: 12px;
   background: none; border: 1px solid var(--border); border-radius: 8px; color: #6b7280; cursor: pointer;
 }
-.top-tabs { display: flex; gap: 6px; margin-top: 10px; }
+/* overflow-x: auto added 2026-09-12, real reported bug: capping .topbar's
+   own width (see its own comment above) gave the tab row LESS horizontal
+   room than it had before on any viewport wide enough to still show
+   .top-tabs instead of the hamburger (roughly 701-900px) -- the buttons
+   don't wrap (flex: 0 0 auto below) and were spilling out past the
+   right edge of the now-bounded bar instead of wrapping or shrinking.
+   Scrolling the row itself, inside its own bounded box, is the same
+   "wide content scrolls in its own container, the page never scrolls
+   sideways" rule used everywhere else on this site. */
+.top-tabs { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .top-tabs .nav-btn {
   flex: 0 0 auto; flex-direction: row; gap: 6px; background: none; border: none; color: #9aa7c7;
   font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;
