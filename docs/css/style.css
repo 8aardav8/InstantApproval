@@ -1023,5 +1023,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-card-info { flex: 1 1 auto; min-width: 0; }
 .appt-card-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
 .appt-card-address { font-weight: 700; color: var(--navy); margin-top: 2px; }
+/* Address -> property page, added 2026-09-13 per Aaron's direct request --
+   distinct from the rest of the card, which still links to the buyer's
+   page (see appt-card-clickable above). Underline on hover signals "this
+   specific text navigates somewhere different than the card around it." */
+.appt-card-address-link { cursor: pointer; width: fit-content; }
+.appt-card-address-link:hover { text-decoration: underline; }
+.appt-card-address-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .appt-card-visitor { font-size: 13px; margin-top: 4px; }
+/* Quo name vs. login name, added 2026-09-13 per Aaron's direct request --
+   see renderApptCard's own comment in app.js for why these can differ. */
+.appt-card-quoname { color: var(--navy); }
+.appt-card-loginname { color: var(--gray-text, #6b7280); }
 .appt-card-contact { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }

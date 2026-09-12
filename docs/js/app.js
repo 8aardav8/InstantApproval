@@ -4698,13 +4698,37 @@ async function renameIdFiles() {
 // below on the next render, no separate "done" flag needed anywhere.
 function renderApptCard(a, showMarkShown) {
   const clickable = !!a.phone;
+  // Address -> that property's own detail page, added 2026-09-13 per
+  // Aaron's direct request ("the address on the card to link to the page
+  // for that property") -- distinct from the card's own click-through to
+  // the BUYER's page (still on by default via .appt-card-clickable above,
+  // which is what makes the ID picture link to the buyer -- clicking the
+  // photo just bubbles up to this same handler, no separate wiring
+  // needed for that half of the request). The address itself gets its
+  // own click handler below (wired in renderAppointmentsOverview) that
+  // stops propagation so it goes to the property instead of the buyer.
+  const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
+  // Quo name vs. login name, added 2026-09-13 per Aaron's direct request
+  // ("show the Quo name and the login name if there is one separately")
+  // -- these are two genuinely different names that can legitimately
+  // differ (a buyer might sign up on the site under one name but have a
+  // different name saved in Quo, or vice versa): a.name is the App:
+  // Logins "Name" field (handleAdminActivity, admin/worker.js) -- what
+  // THIS shows as "Login" -- while a.quoName (set in
+  // renderAppointmentsOverview below, from the same BUYERS_CACHE lookup
+  // the card's own buyer-page link uses) is the Quo contact's own name.
+  // Login name only renders "if there is one" per Aaron's wording; Quo
+  // name renders whenever a matching Quo contact has one.
+  const namesHtml = (a.quoName || a.name)
+    ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)}</div>` : ""}`
+    : escapeHtml(a.email || a.phone || "Unknown visitor");
   return `
     <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
       <div class="appt-card-info">
         <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
-        <div class="appt-card-address">${escapeHtml(a.address)}</div>
-        <div class="appt-card-visitor">${escapeHtml(a.name || a.email || a.phone || "Unknown visitor")}</div>
+        <div class="appt-card-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
+        <div class="appt-card-visitor">${namesHtml}</div>
         ${a.phone ? `<div class="appt-card-contact">${copyableTextHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
         ${showMarkShown && a.row ? `
           <label class="appt-mark-shown-label">
@@ -4732,7 +4756,9 @@ function renderAppointmentsOverview() {
       const buyer = a.phone ? findBuyer(a.phone) : null;
       const row = buyer && buyer.loginsMatch ? buyer.loginsMatch.row : null;
       const alreadyShown = !!(buyer && buyer.loginsMatch && buyer.loginsMatch.shown && buyer.loginsMatch.shown.includes(address));
-      const entry = { address, ...a, row };
+      // quoName, added 2026-09-13 -- see renderApptCard's own comment on
+      // why this and a.name (the login name) are shown separately.
+      const entry = { address, ...a, row, quoName: buyer ? buyer.quoName : null };
       if (a.date < today || alreadyShown) past.push(entry);
       else upcoming.push(entry);
     }
@@ -4761,6 +4787,17 @@ function renderAppointmentsOverview() {
     });
     c.querySelectorAll(".appt-mark-shown-label").forEach((label) => {
       label.addEventListener("click", (e) => e.stopPropagation());
+    });
+    // Address -> that property's own page, added 2026-09-13 per Aaron's
+    // direct request. stopPropagation keeps this from ALSO bubbling up to
+    // the card's own click handler above (which would otherwise navigate
+    // to the buyer's page right after/instead) -- same guard pattern the
+    // mark-shown label already uses just above.
+    c.querySelectorAll(".appt-card-address-link").forEach((el) => {
+      el.addEventListener("click", (e) => { e.stopPropagation(); showDetail(el.dataset.listingId); });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); showDetail(el.dataset.listingId); }
+      });
     });
     c.querySelectorAll(".appt-mark-shown-checkbox").forEach((cb) => {
       cb.addEventListener("change", () => {
