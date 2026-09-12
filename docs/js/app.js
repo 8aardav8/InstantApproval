@@ -3172,16 +3172,9 @@ function renderBuyersList() {
     // Sentiment emoji + Stage dropdown, added 2026-09-12 per Aaron's
     // direct request -- quick controls right on the card, no need to open
     // the buyer's own detail page. Clicking an already-selected emoji
-    // clears it (toggle off); the select saves on change. Both live inside
-    // a wrapper with its own click handler that stops propagation, since
-    // the row itself is clickable (opens detail) and these need to NOT
-    // trigger that.
-    const quickStatusHtml = `
-      <div class="buyer-row-quick-status">
-        <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
-        ${renderStageSelectHtml(b)}
-      </div>
-    `;
+    // clears it (toggle off); the select saves on change. Rendered
+    // directly into the status bar's own thirds below (buyer-row-status-bar
+    // has the stopPropagation wiring, not a separate wrapper here).
     // Outline color, changed 2026-09-12 per Aaron's direct follow-up --
     // was a flat red for any upcoming appointment; now uses that buyer's
     // OWN current-stage color (STAGE_COLORS/stageColorFor) instead, so the
@@ -3190,17 +3183,17 @@ function renderBuyersList() {
     // (which color). Falls back to a neutral gray if they have an
     // appointment but no stage set yet, rather than no outline at all.
     const stageOutlineColor = upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
-    // Card layout, redesigned again 2026-09-12 per Aaron's direct
-    // follow-up (his own screenshot showed the name/phone overlapping the
-    // Texted/Called text) -- now a real 3-equal-column grid, two rows on
-    // the right side:
-    //   "thumb top    top"     <- ID (spans both rows) | name/email/badges, full 2/3 width
-    //   "thumb status dates"   <- (ID continues)        | smiley+stage    | texted/called/login
-    // Each of thumb/status/dates is exactly 1/3 of the card width; top
-    // spans the other two columns. buyer-row-dates moved out of
-    // buyer-row-top (where it was colliding with the name) into its own
-    // grid area, right-aligned, next to the stage control instead of
-    // above it.
+    // Card layout, redone a third time 2026-09-12 per Aaron's explicit
+    // correction -- NOT one unified grid. Two independent stacked
+    // sections, each split differently:
+    //   Top section: two EQUAL HALVES -- left = ID photo, right = name/
+    //   phone/badges.
+    //   Bottom section ("the status bar," full card width): three EQUAL
+    //   THIRDS -- sentiment emoji | stage | last login/text/call info.
+    // Building these as two independent flex rows (not one grid) is what
+    // actually reproduces "top splits in half, bottom splits in thirds" --
+    // a single grid's column tracks can't be half-width on one row and
+    // third-width on another.
     //
     // Switched from <button> to a clickable <div> 2026-09-12 -- a <select>
     // and buttons (sentiment emoji, stage dropdown) can't validly nest
@@ -3208,21 +3201,32 @@ function renderBuyersList() {
     // reachable/activatable via keyboard.
     rows.push(`
       <div class="buyer-row" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${stageOutlineColor ? ` style="border-color:${stageOutlineColor};border-width:2px"` : ""}>
-        ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
         <div class="buyer-row-top">
-          <div class="buyer-row-main">
-            <span class="buyer-row-name">${escapeHtml(label)}</span>
-            ${badgesHtml}
-            ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
-            ${idNameMismatchHtml}
+          <div class="buyer-row-top-half buyer-row-top-thumb-half">
+            ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
+          </div>
+          <div class="buyer-row-top-half buyer-row-top-info-half">
+            <div class="buyer-row-main">
+              <span class="buyer-row-name">${escapeHtml(label)}</span>
+              ${badgesHtml}
+              ${sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+              ${idNameMismatchHtml}
+            </div>
           </div>
         </div>
-        ${quickStatusHtml}
-        <span class="buyer-row-dates">
-          ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
-          ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
-          ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
-        </span>
+        <div class="buyer-row-status-bar">
+          <div class="status-bar-third status-bar-sentiment">
+            <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
+          </div>
+          <div class="status-bar-third status-bar-stage">
+            ${renderStageSelectHtml(b)}
+          </div>
+          <div class="status-bar-third status-bar-dates">
+            ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
+            ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+            ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
+          </div>
+        </div>
       </div>
     `);
   }
@@ -3231,7 +3235,7 @@ function renderBuyersList() {
     el.addEventListener("click", () => showBuyerDetail(el.dataset.phone));
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showBuyerDetail(el.dataset.phone); } });
   });
-  listEl.querySelectorAll(".buyer-row-quick-status").forEach((el) => {
+  listEl.querySelectorAll(".buyer-row-status-bar").forEach((el) => {
     el.addEventListener("click", (e) => e.stopPropagation());
   });
   listEl.querySelectorAll(".sentiment-btn").forEach((btn) => {
