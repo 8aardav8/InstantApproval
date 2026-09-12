@@ -3101,6 +3101,8 @@ function renderBuyersList() {
   if (dateModeBtn) updateDateModeToggleLabel(dateModeBtn);
   const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
   if (sortDirBtn) updateSortDirToggleLabel(sortDirBtn);
+  const cardModeBtn = document.getElementById("buyers-card-mode-toggle");
+  if (cardModeBtn) updateCardModeToggleLabel(cardModeBtn);
 
   const listEl = document.getElementById("buyers-list");
   const buyers = sortedBuyers();
@@ -3161,13 +3163,36 @@ function renderBuyersList() {
     // the detail view's Scheduled/Past split for the full history).
     const today = localTodayISO();
     const upcomingCount = (b.loginsMatch && b.loginsMatch.appointments ? b.loginsMatch.appointments : []).filter((a) => a.date >= today).length;
+    const hasId = !!(b.loginsMatch && b.loginsMatch.idLink);
+    const hasLoggedIn = !!(b.loginsMatch && b.loginsMatch.firstLogin);
+    // The ID badge is dropped from the DETAILED card specifically, added
+    // 2026-09-13 per Aaron's direct request -- the detailed card already
+    // shows the actual ID thumbnail (idThumbHtml below), so a redundant
+    // "🪪 ID" badge on top of it added nothing. The COMPACT card below has
+    // no thumbnail at all, so it keeps the badge -- that's its only way to
+    // show "ID received" at a glance.
     const badgesHtml = `
       <span class="buyer-row-badges">
-        ${b.loginsMatch && b.loginsMatch.idLink ? `<span class="buyer-badge id-badge" title="ID on file">🪪 ID</span>` : ""}
         ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
-        ${b.loginsMatch && b.loginsMatch.firstLogin ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
+        ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
       </span>
     `;
+    // Compact-card "last contact" -- added 2026-09-13 per Aaron's direct
+    // request: "just something that says last contact which would take the
+    // most recent of login texts and calls." Compares the three raw
+    // timestamps (not the already-formatted date strings above) so the
+    // actual most-recent one wins regardless of which channel it was.
+    const contactCandidates = [
+      { iso: lastLogin, label: "Login" },
+      { iso: b.lastActivityAt, label: "Texted" },
+      { iso: b.lastCallAt, label: "Called" },
+    ].filter((c) => c.iso);
+    let lastContactHtml = "";
+    if (contactCandidates.length > 0) {
+      contactCandidates.sort((a, c) => new Date(c.iso).getTime() - new Date(a.iso).getTime());
+      const mostRecent = contactCandidates[0];
+      lastContactHtml = `<span class="buyer-row-compact-contact" title="Most recent of login/text/call">Last contact: ${mostRecent.label} ${formatBuyerDate(mostRecent.iso)}</span>`;
+    }
     // Card thumbnail, added 2026-09-12 per Aaron's direct request -- same
     // admin-id-photo blob-fetch as the detail view's full-size photo (a raw
     // Dropbox share link can't go straight into a plain <img src>, see
@@ -3207,36 +3232,62 @@ function renderBuyersList() {
     // and buttons (sentiment emoji, stage dropdown) can't validly nest
     // inside a <button>'s content model. role="button" + tabindex keep it
     // reachable/activatable via keyboard.
-    rows.push(`
-      <div class="buyer-row" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${stageOutlineColor ? ` style="border-color:${stageOutlineColor};border-width:2px"` : ""}>
-        <div class="buyer-row-top">
-          <div class="buyer-row-top-half buyer-row-top-thumb-half">
-            ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
+    const rowStyle = stageOutlineColor ? ` style="border-color:${stageOutlineColor};border-width:2px"` : "";
+    if (BUYERS_CARD_MODE === "compact") {
+      // Compact card, added 2026-09-13 per Aaron's direct request: one or
+      // two lines -- name, area, ID-received/logged-in icons, and a single
+      // "last contact" line (the most recent of login/text/call, computed
+      // above as lastContactHtml). No thumbnail, no sentiment/stage
+      // controls -- open the buyer's own detail page for those.
+      const areaText = b.areas && b.areas.length > 0 ? b.areas.join(", ") : "";
+      rows.push(`
+        <div class="buyer-row buyer-row-compact" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
+          <div class="buyer-row-compact-line1">
+            <span class="buyer-row-name">${labelHtml}</span>
+            ${areaText ? `<span class="buyer-row-compact-area">${escapeHtml(areaText)}</span>` : ""}
+            <span class="buyer-row-compact-icons">
+              <span class="buyer-badge id-badge${hasId ? "" : " buyer-badge-off"}" title="${hasId ? "ID on file" : "No ID on file"}">🪪</span>
+              <span class="buyer-badge login-badge${hasLoggedIn ? "" : " buyer-badge-off"}" title="${hasLoggedIn ? "Has logged in" : "Hasn't logged in"}">✅</span>
+            </span>
           </div>
-          <div class="buyer-row-top-half buyer-row-top-info-half">
-            <div class="buyer-row-main">
-              <span class="buyer-row-name">${labelHtml}</span>
-              ${badgesHtml}
-              ${subEmail ? `<span class="buyer-row-sub">${copyableTextHtml(subEmail)}</span>` : sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
-              ${idNameMismatchHtml}
+          <div class="buyer-row-compact-line2">
+            ${lastContactHtml || `<span class="buyer-row-compact-contact">No contact yet</span>`}
+            ${idNameMismatchHtml}
+          </div>
+        </div>
+      `);
+    } else {
+      rows.push(`
+        <div class="buyer-row" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
+          <div class="buyer-row-top">
+            <div class="buyer-row-top-half buyer-row-top-thumb-half">
+              ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
+            </div>
+            <div class="buyer-row-top-half buyer-row-top-info-half">
+              <div class="buyer-row-main">
+                <span class="buyer-row-name">${labelHtml}</span>
+                ${badgesHtml}
+                ${subEmail ? `<span class="buyer-row-sub">${copyableTextHtml(subEmail)}</span>` : sub ? `<span class="buyer-row-sub">${escapeHtml(sub)}</span>` : ""}
+                ${idNameMismatchHtml}
+              </div>
+            </div>
+          </div>
+          <div class="buyer-row-status-bar">
+            <div class="status-bar-third status-bar-sentiment">
+              <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
+            </div>
+            <div class="status-bar-third status-bar-stage">
+              ${renderStageSelectHtml(b)}
+            </div>
+            <div class="status-bar-third status-bar-dates">
+              ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
+              ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
+              ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
             </div>
           </div>
         </div>
-        <div class="buyer-row-status-bar">
-          <div class="status-bar-third status-bar-sentiment">
-            <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
-          </div>
-          <div class="status-bar-third status-bar-stage">
-            ${renderStageSelectHtml(b)}
-          </div>
-          <div class="status-bar-third status-bar-dates">
-            ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
-            ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
-            ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
-          </div>
-        </div>
-      </div>
-    `);
+      `);
+    }
   }
   listEl.innerHTML = rows.join("");
   listEl.querySelectorAll(".buyer-row").forEach((el) => {
@@ -3337,6 +3388,15 @@ function formatDaysSince(iso) {
 function formatBuyerDate(iso) {
   return BUYERS_DATE_MODE === "days" ? formatDaysSince(iso) : formatShortDate(iso);
 }
+
+// Compact/Detailed card toggle, added 2026-09-13 per Aaron's direct
+// request -- same localStorage-persisted-convenience pattern as
+// BUYERS_DATE_MODE just above. "Detailed" (the pre-existing card) stays
+// the default so nothing changes for anyone who hasn't touched the toggle.
+const BUYERS_CARD_MODE_STORAGE_KEY = "iah_buyers_card_mode";
+let BUYERS_CARD_MODE = (() => {
+  try { return localStorage.getItem(BUYERS_CARD_MODE_STORAGE_KEY) || "detailed"; } catch (e) { return "detailed"; }
+})();
 
 // Same BUYERS_DATE_MODE toggle, extended 2026-09-12 per Aaron's direct
 // request to the Appointments tab's own date -- that one can be a FUTURE
@@ -3458,10 +3518,31 @@ function initBuyerDetailSwipe() {
 // renderBuyersList() themselves) -- this was a one-way gap, not a data
 // problem: BUYERS_CACHE was always current, the list's rendered DOM
 // underneath just wasn't refreshed to match it.
+// Scrolls back to the card you actually came from, added 2026-09-13 per
+// Aaron's direct request -- previously this always landed back at the top
+// of the list, which is disorienting on a long, sorted/filtered list when
+// the buyer you were looking at is 40 cards down. Uses the SAME data-phone
+// attribute the click handler below reads, and scrollIntoView's own
+// "nearest"/"center" behavior rather than hand-computing an offset, so it
+// stays correct regardless of card height (compact vs. detailed mode).
 function backToBuyersList() {
+  const phone = CURRENT_BUYER_DETAIL_PHONE;
   document.getElementById("buyers-detail-view").classList.add("hidden");
   document.getElementById("buyers-list-view").classList.remove("hidden");
   renderBuyersList();
+  if (phone) {
+    const row = document.querySelector(`.buyer-row[data-phone="${cssEscapeAttrValue(phone)}"]`);
+    if (row) row.scrollIntoView({ block: "center" });
+  }
+}
+
+// Minimal CSS.escape-alike for a data-attribute value used inside a
+// querySelector string -- phones are already E.164 ("+15555555555"), whose
+// only special CSS-selector character is the leading "+", but this escapes
+// defensively rather than assuming that never changes.
+function cssEscapeAttrValue(value) {
+  if (window.CSS && typeof CSS.escape === "function") return CSS.escape(value);
+  return String(value).replace(/[^a-zA-Z0-9_-]/g, (ch) => `\\${ch}`);
 }
 
 // Two links: the openphone:// scheme (documented at
@@ -4486,10 +4567,23 @@ function initBuyersTab() {
   if (dateModeBtn) dateModeBtn.addEventListener("click", toggleDateMode);
   const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
   if (apptDateModeBtn) apptDateModeBtn.addEventListener("click", toggleDateMode);
+
+  // Compact/Detailed card toggle, added 2026-09-13 per Aaron's direct
+  // request -- same persisted-toggle pattern as toggleDateMode above.
+  const cardModeBtn = document.getElementById("buyers-card-mode-toggle");
+  if (cardModeBtn) cardModeBtn.addEventListener("click", () => {
+    BUYERS_CARD_MODE = BUYERS_CARD_MODE === "compact" ? "detailed" : "compact";
+    try { localStorage.setItem(BUYERS_CARD_MODE_STORAGE_KEY, BUYERS_CARD_MODE); } catch (e) {}
+    renderBuyersList();
+  });
 }
 
 function updateDateModeToggleLabel(btn) {
   btn.textContent = BUYERS_DATE_MODE === "days" ? "Show dates" : "Show days since";
+}
+
+function updateCardModeToggleLabel(btn) {
+  btn.textContent = BUYERS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
 }
 
 // ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------
