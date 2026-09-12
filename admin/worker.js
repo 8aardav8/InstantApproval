@@ -2445,6 +2445,38 @@ async function addAppointment(accessToken, row, address, date) {
     body: JSON.stringify({ range: `${LOGINS_TAB}!O${row}:X${row}`, values: [active] }),
   });
   if (!res.ok) throw new Error(`appointment slots write failed: ${await res.text()}`);
+
+  // Auto-advance Stage to "Showing Scheduled," added 2026-09-12 per
+  // Aaron's direct request ("the first time any showing is scheduled for
+  // a Buyer"). This is the ONE real choke point both booking paths go
+  // through (the public Get Started form and the admin "Schedule a
+  // Showing" control), so it belongs here, not duplicated at each caller.
+  // "First time" = never downgrade or re-trigger: only advances a stage
+  // that's still BEFORE Showing Scheduled in the pipeline (blank, First
+  // Contact, or ID Verified) -- a buyer already at Showing Scheduled or
+  // further along (a second/third showing, or already a Buyer) is left
+  // exactly where they are. Best-effort: a failure here shouldn't turn a
+  // real, successful appointment booking into a visitor/admin-facing
+  // error over what's really just a convenience side effect.
+  try {
+    await maybeAdvanceStageOnFirstShowing(accessToken, row);
+  } catch (e) {
+    // swallow -- see comment above
+  }
+}
+
+const SHOWING_SCHEDULED_STAGE_INDEX = STAGE_VALUES.indexOf("Showing Scheduled");
+async function maybeAdvanceStageOnFirstShowing(accessToken, row) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AF${row}:AF${row}`);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`stage read failed: ${await res.text()}`);
+  const data = await res.json();
+  const currentStage = ((data.values || [[]])[0] || [])[0] || "";
+  const currentIdx = currentStage ? STAGE_VALUES.indexOf(currentStage) : -1;
+  if (currentIdx >= SHOWING_SCHEDULED_STAGE_INDEX) return; // already there or further along -- never downgrade
+  await writeStage(accessToken, row, "Showing Scheduled");
 }
 
 async function handleMyAppointments(request, env) {
