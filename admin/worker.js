@@ -3,13 +3,14 @@
 //
 // Cross-reference, added 2026-09-16 per Aaron's direct request: real
 // automations this file implements are catalogued in the Agent System
-// Database Sheet's "Automations" tab (ID column, "Automation N"). This
-// file is responsible for: Automation 1 (booking write), Automation 5
-// (hide/sentiment/stage/DNC -> Sheet write + immediate cache patch),
-// Automation 9 (missed-call/unreplied-text webhook -> Pending Follow-ups),
-// Automation 10 (phone/email-change confirmation flow). If a new
-// automation gets added here, add a row to that tab too -- see
-// instant-approval-homes/SESSION_LOG.md for how it was built.
+// Database Sheet's "Automations" tab (ID column, "AUTO-000001" style,
+// same convention as TASK-000001/RULE-000001). This file is responsible
+// for: AUTO-000001 (booking write), AUTO-000005 (hide/sentiment/stage/DNC
+// -> Sheet write + immediate cache patch), AUTO-000009 (missed-call/
+// unreplied-text webhook -> Pending Follow-ups), AUTO-000010 (phone/
+// email-change confirmation flow). If a new automation gets added here,
+// add a row to that tab too -- see instant-approval-homes/SESSION_LOG.md
+// for how it was built.
 //
 // Two independent jobs on one Worker (kept together since they already
 // share the same service-account Sheets credential -- no reason to stand up
