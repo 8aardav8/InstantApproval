@@ -2706,15 +2706,32 @@ if ("serviceWorker" in navigator) {
 const BUYERS_API_URL = "https://iah-buyers.notactuallyit.workers.dev";
 
 let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on dropdown change
+
+// Sort/filter persistence, added 2026-09-15 per Aaron's direct request
+// ("remember the filter and sort preferences on reload") -- same
+// localStorage-per-device pattern already used for BUYERS_DATE_MODE/
+// BUYERS_CARD_MODE. Read once at load time (these are `let`s, not
+// consts, precisely so they can be reassigned here from whatever was
+// saved last); written back out every time any of them actually change
+// -- see applyBuyersFilters/clearBuyersFilters and the sort/sort-dir/
+// show-hidden click handlers in initBuyersTab.
+const BUYERS_SORT_STORAGE_KEY = "iah_buyers_sort";
+const BUYERS_SORT_DIR_STORAGE_KEY = "iah_buyers_sort_dir";
+const BUYERS_FILTER_STORAGE_KEY = "iah_buyers_filter";
+
 // Default sort, changed 2026-09-11 per Aaron's direct request ("Buyers
 // should be default sorted by most recent contact/login, etc.") -- was
-// "area".
-let BUYERS_SORT = "last-contact";
+// "area". Restored from localStorage if a previous choice was saved.
+let BUYERS_SORT = (() => {
+  try { return localStorage.getItem(BUYERS_SORT_STORAGE_KEY) || "last-contact"; } catch (e) { return "last-contact"; }
+})();
 // 1 = today's real default order for whichever sort is selected, -1 =
 // reversed. Reset to 1 whenever the sort TYPE changes (see initBuyersTab)
 // so switching sorts always starts from its own sensible default, not
 // whatever direction was left over from a different sort.
-let BUYERS_SORT_DIR = 1;
+let BUYERS_SORT_DIR = (() => {
+  try { return localStorage.getItem(BUYERS_SORT_DIR_STORAGE_KEY) === "-1" ? -1 : 1; } catch (e) { return 1; }
+})();
 // Labels are generic ("Reverse order"), not literally "A-Z"/"Z-A" --
 // applies to date-based sorts too, where that framing wouldn't make
 // sense. Shows the direction that CLICKING would produce, matching how
@@ -2751,26 +2768,48 @@ function allBuyersFilterAreas() {
   return [...new Set([...BUYERS_CANONICAL_AREAS, ...fromListings])].sort();
 }
 
-let BUYERS_FILTER = {
-  down: null, monthly: null, beds: null, areas: [],
-  // Added 2026-09-11 per Aaron's direct request.
-  idOnFile: null, // null | "yes" | "no"
-  hasFavorites: null, // null | "yes" | "no"
-  loggedIn: null, // null | "yes" | "no"
-  contactOp: null, // null | "before" | "after"
-  contactPeriod: "week", // "week" | "month" | "quarter" | "year" -- only applied when contactOp is set
-  stages: [], // added 2026-09-12
-  sentiment: null, // added 2026-09-12 -- null | "smile" | "neutral" | "frown" | "none"
-  // Added 2026-09-15 per Aaron's direct request -- unlike every other
-  // filter above (which default to "Any"/null, unrestricted), this one
-  // defaults to "not-hidden" ON PURPOSE: "just hidden or just unhidden,
-  // which would be the default." Only "hidden" | "not-hidden", no "Any" --
-  // a hidden buyer shouldn't silently reappear mixed in with everyone else.
-  hidden: "not-hidden",
-  // Added 2026-09-15 per Aaron's direct request -- only meaningful when
-  // hasFavorites === "specific" (see buyerMatchesFilters below).
-  favoriteAddress: null,
-};
+function defaultBuyersFilter() {
+  return {
+    down: null, monthly: null, beds: null, areas: [],
+    // Added 2026-09-11 per Aaron's direct request.
+    idOnFile: null, // null | "yes" | "no"
+    hasFavorites: null, // null | "yes" | "no"
+    loggedIn: null, // null | "yes" | "no"
+    contactOp: null, // null | "before" | "after"
+    contactPeriod: "week", // "week" | "month" | "quarter" | "year" -- only applied when contactOp is set
+    stages: [], // added 2026-09-12
+    sentiment: null, // added 2026-09-12 -- null | "smile" | "neutral" | "frown" | "none"
+    // Added 2026-09-15 per Aaron's direct request -- unlike every other
+    // filter above (which default to "Any"/null, unrestricted), this one
+    // defaults to "not-hidden" ON PURPOSE: "just hidden or just unhidden,
+    // which would be the default." Only "hidden" | "not-hidden", no "Any" --
+    // a hidden buyer shouldn't silently reappear mixed in with everyone else.
+    hidden: "not-hidden",
+    // Added 2026-09-15 per Aaron's direct request -- only meaningful when
+    // hasFavorites === "specific" (see buyerMatchesFilters below).
+    favoriteAddress: null,
+  };
+}
+// Restored from localStorage if a previous session saved one, added
+// 2026-09-15 per Aaron's direct request ("remember the filter and sort
+// preferences on reload") -- merged ONTO the real defaults (not used
+// standalone) so a filter field added in a later update that an older
+// saved blob doesn't have yet still gets a sane default instead of
+// `undefined`. saveBuyersFilterState() (below) is the writer.
+function loadStoredBuyersFilter() {
+  const base = defaultBuyersFilter();
+  try {
+    const raw = localStorage.getItem(BUYERS_FILTER_STORAGE_KEY);
+    if (!raw) return base;
+    return Object.assign(base, JSON.parse(raw));
+  } catch (e) {
+    return base;
+  }
+}
+function saveBuyersFilterState() {
+  try { localStorage.setItem(BUYERS_FILTER_STORAGE_KEY, JSON.stringify(BUYERS_FILTER)); } catch (e) {}
+}
+let BUYERS_FILTER = loadStoredBuyersFilter();
 
 // Pipeline stages, added 2026-09-12 per Aaron's direct request -- kept as
 // a plain ordered list here (not derived from anything server-side) since
@@ -3024,6 +3063,7 @@ function applyBuyersFilters() {
     hidden: previousHidden || "not-hidden",
     favoriteAddress: (document.getElementById("bf-favorite-address") || {}).value || null,
   };
+  saveBuyersFilterState();
   updateBuyersFilterBadge();
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
@@ -3056,6 +3096,49 @@ function clearBuyersFilters() {
   applyBuyersFilters();
 }
 
+// Reflects the restored BUYERS_SORT/BUYERS_FILTER state (loaded from
+// localStorage at page-load time, or carried over from a previous visit
+// to this tab) back onto the actual form controls -- added 2026-09-15 per
+// Aaron's direct request ("remember the filter and sort preferences on
+// reload"). Filtering/sorting itself already works from BUYERS_SORT/
+// BUYERS_FILTER directly regardless of what the controls show, but
+// leaving them showing stale defaults after a real restore would be
+// actively misleading if Aaron opens the filter/sort panels to check.
+// Must run AFTER renderBuyersAreaCheckboxes()/renderBuyersStageCheckboxes()
+// (see loadBuyers()'s own call order) -- those two rebuild the checkbox
+// elements this needs to check.
+function syncBuyersFilterControlsToState() {
+  const sortSel = document.getElementById("buyers-sort");
+  if (sortSel) sortSel.value = BUYERS_SORT;
+  const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
+  if (sortDirBtn) updateSortDirToggleLabel(sortDirBtn);
+
+  const f = BUYERS_FILTER;
+  const setVal = (id, value) => { const el = document.getElementById(id); if (el) el.value = value == null ? "" : value; };
+  setVal("bf-down", f.down);
+  setVal("bf-monthly", f.monthly);
+  setVal("bf-beds", f.beds);
+  setVal("bf-id", f.idOnFile);
+  setVal("bf-favorites", f.hasFavorites);
+  setVal("bf-loggedin", f.loggedIn);
+  setVal("bf-contact-op", f.contactOp);
+  setVal("bf-contact-period", f.contactPeriod || "week");
+  setVal("bf-sentiment", f.sentiment);
+  const favAddrInput = document.getElementById("bf-favorite-address");
+  if (favAddrInput) favAddrInput.value = f.favoriteAddress || "";
+  const favAddrWrap = document.getElementById("bf-favorite-address-wrap");
+  if (favAddrWrap) favAddrWrap.classList.toggle("hidden", f.hasFavorites !== "specific");
+  document.querySelectorAll("#buyers-area-checkboxes input[type=checkbox]").forEach((cb) => {
+    cb.checked = f.areas.includes(cb.value);
+  });
+  document.querySelectorAll("#buyers-stage-checkboxes input[type=checkbox]").forEach((cb) => {
+    cb.checked = f.stages.includes(cb.value);
+  });
+  updateBuyersFilterBadge();
+  const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
+  if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
+}
+
 async function loadBuyers() {
   const token = getStoredAdminToken();
   const listEl = document.getElementById("buyers-list");
@@ -3074,6 +3157,7 @@ async function loadBuyers() {
   // script has finished executing once.
   renderBuyersAreaCheckboxes();
   renderBuyersStageCheckboxes();
+  syncBuyersFilterControlsToState();
 
   listEl.innerHTML = "<p>Loading…</p>";
   try {
@@ -4799,10 +4883,23 @@ function initBuyersTab() {
   initPhoneQuoLinkDelegation();
   initBuyerRowSwipeToHide();
   initBuyerDetailSearch();
+  // Sort choice + direction persisted on every change, added 2026-09-15
+  // per Aaron's direct request ("remember the filter and sort preferences
+  // on reload") -- see BUYERS_SORT_STORAGE_KEY/BUYERS_SORT_DIR_STORAGE_KEY
+  // above.
   const sortSel = document.getElementById("buyers-sort");
-  if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; BUYERS_SORT_DIR = 1; renderBuyersList(); });
+  if (sortSel) sortSel.addEventListener("change", () => {
+    BUYERS_SORT = sortSel.value;
+    BUYERS_SORT_DIR = 1;
+    try { localStorage.setItem(BUYERS_SORT_STORAGE_KEY, BUYERS_SORT); localStorage.setItem(BUYERS_SORT_DIR_STORAGE_KEY, "1"); } catch (e) {}
+    renderBuyersList();
+  });
   const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
-  if (sortDirBtn) sortDirBtn.addEventListener("click", () => { BUYERS_SORT_DIR *= -1; renderBuyersList(); });
+  if (sortDirBtn) sortDirBtn.addEventListener("click", () => {
+    BUYERS_SORT_DIR *= -1;
+    try { localStorage.setItem(BUYERS_SORT_DIR_STORAGE_KEY, String(BUYERS_SORT_DIR)); } catch (e) {}
+    renderBuyersList();
+  });
   const backBtn = document.getElementById("buyers-back-btn");
   if (backBtn) backBtn.addEventListener("click", backToBuyersList);
 
@@ -4898,6 +4995,7 @@ function initBuyersTab() {
   const showHiddenBtn = document.getElementById("buyers-show-hidden-toggle");
   if (showHiddenBtn) showHiddenBtn.addEventListener("click", () => {
     BUYERS_FILTER.hidden = BUYERS_FILTER.hidden === "hidden" ? "not-hidden" : "hidden";
+    saveBuyersFilterState();
     updateBuyersFilterBadge();
     renderBuyersList();
   });
