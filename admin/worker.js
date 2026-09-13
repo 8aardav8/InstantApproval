@@ -662,6 +662,49 @@ async function quoFindContactByPhone(env, e164Phone) {
   return null;
 }
 
+// Writes a buyer's checked areas directly onto their Quo contact's own
+// `role` field, added 2026-09-13 per Aaron's direct request. A Quo
+// multi-select CUSTOM FIELD was investigated and ruled out first: Quo's
+// own docs confirm custom field DEFINITIONS -- including adding one new
+// option to an already-existing multi-select -- can only ever be created
+// or modified in Quo's own UI, never via the API. That would have meant
+// Aaron manually re-syncing Quo every time the Filling Sheet's Area
+// column changes -- exactly the "forgetting to do this could cause
+// problems" risk he flagged directly. `role` sidesteps that completely:
+// it's a plain free-text field, no predefined option list, no Quo-side
+// setup ever required. Chose `role` over `company` specifically -- some
+// real buyers genuinely are LLCs who might legitimately want a real
+// company name recorded there someday, so `role` is the safer field to
+// repurpose (confirmed both are always null across every real contact
+// sampled live before this decision). Stores the EXACT canonical area
+// label strings, comma-joined -- not invented short codes -- so there's
+// no regex/substring-collision risk like the original TB-tag system had
+// (a real bug there already cost a day: \bWM\b could never match its own
+// fused "WMTB" form). Works for any number of areas with zero code
+// changes when the Filling Sheet's own Area column changes -- the
+// buyers-page checkbox list already reads that live (allBuyersFilterAreas
+// in app.js); this function just serializes whatever's currently checked.
+async function writeContactAreas(env, phone, areas) {
+  const contact = await quoFindContactByPhone(env, toE164(phone));
+  if (!contact) return; // no Quo contact for this phone yet -- nothing to write onto
+  // Fetch-then-merge the FULL existing defaultFields before writing back --
+  // same gotcha already documented elsewhere (tools/quo.mjs's own
+  // upsert-contact-email): Quo's PATCH replaces defaultFields wholesale,
+  // so writing { role } alone would silently wipe name/phone/email too.
+  await quoWrite(env, `/contacts/${contact.id}`, "PATCH", {
+    // "TB" ("Term Buyer" -- Aaron's own convention, confirmed 2026-09-13)
+    // for zero areas checked, not "" or null -- real, confirmed API
+    // limitation: Quo's contact PATCH silently ignores a falsy `role`
+    // value rather than clearing it (tested live: 17 areas -> "AL" wrote
+    // and read back correctly instantly; either "" or null -> stayed
+    // stuck on the previous real value every time). Writing "TB" sidesteps
+    // this entirely since it's always non-empty, and reads naturally as
+    // "a buyer, no specific area yet" rather than a confusing leftover
+    // value from whatever was checked before.
+    defaultFields: { ...contact.defaultFields, role: areas.length ? areas.join(", ") : "TB" },
+  });
+}
+
 async function quoFindConversation(env, e164Phone) {
   let pageToken;
   for (let page = 0; page < 5; page++) {
@@ -1917,36 +1960,35 @@ async function handleAdminSetAreas(request, env) {
       const newRow = await findLoginsRowByPhone(accessToken, phone);
       if (newRow) await writeManualAreaOverride(accessToken, newRow, areasCsv);
     }
+    // Also written straight onto the Quo contact's own `role` field, added
+    // 2026-09-13 -- see writeContactAreas' own comment for the full
+    // reasoning (a Quo custom field was ruled out: definitions can only
+    // ever be edited in Quo's UI, never via API). Best-effort/non-blocking
+    // -- a Quo hiccup (rate limit, no contact yet) should never turn an
+    // already-successful Sheet write into a failed response.
+    try { await writeContactAreas(env, phone, areas); } catch (e) {}
     // Real-time cache patch, added 2026-09-13 -- this endpoint never had
     // one (unlike Set Stage/Sentiment/Hidden/DNC), which mattered a lot
-    // more once the full crawl's own interval was relaxed 15min -> 24h the
-    // same day (see admin-buyers-worker.js's FULL_SYNC_INTERVAL_MS comment)
-    // -- an area assigned here could otherwise sit invisible on the site
-    // for up to a day. ADDITIVE ONLY, a known and accepted limitation: the
-    // real crawl unions manual overrides together with TB-name/address/
-    // search-derived areas (see admin-buyers-worker.js's own area-backfill
-    // comment) -- fully replicating REMOVAL of a manual area in real time
-    // would mean porting that whole derivation (parseAreasFromName,
-    // loadPropertyAreaIndex, matchCanonicalAreas) into this file too. This
-    // patch only ever adds the newly-set areas to whatever's already
-    // cached; removing an area from a buyer's manual selection still needs
-    // the next real crawl to actually disappear from the site.
-    await (async () => {
-      try {
-        const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
-        if (!cachedRaw) return;
+    // more once the full crawl's own interval was relaxed the same day.
+    // FULL REPLACE now (not additive-only, as this comment originally
+    // said) -- now that the checked boxes are also the definitive source
+    // written to Quo's role field above, whatever's currently checked IS
+    // the buyer's true complete area set, so there's no more "removal
+    // needs the next crawl" caveat to carry.
+    try {
+      const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
+      if (cachedRaw) {
         const cacheData = JSON.parse(cachedRaw);
         const normalizedPhone = toE164(phone);
         const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
-        if (!buyer) return;
-        const merged = new Set(buyer.areas || []);
-        for (const a of areas) merged.add(a);
-        buyer.areas = [...merged];
-        await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
-      } catch (e) {
-        // Best-effort, same reasoning as patchBuyersCacheField.
+        if (buyer) {
+          buyer.areas = areas;
+          await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+        }
       }
-    })();
+    } catch (e) {
+      // Best-effort, same reasoning as patchBuyersCacheField.
+    }
     return jsonResponse({ ok: true, areas });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2419,6 +2461,79 @@ async function handleInternalPatchCache(request, env) {
   return jsonResponse({ ok: true });
 }
 
+// Full manual resync for ONE buyer -- added 2026-09-13 during the same
+// incident as ensureBuyerInCache/patchLoginsMatchField, for a case those
+// two didn't fully cover: Aaron's real request was general ("I need to be
+// able to update buyers if they have a phone number, but no name") --
+// this rebuilds one buyer's ENTIRE cache entry (name via a fresh Quo
+// lookup, plus every Sheet-sourced field: ID Link, Manual Area Override,
+// Stage, Hidden, DNC, Sentiment, ID Name) directly from the two real
+// sources of truth (Quo + the Sheet), rather than relying on whichever
+// individual patch call happened to run. Secret-gated like every other
+// /internal endpoint -- lets a stuck buyer be fixed by hand immediately,
+// without waiting on the next full crawl or guessing which single field
+// patch didn't take.
+async function handleInternalResyncBuyer(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  const e164Phone = toE164(phone);
+
+  try {
+    await ensureBuyerInCache(env, e164Phone);
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByPhone(accessToken, e164Phone);
+    let rowData = null;
+    if (row) {
+      const range = encodeURIComponent(`'${LOGINS_TAB}'!A1:AI1`);
+      const headerRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const headerData = await headerRes.json();
+      const headers = (headerData.values && headerData.values[0]) || [];
+      const idx = (name) => headers.indexOf(name);
+      const rowRange = encodeURIComponent(`'${LOGINS_TAB}'!A${row}:AI${row}`);
+      const rowRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rowRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const rowJson = await rowRes.json();
+      const values = (rowJson.values && rowJson.values[0]) || [];
+      const get = (name) => { const i = idx(name); return i >= 0 ? (values[i] || "") : ""; };
+      rowData = {
+        row,
+        name: get("Name"),
+        email: get("Email"),
+        idLink: get("ID Link"),
+        manualAreaOverride: get("Manual Area Override"),
+        sentiment: get("Sentiment"),
+        stage: get("Stage"),
+        idName: get("ID Name (OCR)"),
+        hidden: get("Hidden") === "TRUE",
+        dnc: get("DNC") === "TRUE",
+      };
+    }
+
+    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
+    const cacheData = cachedRaw ? JSON.parse(cachedRaw) : { buyers: [] };
+    const buyer = (cacheData.buyers || []).find((b) => b.phone === e164Phone);
+    if (!buyer) return jsonResponse({ error: "buyer still not in cache after ensureBuyerInCache -- real bug, not a timing issue" }, 500);
+
+    if (rowData) {
+      buyer.loginsMatch = { ...(buyer.loginsMatch || {}), ...rowData };
+      buyer.stage = rowData.stage;
+      buyer.hidden = rowData.hidden;
+      buyer.dnc = rowData.dnc;
+      if (rowData.manualAreaOverride) {
+        const merged = new Set(buyer.areas || []);
+        for (const a of rowData.manualAreaOverride.split(",").map((s) => s.trim()).filter(Boolean)) merged.add(a);
+        buyer.areas = [...merged];
+      }
+    }
+    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+    return jsonResponse({ ok: true, buyer });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalListIdFiles(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
@@ -2456,6 +2571,25 @@ async function handleInternalIdFileBytes(request, env) {
 // fuzzy-match against an OCR-extracted name -- not scoped to "no ID yet"
 // like computeSuggestedIdMatches, since OCR-based matching is meant to
 // catch cases filename-matching misses too.
+// Temporary debug endpoint, added 2026-09-13 -- one-off read of a raw Quo
+// contact object (unfiltered, straight from Quo's own API, past just
+// defaultFields) to answer a real open question: does Quo's contact
+// schema support custom fields/tags at all, distinct from defaultFields?
+// Read-only, no KV writes -- safe to use even while the daily KV write
+// cap is exhausted. Remove once the tags question is settled either way.
+async function handleInternalRawContact(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const phone = (url.searchParams.get("phone") || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone query param" }, 400);
+  try {
+    const contact = await quoFindContactByPhone(env, toE164(phone));
+    return jsonResponse({ contact });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalContacts(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
@@ -3874,6 +4008,12 @@ async function route(request, env) {
 
   if (url.pathname === "/internal/patch-cache" && request.method === "POST") {
     return handleInternalPatchCache(request, env);
+  }
+  if (url.pathname === "/internal/resync-buyer" && request.method === "POST") {
+    return handleInternalResyncBuyer(request, env);
+  }
+  if (url.pathname === "/internal/raw-contact" && request.method === "GET") {
+    return handleInternalRawContact(request, env);
   }
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
     return handleInternalListIdFiles(request, env);
