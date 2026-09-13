@@ -2360,14 +2360,28 @@ function updateAdminButtonState() {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("hidden", !signedIn);
   }
-  // Footer-only decluttering, added 2026-09-13 per Aaron's direct request:
-  // while signed in as admin, the FOOTER specifically should show just
-  // Homes/Buyers/Appointments -- the buyer-facing tabs stay reachable via
-  // .top-tabs/.nav-drawer (unaffected by this), just hidden from the
-  // footer's own row so it isn't cluttered with tabs Aaron doesn't use
-  // while working the admin view. Reverts the moment signedIn goes false
-  // (sign-out), same single toggle either way.
+  // Footer decluttering, added 2026-09-13 per Aaron's direct request:
+  // while signed in as admin, the FOOTER shows just Homes/Buyers/
+  // Appointments -- the buyer-facing tabs stay reachable via .nav-drawer
+  // (unaffected by this), just hidden from the footer's own row so it
+  // isn't cluttered with tabs Aaron doesn't use while working the admin
+  // view. Reverts the moment signedIn goes false (sign-out), same single
+  // toggle either way.
   document.querySelectorAll(".bottom-nav-buyer-tab").forEach((el) => {
+    el.classList.toggle("hidden", signedIn);
+  });
+  // Same decluttering extended to .top-tabs 2026-09-15 per Aaron's direct
+  // follow-up ("in the upper menu in landscape mode, please remove all
+  // the tabs, except for Homes buyers and appointments when I'm logged in
+  // as an admin") -- .top-tabs is the "upper menu" he means: it's only
+  // ever the visible nav (vs. the hamburger+drawer) on wider/landscape
+  // viewports (see the @media max-width:700px rule in style.css), so
+  // hiding these here naturally has no effect at all in portrait, where
+  // .top-tabs itself isn't shown -- no separate orientation check needed.
+  // .nav-drawer keeps every tab regardless (it's the ONLY nav surface at
+  // all in portrait, admin or not, so it can't lose tabs the way the
+  // always-visible footer and the landscape-only top bar can).
+  document.querySelectorAll(".top-tabs-buyer-tab").forEach((el) => {
     el.classList.toggle("hidden", signedIn);
   });
 }
