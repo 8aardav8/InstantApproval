@@ -3441,6 +3441,54 @@ function bytesToBase64(bytes) {
   return btoa(bin);
 }
 
+// Real-time buyer-list entry, added 2026-09-13 per Aaron's direct request
+// ("I need contacts to appear there immediately after a conversation").
+// The periodic full sync (runSyncTick in iah-buyers/admin-buyers-worker.js)
+// walks every Quo contact + every conversation on the Filling number from
+// scratch each cycle -- at real volume (2800+ contacts) a single cycle was
+// found taking well over an hour, so waiting on it is never "immediate"
+// for someone who just texted in. This reuses the webhook below, which
+// ALREADY receives every inbound message on the Filling number in real
+// time (built 2026-09-02 for phone/email-change confirmation) -- rather
+// than build a new webhook subscription, this just also makes sure
+// buyers_cache has an entry for whoever just texted, without waiting for
+// the next full sync to eventually walk far enough to find them.
+// Deliberately best-effort/minimal: only phone/name/Quo id are set here
+// (no areas/leadInfo/loginsMatch) -- the next full sync still runs and
+// properly enriches this entry same as any other; this just stops it
+// from being invisible in the meantime. Only covers INBOUND messages on
+// the Filling number, matching this webhook's own existing scope --
+// Aaron-initiated conversations and calls aren't covered by this webhook
+// today (would need its own new Quo subscription, a separate ask).
+async function ensureBuyerInCache(env, e164Phone) {
+  try {
+    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
+    if (!cachedRaw) return; // cache not ready yet -- the next full sync covers it
+    const cacheData = JSON.parse(cachedRaw);
+    const buyers = cacheData.buyers || [];
+    if (buyers.some((b) => b.phone === e164Phone)) return; // already there, nothing to do
+
+    const contact = await quoFindContactByPhone(env, e164Phone);
+    const d = (contact && contact.defaultFields) || {};
+    const name = [d.firstName, d.lastName].filter(Boolean).join(" ").trim() || null;
+    buyers.push({
+      phone: e164Phone,
+      quoContactId: contact ? contact.id : null,
+      quoName: name,
+      quoUrl: contact ? `https://my.quo.com/contacts/${contact.id}` : null,
+      areas: [], // left for the next full sync to classify -- see comment above
+      lastActivityAt: new Date().toISOString(),
+      loginsMatch: null,
+      leadInfo: null,
+    });
+    cacheData.buyers = buyers;
+    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+  } catch (e) {
+    // Best-effort -- the next full sync is the real safety net; a failure
+    // here should never break this webhook's own ack to Quo (see below).
+  }
+}
+
 // Step 2: Quo calls this when a message.received event fires on the Filling
 // number. Verifies the signature first (unsigned/forged requests never get
 // to touch the Sheet), then checks for a real, still-valid, matching pending
@@ -3478,6 +3526,13 @@ async function handleQuoMessageWebhook(request, env) {
   const fromRaw = resource.from || (payload.data && payload.data.context && payload.data.context.from) || "";
   const text = (resource.text || resource.content || resource.body || "").trim();
   const fromE164 = toE164(fromRaw);
+
+  // Runs for EVERY real inbound message, not just phone/email-confirmation
+  // replies -- see ensureBuyerInCache's own comment above for why this
+  // lives here. ctx.waitUntil isn't available in this handler's own scope
+  // (it's called from the main fetch() below, not given ctx directly), so
+  // this is awaited inline; best-effort/swallows its own errors either way.
+  if (fromE164) await ensureBuyerInCache(env, fromE164);
 
   if (!fromE164 || !/^(yes|y|confirm|ok)\b/i.test(text)) {
     return jsonResponse({ ok: true }); // not an affirmative reply, nothing to do
