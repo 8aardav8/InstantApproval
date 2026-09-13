@@ -701,7 +701,35 @@ async function writeContactAreas(env, phone, areas) {
     // this entirely since it's always non-empty, and reads naturally as
     // "a buyer, no specific area yet" rather than a confusing leftover
     // value from whatever was checked before.
-    defaultFields: { ...contact.defaultFields, role: areas.length ? areas.join(", ") : "TB" },
+    //
+    // Real bug found and fixed 2026-09-13 during the first live backfill
+    // across 429 existing buyers: 63 (~15%) failed with Quo rejecting the
+    // PATCH outright -- "Item with ID ... does not match," always citing
+    // the phoneNumbers[] entry's OWN id. First theory (an empty phone-
+    // number `name` on the failures) was wrong -- fixing just the name
+    // while keeping the existing id still failed identically. Real root
+    // cause, confirmed by testing: the id Quo's GET returns for a phone
+    // number entry doesn't always match what Quo's own PATCH validation
+    // expects internally (every failure was an older contact, last
+    // touched months ago -- looks like a real backend data-integrity
+    // inconsistency on Quo's side, not anything about the data itself).
+    // Fix: never echo phoneNumbers[].id back at all -- send only
+    // {name, value}, which lets Quo assign a fresh internal id on write
+    // instead of validating a possibly-stale one. Also normalizes any
+    // blank name to "Mobile" as a side effect (harmless data-quality
+    // improvement). Confirmed this resolves every one of the 63 failures
+    // with zero regressions on contacts that already worked.
+    defaultFields: {
+      ...contact.defaultFields,
+      phoneNumbers: (contact.defaultFields.phoneNumbers || []).map((p) => ({ name: p.name || "Mobile", value: p.value })),
+      // Same stale-id issue, same fix -- found on a second batch of
+      // failures after the phoneNumbers-only fix above: the rejected id
+      // matched emails[].id instead, on a contact with a real email on
+      // file. Any array-of-objects-with-an-id field on defaultFields
+      // apparently carries this same risk; strip ids on emails too.
+      emails: (contact.defaultFields.emails || []).map((e) => ({ name: e.name || "", value: e.value })),
+      role: areas.length ? areas.join(", ") : "TB",
+    },
   });
 }
 
@@ -2473,6 +2501,35 @@ async function handleInternalPatchCache(request, env) {
 // /internal endpoint -- lets a stuck buyer be fixed by hand immediately,
 // without waiting on the next full crawl or guessing which single field
 // patch didn't take.
+// One-time backfill helper, added 2026-09-13 -- writes areas onto Quo's
+// role field for a buyer already classified in buyers_cache (from a past
+// crawl's TB-name-tag/address/search-derived areas), which never had a
+// chance to write role since that mechanism is brand new. First attempt
+// looked the contact up directly BY ID (one GET, since buyers_cache
+// already has quoContactId) instead of writeContactAreas' own phone-
+// search, to avoid needlessly hammering Quo's rate limit across hundreds
+// of buyers -- found a real bug live: the single-contact GET endpoint's
+// phoneNumbers[].id doesn't round-trip cleanly through a PATCH ("Item
+// with ID ... does not match"), while the exact same contact fetched via
+// the LIST endpoint (what writeContactAreas/quoFindContactByPhone already
+// use) patches back fine. Simplest safe fix: just delegate to the
+// already-proven writeContactAreas rather than a separate, more fragile
+// path -- slower (a phone search instead of a direct ID GET) but reliable.
+async function handleInternalBackfillRole(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const areas = Array.isArray(body.areas) ? body.areas : [];
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  try {
+    await writeContactAreas(env, phone, areas);
+    return jsonResponse({ ok: true, phone, role: areas.length ? areas.join(", ") : "TB" });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalResyncBuyer(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   let body;
@@ -4011,6 +4068,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/resync-buyer" && request.method === "POST") {
     return handleInternalResyncBuyer(request, env);
+  }
+  if (url.pathname === "/internal/backfill-role" && request.method === "POST") {
+    return handleInternalBackfillRole(request, env);
   }
   if (url.pathname === "/internal/raw-contact" && request.method === "GET") {
     return handleInternalRawContact(request, env);
