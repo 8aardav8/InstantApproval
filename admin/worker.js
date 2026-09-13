@@ -1893,6 +1893,21 @@ async function handleAdminSetAreas(request, env) {
   if (!phone) return jsonResponse({ error: "missing phone" }, 400);
 
   try {
+    // Real bug found and fixed 2026-09-13: every cache-patch call below
+    // (and the ones like it in every other Set*/ID-link handler) only
+    // ever finds-and-updates an EXISTING buyers_cache entry -- if this is
+    // someone's very first interaction with the system (e.g. Aaron sets a
+    // stage/area/ID before they've ever texted in), the patch silently
+    // finds nothing and does nothing. The Sheet write below still
+    // succeeds either way, but nothing shows on the site until the next
+    // full crawl -- now up to 24h away since that interval was relaxed
+    // the same day (see FULL_SYNC_INTERVAL_MS in admin-buyers-worker.js).
+    // Real incident that surfaced this: Aaron set stage/area/ID for a
+    // brand-new contact ("Mouton") and none of it appeared, even though
+    // the Sheet had all three correctly. Calling ensureBuyerInCache first
+    // guarantees a cache entry exists (creating a minimal one via a real
+    // Quo lookup if needed) before any patch call below ever runs.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     const areasCsv = areas.join(", ");
     const row = await findLoginsRowByPhone(accessToken, phone);
@@ -1967,6 +1982,8 @@ async function handleAdminAddAppointment(request, env) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return jsonResponse({ error: "date must be YYYY-MM-DD" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2052,6 +2069,8 @@ async function handleAdminSetSentiment(request, env) {
   if (sentiment && !SENTIMENT_VALUES.has(sentiment)) return jsonResponse({ error: "invalid sentiment" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2090,6 +2109,8 @@ async function handleAdminSetStage(request, env) {
   if (stage && !STAGE_VALUES.includes(stage)) return jsonResponse({ error: "invalid stage" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2186,6 +2207,8 @@ async function handleAdminSetHidden(request, env) {
   if (!phone) return jsonResponse({ error: "missing phone" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2222,6 +2245,8 @@ async function handleAdminSetDnc(request, env) {
   if (!phone) return jsonResponse({ error: "missing phone" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2277,6 +2302,8 @@ async function handleAdminSetCoBuyer(request, env) {
   if (slot !== 1 && slot !== 2) return jsonResponse({ error: "invalid slot" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     // Find-or-create, same convention as writeSentiment/writeStage/
     // writeHidden's own handlers -- a BUYERS-tab-only lead has no App:
@@ -2475,6 +2502,8 @@ async function handleInternalAutoLinkId(request, env) {
   if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(buyerPhone));
     const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
 
     const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
@@ -2530,6 +2559,8 @@ async function handleConfirmIdMatch(request, env) {
   if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await ensureBuyerInCache(env, toE164(buyerPhone));
     const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
     // Renames onto the same "<Last>, <First> - <last4>.<ext>" convention
     // every other successful link path uses (upload-from-device, the
