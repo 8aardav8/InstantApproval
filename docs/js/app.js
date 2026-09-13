@@ -2751,10 +2751,12 @@ let BUYERS_FILTER = {
 // a plain ordered list here (not derived from anything server-side) since
 // this is a fixed taxonomy he defined, same reasoning as
 // BUYERS_CANONICAL_AREAS above. Keep in sync with STAGE_VALUES in
-// admin/worker.js if this list ever changes.
+// admin/worker.js if this list ever changes. "Full Down Received" added
+// 2026-09-15 per Aaron's direct request, right after "Deposit Received"
+// (stage 6) and before "Buyer".
 const BUYER_STAGES = [
   "First Contact", "ID Verified", "Showing Scheduled", "First Showing Done",
-  "Multiple Showings", "Deposit Received", "Buyer", "Multiple Buyer",
+  "Multiple Showings", "Deposit Received", "Full Down Received", "Buyer", "Multiple Buyer",
 ];
 
 // One color per stage, same order as BUYER_STAGES -- a warm-to-cool
@@ -2769,6 +2771,7 @@ const STAGE_COLORS = [
   "#84cc16", // First Showing Done -- lime
   "#22c55e", // Multiple Showings -- green
   "#14b8a6", // Deposit Received -- teal
+  "#0ea5e9", // Full Down Received -- sky blue, added 2026-09-15 per Aaron's direct request
   "#3b82f6", // Buyer -- blue
   "#a855f7", // Multiple Buyer -- purple
 ];

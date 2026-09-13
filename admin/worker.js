@@ -439,9 +439,12 @@ async function writeManualAreaOverride(accessToken, row, areasCsv) {
 // both purely his own manual notes. Single-column writes, same pattern as
 // writeManualAreaOverride above.
 const SENTIMENT_VALUES = new Set(["smile", "neutral", "frown"]);
+// "Full Down Received" added 2026-09-15 per Aaron's direct request, right
+// after "Deposit Received" (stage 6) and before "Buyer" -- keep in sync
+// with BUYER_STAGES in docs/js/app.js if this list ever changes again.
 const STAGE_VALUES = [
   "First Contact", "ID Verified", "Showing Scheduled", "First Showing Done",
-  "Multiple Showings", "Deposit Received", "Buyer", "Multiple Buyer",
+  "Multiple Showings", "Deposit Received", "Full Down Received", "Buyer", "Multiple Buyer",
 ];
 async function writeSentiment(accessToken, row, sentiment) {
   const range = encodeURIComponent(`${LOGINS_TAB}!AE${row}:AE${row}`);
