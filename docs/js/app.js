@@ -4813,9 +4813,15 @@ function openIdLightbox(phone, dropboxLink) {
           Upload new ID
           <input type="file" accept="image/*" class="id-lightbox-file-input hidden">
         </label>
+        <!-- "Browse existing IDs," added 2026-09-15 per Aaron's direct
+             request -- an alternative to uploading a fresh file, for a
+             photo already sitting in the Buyer IDs Dropbox folder (e.g.
+             something OCR-renamed but never auto-matched to a buyer). -->
+        <button type="button" class="btn-outline id-lightbox-browse-btn">Browse existing IDs</button>
         <button type="button" class="btn-outline id-lightbox-close">Close</button>
       </div>
       <div class="id-lightbox-status"></div>
+      <div class="id-lightbox-browse-panel hidden"></div>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -4854,6 +4860,74 @@ function openIdLightbox(phone, dropboxLink) {
       statusEl.textContent = `Couldn't upload: ${err}`;
     }
   });
+  overlay.querySelector(".id-lightbox-browse-btn").addEventListener("click", () => {
+    loadBrowseIdPhotosPanel(overlay, phone, fullName, close);
+  });
+}
+
+// Lists every unassociated file in the Buyer IDs Dropbox folder for the
+// "Browse existing IDs" panel, added 2026-09-15 per Aaron's direct
+// request. Thumbnails are lazy -- one /admin/id-photo-preview-link call
+// per row actually rendered, not fetched all up front for the whole
+// folder (see handleAdminBrowseIdPhotos's own comment server-side for why).
+async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) {
+  const panel = overlay.querySelector(".id-lightbox-browse-panel");
+  const statusEl = overlay.querySelector(".id-lightbox-status");
+  panel.classList.remove("hidden");
+  panel.innerHTML = "<p>Loading unassociated ID photos…</p>";
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/browse-id-photos`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't load: ${(data && data.error) || res.status}</p>`; return; }
+    const files = data.files || [];
+    if (files.length === 0) { panel.innerHTML = "<p>No unassociated ID photos found in the Dropbox folder.</p>"; return; }
+    panel.innerHTML = files.map((f) => `
+      <div class="id-browse-item" data-path="${escapeAttr(f.path)}">
+        <img class="id-browse-thumb" alt="${escapeAttr(f.name)}">
+        <span class="id-browse-name">${escapeHtml(f.name)}</span>
+      </div>
+    `).join("");
+    // Lazy per-thumbnail load -- one preview-link request per item actually
+    // rendered here (there's no long scrollable virtualization to worry
+    // about; this panel's own item count is small enough to just load all
+    // of them once the panel opens, still far cheaper than the server
+    // creating every link up front on the SAME request as the list itself).
+    panel.querySelectorAll(".id-browse-item").forEach(async (item) => {
+      const img = item.querySelector(".id-browse-thumb");
+      try {
+        const linkRes = await fetch(`${ADMIN_API_URL}/admin/id-photo-preview-link?path=${encodeURIComponent(item.dataset.path)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const linkData = await linkRes.json();
+        if (linkRes.ok && linkData.idLink) loadAdminIdPhoto(img, linkData.idLink);
+      } catch (e) {
+        // Best-effort -- a thumbnail that fails to load just stays blank; the filename label is still there to pick by.
+      }
+      item.addEventListener("click", async () => {
+        if (!confirm(`Link "${item.querySelector(".id-browse-name").textContent}" as ${fullName || phone}'s ID?`)) return;
+        statusEl.textContent = "Linking…";
+        try {
+          const linkResult = await fetch(`${ADMIN_API_URL}/confirm-id-match`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ dropboxPath: item.dataset.path, buyerPhone: phone, buyerName: fullName }),
+          });
+          const linkData = await linkResult.json();
+          if (!linkResult.ok || !linkData.ok) { statusEl.textContent = `Couldn't link: ${(linkData && linkData.error) || linkResult.status}`; return; }
+          statusEl.textContent = "Linked.";
+          await loadBuyers();
+          closeLightbox();
+          const refreshed = findBuyer(phone);
+          if (refreshed) renderBuyerDetail(refreshed);
+        } catch (err) {
+          statusEl.textContent = `Couldn't link: ${err}`;
+        }
+      });
+    });
+  } catch (err) {
+    panel.innerHTML = `<p>Couldn't load: ${err}</p>`;
+  }
 }
 
 async function loadBuyerMessages(phone) {

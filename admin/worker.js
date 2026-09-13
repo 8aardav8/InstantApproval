@@ -2164,14 +2164,106 @@ async function handleConfirmIdMatch(request, env) {
 
   try {
     const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
-    const idLink = await createOrReuseSharedLink(dropboxToken, dropboxPath);
+    // Renames onto the same "<Last>, <First> - <last4>.<ext>" convention
+    // every other successful link path uses (upload-from-device, the
+    // automated OCR watcher) -- added 2026-09-15. This endpoint used to
+    // link WITHOUT renaming, the only one of the three that didn't;
+    // brought into parity now that it's being reused for the new
+    // "browse existing Dropbox photos" picker (see handleAdminBrowseIdPhotos).
+    const originalFilename = dropboxPath.split("/").pop() || "";
+    const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
+    const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
+    let finalPath = dropboxPath;
+    if (targetName !== originalFilename) {
+      const moveRes = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from_path: dropboxPath, to_path: targetPath, autorename: true }),
+      });
+      if (!moveRes.ok) return jsonResponse({ error: "rename failed", detail: await moveRes.text() }, 500);
+      const moveData = await moveRes.json();
+      finalPath = moveData.metadata.path_display;
+    }
+    const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
     // Most matched buyers have no App: Logins row at all (see
     // computeSuggestedIdMatches' own comment) -- find one if it exists,
     // otherwise create a minimal new row rather than requiring one.
     const row = await findLoginsRowByPhone(accessToken, buyerPhone);
     if (row) await writeIdLink(accessToken, row, idLink);
     else await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
-    return jsonResponse({ ok: true, idLink });
+    return jsonResponse({ ok: true, idLink, renamedTo: finalPath });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// "Browse existing, unassociated ID photos," added 2026-09-15 per Aaron's
+// direct request -- the buyer detail page's ID lightbox now offers this
+// alongside "Upload new ID," for files already sitting in the Buyer IDs
+// Dropbox folder (e.g. from the OCR-renamed batch, or anything dropped in
+// by hand) that no buyer is currently linked to yet. Deliberately does
+// NOT create a shared link for every file up front -- checking existence
+// only (list_shared_links with a path, never creating) keeps this to one
+// cheap read per file, safely under the Workers free-plan's 50-subrequest
+// cap even for a full folder; a real preview link is created lazily, one
+// request per thumbnail actually rendered client-side (see
+// handleAdminIdPhotoPreviewLink below), which is a SEPARATE invocation
+// with its own budget.
+async function handleAdminBrowseIdPhotos(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  try {
+    const [dropboxToken, cached] = await Promise.all([
+      getDropboxAccessToken(env),
+      env.BUYERS_KV.get("buyers_cache"),
+    ]);
+    const linkedUrls = new Set(
+      cached ? (JSON.parse(cached).buyers || []).map((b) => b.loginsMatch && b.loginsMatch.idLink).filter(Boolean) : []
+    );
+    const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
+    const unassociated = [];
+    for (const file of files) {
+      const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ path: file.path_display, direct_only: true }),
+      });
+      if (!listRes.ok) continue; // best-effort -- skip a file whose link status we couldn't check rather than fail the whole browse
+      const listData = await listRes.json();
+      const existingUrl = (listData.links || [])[0] && listData.links[0].url;
+      if (existingUrl && linkedUrls.has(existingUrl)) continue; // a real buyer already points at this file -- not a candidate
+      unassociated.push({ path: file.path_display, name: file.name });
+    }
+    return jsonResponse({ files: unassociated });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Creates (or reuses) a shared link for exactly ONE file, added 2026-09-15
+// alongside handleAdminBrowseIdPhotos above -- called once per thumbnail
+// the browse picker actually renders, as its own separate request/
+// invocation (own subrequest budget), rather than up front for the whole
+// folder.
+async function handleAdminIdPhotoPreviewLink(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  const url = new URL(request.url);
+  const dropboxPath = (url.searchParams.get("path") || "").trim();
+  if (!dropboxPath) return jsonResponse({ error: "missing path" }, 400);
+
+  try {
+    const dropboxToken = await getDropboxAccessToken(env);
+    const idLink = await createOrReuseSharedLink(dropboxToken, dropboxPath);
+    return jsonResponse({ idLink });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -3268,6 +3360,12 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/upload-id" && request.method === "POST") {
     return handleAdminUploadId(request, env);
+  }
+  if (url.pathname === "/admin/browse-id-photos" && request.method === "GET") {
+    return handleAdminBrowseIdPhotos(request, env);
+  }
+  if (url.pathname === "/admin/id-photo-preview-link" && request.method === "GET") {
+    return handleAdminIdPhotoPreviewLink(request, env);
   }
   if (url.pathname === "/admin/update-contact-name" && request.method === "POST") {
     return handleAdminUpdateContactName(request, env);

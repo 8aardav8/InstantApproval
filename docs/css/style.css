@@ -927,6 +927,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .id-lightbox-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
 .id-lightbox-upload-label { cursor: pointer; }
 .id-lightbox-status { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 8px; }
+/* "Browse existing IDs" panel, added 2026-09-15 per Aaron's direct
+   request -- a grid of unassociated Dropbox ID photos, click one to link
+   it to the buyer currently open in this lightbox. */
+.id-lightbox-browse-panel {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;
+  margin-top: 14px; max-height: 50vh; overflow-y: auto; text-align: left;
+}
+.id-browse-item { cursor: pointer; text-align: center; }
+.id-browse-thumb {
+  width: 100%; height: 90px; object-fit: cover; border-radius: 8px;
+  border: 1px solid #e5e7eb; background: #f3f4f6; display: block;
+}
+.id-browse-item:hover .id-browse-thumb { border-color: var(--blue); }
+.id-browse-name { display: block; font-size: 11px; color: var(--gray-text, #6b7280); margin-top: 4px; word-break: break-word; }
 /* Side by side, added 2026-09-12 per Aaron's direct request (were stacked
    above/below each other before). */
 .buyer-quo-links { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
