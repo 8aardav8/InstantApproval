@@ -563,6 +563,10 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .admin-activity-row:last-child { border-bottom: none; }
 .admin-activity-contact { color: var(--gray-text); margin-top: 2px; }
+/* Name -> straight to that buyer's own page, added 2026-09-15 per Aaron's
+   direct request. */
+.admin-activity-name-link { cursor: pointer; }
+.admin-activity-name-link:hover { color: var(--blue); text-decoration: underline; }
 
 /* Get Started property autocomplete, added 2026-08-29 -- replaces a plain
    <select> that listed every Available property in one long native

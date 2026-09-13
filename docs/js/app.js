@@ -2482,13 +2482,23 @@ async function renderAdminSection(listing) {
     // ADMIN_APPOINTMENTS_BY_ADDRESS/ADMIN_FAVORITES_BY_ADDRESS maps the
     // card badges already use (see refreshAdminActivity) -- no separate
     // network call needed per detail-page view.
+    // Name -> straight to that buyer's own page, email -> click-to-copy,
+    // phone -> click straight into the Quo conversation, added 2026-09-15
+    // per Aaron's direct request ("apply the same rules that you did in
+    // the Buyer pages" to this Home-page admin-only section too).
+    // copyableTextHtml/phoneQuoLinkHtml need no extra wiring here --
+    // initCopyableTextDelegation/initPhoneQuoLinkDelegation are already
+    // document-level delegated listeners (wired once at page load via
+    // initBuyersTab()), so they work on this markup regardless of which
+    // tab it's rendered in. The name-link click handler is the one thing
+    // that DOES need wiring below, since it's specific to this section.
     const favsForThis = ADMIN_FAVORITES_BY_ADDRESS[listing.address] || [];
     if (favsForThis.length > 0) {
       html += `<div class="admin-info-title" style="margin-top:14px">Favorited By (${favsForThis.length})</div>`;
       for (const f of favsForThis) {
         html += `<div class="admin-activity-row">
-          <div><strong>${escapeHtml(f.name || "(no name)")}</strong></div>
-          <div class="admin-activity-contact">${escapeHtml(f.email || "")}${f.email && f.phone ? " · " : ""}${escapeHtml(f.phone || "")}</div>
+          <div><strong class="admin-activity-name${f.phone ? " admin-activity-name-link" : ""}" ${f.phone ? `data-phone="${escapeAttr(f.phone)}" title="Open this buyer's page"` : ""}>${escapeHtml(f.name || "(no name)")}</strong></div>
+          <div class="admin-activity-contact">${f.email ? copyableTextHtml(f.email) : ""}${f.email && f.phone ? " · " : ""}${f.phone ? phoneQuoLinkHtml(f.phone) : ""}</div>
         </div>`;
       }
     }
@@ -2497,13 +2507,16 @@ async function renderAdminSection(listing) {
       html += `<div class="admin-info-title" style="margin-top:14px">Scheduled Appointments (${apptsForThis.length})</div>`;
       for (const a of apptsForThis) {
         html += `<div class="admin-activity-row">
-          <div><strong>${escapeHtml(a.name || "(no name)")}</strong> — ${escapeHtml(formatAppointmentDate(a.date))}</div>
-          <div class="admin-activity-contact">${escapeHtml(a.email || "")}${a.email && a.phone ? " · " : ""}${escapeHtml(a.phone || "")}</div>
+          <div><strong class="admin-activity-name${a.phone ? " admin-activity-name-link" : ""}" ${a.phone ? `data-phone="${escapeAttr(a.phone)}" title="Open this buyer's page"` : ""}>${escapeHtml(a.name || "(no name)")}</strong> — ${escapeHtml(formatAppointmentDate(a.date))}</div>
+          <div class="admin-activity-contact">${a.email ? copyableTextHtml(a.email) : ""}${a.email && a.phone ? " · " : ""}${a.phone ? phoneQuoLinkHtml(a.phone) : ""}</div>
         </div>`;
       }
     }
 
     container.innerHTML = html;
+    container.querySelectorAll(".admin-activity-name-link").forEach((el) => {
+      el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
+    });
   } catch (e) {
     container.innerHTML = `<div class="admin-info-title">Admin Info (only visible to you)</div><div class="admin-info-status">Request failed.</div>`;
   }
