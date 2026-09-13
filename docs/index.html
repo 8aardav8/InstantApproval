@@ -985,23 +985,16 @@
           <span class="area-filter-label">Area</span>
           <!-- Populated from the 5 canonical buyer-tag areas UNION every
                area that shows up on the Home page's own search filter
-               (ALL_LISTINGS) UNION any custom area Aaron's added below --
+               (ALL_LISTINGS, itself sourced from the Filling Sheet) --
                see renderBuyersAreaCheckboxes()/allBuyersFilterAreas() in
                app.js. Expanded 2026-09-15 per Aaron's direct request ("add
                all of the areas from the Home page search filters to the
-               buyers page filters"). -->
+               buyers page filters") -- a manual "+ Add area" input was
+               tried the same day but dropped per his direct follow-up:
+               since this already pulls from the Filling Sheet, any area
+               added there shows up here automatically, no manual add
+               needed. -->
           <div id="buyers-area-checkboxes" class="area-checkboxes"></div>
-          <!-- "Add other areas that are not currently available," added
-               2026-09-15 per Aaron's direct request -- for a filter label
-               that isn't a real property area at all (e.g. something a
-               buyer typed into their own site search that never matched a
-               listing). Persisted per-device (localStorage) -- see
-               BUYERS_CUSTOM_AREAS_STORAGE_KEY in app.js -- since this is
-               Aaron's own ad-hoc filter shortcut, not real listing data. -->
-          <div class="area-add-row">
-            <input type="text" id="buyers-add-area-input" placeholder="Add another area…" autocomplete="off">
-            <button type="button" id="buyers-add-area-btn" class="btn-outline">Add</button>
-          </div>
         </div>
         <!-- Added 2026-09-12 per Aaron's direct request. Populated from
              STAGE_VALUES -- see renderBuyersStageCheckboxes() in app.js. -->

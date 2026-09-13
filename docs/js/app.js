@@ -2735,35 +2735,20 @@ const BUYERS_CANONICAL_AREAS = ["IL - East St Louis", "MO - St. Louis", "AR - Li
 let SHOWN_AVAILABLE_ADDRESSES = [];
 let APPOINTMENT_AVAILABLE_ADDRESSES = []; // added 2026-09-12, same pattern, populated fresh each renderBuyerDetail() call
 
-// Custom areas Aaron's added to the buyers-page filter that AREN'T a real
-// property area at all -- added 2026-09-15 per Aaron's direct request
-// ("add other areas that are not currently available by clicking the
-// check box"). Persisted per-device (this is Aaron's own ad-hoc filter
-// shortcut, not real listing data synced anywhere server-side).
-const BUYERS_CUSTOM_AREAS_STORAGE_KEY = "iah_buyers_custom_areas";
-function getBuyersCustomAreas() {
-  try { return JSON.parse(localStorage.getItem(BUYERS_CUSTOM_AREAS_STORAGE_KEY) || "[]"); } catch (e) { return []; }
-}
-function addBuyersCustomArea(area) {
-  const areas = getBuyersCustomAreas();
-  if (!areas.includes(area)) {
-    areas.push(area);
-    try { localStorage.setItem(BUYERS_CUSTOM_AREAS_STORAGE_KEY, JSON.stringify(areas)); } catch (e) {}
-  }
-}
 // Full area-checkbox list for the buyers-page filter -- the 5 canonical
 // buyer-tag areas UNION every area that shows up in the Home page's own
-// search filter (ALL_LISTINGS, same source renderAreaCheckboxes() reads)
-// UNION Aaron's own custom-added areas above. Added 2026-09-15 per
-// Aaron's direct request ("add all of the areas from the Home page
-// search filters to the buyers page filters"). buyerMatchesFilters
-// itself needed no changes for this -- its area check already does a
-// plain array-includes/substring match against whatever labels are
-// checked, canonical or not.
+// search filter (ALL_LISTINGS, same source renderAreaCheckboxes() reads).
+// Added 2026-09-15 per Aaron's direct request ("add all of the areas
+// from the Home page search filters to the buyers page filters"). A
+// manual "+ Add area" input was tried the same day and dropped per his
+// direct follow-up: ALL_LISTINGS itself pulls from the Filling Sheet, so
+// any area added there becomes available here automatically, with no
+// manual add needed. buyerMatchesFilters itself needed no changes for
+// this -- its area check already does a plain array-includes/substring
+// match against whatever labels are checked, canonical or not.
 function allBuyersFilterAreas() {
   const fromListings = (typeof ALL_LISTINGS !== "undefined" && ALL_LISTINGS) ? [...new Set(ALL_LISTINGS.map((l) => l.area).filter(Boolean))] : [];
-  const combined = new Set([...BUYERS_CANONICAL_AREAS, ...fromListings, ...getBuyersCustomAreas()]);
-  return [...combined].sort();
+  return [...new Set([...BUYERS_CANONICAL_AREAS, ...fromListings])].sort();
 }
 
 let BUYERS_FILTER = {
@@ -4854,25 +4839,6 @@ function initBuyersTab() {
     });
   }
   initFavoriteAddressAutocomplete();
-
-  // "+ Add area" for the buyers-page area filter, added 2026-09-15 per
-  // Aaron's direct request -- adds a custom (non-listing) area label as
-  // its own checkbox, checked immediately so it takes effect right away.
-  const addAreaBtn = document.getElementById("buyers-add-area-btn");
-  const addAreaInput = document.getElementById("buyers-add-area-input");
-  function addCustomBuyerArea() {
-    if (!addAreaInput) return;
-    const val = addAreaInput.value.trim();
-    if (!val) return;
-    addBuyersCustomArea(val);
-    addAreaInput.value = "";
-    renderBuyersAreaCheckboxes();
-    const cb = [...document.querySelectorAll("#buyers-area-checkboxes input[type=checkbox]")].find((el) => el.value === val);
-    if (cb) cb.checked = true;
-    applyBuyersFilters();
-  }
-  if (addAreaBtn) addAreaBtn.addEventListener("click", addCustomBuyerArea);
-  if (addAreaInput) addAreaInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addCustomBuyerArea(); } });
 
   // "Check for ID photo matches" / "Rename ID files in Dropbox" button
   // wiring removed 2026-09-12 -- see the removal comment in index.html for
