@@ -3487,16 +3487,18 @@ function renderBuyersList() {
     // last call last text"). Compact stays without it -- see
     // lastContactHtml (one collapsed summary line) and the label-less
     // progress bar below instead.
-    // Progress bar -- both card types, showLabel false for both now.
-    // Compact was already label-less (Aaron, 2026-09-14: "no need to
-    // write the name of the stage. Simply show the progress bar").
-    // Detailed switched to label-less too, 2026-09-16 per Aaron's direct
-    // request -- moved to sit right under the stage dropdown itself
-    // (inside statusBarHtml's own status-bar-stage column below, not as
-    // a separate full-width row under the whole status bar like before),
-    // so the label was pure redundancy: the dropdown right above it
-    // already shows the current stage in words.
-    const progressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b, false)}</div>`;
+    // Progress bar -- both card types. showLabel is false for compact
+    // (Aaron, 2026-09-14: "no need to write the name of the stage. Simply
+    // show the progress bar"), true (default) for detailed, which still
+    // shows the stage name underneath since that removal was never asked
+    // for there. 2026-09-16: briefly moved under the stage dropdown/made
+    // label-less on the DETAILED CARD specifically, per a misreading of
+    // Aaron's request -- reverted the same day per his direct correction
+    // ("that edit was not meant for the cards... I was talking about the
+    // actual buyer page once the card has been clicked"). The real target
+    // was the buyer detail page's own header -- see renderBuyerDetail's
+    // detailHeaderHtml below for that version instead.
+    const progressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b)}</div>`;
     const compactProgressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b, false)}</div>`;
     const statusBarHtml = `
       <div class="buyer-row-status-bar">
@@ -3505,7 +3507,6 @@ function renderBuyersList() {
         </div>
         <div class="status-bar-third status-bar-stage">
           ${renderStageSelectHtml(b)}
-          ${progressBarHtml}
         </div>
         <div class="status-bar-third status-bar-dates">
           ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
@@ -3571,6 +3572,7 @@ function renderBuyersList() {
             </div>
           </div>
           ${statusBarHtml}
+          ${progressBarHtml}
         </div>
       `);
     }
@@ -4519,10 +4521,20 @@ function renderBuyerDetail(buyer) {
         ${quoLinkHtml}
         <button type="button" class="buyer-nav-arrow" id="buyer-nav-next" aria-label="Next buyer"${hasNextBuyer ? "" : " disabled"}>&rarr;</button>
       </div>
-      ${renderStageProgressBarHtml(buyer)}
       <div class="buyer-detail-quick-status">
         <span class="sentiment-picker">${renderSentimentPickerHtml(buyer)}</span>
-        ${renderStageSelectHtml(buyer)}
+        <div class="buyer-detail-stage-block">
+          ${renderStageSelectHtml(buyer)}
+          <!-- Progress bar moved here 2026-09-16 per Aaron's direct
+               correction -- previously sat above this whole row, with its
+               own stage-name label underneath. Now sits right below the
+               stage dropdown specifically, label-less, since the dropdown
+               right above it already shows the stage in words. This is
+               the BUYER DETAIL PAGE only (once a card is clicked) -- the
+               buyers-LIST card itself was reverted back to its prior
+               look (see renderBuyersList's own comment on progressBarHtml). -->
+          <div class="buyer-row-progress">${renderStageProgressBarHtml(buyer, false)}</div>
+        </div>
         <button type="button" class="dnc-toggle-btn${buyer.dnc ? " dnc-toggle-btn-active" : ""}" data-phone="${escapeAttr(buyer.phone)}" title="${buyer.dnc ? "Remove Do Not Contact/Call" : "Mark Do Not Contact/Call -- excludes them from automated texts"}">🚫 ${buyer.dnc ? "DNC" : "Mark DNC"}</button>
       </div>
     </div>

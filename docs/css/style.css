@@ -819,7 +819,13 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    label-less there now too, since the dropdown right above it already
    shows the stage in words. */
 .buyer-row-compact > .buyer-row-progress { padding-top: 10px; border-top: 1px solid #f3f4f6; }
-.status-bar-stage .buyer-row-progress { margin-top: 6px; }
+/* Buyer DETAIL page's own stage dropdown + progress bar, added
+   2026-09-16 -- NOT the buyers-list card (that reverted back to its
+   prior look, see renderBuyersList's own comment on progressBarHtml).
+   Stacks the label-less bar right under the dropdown, inside the
+   buyer-detail-quick-status flex row. */
+.buyer-detail-stage-block { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+.buyer-detail-stage-block .buyer-row-progress { margin: 0; }
 .sentiment-picker { display: flex; gap: 2px; }
 .sentiment-btn {
   background: none; border: 1px solid transparent; border-radius: 6px; font-size: 16px;
