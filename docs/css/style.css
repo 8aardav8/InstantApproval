@@ -875,6 +875,17 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   75% { opacity: 1; }
   100% { opacity: 0; }
 }
+/* Swipe-to-hide toast, added 2026-09-15 -- overrides the plain swipe-toast
+   above: no fade-out animation (a JS setTimeout removes it instead, after
+   4s rather than 1s) and real pointer-events, both needed so the Undo
+   button inside is actually clickable and doesn't disappear before
+   anyone can tap it. */
+.swipe-toast-with-undo { animation: none; opacity: 1; pointer-events: auto; }
+.swipe-toast-undo {
+  background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 12px; padding: 3px 10px; margin-left: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.swipe-toast-undo:hover { background: rgba(255,255,255,0.3); }
 .swipe-flash-left { animation: swipe-flash-left 0.35s ease; }
 .swipe-flash-right { animation: swipe-flash-right 0.35s ease; }
 @keyframes swipe-flash-left {

@@ -2745,6 +2745,12 @@ let BUYERS_FILTER = {
   contactPeriod: "week", // "week" | "month" | "quarter" | "year" -- only applied when contactOp is set
   stages: [], // added 2026-09-12
   sentiment: null, // added 2026-09-12 -- null | "smile" | "neutral" | "frown" | "none"
+  // Added 2026-09-15 per Aaron's direct request -- unlike every other
+  // filter above (which default to "Any"/null, unrestricted), this one
+  // defaults to "not-hidden" ON PURPOSE: "just hidden or just unhidden,
+  // which would be the default." Only "hidden" | "not-hidden", no "Any" --
+  // a hidden buyer shouldn't silently reappear mixed in with everyone else.
+  hidden: "not-hidden",
 };
 
 // Pipeline stages, added 2026-09-12 per Aaron's direct request -- kept as
@@ -2909,6 +2915,10 @@ function buyerMatchesFilters(b) {
   if (f.sentiment) {
     if (f.sentiment === "none" ? !!b.sentiment : b.sentiment !== f.sentiment) return false;
   }
+  // Added 2026-09-15 -- see BUYERS_FILTER's own comment on why this
+  // defaults to "not-hidden" rather than "Any".
+  if (f.hidden === "not-hidden" && b.hidden) return false;
+  if (f.hidden === "hidden" && !b.hidden) return false;
   return true;
 }
 
@@ -2945,6 +2955,10 @@ function activeBuyersFilterCount() {
   if (f.contactOp) n++;
   if (f.stages.length > 0) n++;
   if (f.sentiment) n++;
+  // Only counts as an active filter when set to "hidden" -- "not-hidden"
+  // IS the default, not something Aaron actively turned on, so it
+  // shouldn't inflate the badge every single time.
+  if (f.hidden === "hidden") n++;
   return n;
 }
 function updateBuyersFilterBadge() {
@@ -2968,8 +2982,11 @@ function applyBuyersFilters() {
     contactPeriod: document.getElementById("bf-contact-period").value || "week",
     stages: [...document.querySelectorAll("#buyers-stage-checkboxes input:checked")].map((cb) => cb.value),
     sentiment: document.getElementById("bf-sentiment").value || null,
+    hidden: document.getElementById("bf-hidden").value || "not-hidden",
   };
   updateBuyersFilterBadge();
+  const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
+  if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
   renderBuyersList();
 }
 
@@ -2985,6 +3002,9 @@ function clearBuyersFilters() {
   document.getElementById("bf-contact-op").value = "";
   document.getElementById("bf-contact-period").value = "week";
   document.getElementById("bf-sentiment").value = "";
+  // Resets to "not-hidden" (the actual default), NOT cleared to empty --
+  // there is no "Any" option for this one, see BUYERS_FILTER's own comment.
+  document.getElementById("bf-hidden").value = "not-hidden";
   applyBuyersFilters();
 }
 
@@ -3136,6 +3156,8 @@ function renderBuyersList() {
   if (sortDirBtn) updateSortDirToggleLabel(sortDirBtn);
   const cardModeBtn = document.getElementById("buyers-card-mode-toggle");
   if (cardModeBtn) updateCardModeToggleLabel(cardModeBtn);
+  const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
+  if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
 
   const listEl = document.getElementById("buyers-list");
   const buyers = sortedBuyers();
@@ -3294,10 +3316,16 @@ function renderBuyersList() {
       // progress bar at the bottom.
       const areaText = b.areas && b.areas.length > 0 ? b.areas.join(", ") : "";
       const compactEmail = b.loginsMatch ? b.loginsMatch.email : "";
-      const compactIconsHtml = (hasId || hasLoggedIn) ? `
+      // Appointment icon, added 2026-09-15 per Aaron's direct follow-up
+      // ("Compact, you should also show the icon for scheduled
+      // appointments on the card") -- same upcomingCount already used for
+      // the detailed card's own showing-badge above, same "only when it
+      // actually applies" rule as the ID/login icons here.
+      const compactIconsHtml = (hasId || hasLoggedIn || upcomingCount > 0) ? `
         <span class="buyer-row-compact-icons">
           ${hasId ? `<span class="buyer-badge id-badge" title="ID on file">🪪</span>` : ""}
           ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅</span>` : ""}
+          ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
         </span>
       ` : "";
       rows.push(`
@@ -3401,6 +3429,29 @@ async function setBuyerStage(phone, stage, onDone) {
     if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
     const buyer = findBuyer(phone);
     if (buyer) buyer.stage = stage;
+    if (onDone) onDone(); else renderBuyersList();
+  } catch (err) {
+    alert(`Couldn't save: ${err}`);
+  }
+}
+
+// Sets (or clears) a buyer's hidden state -- added 2026-09-15 per Aaron's
+// direct request. Same pattern as setBuyerSentiment/setBuyerStage above:
+// optimistic BUYERS_CACHE update, then re-render (or the caller's own
+// onDone, e.g. the swipe-to-hide toast's Undo action re-rendering just
+// itself rather than the whole list).
+async function setBuyerHidden(phone, hidden, onDone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-hidden`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, hidden }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
+    const buyer = findBuyer(phone);
+    if (buyer) buyer.hidden = hidden;
     if (onDone) onDone(); else renderBuyersList();
   } catch (err) {
     alert(`Couldn't save: ${err}`);
@@ -3531,6 +3582,79 @@ function flashSwipeIndicator(direction, name) {
   toast.textContent = `${direction > 0 ? "→" : "←"} ${name}`;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 1000);
+}
+
+// Swipe left on a buyer-row card (list view, NOT the detail-page swipe
+// above) to hide it, added 2026-09-15 per Aaron's direct request --
+// swiping left on an already-hidden card (only reachable via the "Show
+// hidden" view) un-hides it instead, so the same gesture works both
+// directions rather than needing a separate control to undo it from
+// there. Delegated on #buyers-list itself (not each .buyer-row), so this
+// keeps working across every renderBuyersList() re-render without
+// needing to be re-wired -- same reasoning as initCopyableTextDelegation/
+// initPhoneQuoLinkDelegation above.
+let buyerRowSwipeEl = null;
+let buyerRowSwipeStartX = null;
+let buyerRowSwipeStartY = null;
+function initBuyerRowSwipeToHide() {
+  const listEl = document.getElementById("buyers-list");
+  if (!listEl) return;
+  listEl.addEventListener("touchstart", (e) => {
+    const el = e.target.closest(".buyer-row");
+    if (!el || e.touches.length !== 1) { buyerRowSwipeEl = null; return; }
+    buyerRowSwipeEl = el;
+    buyerRowSwipeStartX = e.touches[0].clientX;
+    buyerRowSwipeStartY = e.touches[0].clientY;
+  }, { passive: true });
+  listEl.addEventListener("touchend", (e) => {
+    const el = buyerRowSwipeEl;
+    const startX = buyerRowSwipeStartX, startY = buyerRowSwipeStartY;
+    buyerRowSwipeEl = null;
+    buyerRowSwipeStartX = null;
+    buyerRowSwipeStartY = null;
+    if (!el || startX === null || e.changedTouches.length !== 1) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    // Leftward only (dx sufficiently negative), and more horizontal than
+    // vertical -- same shape check every other swipe gesture here uses,
+    // just one-directional (no right-swipe action defined).
+    if (dx > -SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
+    const phone = el.dataset.phone;
+    if (!phone) return;
+    toggleBuyerHiddenViaSwipe(phone);
+  }, { passive: true });
+}
+
+function toggleBuyerHiddenViaSwipe(phone) {
+  const buyer = findBuyer(phone);
+  if (!buyer) return;
+  const newHidden = !buyer.hidden;
+  const name = buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || buyer.phone;
+  setBuyerHidden(phone, newHidden, () => {
+    renderBuyersList();
+    flashHiddenToast(newHidden, name, phone);
+  });
+}
+
+// Toast confirming the hide/unhide, with an Undo action -- added
+// 2026-09-15. A swipe is easy to trigger by accident (Aaron's own past
+// feedback about the buyer-detail swipe, "I have accidentally swiped
+// before and didn't know that I was on a new page," is exactly why the
+// detail-page swipe got a visual confirmation too) -- hiding a buyer
+// card is a more consequential accident than just landing on the wrong
+// page, so this gets a real Undo button, not just a toast you glance at.
+function flashHiddenToast(hidden, name, phone) {
+  const existing = document.querySelector(".swipe-toast");
+  if (existing) existing.remove();
+  const toast = document.createElement("div");
+  toast.className = "swipe-toast swipe-toast-with-undo";
+  toast.innerHTML = `${hidden ? "Hidden" : "Unhidden"}: ${escapeHtml(name)} <button type="button" class="swipe-toast-undo">Undo</button>`;
+  document.body.appendChild(toast);
+  toast.querySelector(".swipe-toast-undo").addEventListener("click", () => {
+    setBuyerHidden(phone, !hidden);
+    toast.remove();
+  });
+  setTimeout(() => { if (toast.isConnected) toast.remove(); }, 4000);
 }
 
 let CURRENT_BUYER_DETAIL_PHONE = null;
@@ -4572,6 +4696,7 @@ function initPhoneQuoLinkDelegation() {
 function initBuyersTab() {
   initCopyableTextDelegation();
   initPhoneQuoLinkDelegation();
+  initBuyerRowSwipeToHide();
   initBuyerDetailSearch();
   const sortSel = document.getElementById("buyers-sort");
   if (sortSel) sortSel.addEventListener("change", () => { BUYERS_SORT = sortSel.value; BUYERS_SORT_DIR = 1; renderBuyersList(); });
@@ -4606,7 +4731,7 @@ function initBuyersTab() {
   // comment at its call site in loadBuyers() for why calling it eagerly at
   // page-load time (this function runs before this section's own consts
   // are initialized) is what broke the whole page on 2026-09-11.
-  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment"].forEach((id) => {
+  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment", "bf-hidden"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyBuyersFilters);
   });
@@ -4650,6 +4775,19 @@ function initBuyersTab() {
     try { localStorage.setItem(BUYERS_CARD_MODE_STORAGE_KEY, BUYERS_CARD_MODE); } catch (e) {}
     renderBuyersList();
   });
+
+  // "Show hidden" quick toggle, added 2026-09-15 per Aaron's direct
+  // request -- flips BUYERS_FILTER.hidden directly and keeps the filter
+  // panel's own #bf-hidden select in sync, so however you got to either
+  // state, both controls (and the filter badge) always agree.
+  const showHiddenBtn = document.getElementById("buyers-show-hidden-toggle");
+  if (showHiddenBtn) showHiddenBtn.addEventListener("click", () => {
+    BUYERS_FILTER.hidden = BUYERS_FILTER.hidden === "hidden" ? "not-hidden" : "hidden";
+    const sel = document.getElementById("bf-hidden");
+    if (sel) sel.value = BUYERS_FILTER.hidden;
+    updateBuyersFilterBadge();
+    renderBuyersList();
+  });
 }
 
 function updateDateModeToggleLabel(btn) {
@@ -4658,6 +4796,15 @@ function updateDateModeToggleLabel(btn) {
 
 function updateCardModeToggleLabel(btn) {
   btn.textContent = BUYERS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
+}
+
+// Quick "Show hidden" toggle, added 2026-09-15 per Aaron's direct request
+// -- flips the SAME BUYERS_FILTER.hidden state the filter panel's own
+// #bf-hidden select controls (kept in sync both ways: this updates that
+// select's value too, and applyBuyersFilters/clearBuyersFilters update
+// this button's label -- see their own call sites).
+function updateHiddenToggleLabel(btn) {
+  btn.textContent = BUYERS_FILTER.hidden === "hidden" ? "Show active" : "Show hidden";
 }
 
 // ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------

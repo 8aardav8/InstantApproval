@@ -467,6 +467,25 @@ async function writeStage(accessToken, row, stage) {
   if (!res.ok) throw new Error(`stage write failed: ${await res.text()}`);
 }
 
+// "Hidden" -- column AH, added 2026-09-15 per Aaron's direct request:
+// swipe-to-hide a buyer card off the default list, with a "show hidden"
+// toggle and a Hidden/Not-hidden filter. Stored as the literal string
+// "TRUE"/"" (not a real boolean -- Sheets values are always strings over
+// the API either way), same pattern as every other single-column writer
+// above. Column AG (ID Name/OCR) is the last one currently in use, so
+// this is the very next column -- see handleAdminSetHidden below for the
+// row-lookup/auto-create wrapper.
+async function writeHidden(accessToken, row, hidden) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AH${row}:AH${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AH${row}:AH${row}`, values: [[hidden ? "TRUE" : ""]] }),
+  });
+  if (!res.ok) throw new Error(`hidden write failed: ${await res.text()}`);
+}
+
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
 // Same auth/base URL, same "PATCH replaces defaultFields wholesale, always
 // fetch-then-merge" gotcha, same firstName-required-on-create gotcha, same
@@ -1874,6 +1893,40 @@ async function handleAdminSetStage(request, env) {
   }
 }
 
+// Sets (or clears) whether a buyer is hidden from the default buyers-list
+// view -- added 2026-09-15 per Aaron's direct request ("swipe left on a
+// card and hide it from the list"). Same no-confirmation-needed
+// reasoning as sentiment/stage above -- Aaron's own personal
+// organization, not a third-party-visible write.
+async function handleAdminSetHidden(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const hidden = !!body.hidden;
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await writeHidden(accessToken, row, hidden);
+    return jsonResponse({ ok: true, hidden });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Renames a buyer's Quo contact -- a separate, OPT-IN action (see the
 // checkbox in the buyers-tab UI, default checked) from setting areas
 // above. The buyers-tab UI composes personal-name + area-tag-suffix into
@@ -3187,6 +3240,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-stage" && request.method === "POST") {
     return handleAdminSetStage(request, env);
+  }
+  if (url.pathname === "/admin/set-hidden" && request.method === "POST") {
+    return handleAdminSetHidden(request, env);
   }
 
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
