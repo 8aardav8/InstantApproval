@@ -3412,7 +3412,15 @@ function renderBuyersList() {
     // it's outlined at all) AND roughly where they are in the pipeline
     // (which color). Falls back to a neutral gray if they have an
     // appointment but no stage set yet, rather than no outline at all.
-    const stageOutlineColor = upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
+    // "Currently logged in" (added 2026-09-15 per Aaron's direct request)
+    // takes priority over the stage-color outline when both apply -- it's
+    // the more time-sensitive signal (they're on the site RIGHT NOW),
+    // whereas an upcoming appointment is true regardless of the moment
+    // you happen to be looking at the card.
+    const currentlyLoggedIn = isCurrentlyLoggedIn(b.loginsMatch && b.loginsMatch.lastLogin);
+    const stageOutlineColor = currentlyLoggedIn
+      ? CURRENTLY_LOGGED_IN_OUTLINE_COLOR
+      : upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
     // Detailed-card layout, redone a third time 2026-09-12 per Aaron's
     // explicit correction -- NOT one unified grid. Two independent
     // stacked sections: top splits into two EQUAL HALVES (left = ID
@@ -3617,6 +3625,63 @@ function formatShortDate(iso) {
   if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+// Same as formatShortDate but WITH the year -- added 2026-09-15 per
+// Aaron's direct request, specifically for the buyer detail page's own
+// "Last activity (Quo)" fact (see renderBuyerDetail's facts array below).
+// Kept as its own function rather than changing formatShortDate itself,
+// which stays year-less everywhere else it's used (buyer-row cards,
+// appointment cards) -- Aaron only asked for the year on this one line.
+function formatDateWithYear(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// Combines formatDateWithYear + formatDaysSince (defined just below) into
+// the one "Mon Day, Year (Nd ago)" format Aaron asked for on the buyer
+// detail page's own Last activity (Quo) fact -- added 2026-09-15. Defined
+// here even though it calls formatDaysSince (declared a few lines down) --
+// function declarations are hoisted, so this is safe; only the RENDER-TIME
+// call matters, not source order.
+function formatDateWithYearAndSince(iso) {
+  const datePart = formatDateWithYear(iso);
+  return datePart ? `${datePart} (${formatDaysSince(iso)})` : "";
+}
+
+// Same idea, but ALSO keeps the time of day -- added 2026-09-15 per
+// Aaron's direct follow-up, specifically for First login/Last login:
+// "I would like the same format that we use for the last co-activity...
+// Also keep the time of day in that first and last login info." Produces
+// "Mon Day, Year, H:MMam/pm (Nd ago)".
+function formatDateTimeWithYearAndSince(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const datePart = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const timePart = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${datePart}, ${timePart} (${formatDaysSince(iso)})`;
+}
+
+// "Currently logged in," added 2026-09-15 per Aaron's direct request --
+// this app has no real live-session tracking (no logout/expiry concept,
+// "logged in" is really just "submitted the login gate at some point"),
+// so this is a recency heuristic: Last Login within the last hour reads
+// as "probably still here" (confirmed with Aaron directly -- a tighter
+// 15-minute window and a looser same-calendar-day window were the other
+// two options considered).
+const CURRENTLY_LOGGED_IN_WINDOW_MS = 60 * 60 * 1000;
+function isCurrentlyLoggedIn(lastLoginIso) {
+  if (!lastLoginIso) return false;
+  const d = new Date(lastLoginIso);
+  if (isNaN(d.getTime())) return false;
+  return Date.now() - d.getTime() <= CURRENTLY_LOGGED_IN_WINDOW_MS;
+}
+// Light green outline for a currently-logged-in buyer's card AND their own
+// detail page, added 2026-09-15 per Aaron's direct request ("highlight
+// their card and their page with a light green outline").
+const CURRENTLY_LOGGED_IN_OUTLINE_COLOR = "#86efac";
 
 // "Days since" toggle for Texted/Called/Login on the buyer list, added
 // 2026-09-11 per Aaron's direct request. Persisted in localStorage --
@@ -3958,15 +4023,26 @@ function renderBuyerDetail(buyer) {
     ["ID Name (OCR)", (lm && lm.idName) || ""],
     ["Phone", buyer.phone],
     ["Email", (lm && lm.email) || ""],
-    ["First login", (lm && lm.firstLogin) || ""],
-    ["Last login", (lm && lm.lastLogin) || ""],
+    ["First login", (lm && lm.firstLogin) ? formatDateTimeWithYearAndSince(lm.firstLogin) : ""],
+    ["Last login", (lm && lm.lastLogin)
+      ? `${formatDateTimeWithYearAndSince(lm.lastLogin)}${isCurrentlyLoggedIn(lm.lastLogin) ? " 🟢 Currently logged in" : ""}`
+      : ""],
     // Cross-referenced from a Glide-app login with no phone on its own
     // App: Logins row -- added 2026-09-11 per Aaron's direct request. See
     // matchEmailToContact's own comment server-side for how the identity
     // was recovered.
     ["Login Source", lm && lm.viaGlide ? "Glide App" : ""],
     ["Agreed to terms", (lm && lm.agreed) || ""],
-    ["Last activity (Quo)", formatShortDate(buyer.lastActivityAt)],
+    // Year added 2026-09-15 per Aaron's direct request (formatShortDate,
+    // used everywhere else, deliberately stays year-less -- see
+    // formatDateWithYear's own comment). "Time since" (formatDaysSince,
+    // already used elsewhere for the same days-since-a-date concept)
+    // appended on this SAME line, also per his direct request -- he
+    // first said "sentiment," then corrected himself: "I didn't mean
+    // sentiment I meant the time since."
+    ["Last activity (Quo)", buyer.lastActivityAt
+      ? `${formatDateWithYear(buyer.lastActivityAt)} (${formatDaysSince(buyer.lastActivityAt)})`
+      : ""],
   ].filter(([, v]) => v);
 
   // Phone/Email copy-to-clipboard, added 2026-09-12 per Aaron's direct
@@ -4171,9 +4247,24 @@ function renderBuyerDetail(buyer) {
   // link (just the app button now, see quoAppLinkHtml's comment), a stage
   // progress bar, and the SAME sentiment/stage controls the list card
   // has -- all updatable from the top of the page, not just from the list.
+  // Left/right arrows flanking the Quo app button, added 2026-09-15 per
+  // Aaron's direct request -- a visible alternative to the swipe gesture
+  // (showAdjacentBuyer, same function, same sortedBuyers() order) for
+  // stepping to the previous/next buyer without needing a touchscreen.
+  // Disabled (not hidden) at either end of the list -- same "nothing sane
+  // to step to" behavior showAdjacentBuyer already has, just visible here
+  // rather than silently doing nothing.
+  const adjacentList = sortedBuyers();
+  const currentBuyerIdx = adjacentList.findIndex((b) => b.phone === buyer.phone);
+  const hasPrevBuyer = currentBuyerIdx > 0;
+  const hasNextBuyer = currentBuyerIdx >= 0 && currentBuyerIdx < adjacentList.length - 1;
   const detailHeaderHtml = `
     <div class="buyer-detail-header">
-      ${quoLinkHtml}
+      <div class="buyer-nav-row">
+        <button type="button" class="buyer-nav-arrow" id="buyer-nav-prev" aria-label="Previous buyer"${hasPrevBuyer ? "" : " disabled"}>&larr;</button>
+        ${quoLinkHtml}
+        <button type="button" class="buyer-nav-arrow" id="buyer-nav-next" aria-label="Next buyer"${hasNextBuyer ? "" : " disabled"}>&rarr;</button>
+      </div>
       ${renderStageProgressBarHtml(buyer)}
       <div class="buyer-detail-quick-status">
         <span class="sentiment-picker">${renderSentimentPickerHtml(buyer)}</span>
@@ -4240,6 +4331,14 @@ function renderBuyerDetail(buyer) {
     ${filtersHtml}
   `;
 
+  // Light green outline for the whole page when this buyer is currently
+  // logged in, added 2026-09-15 per Aaron's direct request -- same
+  // isCurrentlyLoggedIn()/CURRENTLY_LOGGED_IN_OUTLINE_COLOR the buyer-row
+  // card outline uses (see renderBuyersList), applied here as a real CSS
+  // outline (not border) so it doesn't shift this container's own layout.
+  container.style.outline = isCurrentlyLoggedIn(lm && lm.lastLogin) ? `3px solid ${CURRENTLY_LOGGED_IN_OUTLINE_COLOR}` : "";
+  container.style.outlineOffset = isCurrentlyLoggedIn(lm && lm.lastLogin) ? "6px" : "";
+
   // Click-to-edit name -- click the heading, it becomes a text input;
   // Enter or blur saves (Escape cancels without saving). Renders back to
   // plain text either way afterward.
@@ -4300,6 +4399,15 @@ function renderBuyerDetail(buyer) {
   // Sentiment/stage controls at the top of the page, added 2026-09-12 --
   // same handlers as the list card, but re-render THIS page afterward
   // (onDone), not the list underneath it.
+  // Prev/Next arrows, added 2026-09-15 per Aaron's direct request -- same
+  // showAdjacentBuyer() the swipe gesture already calls, so both stay in
+  // sync with the same sortedBuyers() order and the same swipe-toast
+  // confirmation (flashSwipeIndicator) on every step, not just swipes.
+  const prevBtn = container.querySelector("#buyer-nav-prev");
+  if (prevBtn) prevBtn.addEventListener("click", () => showAdjacentBuyer(-1));
+  const nextBtn = container.querySelector("#buyer-nav-next");
+  if (nextBtn) nextBtn.addEventListener("click", () => showAdjacentBuyer(1));
+
   container.querySelectorAll(".sentiment-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const selected = btn.classList.contains("sentiment-btn-selected");

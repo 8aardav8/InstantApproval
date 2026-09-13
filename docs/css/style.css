@@ -935,6 +935,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Detail-page header block (Quo links, stage progress, sentiment/stage
    controls), added 2026-09-12 per Aaron's direct request. */
 .buyer-detail-header { margin-bottom: 16px; }
+/* Prev/Next arrows flanking the Quo app button, added 2026-09-15 per
+   Aaron's direct request -- a visible alternative to the swipe gesture.
+   .buyer-quo-links (the Quo button's own wrapper) already has its own
+   margin-bottom, so this row doesn't need one of its own. */
+.buyer-nav-row { display: flex; align-items: center; gap: 8px; }
+.buyer-nav-row .buyer-quo-links { margin-bottom: 0; flex: 1 1 auto; }
+.buyer-nav-arrow {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border); background: #fff; color: var(--navy);
+  font-size: 16px; cursor: pointer;
+}
+.buyer-nav-arrow:hover { border-color: var(--blue); color: var(--blue); }
+.buyer-nav-arrow:disabled { opacity: 0.3; cursor: default; }
+.buyer-nav-arrow:disabled:hover { border-color: var(--border); color: var(--navy); }
 .stage-progress-bar { display: flex; gap: 3px; margin-bottom: 4px; }
 .stage-progress-segment { flex: 1 1 0; height: 6px; border-radius: 3px; background: #e5e7eb; }
 .stage-progress-filled { background: var(--blue); }
