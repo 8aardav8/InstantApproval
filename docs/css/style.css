@@ -769,7 +769,6 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .buyer-row-name { font-weight: 700; font-size: 15px; color: var(--navy); }
 .buyer-row-sub { font-size: 12px; color: var(--gray-text, #6b7280); }
-.buyer-row-date { font-size: 11px; color: #9ca3af; }
 /* Quo-name / ID-name mismatch flag, added 2026-09-12. */
 .buyer-row-idname-flag { font-size: 11px; font-weight: 700; color: #9a3412; background: #fff7ed; padding: 2px 8px; border-radius: 10px; width: fit-content; }
 
@@ -783,16 +782,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    Aaron's direct request -- SOLID underline (unlike .copyable-text's
    dotted one above), since this genuinely navigates somewhere (opens the
    Quo app) rather than just copying text. Inherits color from context
-   (name fallback, status bar text, etc.) rather than forcing one, so it
-   reads correctly wherever it's dropped in. */
+   (card name fallback, compact line 2, etc.) rather than forcing one, so
+   it reads correctly wherever it's dropped in. */
 .phone-quo-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .phone-quo-link:hover { color: var(--blue); }
 
-/* Bottom section, "the status bar" -- full card width, three equal
-   thirds. Added/redone 2026-09-12 per Aaron's direct request. */
-.buyer-row-status-bar { display: flex; gap: 10px; padding-top: 10px; border-top: 1px solid #f3f4f6; }
-.status-bar-third { flex: 1 1 33.333%; min-width: 0; }
-.status-bar-dates { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; text-align: right; }
+/* Bottom section -- the stage progress bar, full card width. Was a
+   three-way sentiment/stage/dates "status bar" (added 2026-09-12),
+   replaced 2026-09-14 per Aaron's direct request -- see progressBarHtml's
+   own comment in app.js. Reuses .stage-progress-bar/-segment/-label
+   as-is (same visual already used at the top of the full buyer detail
+   page), just wrapped with its own top border/spacing here. */
+.buyer-row-progress { padding-top: 10px; border-top: 1px solid #f3f4f6; }
 .sentiment-picker { display: flex; gap: 2px; }
 .sentiment-btn {
   background: none; border: 1px solid transparent; border-radius: 6px; font-size: 16px;
@@ -824,20 +825,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-badge.showing-badge { background: #fff7ed; color: #9a3412; }
 .buyer-badge.login-badge { background: #f0fdf4; color: #166534; }
 
-/* Compact card, added 2026-09-13, redone 2026-09-14 per Aaron's direct
-   request: name + ID/login icons on line 1; area + email + phone on
-   line 2; the full status bar (shared .buyer-row-status-bar, same as the
-   detailed card) underneath. Overrides .buyer-row's own padding/gap
-   (built for the taller detailed card) down to something that still
-   reads as compact despite now carrying the status bar too. */
+/* Compact card, added 2026-09-13, redone 2026-09-14 (twice) per Aaron's
+   direct requests: name + ID/login icons on line 1 (icons render ONLY
+   when they actually apply -- a prior version always showed both,
+   dimmed when false, which Aaron asked to drop entirely: "I don't want
+   them taking up space if the person has never logged on and we don't
+   have ID on file"); area + email + phone on line 2; the stage progress
+   bar underneath (see .buyer-row-progress above). Overrides .buyer-row's
+   own padding/gap (built for the taller detailed card) down to something
+   that still reads as compact. */
 .buyer-row-compact { padding: 10px 14px; gap: 4px; }
 .buyer-row-compact-line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .buyer-row-compact-icons { display: flex; gap: 4px; margin-left: auto; }
-/* Dimmed rather than omitted -- added 2026-09-13. Aaron asked for "icons
-   about whether ID was received, whether they logged in," i.e. the
-   negative case should still show (grayed out), not disappear, since a
-   missing icon and a "not yet" icon read very differently at a glance. */
-.buyer-badge-off { background: #f3f4f6; color: #9ca3af; opacity: 0.6; }
 .buyer-row-compact-line2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: #9ca3af; }
 .buyer-row-compact-area, .buyer-row-compact-email, .buyer-row-compact-phone { font-size: 12px; }
 .buyer-row-compact-area { color: var(--gray-text, #6b7280); }

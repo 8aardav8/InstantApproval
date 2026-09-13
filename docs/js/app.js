@@ -3156,19 +3156,6 @@ function renderBuyersList() {
     const idNameMismatchHtml = idNameMismatch
       ? `<span class="buyer-row-idname-flag" title="ID reads: ${escapeAttr(idNameVal)}">🪪⚠️ ID says "${escapeHtml(idNameVal)}"</span>`
       : "";
-    // Last login (App: Logins sheet, via loginsMatch) and last texted (Quo
-    // conversation activity) are two different signals -- a buyer can log
-    // in without texting, or text without ever logging in -- so show both
-    // rather than collapsing to one date. Added 2026-09-11 per Aaron's
-    // request to see this at a glance on the list, not just in the detail view.
-    const lastLogin = b.loginsMatch ? b.loginsMatch.lastLogin : "";
-    const loginDate = lastLogin ? formatBuyerDate(lastLogin) : "";
-    const textedDate = formatBuyerDate(b.lastActivityAt);
-    // lastCallAt comes from the worker's separate, slower calls_cache (see
-    // its own comment server-side) -- absent/null until that background
-    // pass has actually reached this phone, in which case this just omits
-    // the "Called:" date rather than showing anything misleading.
-    const calledDate = b.lastCallAt ? formatBuyerDate(b.lastCallAt) : "";
     // At-a-glance badges, added 2026-09-11 per Aaron's direct request --
     // ID on file, and how many showings are actually booked (today or
     // later; a past-dated appointment doesn't count as "booked" here, see
@@ -3198,12 +3185,10 @@ function renderBuyersList() {
     const idThumbHtml = b.loginsMatch && b.loginsMatch.idLink
       ? `<img class="buyer-row-thumb admin-id-photo" data-dropbox-link="${escapeAttr(b.loginsMatch.idLink)}" alt="ID on file">`
       : "";
-    // Sentiment emoji + Stage dropdown, added 2026-09-12 per Aaron's
-    // direct request -- quick controls right on the card, no need to open
-    // the buyer's own detail page. Clicking an already-selected emoji
-    // clears it (toggle off); the select saves on change. Rendered
-    // directly into the status bar's own thirds below (buyer-row-status-bar
-    // has the stopPropagation wiring, not a separate wrapper here).
+    // Sentiment/stage controls used to live directly on the card here
+    // (added 2026-09-12) but were removed from cards entirely 2026-09-14
+    // per Aaron's direct request -- see progressBarHtml's own comment
+    // below. Editable from the buyer's own detail page only now.
     // Outline color, changed 2026-09-12 per Aaron's direct follow-up --
     // was a flat red for any upcoming appointment; now uses that buyer's
     // OWN current-stage color (STAGE_COLORS/stageColorFor) instead, so the
@@ -3212,66 +3197,49 @@ function renderBuyersList() {
     // (which color). Falls back to a neutral gray if they have an
     // appointment but no stage set yet, rather than no outline at all.
     const stageOutlineColor = upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
-    // Card layout, redone a third time 2026-09-12 per Aaron's explicit
-    // correction -- NOT one unified grid. Two independent stacked
-    // sections, each split differently:
-    //   Top section: two EQUAL HALVES -- left = ID photo, right = name/
-    //   phone/badges.
-    //   Bottom section ("the status bar," full card width): three EQUAL
-    //   THIRDS -- sentiment emoji | stage | last login/text/call info.
-    // Building these as two independent flex rows (not one grid) is what
-    // actually reproduces "top splits in half, bottom splits in thirds" --
-    // a single grid's column tracks can't be half-width on one row and
-    // third-width on another.
+    // Detailed-card layout, redone a third time 2026-09-12 per Aaron's
+    // explicit correction -- NOT one unified grid. Two independent
+    // stacked sections: top splits into two EQUAL HALVES (left = ID
+    // photo, right = name/phone/badges); bottom is now just the stage
+    // progress bar, full width (used to be a three-way sentiment/stage/
+    // dates "status bar," replaced 2026-09-14 -- see progressBarHtml).
     //
-    // Switched from <button> to a clickable <div> 2026-09-12 -- a <select>
-    // and buttons (sentiment emoji, stage dropdown) can't validly nest
-    // inside a <button>'s content model. role="button" + tabindex keep it
-    // reachable/activatable via keyboard.
+    // Switched from <button> to a clickable <div> 2026-09-12 -- role and
+    // tabindex keep it reachable/activatable via keyboard (a leftover
+    // requirement from when a <select>/buttons lived inside this div too;
+    // harmless to keep now that they don't).
     const rowStyle = stageOutlineColor ? ` style="border-color:${stageOutlineColor};border-width:2px"` : "";
-    // Status bar (sentiment emoji | stage | last login/text/call), pulled
-    // out into a shared variable 2026-09-14 per Aaron's direct request
-    // ("include the status bar on the cards for both compact and detail
-    // views") -- previously detailed-card-only, now rendered identically
-    // in both. Its own click-to-stopPropagation/sentiment-btn/stage-select
-    // wiring below already targets these classes generically, so no
-    // separate wiring is needed for the compact copy.
-    const statusBarHtml = `
-      <div class="buyer-row-status-bar">
-        <div class="status-bar-third status-bar-sentiment">
-          <span class="sentiment-picker">${renderSentimentPickerHtml(b)}</span>
-        </div>
-        <div class="status-bar-third status-bar-stage">
-          ${renderStageSelectHtml(b)}
-        </div>
-        <div class="status-bar-third status-bar-dates">
-          ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
-          ${textedDate ? `<span class="buyer-row-date" title="Last texted">Texted: ${textedDate}</span>` : ""}
-          ${calledDate ? `<span class="buyer-row-date" title="Last called">Called: ${calledDate}</span>` : ""}
-        </div>
-      </div>
-    `;
+    // Status bar (sentiment emoji + stage dropdown + login/text/call
+    // dates), added 2026-09-14 (briefly, to both card types), REMOVED
+    // again the same day per Aaron's direct follow-up: "I don't want the
+    // sentiment or status drop-down to be on the compact view. I only
+    // want the progress bar to be at the bottom of the compact view as
+    // well as the bottom of the details view Cards." Replaced with just
+    // the stage progress bar (renderStageProgressBarHtml, the same visual
+    // already used at the top of the full buyer detail page) on BOTH
+    // card types -- sentiment/stage are still editable, just from the
+    // buyer's own detail page now, not from the list card.
+    const progressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b)}</div>`;
     if (BUYERS_CARD_MODE === "compact") {
-      // Compact card -- name + ID/login icons on line 1; area, email, and
-      // phone (in one place, all identifying info together) on line 2;
-      // the full status bar below. Redone 2026-09-14 per Aaron's direct
-      // request ("move the areas down to the second line... include email
-      // address and phone number... include the status bar") -- area used
-      // to sit on line 1 and there was no email/phone shown at all, a
-      // one-line "Last contact: <most recent>" summary stood in for the
-      // status bar's own more detailed Login/Texted/Called breakdown,
-      // which is why that summary is gone now -- the real status bar
-      // below already covers it, with more detail, not less.
+      // Compact card -- name + ID/login icons (ONLY when they actually
+      // apply, added 2026-09-14 per Aaron's direct request: "I don't want
+      // them taking up space if the person has never logged on and we
+      // don't have ID on file" -- previously both always rendered, dimmed
+      // when false) on line 1; area, email, and phone on line 2; the
+      // stage progress bar at the bottom (see progressBarHtml below).
       const areaText = b.areas && b.areas.length > 0 ? b.areas.join(", ") : "";
       const compactEmail = b.loginsMatch ? b.loginsMatch.email : "";
+      const compactIconsHtml = (hasId || hasLoggedIn) ? `
+        <span class="buyer-row-compact-icons">
+          ${hasId ? `<span class="buyer-badge id-badge" title="ID on file">🪪</span>` : ""}
+          ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅</span>` : ""}
+        </span>
+      ` : "";
       rows.push(`
         <div class="buyer-row buyer-row-compact" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
           <div class="buyer-row-compact-line1">
             <span class="buyer-row-name">${labelHtml}</span>
-            <span class="buyer-row-compact-icons">
-              <span class="buyer-badge id-badge${hasId ? "" : " buyer-badge-off"}" title="${hasId ? "ID on file" : "No ID on file"}">🪪</span>
-              <span class="buyer-badge login-badge${hasLoggedIn ? "" : " buyer-badge-off"}" title="${hasLoggedIn ? "Has logged in" : "Hasn't logged in"}">✅</span>
-            </span>
+            ${compactIconsHtml}
           </div>
           <div class="buyer-row-compact-line2">
             ${areaText ? `<span class="buyer-row-compact-area">${escapeHtml(areaText)}</span>` : ""}
@@ -3279,7 +3247,7 @@ function renderBuyersList() {
             <span class="buyer-row-compact-phone">${phoneQuoLinkHtml(b.phone)}</span>
             ${idNameMismatchHtml}
           </div>
-          ${statusBarHtml}
+          ${progressBarHtml}
         </div>
       `);
     } else {
@@ -3298,7 +3266,7 @@ function renderBuyersList() {
               </div>
             </div>
           </div>
-          ${statusBarHtml}
+          ${progressBarHtml}
         </div>
       `);
     }
@@ -3308,20 +3276,13 @@ function renderBuyersList() {
     el.addEventListener("click", () => showBuyerDetail(el.dataset.phone));
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showBuyerDetail(el.dataset.phone); } });
   });
-  listEl.querySelectorAll(".buyer-row-status-bar").forEach((el) => {
-    el.addEventListener("click", (e) => e.stopPropagation());
-  });
-  listEl.querySelectorAll(".sentiment-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const current = btn.classList.contains("sentiment-btn-selected");
-      setBuyerSentiment(btn.dataset.phone, current ? "" : btn.dataset.sentiment);
-    });
-  });
-  listEl.querySelectorAll(".stage-select").forEach((sel) => {
-    sel.addEventListener("click", (e) => e.stopPropagation());
-    sel.addEventListener("change", (e) => setBuyerStage(e.target.dataset.phone, e.target.value));
-  });
+  // Sentiment-btn/stage-select wiring REMOVED from list cards 2026-09-14
+  // per Aaron's direct request -- neither renders on a card anymore (see
+  // progressBarHtml above), so this had nothing left to match. Sentiment/
+  // stage are still editable from the buyer's own detail page, which has
+  // its own separate wiring for the same classes (see renderBuyerDetail,
+  // scoped to #buyers-detail-content, not this listEl) -- unaffected by
+  // this removal.
   // Load card thumbnails lazily, same admin-id-photo wiring the detail view
   // uses -- deliberately AFTER the click-handler wiring above, so a slow
   // thumbnail fetch never blocks the list from being interactive.
@@ -3397,8 +3358,12 @@ function formatDaysSince(iso) {
   return `${days}d ago`;
 }
 // Picks formatShortDate or formatDaysSince based on the current toggle
-// state -- single call site for every Texted/Called/Login date so the
-// toggle affects all three at once, consistently.
+// state -- was the single call site for every Texted/Called/Login date on
+// a buyer card. Left defined but UNWIRED as of 2026-09-14 -- Aaron's
+// direct request to drop the sentiment/stage/dates status bar in favor of
+// just the stage progress bar (see renderStageProgressBarHtml's new card
+// call sites below) removed its only caller, same "trivial to bring back"
+// pattern already used elsewhere in this file for a removed feature.
 function formatBuyerDate(iso) {
   return BUYERS_DATE_MODE === "days" ? formatDaysSince(iso) : formatShortDate(iso);
 }
