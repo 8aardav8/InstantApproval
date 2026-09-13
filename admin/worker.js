@@ -1308,6 +1308,7 @@ async function handleUploadCoBuyerId(request, env) {
     const filename = buildCoBuyerIdFilename(coName, coPhone, primaryName, idPhoto.name);
     const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
     const fileBytes = await idPhoto.arrayBuffer();
+    await archivePreviousIdPhoto(dropboxToken, destPath);
 
     const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
       method: "POST",
@@ -1718,18 +1719,57 @@ async function createOrReuseSharedLink(dropboxToken, path) {
   return link.url;
 }
 
+// ---------- ID photo preservation, added 2026-09-13 ----------
+// Every upload path below uses mode: "overwrite" onto a path keyed off
+// name+phone (buildIdFilename/buildCoBuyerIdFilename), not the original
+// filename or a timestamp -- so a re-upload for the same person used to
+// silently replace the old file's bytes in place, with nothing left to
+// fall back on but Dropbox's own version history. Aaron asked to keep the
+// old one instead ("dupe and rename before overwrite"). This copies
+// whatever's currently at destPath into a dated "_previous_versions"
+// subfolder BEFORE the new upload lands, so nothing is ever actually lost,
+// while the live folder -- and everything that lists it non-recursively
+// (handleInternalListIdFiles, handleAdminBrowseIdPhotos) -- still only ever
+// shows the current photo. Best-effort and silent: a missing destPath
+// (first-ever upload for this person) is the normal, expected case here,
+// not an error, and any other hiccup shouldn't block the new upload, which
+// is the actually-required part of the request.
+async function archivePreviousIdPhoto(dropboxToken, destPath) {
+  try {
+    const slash = destPath.lastIndexOf("/");
+    const dir = destPath.slice(0, slash);
+    const name = destPath.slice(slash + 1);
+    const dot = name.lastIndexOf(".");
+    const base = dot === -1 ? name : name.slice(0, dot);
+    const ext = dot === -1 ? "" : name.slice(dot);
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const archivePath = `${dir}/_previous_versions/${base}-${stamp}${ext}`;
+    const res = await fetch("https://api.dropboxapi.com/2/files/copy_v2", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+      // autorename guards the same-millisecond edge case; not expected in
+      // practice but free insurance against ever losing the old copy.
+      body: JSON.stringify({ from_path: destPath, to_path: archivePath, autorename: true }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      if (!errText.includes("from_lookup/not_found")) {
+        console.error(`archivePreviousIdPhoto: copy failed for ${destPath}: ${errText}`);
+      }
+    }
+  } catch (e) {
+    console.error(`archivePreviousIdPhoto: unexpected error for ${destPath}: ${e}`);
+  }
+}
+
 // ---------- Suggested ID matches, added 2026-09-11 ----------
 // Aaron's own workflow: he drops ID photos he's collected some other way
 // (in person, via text, wherever) straight into the Buyer IDs Dropbox
 // folder, by hand, named however he named them -- not through the site's
 // own upload form (which already names files via buildIdFilename above and
-// writes ID Link itself). This scans that folder for files that don't
-// already correspond to a linked buyer, fuzzy-matches the filename against
-// buyer names with no ID Link on file yet, and returns candidates for
-// Aaron to confirm -- it never auto-writes ID Link on its own. A wrong
-// auto-match would show one buyer's ID photo on a different buyer's page,
-// which is exactly the kind of mistake that should need a human glance
-// first, not get silently guessed.
+// writes ID Link itself). handleInternalListIdFiles and
+// handleAdminBrowseIdPhotos (both below) use this to list that folder for
+// Aaron's own manual browse/link flows.
 async function listDropboxFolder(dropboxToken, path) {
   const entries = [];
   let res = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
@@ -1789,6 +1829,7 @@ async function handleAdminUploadId(request, env) {
     const filename = buildIdFilename(fullName, phone, idPhoto.name);
     const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
     const fileBytes = await idPhoto.arrayBuffer();
+    await archivePreviousIdPhoto(dropboxToken, destPath);
     const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
       method: "POST",
       headers: {
@@ -2883,6 +2924,7 @@ async function handleUploadId(request, env) {
       filename = buildIdFilename(name, phone, idPhoto.name);
       const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
       const fileBytes = await idPhoto.arrayBuffer();
+      await archivePreviousIdPhoto(dropboxToken, destPath);
 
       const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
         method: "POST",
@@ -3014,6 +3056,7 @@ async function handleUploadMyId(request, env) {
     const filename = buildIdFilename(name, phone, idPhoto.name);
     const destPath = `${DROPBOX_IDS_FOLDER}/${filename}`;
     const fileBytes = await idPhoto.arrayBuffer();
+    await archivePreviousIdPhoto(dropboxToken, destPath);
 
     const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
       method: "POST",
