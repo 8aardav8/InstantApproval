@@ -1129,6 +1129,17 @@ async function prefillGetStartedContactFields() {
     // field's required-ness and status line.
     serverIdOnFile = !!data.idOnFile;
     updateIdPhotoStatus();
+    // Thumbnail added 2026-09-13, alongside the text status above -- same
+    // loadIdPhotoThumbnail used on My Info, since this is the same server-
+    // confirmed ID (same Sheet row, keyed by the same email), not a
+    // separate upload.
+    const hasIdEl = document.getElementById("get-started-id-has-file");
+    if (hasIdEl) {
+      hasIdEl.classList.toggle("hidden", !serverIdOnFile);
+      if (serverIdOnFile) {
+        loadIdPhotoThumbnail(document.getElementById("get-started-id-thumbnail"), data.email || email, null);
+      }
+    }
   }
 }
 
@@ -1193,8 +1204,14 @@ async function refreshMyAppointments() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const today = localTodayISO();
+    // status !== "Canceled" added 2026-09-13 alongside the cancel-appointment
+    // fix below (handleCancelAppointment now preserves a Canceled status
+    // instead of blanking the cell) -- without this, a visitor who cancels
+    // their own still-upcoming viewing would see it pop right back into
+    // their own "Viewings scheduled" list, looking like the cancel silently
+    // failed.
     MY_APPOINTMENTS = (data.appointments || [])
-      .filter((a) => a.date >= today)
+      .filter((a) => a.date >= today && a.status !== "Canceled")
       .sort((a, b) => a.date.localeCompare(b.date));
   } catch (err) {
     // Best-effort -- a failed fetch just means no banners show anywhere,
@@ -1246,6 +1263,22 @@ function renderMyAppointmentCards() {
 function initAppointmentsAccordionToggle() {
   const toggle = document.getElementById("appointments-accordion-toggle");
   const wrap = document.getElementById("appointments-banner-wrap");
+  if (!toggle || !wrap) return;
+  toggle.addEventListener("click", () => {
+    const showing = !wrap.classList.contains("hidden");
+    wrap.classList.toggle("hidden", showing);
+    toggle.classList.toggle("expanded", !showing);
+  });
+}
+
+// Additional Buyers accordion (My Info tab), added 2026-09-13 -- same
+// click-to-toggle wiring as initAppointmentsAccordionToggle above, kept as
+// its own function/listener for the same reason: called once at init, not
+// from refreshMyInfoTab (which reruns on every tab visit and would
+// otherwise stack duplicate listeners).
+function initCoBuyerAccordionToggle() {
+  const toggle = document.getElementById("cobuyer-accordion-toggle");
+  const wrap = document.getElementById("cobuyer-accordion-wrap");
   if (!toggle || !wrap) return;
   toggle.addEventListener("click", () => {
     const showing = !wrap.classList.contains("hidden");
@@ -1992,6 +2025,20 @@ async function refreshMyInfoTab() {
   // Additional Buyers -- data.coBuyers is [slot1, slot2], each either null
   // (nothing saved yet) or {name, email, phone, idOnFile}.
   const coBuyers = data.coBuyers || [null, null];
+  // Accordion starts collapsed for the majority with no co-buyer, but
+  // auto-expands here when one's already saved -- collapsing on a returning
+  // buyer would hide their own real data, not just an empty invitation.
+  const savedCount = coBuyers.filter((co) => co && co.name).length;
+  const cobuyerToggle = document.getElementById("cobuyer-accordion-toggle");
+  const cobuyerWrap = document.getElementById("cobuyer-accordion-wrap");
+  const cobuyerLabel = document.getElementById("cobuyer-accordion-label");
+  if (cobuyerToggle && cobuyerWrap) {
+    cobuyerWrap.classList.toggle("hidden", savedCount === 0);
+    cobuyerToggle.classList.toggle("expanded", savedCount > 0);
+  }
+  if (cobuyerLabel) {
+    cobuyerLabel.textContent = savedCount > 0 ? `Additional Buyers (${savedCount} added)` : "Additional Buyers";
+  }
   [1, 2].forEach((slot) => {
     const co = coBuyers[slot - 1];
     document.getElementById(`my-info-cobuyer${slot}-name`).value = (co && co.name) || "";
@@ -2684,6 +2731,7 @@ initAdminUI();
 initLoginGate();
 initInstallUI();
 initAppointmentsAccordionToggle();
+initCoBuyerAccordionToggle();
 initPullToRefresh();
 initMyInfoUI();
 initBuyersTab();

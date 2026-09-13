@@ -503,6 +503,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .appointments-accordion-chevron { transition: transform 0.15s ease; }
 .appointments-accordion-toggle.expanded .appointments-accordion-chevron { transform: rotate(180deg); }
+/* Additional Buyers accordion (My Info tab), added 2026-09-13 -- same
+   collapsed-by-default toggle pattern as .appointments-accordion above,
+   so the co-buyer form fields don't take up space for the majority of
+   buyers who have no co-buyer to add. */
+.cobuyer-accordion-toggle {
+  /* Stands in for .form-card-heading (same size/weight/color) since this
+     toggle replaces the plain <h2> that used to sit here. */
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  margin: 0; padding: 0; border: none; background: none; cursor: pointer;
+  font-size: 15px; font-weight: 800; color: #111827;
+}
+.cobuyer-accordion-chevron { transition: transform 0.15s ease; }
+.cobuyer-accordion-toggle.expanded .cobuyer-accordion-chevron { transform: rotate(180deg); }
+.cobuyer-accordion-wrap { margin-top: 14px; }
 /* Same grid sizing as the Homes/Favorites card-grid, added 2026-08-29 per
    Aaron's direct request ("same width as on the Homes page") -- was a
    full-width flex-column stack of full-size cards before. Real reported

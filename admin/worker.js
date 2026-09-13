@@ -3236,6 +3236,20 @@ async function handleMyAppointments(request, env) {
   }
 }
 
+// Real gap found and fixed 2026-09-13, per Aaron's direct request for a
+// "record of past showings, anything that has ever been scheduled... even
+// if it passed" on the Buyer page: this used to blank the cell entirely
+// (values: [[""]]) on a visitor's own self-service cancel, erasing any
+// trace that a showing had ever been booked at all -- the admin-side
+// Cancel button (appointmentManageControlsHtml -> handleAdminUpdateAppointment)
+// already preserved a "Canceled" status instead of blanking, so the two
+// paths had silently drifted into inconsistent behavior. Now reads the
+// existing address/date first and rewrites the cell with status "Canceled"
+// (same buildAppointmentCell format the admin path uses), so it still
+// shows up in Past Showings. See app.js's own MY_APPOINTMENTS filter
+// (status !== "Canceled") for the matching fix on the visitor-facing side
+// -- otherwise a canceled-but-still-future-dated viewing would pop right
+// back into the visitor's own "Viewings scheduled" list.
 async function handleCancelAppointment(request, env) {
   let body;
   try {
@@ -3254,11 +3268,19 @@ async function handleCancelAppointment(request, env) {
     if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
     const col = APPOINTMENT_COLS[slot - 1];
     const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!getRes.ok) throw new Error(`cancel read failed: ${await getRes.text()}`);
+    const getData = await getRes.json();
+    const raw = ((getData.values && getData.values[0] && getData.values[0][0]) || "").trim();
+    const existing = parseAppointmentCell(raw, slot);
+    if (!existing) return jsonResponse({ error: "that slot is empty -- nothing to cancel" }, 404);
     const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
     const res = await fetch(putUrl, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[""]] }),
+      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[buildAppointmentCell(existing.address, existing.date, "Canceled")]] }),
     });
     if (!res.ok) throw new Error(`cancel write failed: ${await res.text()}`);
     return jsonResponse({ ok: true });
