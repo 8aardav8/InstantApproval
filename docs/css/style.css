@@ -822,9 +822,11 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Buyer DETAIL page's own stage dropdown + progress bar, added
    2026-09-16 -- NOT the buyers-list card (that reverted back to its
    prior look, see renderBuyersList's own comment on progressBarHtml).
-   Stacks the label-less bar right under the dropdown, inside the
-   buyer-detail-quick-status flex row. */
-.buyer-detail-stage-block { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+   Its own standalone full-width section (moved out of
+   buyer-detail-quick-status the same day per Aaron's direct
+   correction), placed right above the ID photo -- stacks the
+   label-less progress bar right under the dropdown. */
+.buyer-detail-stage-block { display: flex; flex-direction: column; gap: 6px; width: 100%; margin: 12px 0; }
 .buyer-detail-stage-block .buyer-row-progress { margin: 0; }
 .sentiment-picker { display: flex; gap: 2px; }
 .sentiment-btn {

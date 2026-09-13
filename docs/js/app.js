@@ -4568,20 +4568,23 @@ function renderBuyerDetail(buyer) {
       </div>
       <div class="buyer-detail-quick-status">
         <span class="sentiment-picker">${renderSentimentPickerHtml(buyer)}</span>
-        <div class="buyer-detail-stage-block">
-          ${renderStageSelectHtml(buyer)}
-          <!-- Progress bar moved here 2026-09-16 per Aaron's direct
-               correction -- previously sat above this whole row, with its
-               own stage-name label underneath. Now sits right below the
-               stage dropdown specifically, label-less, since the dropdown
-               right above it already shows the stage in words. This is
-               the BUYER DETAIL PAGE only (once a card is clicked) -- the
-               buyers-LIST card itself was reverted back to its prior
-               look (see renderBuyersList's own comment on progressBarHtml). -->
-          <div class="buyer-row-progress">${renderStageProgressBarHtml(buyer, false)}</div>
-        </div>
+        <!-- DNC button moved up next to the sentiment emojis 2026-09-16
+             per Aaron's direct correction -- the stage dropdown/progress
+             bar moved OUT of this row entirely (see stageBlockHtml below,
+             now its own section right above the ID photo). -->
         <button type="button" class="dnc-toggle-btn${buyer.dnc ? " dnc-toggle-btn-active" : ""}" data-phone="${escapeAttr(buyer.phone)}" title="${buyer.dnc ? "Remove Do Not Contact/Call" : "Mark Do Not Contact/Call -- excludes them from automated texts"}">🚫 ${buyer.dnc ? "DNC" : "Mark DNC"}</button>
       </div>
+    </div>
+  `;
+
+  // Stage dropdown + progress bar, pulled OUT of detailHeaderHtml's own
+  // quick-status row 2026-09-16 per Aaron's direct correction -- now its
+  // own full-width section, placed right above the ID photo (see
+  // container.innerHTML's own assembly below).
+  const stageBlockHtml = `
+    <div class="buyer-detail-stage-block">
+      ${renderStageSelectHtml(buyer)}
+      <div class="buyer-row-progress">${renderStageProgressBarHtml(buyer, false)}</div>
     </div>
   `;
 
@@ -4628,6 +4631,7 @@ function renderBuyerDetail(buyer) {
   container.innerHTML = `
     ${nameHeadingHtml}
     ${detailHeaderHtml}
+    ${stageBlockHtml}
     <div class="buyer-id-section">${idPhoto}</div>
     ${possibleIdHtml}
     ${areasBlockHtml}
