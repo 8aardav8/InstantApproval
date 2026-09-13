@@ -812,10 +812,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row-date { font-size: 11px; color: #9ca3af; }
 /* Progress bar -- both card types. Reuses .stage-progress-bar/-segment/
    -label as-is (same visual already used at the top of the full buyer
-   detail page). On the detailed card this sits right below the status
-   bar above (its own top border there instead), so only the compact
-   card needs its own top border/spacing here. */
+   detail page). Compact keeps its own top border/spacing (sits at the
+   bottom of the whole card, below the last-contact line). Detailed
+   moved 2026-09-16 per Aaron's direct request to sit right under the
+   stage dropdown itself, inside .status-bar-stage (see app.js) --
+   label-less there now too, since the dropdown right above it already
+   shows the stage in words. */
 .buyer-row-compact > .buyer-row-progress { padding-top: 10px; border-top: 1px solid #f3f4f6; }
+.status-bar-stage .buyer-row-progress { margin-top: 6px; }
 .sentiment-picker { display: flex; gap: 2px; }
 .sentiment-btn {
   background: none; border: 1px solid transparent; border-radius: 6px; font-size: 16px;
@@ -846,6 +850,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #eef2ff; color: var(--blue); }
 .buyer-badge.showing-badge { background: #fff7ed; color: #9a3412; }
 .buyer-badge.login-badge { background: #f0fdf4; color: #166534; }
+.buyer-badge.dnc-badge { background: #fef2f2; color: #b91c1c; }
 
 /* Compact card, added 2026-09-13, redone 2026-09-14 (several times) per
    Aaron's direct requests: name + ID/login icons on line 1 (icons render
@@ -941,6 +946,17 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .id-lightbox-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
 .id-lightbox-upload-label { cursor: pointer; }
 .id-lightbox-status { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 8px; }
+/* Schedule a Showing lightbox, added 2026-09-16 -- reuses .id-lightbox-*
+   for the overlay/actions/status, just needs its own text-align (the ID
+   lightbox is centered around an image; this one is a real form) and
+   width. */
+.schedule-appt-lightbox-content { text-align: left; width: 340px; max-width: 90vw; }
+.schedule-appt-lightbox-content label { display: block; margin-bottom: 12px; font-size: 13px; font-weight: 700; color: var(--navy); }
+.schedule-appt-lightbox-content select, .schedule-appt-lightbox-content .autocomplete-wrap input {
+  width: 100%; margin-top: 4px; padding: 8px 10px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 14px; box-sizing: border-box;
+}
+.schedule-appt-lightbox-title { margin: 0 0 14px; font-size: 15px; }
+.schedule-appt-open-btn { width: 100%; }
 /* "Browse existing IDs" panel, added 2026-09-15 per Aaron's direct
    request -- a grid of unassociated Dropbox ID photos, click one to link
    it to the buyer currently open in this lightbox. */
@@ -983,6 +999,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .stage-progress-label { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
 .buyer-detail-quick-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .buyer-detail-quick-status .sentiment-picker { display: flex; gap: 2px; }
+/* DNC toggle, added 2026-09-16. Neutral outline until active, then reads
+   as a clear warning color -- same red as the badge it produces
+   elsewhere (.dnc-badge/.buyer-search-badge-dnc). */
+.dnc-toggle-btn {
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px;
+  border: 1px solid #e5e7eb; background: #fff; color: #6b7280; cursor: pointer;
+}
+.dnc-toggle-btn-active { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
 
 .buyer-id-section { margin: 10px 0; }
 .buyer-id-photo { max-width: 240px; border-radius: 10px; border: 1px solid #e5e7eb; display: block; }
@@ -991,6 +1015,17 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-section { margin-top: 20px; }
 .buyer-section h3 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--navy); margin: 0 0 8px; }
 .buyer-list-item { padding: 8px 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
+/* Scheduled Showing -> its own Appointments-tab card, added 2026-09-16.
+   Past Showings stay plain .buyer-list-item, no hover/cursor. */
+.buyer-appt-item-clickable { cursor: pointer; }
+.buyer-appt-item-clickable:hover { background: #eef2ff; }
+/* Brief highlight pulse on landing, added 2026-09-16 -- see
+   scrollToApptCard/goToAppointmentFromBuyer in app.js. */
+.appt-card-highlight-flash { animation: appt-card-flash 1.6s ease-out; }
+@keyframes appt-card-flash {
+  0% { box-shadow: 0 0 0 3px var(--blue); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
 
 /* Shown Properties (editable) + its add row, added 2026-09-11 */
 .shown-property-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -1018,6 +1053,11 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   font-size: 14px; box-sizing: border-box;
 }
 .buyer-search-option-sub { display: block; font-size: 11px; color: #6b7280; }
+/* Hidden/DNC pills inside a search-autocomplete suggestion, added
+   2026-09-16 -- see buyerAutocompleteBadgesHtml in app.js. */
+.buyer-search-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+.buyer-search-badge-hidden { background: #f3f4f6; color: #6b7280; }
+.buyer-search-badge-dnc { background: #fef2f2; color: #b91c1c; }
 
 .buyer-message { padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
 .buyer-message.incoming { background: #eef2ff; }

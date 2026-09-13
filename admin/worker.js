@@ -486,6 +486,47 @@ async function writeHidden(accessToken, row, hidden) {
   if (!res.ok) throw new Error(`hidden write failed: ${await res.text()}`);
 }
 
+// "DNC" (Do Not Contact/Call) -- column AI, added 2026-09-16 per Aaron's
+// direct request: label a buyer DNC to remove them from every automated
+// Quo text this system sends (appointment-notifier-worker.js checks this
+// same column before texting). Same "TRUE"/"" string convention as
+// Hidden -- AH is the last column in use, this is the next one.
+//
+// Every reader of this column (admin-buyers-worker.js, appointment-
+// notifier-worker.js) finds it by literal header text via
+// headers.indexOf('DNC') -- NOT a hardcoded column letter. Since this is
+// a brand-new column nobody has ever typed a header into, every write
+// here also stamps AI1 = "DNC" first (idempotent, negligible extra cost
+// given how rarely this endpoint is actually called) -- otherwise this
+// would repeat the EXACT bug just fixed for Hidden/Sentiment/Stage
+// (loadLoginsByPhone's own comment above), just from day one instead of
+// growing into it later: the write would silently succeed while every
+// reader kept seeing -1/"" forever, since the header cell they search
+// for would never actually exist.
+async function ensureDncHeader(accessToken) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!AI1:AI1`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AI1:AI1`, values: [["DNC"]] }),
+  });
+  // Best-effort -- if this one fails, the actual value write below still
+  // throws its own clear error, and a missing header is easy to spot/fix
+  // by hand in the Sheet directly.
+}
+async function writeDnc(accessToken, row, dnc) {
+  await ensureDncHeader(accessToken);
+  const range = encodeURIComponent(`${LOGINS_TAB}!AI${row}:AI${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!AI${row}:AI${row}`, values: [[dnc ? "TRUE" : ""]] }),
+  });
+  if (!res.ok) throw new Error(`dnc write failed: ${await res.text()}`);
+}
+
 // Patches ONE field on ONE buyer directly in the live buyers_cache KV
 // (shared with iah-buyers -- same BUYERS_KV namespace), added 2026-09-15
 // to fix a real bug Aaron found: "I hid a contact but it did not stay
@@ -2027,6 +2068,42 @@ async function handleAdminSetHidden(request, env) {
   }
 }
 
+// Sets (or clears) a buyer's DNC (Do Not Contact/Call) flag, added
+// 2026-09-16 per Aaron's direct request. Same shape/reasoning as
+// handleAdminSetHidden above. Blocking the automated texts themselves
+// happens in appointment-notifier-worker.js, which reads this same Sheet
+// column directly -- this endpoint's only job is the write + immediate
+// cache patch.
+async function handleAdminSetDnc(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const dnc = !!body.dnc;
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await writeDnc(accessToken, row, dnc);
+    await patchBuyersCacheField(env, phone, "dnc", dnc);
+    return jsonResponse({ ok: true, dnc });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Admin-side "associate a co-buyer," added 2026-09-15 per Aaron's direct
 // request ("I can click to associate and link co-buyers, which will then
 // be displayed in their UI"). Writes the SAME Z/AA "Co-Buyer 1"/"Co-Buyer
@@ -3535,6 +3612,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-hidden" && request.method === "POST") {
     return handleAdminSetHidden(request, env);
+  }
+  if (url.pathname === "/admin/set-dnc" && request.method === "POST") {
+    return handleAdminSetDnc(request, env);
   }
   if (url.pathname === "/admin/set-co-buyer" && request.method === "POST") {
     return handleAdminSetCoBuyer(request, env);

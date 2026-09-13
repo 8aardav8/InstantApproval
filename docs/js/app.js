@@ -1718,10 +1718,17 @@ function activateTab(tabName) {
   // fetch -- the new Past-Appointments split needs each buyer's own
   // "shown" list (BUYERS_CACHE) to tell whether a still-upcoming-dated
   // appointment has already been manually marked done.
+  // Returns the pending fetch+render promise for "appointments" specifically
+  // (undefined for every other tab) -- added 2026-09-16 so
+  // goToAppointmentFromBuyer below can chain its own scroll-to-card onto
+  // the SAME render this call already kicks off, instead of triggering a
+  // second redundant fetch of its own.
+  let pending;
   if (tabName === "appointments") {
-    Promise.all([refreshAdminActivity(), loadBuyers()]).then(renderAppointmentsOverview);
+    pending = Promise.all([refreshAdminActivity(), loadBuyers()]).then(renderAppointmentsOverview);
   }
   closeDrawer();
+  return pending;
 }
 
 function initNav() {
@@ -3420,8 +3427,14 @@ function renderBuyersList() {
     // "🪪 ID" badge on top of it added nothing. The COMPACT card below has
     // no thumbnail at all, so it keeps the badge -- that's its only way to
     // show "ID received" at a glance.
+    // DNC badge, added 2026-09-16 -- shown on both card types (unlike
+    // Hidden, which hides the card from the default list entirely rather
+    // than badging it, DNC still needs to appear at a glance since a DNC
+    // buyer's card stays visible in the normal list).
+    const dncBadgeHtml = b.dnc ? `<span class="buyer-badge dnc-badge" title="Do Not Contact/Call -- excluded from automated texts">🚫 DNC</span>` : "";
     const badgesHtml = `
       <span class="buyer-row-badges">
+        ${dncBadgeHtml}
         ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
         ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
       </span>
@@ -3474,6 +3487,17 @@ function renderBuyersList() {
     // last call last text"). Compact stays without it -- see
     // lastContactHtml (one collapsed summary line) and the label-less
     // progress bar below instead.
+    // Progress bar -- both card types, showLabel false for both now.
+    // Compact was already label-less (Aaron, 2026-09-14: "no need to
+    // write the name of the stage. Simply show the progress bar").
+    // Detailed switched to label-less too, 2026-09-16 per Aaron's direct
+    // request -- moved to sit right under the stage dropdown itself
+    // (inside statusBarHtml's own status-bar-stage column below, not as
+    // a separate full-width row under the whole status bar like before),
+    // so the label was pure redundancy: the dropdown right above it
+    // already shows the current stage in words.
+    const progressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b, false)}</div>`;
+    const compactProgressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b, false)}</div>`;
     const statusBarHtml = `
       <div class="buyer-row-status-bar">
         <div class="status-bar-third status-bar-sentiment">
@@ -3481,6 +3505,7 @@ function renderBuyersList() {
         </div>
         <div class="status-bar-third status-bar-stage">
           ${renderStageSelectHtml(b)}
+          ${progressBarHtml}
         </div>
         <div class="status-bar-third status-bar-dates">
           ${loginDate ? `<span class="buyer-row-date" title="Last login">Login: ${loginDate}</span>` : ""}
@@ -3489,13 +3514,6 @@ function renderBuyersList() {
         </div>
       </div>
     `;
-    // Progress bar -- both card types. showLabel is false for compact
-    // (Aaron, 2026-09-14: "no need to write the name of the stage. Simply
-    // show the progress bar"), true (default) for detailed, which still
-    // shows the stage name underneath since that removal was never asked
-    // for there.
-    const progressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b)}</div>`;
-    const compactProgressBarHtml = `<div class="buyer-row-progress">${renderStageProgressBarHtml(b, false)}</div>`;
     if (BUYERS_CARD_MODE === "compact") {
       // Compact card -- name + ID/login icons (ONLY when they actually
       // apply, added 2026-09-14 per Aaron's direct request: "I don't want
@@ -3512,8 +3530,9 @@ function renderBuyersList() {
       // appointments on the card") -- same upcomingCount already used for
       // the detailed card's own showing-badge above, same "only when it
       // actually applies" rule as the ID/login icons here.
-      const compactIconsHtml = (hasId || hasLoggedIn || upcomingCount > 0) ? `
+      const compactIconsHtml = (hasId || hasLoggedIn || upcomingCount > 0 || b.dnc) ? `
         <span class="buyer-row-compact-icons">
+          ${b.dnc ? `<span class="buyer-badge dnc-badge" title="Do Not Contact/Call -- excluded from automated texts">🚫 DNC</span>` : ""}
           ${hasId ? `<span class="buyer-badge id-badge" title="ID on file">🪪</span>` : ""}
           ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅</span>` : ""}
           ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
@@ -3552,7 +3571,6 @@ function renderBuyersList() {
             </div>
           </div>
           ${statusBarHtml}
-          ${progressBarHtml}
         </div>
       `);
     }
@@ -3643,6 +3661,30 @@ async function setBuyerHidden(phone, hidden, onDone) {
     if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
     const buyer = findBuyer(phone);
     if (buyer) buyer.hidden = hidden;
+    if (onDone) onDone(); else renderBuyersList();
+  } catch (err) {
+    alert(`Couldn't save: ${err}`);
+  }
+}
+
+// Sets (or clears) a buyer's DNC (Do Not Contact/Call) flag -- added
+// 2026-09-16 per Aaron's direct request ("label buyers as DNC... that
+// will remove them from any automatic texting"). Same pattern as
+// setBuyerHidden above; blocking the actual texts happens server-side
+// (appointment-notifier-worker.js), this is just the write + optimistic
+// cache update.
+async function setBuyerDnc(phone, dnc, onDone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-dnc`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, dnc }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
+    const buyer = findBuyer(phone);
+    if (buyer) buyer.dnc = dnc;
     if (onDone) onDone(); else renderBuyersList();
   } catch (err) {
     alert(`Couldn't save: ${err}`);
@@ -4327,7 +4369,17 @@ function renderBuyerDetail(buyer) {
   // per Aaron's direct request ("click to reschedule or cancel existing
   // appointments... on Buyer pages") -- same shared controls/wiring the
   // Appointments-tab cards use (renderApptCard/wireAppointmentManageControls).
-  const apptItem = (a, showAvailability) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}${appointmentManageControlsHtml({ ...a, phone: buyer.phone })}</div>`;
+  // linkToAppointment (Scheduled only, per Aaron's direct request: "Under
+  // scheduled showings on the Buyer page when I click on that scheduled
+  // showing I'd like it to take me to the Appointment page and the card
+  // for the showing") -- Past showings stay non-clickable, unchanged.
+  // data-address/data-date match what renderApptCard's own outer div now
+  // carries, so goToAppointmentFromBuyer can find the same card there.
+  // The manage controls below (Reschedule/Cancel/Outcome) already
+  // stopPropagation on every one of their own click targets (see
+  // wireAppointmentManageControls), so nesting this new click handler
+  // around them is safe -- clicking Reschedule etc. won't ALSO navigate.
+  const apptItem = (a, showAvailability, linkToAppointment) => `<div class="buyer-list-item${linkToAppointment ? " buyer-appt-item-clickable" : ""}"${linkToAppointment ? ` data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" role="button" tabindex="0"` : ""}>${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}${appointmentManageControlsHtml({ ...a, phone: buyer.phone })}</div>`;
   // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
   // an appointment for a buyer for a property from their Buyer page
   // myself"). Same autocomplete pattern as Shown Properties above, but
@@ -4342,45 +4394,24 @@ function renderBuyerDetail(buyer) {
   // Showings list above both pick it up automatically, no separate
   // rendering needed.
   APPOINTMENT_AVAILABLE_ADDRESSES = (ALL_LISTINGS || []).filter((l) => l.status === "Available").map((l) => l.address);
-  // Restyled 2026-09-12 per Aaron's direct request ("make it look more
-  // like the other things on the page") to match the visitor-facing Get
-  // Started form's own .form-card look (docs/index.html) instead of the
-  // plain buyer-section it started as. Date field switched from a native
-  // <input type="date"> to the SAME closed <select> Get Started already
-  // uses (buildDateOptions(), next 10 days) -- the real, previously-fixed
-  // reason: several mobile browsers ignore an <input type="date">'s
-  // min= entirely and show a full calendar anyway, so "only certain days
-  // schedulable" needs the closed-option-list approach, not min=/max=.
-  const apptDateOptionsHtml = buildDateOptions()
-    .map(({ value, label }) => `<option value="${value}">${escapeHtml(label)}</option>`)
-    .join("");
+  // Collapsed to just an open-a-lightbox button, 2026-09-16 per Aaron's
+  // direct request ("save space on the Buyer page by just having
+  // schedule a showing via button and a lightbox opens up to choose the
+  // property and date") -- the address-autocomplete + date-select +
+  // Schedule form itself moved into openScheduleApptLightbox below,
+  // unchanged otherwise (same /admin/add-appointment write, same
+  // Available-only address list).
   const scheduleApptHtml = lm && lm.row ? `
     <div class="buyer-section">
-      <h3>Schedule a Showing</h3>
-      <div class="form-card schedule-appt-card">
-        <label>Property Address
-          <div class="autocomplete-wrap">
-            <input type="text" id="appt-property-input" placeholder="Type an address…" autocomplete="off">
-            <div id="appt-property-suggestions" class="autocomplete-dropdown hidden"></div>
-          </div>
-        </label>
-        <label>Date
-          <select id="appt-date-input">
-            <option value="" disabled selected>Choose a date</option>
-            ${apptDateOptionsHtml}
-          </select>
-        </label>
-        <button type="button" id="appt-schedule-btn" data-phone="${escapeAttr(buyer.phone)}" data-row="${lm.row}" class="btn-primary">Schedule</button>
-        <div id="appt-schedule-status"></div>
-      </div>
+      <button type="button" class="btn-outline schedule-appt-open-btn" data-phone="${escapeAttr(buyer.phone)}" data-row="${lm.row}">+ Schedule a Showing</button>
     </div>
   ` : "";
 
   const scheduledHtml = scheduledAppts.length
-    ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map((a) => apptItem(a, true)).join("")}</div>`
+    ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map((a) => apptItem(a, true, true)).join("")}</div>`
     : "";
   const pastHtml = pastAppts.length
-    ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map((a) => apptItem(a, false)).join("")}</div>`
+    ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map((a) => apptItem(a, false, false)).join("")}</div>`
     : "";
 
   // Always 2 slots now (empty ones kept, not filtered out server-side --
@@ -4492,6 +4523,7 @@ function renderBuyerDetail(buyer) {
       <div class="buyer-detail-quick-status">
         <span class="sentiment-picker">${renderSentimentPickerHtml(buyer)}</span>
         ${renderStageSelectHtml(buyer)}
+        <button type="button" class="dnc-toggle-btn${buyer.dnc ? " dnc-toggle-btn-active" : ""}" data-phone="${escapeAttr(buyer.phone)}" title="${buyer.dnc ? "Remove Do Not Contact/Call" : "Mark Do Not Contact/Call -- excludes them from automated texts"}">🚫 ${buyer.dnc ? "DNC" : "Mark DNC"}</button>
       </div>
     </div>
   `;
@@ -4636,6 +4668,16 @@ function renderBuyerDetail(buyer) {
   // the Appointments-tab cards use.
   wireAppointmentManageControls(container, () => renderBuyerDetail(findBuyer(buyer.phone)));
 
+  // Scheduled Showing -> its own card on the Appointments tab, added
+  // 2026-09-16 per Aaron's direct request. Manage-controls clicks inside
+  // this same item already stopPropagation (wireAppointmentManageControls
+  // above), so they never reach this handler.
+  container.querySelectorAll(".buyer-appt-item-clickable").forEach((el) => {
+    const go = () => goToAppointmentFromBuyer({ phone: buyer.phone, address: el.dataset.address, date: el.dataset.date });
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+
   // Co-Buyers, added 2026-09-15 per Aaron's direct request.
   container.querySelectorAll(".co-buyer-block").forEach((block) => {
     const phone = block.dataset.phone;
@@ -4684,12 +4726,18 @@ function renderBuyerDetail(buyer) {
       setBuyerStage(e.target.dataset.phone, e.target.value, () => renderBuyerDetail(findBuyer(e.target.dataset.phone)));
     });
   });
+  const dncBtn = container.querySelector(".dnc-toggle-btn");
+  if (dncBtn) dncBtn.addEventListener("click", () => {
+    const phone = dncBtn.dataset.phone;
+    const current = !!findBuyer(phone).dnc;
+    if (!current && !confirm("Mark this buyer Do Not Contact/Call? They'll be excluded from every automated text this system sends (day-of reminders, availability-change updates).")) return;
+    setBuyerDnc(phone, !current, () => renderBuyerDetail(findBuyer(phone)));
+  });
 
   // Fill in the placeholder <img> elements -- see idPhoto's own comment
   // above for why this can't just be a plain src= attribute.
   container.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
   initShownPropertyAutocomplete();
-  initApptPropertyAutocomplete();
 
   const shownAddBtn = document.getElementById("shown-add-btn");
   if (shownAddBtn) shownAddBtn.addEventListener("click", () => {
@@ -4699,8 +4747,11 @@ function renderBuyerDetail(buyer) {
     markShown(Number(shownAddBtn.dataset.row), address, "add", buyer.phone);
   });
 
-  const apptScheduleBtn = document.getElementById("appt-schedule-btn");
-  if (apptScheduleBtn) apptScheduleBtn.addEventListener("click", (e) => scheduleAppointment(e.target.dataset.phone));
+  // Schedule a Showing now opens a lightbox (2026-09-16, see
+  // openScheduleApptLightbox) instead of an inline form -- this just
+  // opens it, same data-phone the old inline button carried.
+  const scheduleApptOpenBtn = container.querySelector(".schedule-appt-open-btn");
+  if (scheduleApptOpenBtn) scheduleApptOpenBtn.addEventListener("click", () => openScheduleApptLightbox(scheduleApptOpenBtn.dataset.phone));
   container.querySelectorAll(".shown-remove-btn").forEach((btn) => {
     btn.addEventListener("click", () => markShown(Number(btn.dataset.row), btn.dataset.address, "remove", buyer.phone));
   });
@@ -4851,6 +4902,17 @@ function initFavoriteAddressAutocomplete() {
   });
 }
 
+// Hidden/DNC pill labels for a matched buyer in a search-autocomplete
+// dropdown, added 2026-09-16 per Aaron's direct request ("if I start
+// typing the first few letters of a buyer name... if any of them are
+// hidden I would like them to be labeled as such" / "DNC labeling should
+// also be shown"). Shared by both buyer-name autocompletes below
+// (initCoBuyerSearchAutocomplete, initBuyerDetailSearch) so the two don't
+// drift out of sync with each other.
+function buyerAutocompleteBadgesHtml(b) {
+  return `${b.hidden ? `<span class="buyer-search-badge buyer-search-badge-hidden">Hidden</span>` : ""}${b.dnc ? `<span class="buyer-search-badge buyer-search-badge-dnc">DNC</span>` : ""}`;
+}
+
 // Buyer-search autocomplete for linking a co-buyer, added 2026-09-15 per
 // Aaron's direct request -- wired fresh each renderBuyerDetail() call
 // (one per empty/populated co-buyer slot in the DOM at any time), unlike
@@ -4876,7 +4938,7 @@ function initCoBuyerSearchAutocomplete(searchWrap, phone, slot, fullName) {
     if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
     dropdown.innerHTML = matches.map((b) => `
       <div class="autocomplete-option" data-phone="${escapeAttr(b.phone)}">
-        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}
+        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}${buyerAutocompleteBadgesHtml(b)}
         <span class="buyer-search-option-sub">${escapeHtml(b.phone)}</span>
       </div>
     `).join("");
@@ -4935,7 +4997,7 @@ function initBuyerDetailSearch() {
     if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
     dropdown.innerHTML = matches.map((b) => `
       <div class="autocomplete-option" data-phone="${escapeAttr(b.phone)}">
-        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}
+        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}${buyerAutocompleteBadgesHtml(b)}
         <span class="buyer-search-option-sub">${escapeHtml(b.phone)}</span>
       </div>
     `).join("");
@@ -4967,7 +5029,11 @@ function initBuyerDetailSearch() {
   });
 }
 
-async function scheduleAppointment(phone) {
+// onDone, added 2026-09-16 -- called after a successful schedule (only),
+// so openScheduleApptLightbox below can close itself and refresh the
+// buyer page underneath. Optional/no-op when omitted, so nothing else
+// calling this needs to change.
+async function scheduleAppointment(phone, onDone) {
   const addressInput = document.getElementById("appt-property-input");
   const dateInput = document.getElementById("appt-date-input");
   const statusEl = document.getElementById("appt-schedule-status");
@@ -4991,9 +5057,58 @@ async function scheduleAppointment(phone) {
     statusEl.textContent = "Scheduled. (Shows up here and on the property card within ~15-20 min, once the background sync re-reads the Sheet.)";
     addressInput.value = "";
     dateInput.value = "";
+    if (onDone) onDone();
   } catch (err) {
     statusEl.textContent = `Couldn't schedule: ${err}`;
   }
+}
+
+// Schedule a Showing, moved into a lightbox 2026-09-16 per Aaron's direct
+// request ("save space on the Buyer page... a lightbox opens up to
+// choose the property and date") -- same form/fields/write the old
+// inline .schedule-appt-card used, just not permanently taking up space
+// on the page. Same overlay pattern as openIdLightbox.
+function openScheduleApptLightbox(phone) {
+  const buyer = findBuyer(phone);
+  const fullName = buyer ? (buyer.quoName || (buyer.leadInfo && buyer.leadInfo.contactName) || "") : "";
+  const apptDateOptionsHtml = buildDateOptions()
+    .map(({ value, label }) => `<option value="${value}">${escapeHtml(label)}</option>`)
+    .join("");
+  const overlay = document.createElement("div");
+  overlay.className = "id-lightbox-overlay";
+  overlay.innerHTML = `
+    <div class="id-lightbox-content schedule-appt-lightbox-content">
+      <h3 class="schedule-appt-lightbox-title">Schedule a Showing${fullName ? ` for ${escapeHtml(fullName)}` : ""}</h3>
+      <label>Property Address
+        <div class="autocomplete-wrap">
+          <input type="text" id="appt-property-input" placeholder="Type an address…" autocomplete="off">
+          <div id="appt-property-suggestions" class="autocomplete-dropdown hidden"></div>
+        </div>
+      </label>
+      <label>Date
+        <select id="appt-date-input">
+          <option value="" disabled selected>Choose a date</option>
+          ${apptDateOptionsHtml}
+        </select>
+      </label>
+      <div class="id-lightbox-actions">
+        <button type="button" id="appt-schedule-btn" class="btn-primary">Schedule</button>
+        <button type="button" class="btn-outline id-lightbox-close">Close</button>
+      </div>
+      <div class="id-lightbox-status" id="appt-schedule-status"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector(".id-lightbox-close").addEventListener("click", close);
+  // Freshest available-listing list at the moment the lightbox actually
+  // opens, same filter the old inline form used.
+  APPOINTMENT_AVAILABLE_ADDRESSES = (ALL_LISTINGS || []).filter((l) => l.status === "Available").map((l) => l.address);
+  initApptPropertyAutocomplete();
+  overlay.querySelector("#appt-schedule-btn").addEventListener("click", () => {
+    scheduleAppointment(phone, () => { close(); const refreshed = findBuyer(phone); if (refreshed) renderBuyerDetail(refreshed); });
+  });
 }
 
 // onDone, added 2026-09-12 -- optional override for what to re-render
@@ -5683,8 +5798,13 @@ function renderApptCard(a, showMarkShown) {
   const availabilityBadgeHtml = matchingListing
     ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
     : "";
+  // data-address/data-date, added 2026-09-16 -- lets
+  // goToAppointmentFromBuyer (below) find THIS specific card again after
+  // switching to the Appointments tab, distinct from data-phone which
+  // only narrows it down to "this buyer" (who can have more than one
+  // showing booked).
   return `
-    <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
+    <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
       ${availabilityBadgeHtml}
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
       <div class="appt-card-info">
@@ -5787,4 +5907,32 @@ async function goToBuyerFromAppointment(phone) {
   const buyer = findBuyer(phone);
   if (!buyer) { alert("Couldn't find this buyer's own card (they may not have a matching Quo contact or BUYERS-tab lead)."); return; }
   showBuyerDetail(phone);
+}
+
+// The reverse trip -- from a Scheduled Showing on the Buyer page straight
+// to that showing's own card on the Appointments tab, added 2026-09-16
+// per Aaron's direct request. activateTab("appointments") returns the
+// fetch+render promise for that tab (see its own comment above); this
+// chains the scroll onto THAT same render rather than firing a second,
+// redundant fetch of its own.
+function goToAppointmentFromBuyer(a) {
+  const pending = activateTab("appointments");
+  (pending || Promise.resolve()).then(() => scrollToApptCard(a));
+}
+
+function scrollToApptCard(a) {
+  // phone+address+date together -- address+date alone could theoretically
+  // collide if two different buyers booked showings at the same property
+  // on the same date.
+  const card = document.querySelector(
+    `.appt-card[data-phone="${cssEscapeAttrValue(a.phone || "")}"][data-address="${cssEscapeAttrValue(a.address)}"][data-date="${cssEscapeAttrValue(a.date)}"]`
+  );
+  if (!card) return;
+  card.scrollIntoView({ block: "center" });
+  // Brief highlight flash so it's obvious which card this landed on,
+  // same idea as the buyer-list's own scroll-back (backToBuyersList)
+  // but with a visible pulse since this crosses tabs, not just a scroll
+  // position within the same list.
+  card.classList.add("appt-card-highlight-flash");
+  setTimeout(() => card.classList.remove("appt-card-highlight-flash"), 1600);
 }
