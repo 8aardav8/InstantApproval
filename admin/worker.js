@@ -574,6 +574,37 @@ async function patchBuyersCacheField(env, phone, field, value) {
   }
 }
 
+// Real bug found and fixed 2026-09-13: neither handleConfirmIdMatch nor
+// handleInternalAutoLinkId ever patched the cache after a successful link
+// -- unlike handleAdminBackfillStage, which has always called
+// patchBuyersCacheField for its own field. The site reads ID-on-file
+// status from the NESTED b.loginsMatch.idLink (see buyerMatchesFilters/
+// the buyer-detail render in app.js), not a top-level field, so
+// patchBuyersCacheField itself can't be reused as-is for this -- it only
+// ever sets a top-level key. Real-world impact: a buyer's ID could sit
+// correctly linked in the Sheet for hours showing "No ID on file" on the
+// site, entirely dependent on iah-buyers' own background full-sync cycle
+// (which itself was found stuck/stale for 2.5+ hours the same day this
+// was diagnosed -- separate problem, not fixed here, flagged to Aaron).
+// Same best-effort/non-critical-path reasoning as patchBuyersCacheField:
+// this is purely a latency fix, the Sheet write above is the real source
+// of truth either way.
+async function patchLoginsMatchField(env, phone, field, value) {
+  try {
+    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
+    if (!cachedRaw) return;
+    const cacheData = JSON.parse(cachedRaw);
+    const normalizedPhone = toE164(phone);
+    const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
+    if (!buyer) return;
+    if (!buyer.loginsMatch) buyer.loginsMatch = {};
+    buyer.loginsMatch[field] = value;
+    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+  } catch (e) {
+    // Best-effort -- swallow, same reasoning as patchBuyersCacheField.
+  }
+}
+
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
 // Same auth/base URL, same "PATCH replaces defaultFields wholesale, always
 // fetch-then-merge" gotcha, same firstName-required-on-create gotcha, same
@@ -2310,6 +2341,27 @@ function checkInternalToolsSecret(request, env) {
   return url.searchParams.get("key") === env.INTERNAL_TOOLS_SECRET && !!env.INTERNAL_TOOLS_SECRET;
 }
 
+// Manual one-off cache correction, added 2026-09-13 during the same
+// incident that found patchLoginsMatchField missing from the two ID-link
+// write paths (see that function's own comment). Narrow and secret-gated
+// same as every other /internal endpoint -- writes exactly one nested
+// field on one buyer's cache entry, nothing else. Useful any time a field
+// is known-correct in the Sheet but the cache hasn't caught up yet
+// (background full-sync stuck/slow, or fixing a buyer from before this
+// day's cache-patch fix existed) without needing a risky full KV overwrite
+// by hand.
+async function handleInternalPatchCache(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const field = (body.field || "").trim();
+  const value = body.value;
+  if (!phone || !field) return jsonResponse({ error: "missing phone or field" }, 400);
+  await patchLoginsMatchField(env, phone, field, value);
+  return jsonResponse({ ok: true });
+}
+
 async function handleInternalListIdFiles(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
@@ -2420,6 +2472,12 @@ async function handleInternalAutoLinkId(request, env) {
         if (newRow) await writeIdName(accessToken, newRow, idName);
       }
     }
+    // Real-time cache patch, added 2026-09-13 -- see patchLoginsMatchField's
+    // own comment for why this was missing and what it fixes. This is the
+    // path id-photo-watch.ts's automated OCR watch actually calls, so this
+    // is the more common real-world case of the two.
+    await patchLoginsMatchField(env, buyerPhone, "idLink", idLink);
+    if (idName) await patchLoginsMatchField(env, buyerPhone, "idName", idName);
 
     return jsonResponse({ ok: true, renamedTo: finalPath, idLink });
   } catch (e) {
@@ -2470,6 +2528,9 @@ async function handleConfirmIdMatch(request, env) {
     const row = await findLoginsRowByPhone(accessToken, buyerPhone);
     if (row) await writeIdLink(accessToken, row, idLink);
     else await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
+    // Real-time cache patch, added 2026-09-13 -- see patchLoginsMatchField's
+    // own comment for why this was missing and what it fixes.
+    await patchLoginsMatchField(env, buyerPhone, "idLink", idLink);
     return jsonResponse({ ok: true, idLink, renamedTo: finalPath });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -3695,6 +3756,9 @@ async function route(request, env) {
     return handleAdminSetCoBuyer(request, env);
   }
 
+  if (url.pathname === "/internal/patch-cache" && request.method === "POST") {
+    return handleInternalPatchCache(request, env);
+  }
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
     return handleInternalListIdFiles(request, env);
   }

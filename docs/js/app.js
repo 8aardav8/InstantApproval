@@ -4297,9 +4297,12 @@ function renderBuyerDetail(buyer) {
     // appended on this SAME line, also per his direct request -- he
     // first said "sentiment," then corrected himself: "I didn't mean
     // sentiment I meant the time since."
-    ["Last activity (Quo)", buyer.lastActivityAt
-      ? `${formatDateWithYear(buyer.lastActivityAt)} (${formatDaysSince(buyer.lastActivityAt)})`
-      : ""],
+    // Real cleanup 2026-09-13: this used to duplicate formatDateWithYear +
+    // formatDaysSince inline instead of calling the dedicated helper
+    // written for exactly this format (formatDateWithYearAndSince, added
+    // 2026-09-15 alongside this same fact but apparently never actually
+    // wired in) -- found during a full site sweep, zero visible change.
+    ["Last activity (Quo)", formatDateWithYearAndSince(buyer.lastActivityAt)],
   ].filter(([, v]) => v);
 
   // Phone/Email copy-to-clipboard, added 2026-09-12 per Aaron's direct
