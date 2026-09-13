@@ -836,11 +836,12 @@
              direct request -- see updateCardModeToggleLabel()/
              BUYERS_CARD_MODE in app.js. -->
         <button id="buyers-card-mode-toggle" class="btn-outline" type="button">Compact view</button>
-        <!-- Quick "Show hidden" toggle, added 2026-09-15 per Aaron's direct
-             request -- a faster path to the same state the Hidden filter
-             dropdown controls (see #bf-hidden above), for when you just
-             want to glance at what's hidden without opening the filter
-             panel. See toggleShowHidden/updateHiddenToggleLabel in app.js. -->
+        <!-- "Show hidden" toggle, added 2026-09-15 per Aaron's direct
+             request -- the ONLY control for BUYERS_FILTER.hidden (a
+             separate Hidden filter dropdown was tried the same day and
+             removed per his direct follow-up: "I can just toggle by
+             clicking the button at the top of the page and that will
+             work just fine"). See updateHiddenToggleLabel in app.js. -->
         <button id="buyers-show-hidden-toggle" class="btn-outline" type="button">Show hidden</button>
       </div>
 
@@ -950,20 +951,6 @@
             <option value="" selected>Any</option>
             <option value="yes">Has logged in</option>
             <option value="no">Hasn't logged in</option>
-          </select>
-        </label>
-        <!-- Added 2026-09-15 per Aaron's direct request ("swipe left on a
-             card and hide it from the list... in the filters I can filter
-             for just hidden or just unhidden, which would be the
-             default") -- deliberately just these two options, no "Any,"
-             since hidden buyers shouldn't silently reappear mixed in with
-             everyone else. Kept in sync with the quick "Show hidden"
-             toggle button above the list -- see updateHiddenToggleLabel/
-             toggleShowHidden in app.js. -->
-        <label>Hidden
-          <select id="bf-hidden">
-            <option value="not-hidden" selected>Not hidden</option>
-            <option value="hidden">Hidden only</option>
           </select>
         </label>
         <label>Last Contact

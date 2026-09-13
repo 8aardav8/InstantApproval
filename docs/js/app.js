@@ -3001,6 +3001,14 @@ function updateBuyersFilterBadge() {
 }
 
 function applyBuyersFilters() {
+  // Hidden filter dropdown removed 2026-09-15 per Aaron's direct request
+  // ("I can just toggle by clicking the button at the top of the page")
+  // -- BUYERS_FILTER.hidden is now ONLY ever set by that "Show hidden"
+  // toggle button (see its own click handler below), never by this
+  // panel. Carried forward here rather than reset to a hardcoded default
+  // every time some OTHER filter changes, since this function replaces
+  // the whole BUYERS_FILTER object.
+  const previousHidden = BUYERS_FILTER.hidden;
   BUYERS_FILTER = {
     down: parseFloat(document.getElementById("bf-down").value) || null,
     monthly: parseFloat(document.getElementById("bf-monthly").value) || null,
@@ -3013,7 +3021,7 @@ function applyBuyersFilters() {
     contactPeriod: document.getElementById("bf-contact-period").value || "week",
     stages: [...document.querySelectorAll("#buyers-stage-checkboxes input:checked")].map((cb) => cb.value),
     sentiment: document.getElementById("bf-sentiment").value || null,
-    hidden: document.getElementById("bf-hidden").value || "not-hidden",
+    hidden: previousHidden || "not-hidden",
     favoriteAddress: (document.getElementById("bf-favorite-address") || {}).value || null,
   };
   updateBuyersFilterBadge();
@@ -3038,9 +3046,13 @@ function clearBuyersFilters() {
   document.getElementById("bf-contact-op").value = "";
   document.getElementById("bf-contact-period").value = "week";
   document.getElementById("bf-sentiment").value = "";
-  // Resets to "not-hidden" (the actual default), NOT cleared to empty --
-  // there is no "Any" option for this one, see BUYERS_FILTER's own comment.
-  document.getElementById("bf-hidden").value = "not-hidden";
+  // Resets to "not-hidden" (the actual default) directly on BUYERS_FILTER
+  // -- there's no dropdown for this anymore (removed 2026-09-15 per
+  // Aaron's direct request), only the "Show hidden" toggle button, whose
+  // label this also needs to refresh to match.
+  BUYERS_FILTER.hidden = "not-hidden";
+  const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
+  if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
   applyBuyersFilters();
 }
 
@@ -4820,7 +4832,7 @@ function initBuyersTab() {
   // comment at its call site in loadBuyers() for why calling it eagerly at
   // page-load time (this function runs before this section's own consts
   // are initialized) is what broke the whole page on 2026-09-11.
-  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment", "bf-hidden"].forEach((id) => {
+  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyBuyersFilters);
   });
@@ -4878,15 +4890,14 @@ function initBuyersTab() {
     renderBuyersList();
   });
 
-  // "Show hidden" quick toggle, added 2026-09-15 per Aaron's direct
-  // request -- flips BUYERS_FILTER.hidden directly and keeps the filter
-  // panel's own #bf-hidden select in sync, so however you got to either
-  // state, both controls (and the filter badge) always agree.
+  // "Show hidden" quick toggle, added 2026-09-15 -- the ONLY control for
+  // BUYERS_FILTER.hidden now (the filter-panel dropdown was removed the
+  // same day per Aaron's direct follow-up: "I can just toggle by
+  // clicking the button at the top of the page and that will work just
+  // fine").
   const showHiddenBtn = document.getElementById("buyers-show-hidden-toggle");
   if (showHiddenBtn) showHiddenBtn.addEventListener("click", () => {
     BUYERS_FILTER.hidden = BUYERS_FILTER.hidden === "hidden" ? "not-hidden" : "hidden";
-    const sel = document.getElementById("bf-hidden");
-    if (sel) sel.value = BUYERS_FILTER.hidden;
     updateBuyersFilterBadge();
     renderBuyersList();
   });
@@ -4900,11 +4911,9 @@ function updateCardModeToggleLabel(btn) {
   btn.textContent = BUYERS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
 }
 
-// Quick "Show hidden" toggle, added 2026-09-15 per Aaron's direct request
-// -- flips the SAME BUYERS_FILTER.hidden state the filter panel's own
-// #bf-hidden select controls (kept in sync both ways: this updates that
-// select's value too, and applyBuyersFilters/clearBuyersFilters update
-// this button's label -- see their own call sites).
+// "Show hidden" toggle label, added 2026-09-15 -- the ONLY control for
+// BUYERS_FILTER.hidden (a filter-panel dropdown for the same state was
+// tried the same day and removed per Aaron's direct follow-up).
 function updateHiddenToggleLabel(btn) {
   btn.textContent = BUYERS_FILTER.hidden === "hidden" ? "Show active" : "Show hidden";
 }
