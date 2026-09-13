@@ -2704,6 +2704,18 @@ async function handleConfirmIdMatch(request, env) {
 // request per thumbnail actually rendered client-side (see
 // handleAdminIdPhotoPreviewLink below), which is a SEPARATE invocation
 // with its own budget.
+//
+// "Already linked" is checked against the Sheet's own ID Link column (F),
+// not buyers_cache -- fixed 2026-09-13. The cache only reflects a buyer
+// once something has given them a cache entry (crawl, or ensureBuyerInCache
+// on some real-time write); the Sheet's F column is the actual thing
+// writeIdLink writes to, so it's the true ground truth here. Checking the
+// cache instead would risk showing an already-linked buyer's file as
+// "unassociated" whenever their cache entry is missing or stale, and
+// clicking it would rename/move that file onto a NEW buyer -- silently
+// orphaning the original buyer's real ID Link URL in the Sheet. One extra
+// Sheets column-range read (same cheap pattern as findLoginsRowByPhone)
+// closes that gap.
 async function handleAdminBrowseIdPhotos(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -2712,12 +2724,18 @@ async function handleAdminBrowseIdPhotos(request, env) {
   if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
 
   try {
-    const [dropboxToken, cached] = await Promise.all([
+    const [dropboxToken, accessToken] = await Promise.all([
       getDropboxAccessToken(env),
-      env.BUYERS_KV.get("buyers_cache"),
+      getSheetsAccessToken(env),
     ]);
+    const linksRange = encodeURIComponent(`${LOGINS_TAB}!F:F`);
+    const linksRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${linksRange}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!linksRes.ok) throw new Error(`id-link column read failed: ${await linksRes.text()}`);
+    const linksData = await linksRes.json();
     const linkedUrls = new Set(
-      cached ? (JSON.parse(cached).buyers || []).map((b) => b.loginsMatch && b.loginsMatch.idLink).filter(Boolean) : []
+      (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean)
     );
     const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
     const unassociated = [];
