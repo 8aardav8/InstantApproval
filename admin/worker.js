@@ -486,6 +486,40 @@ async function writeHidden(accessToken, row, hidden) {
   if (!res.ok) throw new Error(`hidden write failed: ${await res.text()}`);
 }
 
+// Patches ONE field on ONE buyer directly in the live buyers_cache KV
+// (shared with iah-buyers -- same BUYERS_KV namespace), added 2026-09-15
+// to fix a real bug Aaron found: "I hid a contact but it did not stay
+// hidden after refresh." Root cause confirmed by direct diagnosis: the
+// Sheet write itself was always durable and correct (Hidden really was
+// TRUE), but iah-buyers only rewrites buyers_cache once an entire
+// multi-tick full sync pass finishes walking every contacts+conversations
+// page (can legitimately take 15-30+ minutes) -- so a refresh soon after
+// hiding someone read the STILL-STALE cache from before that hide, which
+// looked exactly like "it didn't stick." This closes that gap for
+// same-session-and-later reads: after a Sheet write succeeds, also patch
+// the already-cached copy of that one buyer in place, so the very next
+// /buyers read (including a fresh page load) reflects it immediately,
+// without waiting for iah-buyers' own next full pass. Best-effort and
+// silent on any failure (missing cache, buyer not yet in it, etc.) --
+// the Sheet write already succeeded and remains the real source of
+// truth; iah-buyers' own background sync will reconcile everything
+// properly regardless, this is purely a latency fix, not a correctness
+// dependency.
+async function patchBuyersCacheField(env, phone, field, value) {
+  try {
+    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
+    if (!cachedRaw) return;
+    const cacheData = JSON.parse(cachedRaw);
+    const normalizedPhone = toE164(phone);
+    const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
+    if (!buyer) return;
+    buyer[field] = value;
+    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+  } catch (e) {
+    // Best-effort -- swallow. See this function's own comment above.
+  }
+}
+
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
 // Same auth/base URL, same "PATCH replaces defaultFields wholesale, always
 // fetch-then-merge" gotcha, same firstName-required-on-create gotcha, same
@@ -1854,6 +1888,11 @@ async function handleAdminSetSentiment(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeSentiment(accessToken, row, sentiment);
+    // Immediate cache patch, added 2026-09-15 -- same fix/reasoning as
+    // handleAdminSetHidden's patchBuyersCacheField call (see its own
+    // comment): this is the exact same staleness Aaron hit earlier with
+    // Alexis's sentiment "not saving on reload."
+    await patchBuyersCacheField(env, phone, "sentiment", sentiment);
     return jsonResponse({ ok: true, sentiment });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -1887,6 +1926,9 @@ async function handleAdminSetStage(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeStage(accessToken, row, stage);
+    // Immediate cache patch, added 2026-09-15 -- see patchBuyersCacheField's
+    // own comment (handleAdminSetHidden) for the full explanation.
+    await patchBuyersCacheField(env, phone, "stage", stage);
     return jsonResponse({ ok: true, stage });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -1921,6 +1963,7 @@ async function handleAdminSetHidden(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeHidden(accessToken, row, hidden);
+    await patchBuyersCacheField(env, phone, "hidden", hidden);
     return jsonResponse({ ok: true, hidden });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
