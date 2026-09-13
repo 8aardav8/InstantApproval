@@ -2760,13 +2760,19 @@ let APPOINTMENT_AVAILABLE_ADDRESSES = []; // added 2026-09-12, same pattern, pop
 // manual "+ Add area" input was tried the same day and dropped per his
 // direct follow-up: ALL_LISTINGS itself pulls from the Filling Sheet, so
 // any area added there becomes available here automatically, with no
-// manual add needed. buyerMatchesFilters itself needed no changes for
-// this -- its area check already does a plain array-includes/substring
-// match against whatever labels are checked, canonical or not.
+// manual add needed.
 function allBuyersFilterAreas() {
   const fromListings = (typeof ALL_LISTINGS !== "undefined" && ALL_LISTINGS) ? [...new Set(ALL_LISTINGS.map((l) => l.area).filter(Boolean))] : [];
   return [...new Set([...BUYERS_CANONICAL_AREAS, ...fromListings])].sort();
 }
+
+// Sentinel checkbox value for "Unclassified" (a buyer with no areas at
+// all) -- added 2026-09-15 per Aaron's direct request ("make area
+// unclassified a filter on the buyers list page"). Not a real area
+// label, so it's excluded from the buyer-detail Areas edit panel
+// (renderBuyerDetail reuses allBuyersFilterAreas() directly for that,
+// which never includes this sentinel).
+const BUYERS_UNCLASSIFIED_AREA_VALUE = "__unclassified__";
 
 function defaultBuyersFilter() {
   return {
@@ -2911,9 +2917,14 @@ function periodStartDate(period) {
 function renderBuyersAreaCheckboxes() {
   const container = document.getElementById("buyers-area-checkboxes");
   if (!container) return;
+  // "Unclassified" appended last, added 2026-09-15 per Aaron's direct
+  // request -- a real, checkable filter option for buyers with no area
+  // at all (see BUYERS_UNCLASSIFIED_AREA_VALUE/buyerMatchesFilters).
   container.innerHTML = allBuyersFilterAreas().map((area) => `
     <label class="area-checkbox"><input type="checkbox" value="${escapeAttr(area)}">${escapeHtml(area)}</label>
-  `).join("");
+  `).join("") + `
+    <label class="area-checkbox"><input type="checkbox" value="${BUYERS_UNCLASSIFIED_AREA_VALUE}">Unclassified</label>
+  `;
   container.querySelectorAll("input[type=checkbox]").forEach((cb) => cb.addEventListener("change", applyBuyersFilters));
 }
 
@@ -2938,13 +2949,23 @@ function buyerMatchesFilters(b) {
   if (f.monthly != null && parseFloat((lmFilters && lmFilters.maxMonthly) || "") !== f.monthly) return false;
   if (f.beds != null && parseInt((lmFilters && lmFilters.minBeds) || "", 10) !== f.beds) return false;
   if (f.areas.length > 0) {
-    // A buyer counts as matching a checked area either by any of their own
-    // classified areas (b.areas -- can now be more than one, per Aaron's
-    // 2026-09-11 request) OR by what they literally typed into the site's
-    // own area search field -- either is a real signal of interest in that area.
-    const byTag = b.areas && b.areas.length > 0 && f.areas.some((a) => b.areas.includes(a));
-    const bySearch = lmFilters && lmFilters.areas && f.areas.some((a) => lmFilters.areas.toLowerCase().includes(a.toLowerCase()));
-    if (!byTag && !bySearch) return false;
+    // "Unclassified," added 2026-09-15 per Aaron's direct request -- a
+    // buyer with NO area at all, split out from the real-area labels
+    // below since it isn't one of them and needs its own match rule.
+    // Still unions with any real areas also checked, same as those union
+    // with each other -- checking "Unclassified" + a real area shows
+    // buyers matching EITHER.
+    const wantsUnclassified = f.areas.includes(BUYERS_UNCLASSIFIED_AREA_VALUE);
+    const realAreas = f.areas.filter((a) => a !== BUYERS_UNCLASSIFIED_AREA_VALUE);
+    const matchesUnclassified = wantsUnclassified && !(b.areas && b.areas.length > 0);
+    // A buyer counts as matching a checked REAL area either by any of
+    // their own classified areas (b.areas -- can now be more than one,
+    // per Aaron's 2026-09-11 request) OR by what they literally typed
+    // into the site's own area search field -- either is a real signal
+    // of interest in that area.
+    const byTag = realAreas.length > 0 && b.areas && b.areas.length > 0 && realAreas.some((a) => b.areas.includes(a));
+    const bySearch = realAreas.length > 0 && lmFilters && lmFilters.areas && realAreas.some((a) => lmFilters.areas.toLowerCase().includes(a.toLowerCase()));
+    if (!matchesUnclassified && !byTag && !bySearch) return false;
   }
   const lm = b.loginsMatch;
   if (f.idOnFile === "yes" && !(lm && lm.idLink)) return false;
@@ -4181,7 +4202,13 @@ function renderBuyerDetail(buyer) {
   // separate Save button, no Quo-name bundling -- that's the name click
   // target's own job now).
   const areasDisplayHtml = (buyer.areas && buyer.areas.length > 0) ? escapeHtml(buyer.areas.join(", ")) : "Not yet classified";
-  const areasCheckboxesHtml = BUYERS_CANONICAL_AREAS.map((area) => `
+  // Uses allBuyersFilterAreas() (the 5 canonical buyer-tag areas UNION
+  // every area from the Home page's own listings), not just
+  // BUYERS_CANONICAL_AREAS -- fixed 2026-09-15, real bug found by Aaron
+  // directly: "It doesn't have the full array of all areas yet" (this
+  // panel was still on the old 5-area list even after the buyers-list
+  // filter panel was expanded to the full set the same day).
+  const areasCheckboxesHtml = allBuyersFilterAreas().map((area) => `
     <label class="edit-area-checkbox">
       <input type="checkbox" class="buyer-areas-checkbox" value="${escapeAttr(area)}" ${buyer.areas && buyer.areas.includes(area) ? "checked" : ""}>
       ${escapeHtml(area)}
