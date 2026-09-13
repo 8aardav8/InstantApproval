@@ -3619,6 +3619,30 @@ async function setBuyerHidden(phone, hidden, onDone) {
   }
 }
 
+// Links (coBuyerPhone set) or clears (coBuyerPhone "") a co-buyer slot --
+// added 2026-09-15 per Aaron's direct request. No optimistic BUYERS_CACHE
+// patch here (unlike setBuyerHidden/setBuyerSentiment/setBuyerStage
+// above) -- the server looks the co-buyer's own name/email/idLink up
+// itself from the live cache, so onDone always re-reads the buyer fresh
+// via findBuyer() + a full loadBuyers() rather than trying to duplicate
+// that lookup client-side.
+async function setCoBuyer(phone, slot, coBuyerPhone, fullName, onDone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-co-buyer`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, slot, coBuyerPhone, fullName }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
+    await loadBuyers();
+    if (onDone) onDone();
+  } catch (err) {
+    alert(`Couldn't save: ${err}`);
+  }
+}
+
 function formatShortDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -4197,15 +4221,52 @@ function renderBuyerDetail(buyer) {
     ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map(apptItem).join("")}</div>`
     : "";
 
-  const coBuyersHtml = lm && lm.coBuyers && lm.coBuyers.length
-    ? `<div class="buyer-section"><h3>Co-Buyers</h3>${lm.coBuyers.map((c) => `
-        <div class="co-buyer-block">
-          <div class="detail-field"><span class="label">Name</span><span class="value">${escapeHtml(c.name)}</span></div>
-          ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${phoneQuoLinkHtml(c.phone)}</span></div>` : ""}
-          ${c.email ? `<div class="detail-field"><span class="label">Email</span><span class="value">${escapeHtml(c.email)}</span></div>` : ""}
-          ${c.idLink ? `<a href="${escapeAttr(c.idLink)}" target="_blank" rel="noopener"><img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(c.idLink)}" alt="Co-buyer ID"></a>` : `<p class="buyer-no-id">No ID on file.</p>`}
-        </div>`).join("")}</div>`
-    : "";
+  // Always 2 slots now (empty ones kept, not filtered out server-side --
+  // see admin-buyers-worker.js's own comment), added 2026-09-15 per
+  // Aaron's direct request: "there should be co-buyers line where
+  // co-buyers they have added from their UI will be listed, or I can
+  // click to associate and link co-buyers, which will then be displayed
+  // in their UI." Linking here writes the SAME Z/AA columns the buyer's
+  // own My Info tab reads/writes (handleAdminSetCoBuyer, admin/worker.js
+  // -- same buildCoBuyerCell format), so it shows up there too. A
+  // populated slot whose phone matches an EXISTING tracked buyer
+  // (findBuyer) is clickable straight to that buyer's own page, per
+  // Aaron's same-day follow-up ("When I click on each existing co-buyer
+  // in a Buyer page it'll go straight to that buyer's page").
+  const coBuyerSlots = (lm && lm.coBuyers && lm.coBuyers.length === 2) ? lm.coBuyers : [{ slot: 1, empty: true }, { slot: 2, empty: true }];
+  const coBuyersHtml = `
+    <div class="buyer-section buyer-cobuyers-section">
+      <h3>Co-Buyers</h3>
+      ${coBuyerSlots.map((c) => {
+        if (c.empty) {
+          return `
+            <div class="co-buyer-block co-buyer-empty" data-phone="${escapeAttr(buyer.phone)}" data-slot="${c.slot}">
+              <span class="co-buyer-add-prompt">+ Add co-buyer</span>
+              <div class="co-buyer-search-wrap autocomplete-wrap hidden">
+                <input type="text" class="co-buyer-search-input" placeholder="Search buyers…" autocomplete="off">
+                <div class="co-buyer-search-suggestions autocomplete-dropdown hidden"></div>
+              </div>
+            </div>`;
+        }
+        const matched = c.phone ? findBuyer(c.phone) : null;
+        return `
+          <div class="co-buyer-block${matched ? " co-buyer-linked" : ""}" data-phone="${escapeAttr(buyer.phone)}" data-slot="${c.slot}"${matched ? ` data-linked-phone="${escapeAttr(matched.phone)}"` : ""}>
+            <div class="detail-field"><span class="label">Name</span><span class="value">${escapeHtml(c.name)}${matched ? ` <span class="co-buyer-goto-hint">(view their page →)</span>` : ""}</span></div>
+            ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${phoneQuoLinkHtml(c.phone)}</span></div>` : ""}
+            ${c.email ? `<div class="detail-field"><span class="label">Email</span><span class="value">${escapeHtml(c.email)}</span></div>` : ""}
+            ${c.idLink ? `<img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(c.idLink)}" alt="Co-buyer ID">` : `<p class="buyer-no-id">No ID on file.</p>`}
+            <div class="co-buyer-actions">
+              <button type="button" class="btn-outline co-buyer-change-btn">Change</button>
+              <button type="button" class="btn-outline co-buyer-remove-btn">Remove</button>
+            </div>
+            <div class="co-buyer-search-wrap autocomplete-wrap hidden">
+              <input type="text" class="co-buyer-search-input" placeholder="Search buyers…" autocomplete="off">
+              <div class="co-buyer-search-suggestions autocomplete-dropdown hidden"></div>
+            </div>
+          </div>`;
+      }).join("")}
+    </div>
+  `;
 
   const filtersHtml = lm && lm.filters && (lm.filters.maxDown || lm.filters.maxMonthly || lm.filters.minBeds || lm.filters.areas)
     ? `<div class="buyer-section"><h3>Search Filters Used</h3>
@@ -4408,6 +4469,43 @@ function renderBuyerDetail(buyer) {
   const nextBtn = container.querySelector("#buyer-nav-next");
   if (nextBtn) nextBtn.addEventListener("click", () => showAdjacentBuyer(1));
 
+  // Co-Buyers, added 2026-09-15 per Aaron's direct request.
+  container.querySelectorAll(".co-buyer-block").forEach((block) => {
+    const phone = block.dataset.phone;
+    const slot = Number(block.dataset.slot);
+    const searchWrap = block.querySelector(".co-buyer-search-wrap");
+
+    // Clicking a LINKED slot (matched to an existing tracked buyer) goes
+    // straight to that buyer's own page -- "When I click on each existing
+    // co-buyer in a Buyer page it'll go straight to that buyer's page."
+    // Everything else in this block (Change/Remove buttons, the phone/
+    // email copy targets, the search input) stops propagation so it
+    // doesn't ALSO trigger this navigation.
+    if (block.classList.contains("co-buyer-linked") && block.dataset.linkedPhone) {
+      block.classList.add("co-buyer-clickable");
+      block.addEventListener("click", () => showBuyerDetail(block.dataset.linkedPhone));
+    }
+    const openSearch = (e) => {
+      e.stopPropagation();
+      searchWrap.classList.toggle("hidden");
+      if (!searchWrap.classList.contains("hidden")) searchWrap.querySelector(".co-buyer-search-input").focus();
+    };
+    const addPrompt = block.querySelector(".co-buyer-add-prompt");
+    if (addPrompt) addPrompt.addEventListener("click", openSearch);
+    const changeBtn = block.querySelector(".co-buyer-change-btn");
+    if (changeBtn) changeBtn.addEventListener("click", openSearch);
+    const removeBtn = block.querySelector(".co-buyer-remove-btn");
+    if (removeBtn) removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!confirm("Remove this co-buyer?")) return;
+      setCoBuyer(phone, slot, "", personalName, () => renderBuyerDetail(findBuyer(phone)));
+    });
+    if (searchWrap) {
+      searchWrap.addEventListener("click", (e) => e.stopPropagation());
+      initCoBuyerSearchAutocomplete(searchWrap, phone, slot, personalName);
+    }
+  });
+
   container.querySelectorAll(".sentiment-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const selected = btn.classList.contains("sentiment-btn-selected");
@@ -4582,6 +4680,63 @@ function initFavoriteAddressAutocomplete() {
       const first = dropdown.querySelector(".autocomplete-option");
       if (first && !dropdown.classList.contains("hidden")) { input.value = first.dataset.address; dropdown.classList.add("hidden"); }
       applyBuyersFilters();
+    }
+  });
+}
+
+// Buyer-search autocomplete for linking a co-buyer, added 2026-09-15 per
+// Aaron's direct request -- wired fresh each renderBuyerDetail() call
+// (one per empty/populated co-buyer slot in the DOM at any time), unlike
+// the other autocompletes in this file which wire once at page load,
+// since these elements themselves only exist while a buyer detail page
+// is showing. Excludes the buyer whose own page this is -- they can't be
+// their own co-buyer.
+function initCoBuyerSearchAutocomplete(searchWrap, phone, slot, fullName) {
+  const input = searchWrap.querySelector(".co-buyer-search-input");
+  const dropdown = searchWrap.querySelector(".co-buyer-search-suggestions");
+  if (!input || !dropdown) return;
+
+  function renderSuggestions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    const matches = (BUYERS_CACHE || [])
+      .filter((b) => b.phone !== phone)
+      .filter((b) => {
+        const name = b.quoName || (b.leadInfo && b.leadInfo.contactName) || "";
+        return name.toLowerCase().includes(q) || b.phone.includes(q);
+      })
+      .slice(0, AUTOCOMPLETE_MAX_RESULTS);
+    if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    dropdown.innerHTML = matches.map((b) => `
+      <div class="autocomplete-option" data-phone="${escapeAttr(b.phone)}">
+        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}
+        <span class="buyer-search-option-sub">${escapeHtml(b.phone)}</span>
+      </div>
+    `).join("");
+    dropdown.classList.remove("hidden");
+    dropdown.querySelectorAll(".autocomplete-option").forEach((opt) => {
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        dropdown.classList.add("hidden");
+        input.value = "";
+        setCoBuyer(phone, slot, opt.dataset.phone, fullName, () => renderBuyerDetail(findBuyer(phone)));
+      });
+    });
+  }
+
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => { if (input.value.trim()) renderSuggestions(input.value); });
+  input.addEventListener("blur", () => { dropdown.classList.add("hidden"); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { dropdown.classList.add("hidden"); return; }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const first = dropdown.querySelector(".autocomplete-option");
+      if (first && !dropdown.classList.contains("hidden")) {
+        dropdown.classList.add("hidden");
+        input.value = "";
+        setCoBuyer(phone, slot, first.dataset.phone, fullName, () => renderBuyerDetail(findBuyer(phone)));
+      }
     }
   });
 }

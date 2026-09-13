@@ -1970,6 +1970,79 @@ async function handleAdminSetHidden(request, env) {
   }
 }
 
+// Admin-side "associate a co-buyer," added 2026-09-15 per Aaron's direct
+// request ("I can click to associate and link co-buyers, which will then
+// be displayed in their UI"). Writes the SAME Z/AA "Co-Buyer 1"/"Co-Buyer
+// 2" columns handleUpdateCoBuyer (the buyer's own My Info tab) already
+// reads and writes -- same buildCoBuyerCell format -- so a co-buyer Aaron
+// links here shows up pre-filled the next time this buyer opens their own
+// My Info tab, exactly like one they'd entered themselves. Unlike
+// handleUpdateCoBuyer (which takes a co-buyer's name/email/phone typed by
+// hand, since a visitor's co-buyer might not be an existing site user at
+// all), this looks the co-buyer's info up from the LIVE buyers_cache by
+// phone -- Aaron is linking an EXISTING tracked buyer, not typing a new
+// person's details blind. coBuyerPhone: "" clears the slot.
+async function writeCoBuyerCell(accessToken, row, slot, cellValue) {
+  const col = slot === 1 ? "Z" : "AA";
+  const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
+  });
+  if (!res.ok) throw new Error(`co-buyer write failed: ${await res.text()}`);
+}
+async function handleAdminSetCoBuyer(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const slot = Number(body.slot);
+  const coBuyerPhone = (body.coBuyerPhone || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  if (slot !== 1 && slot !== 2) return jsonResponse({ error: "invalid slot" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    // Find-or-create, same convention as writeSentiment/writeStage/
+    // writeHidden's own handlers -- a BUYERS-tab-only lead has no App:
+    // Logins row at all until something writes one.
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+
+    if (!coBuyerPhone) {
+      await writeCoBuyerCell(accessToken, row, slot, "");
+      return jsonResponse({ ok: true, cleared: true });
+    }
+
+    const cached = await env.BUYERS_KV.get("buyers_cache");
+    if (!cached) return jsonResponse({ error: "buyers cache not ready yet" }, 503);
+    const normalizedCoPhone = toE164(coBuyerPhone);
+    const coBuyer = (JSON.parse(cached).buyers || []).find((b) => b.phone === normalizedCoPhone);
+    if (!coBuyer) return jsonResponse({ error: "co-buyer not found in the current buyer list" }, 404);
+
+    const coName = coBuyer.quoName || (coBuyer.leadInfo && coBuyer.leadInfo.contactName) || "";
+    const coEmail = (coBuyer.loginsMatch && coBuyer.loginsMatch.email) || "";
+    const coIdLink = (coBuyer.loginsMatch && coBuyer.loginsMatch.idLink) || "";
+    const cellValue = buildCoBuyerCell(coName, coEmail, normalizedCoPhone, coIdLink);
+    await writeCoBuyerCell(accessToken, row, slot, cellValue);
+    return jsonResponse({ ok: true, coBuyer: { name: coName, email: coEmail, phone: normalizedCoPhone, idLink: coIdLink } });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Renames a buyer's Quo contact -- a separate, OPT-IN action (see the
 // checkbox in the buyers-tab UI, default checked) from setting areas
 // above. The buyers-tab UI composes personal-name + area-tag-suffix into
@@ -3384,6 +3457,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-hidden" && request.method === "POST") {
     return handleAdminSetHidden(request, env);
+  }
+  if (url.pathname === "/admin/set-co-buyer" && request.method === "POST") {
+    return handleAdminSetCoBuyer(request, env);
   }
 
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {

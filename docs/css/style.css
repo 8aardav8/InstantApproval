@@ -636,10 +636,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    disabled fields already use), so both slots are clearly, equally
    distinct sub-sections rather than the 2nd merely being set off from the
    1st by a border-top. */
-.co-buyer-block { background: var(--gray-bg); border-radius: 10px; padding: 16px; }
+.co-buyer-block { background: var(--gray-bg); border-radius: 10px; padding: 16px; position: relative; }
 .co-buyer-block + .co-buyer-block { margin-top: 16px; }
 .co-buyer-block h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--navy); }
 .co-buyer-intro { color: var(--gray-text); font-size: 13px; margin: 0 0 4px; }
+/* Admin-side co-buyer linking, added 2026-09-15 per Aaron's direct
+   request. */
+.co-buyer-empty { display: flex; align-items: center; }
+.co-buyer-add-prompt { color: var(--blue); font-weight: 700; font-size: 13px; cursor: pointer; }
+.co-buyer-clickable { cursor: pointer; }
+.co-buyer-clickable:hover { outline: 2px solid var(--blue); outline-offset: 2px; }
+.co-buyer-goto-hint { font-weight: 400; font-size: 12px; color: var(--blue); }
+.co-buyer-actions { display: flex; gap: 8px; margin-top: 8px; }
+.co-buyer-actions button { font-size: 12px; padding: 6px 12px; }
+.co-buyer-search-wrap { margin-top: 10px; }
 
 /* ---------- bottom popover (shared shape, install app 2026-08-29 +
    booking confirmation 2026-08-29) ---------- */
