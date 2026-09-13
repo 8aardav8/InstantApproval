@@ -1902,6 +1902,36 @@ async function handleAdminSetAreas(request, env) {
       const newRow = await findLoginsRowByPhone(accessToken, phone);
       if (newRow) await writeManualAreaOverride(accessToken, newRow, areasCsv);
     }
+    // Real-time cache patch, added 2026-09-13 -- this endpoint never had
+    // one (unlike Set Stage/Sentiment/Hidden/DNC), which mattered a lot
+    // more once the full crawl's own interval was relaxed 15min -> 24h the
+    // same day (see admin-buyers-worker.js's FULL_SYNC_INTERVAL_MS comment)
+    // -- an area assigned here could otherwise sit invisible on the site
+    // for up to a day. ADDITIVE ONLY, a known and accepted limitation: the
+    // real crawl unions manual overrides together with TB-name/address/
+    // search-derived areas (see admin-buyers-worker.js's own area-backfill
+    // comment) -- fully replicating REMOVAL of a manual area in real time
+    // would mean porting that whole derivation (parseAreasFromName,
+    // loadPropertyAreaIndex, matchCanonicalAreas) into this file too. This
+    // patch only ever adds the newly-set areas to whatever's already
+    // cached; removing an area from a buyer's manual selection still needs
+    // the next real crawl to actually disappear from the site.
+    await (async () => {
+      try {
+        const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
+        if (!cachedRaw) return;
+        const cacheData = JSON.parse(cachedRaw);
+        const normalizedPhone = toE164(phone);
+        const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
+        if (!buyer) return;
+        const merged = new Set(buyer.areas || []);
+        for (const a of areas) merged.add(a);
+        buyer.areas = [...merged];
+        await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+      } catch (e) {
+        // Best-effort, same reasoning as patchBuyersCacheField.
+      }
+    })();
     return jsonResponse({ ok: true, areas });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
