@@ -2814,6 +2814,13 @@ function defaultBuyersFilter() {
     // Added 2026-09-15 per Aaron's direct request -- only meaningful when
     // hasFavorites === "specific" (see buyerMatchesFilters below).
     favoriteAddress: null,
+    // Added 2026-09-16 per Aaron's direct request ("a small button... that
+    // allows for showing just the DNC list") -- unlike hidden above, this
+    // DOES default to unrestricted ("any"): a DNC buyer stays visible in
+    // the normal list by design (the badge on their card is the at-a-glance
+    // signal), this toggle just narrows down to ONLY them when wanted.
+    // null | "dnc" -- see the "Show DNC only" toggle button.
+    dnc: null,
   };
 }
 // Restored from localStorage if a previous session saved one, added
@@ -3047,6 +3054,9 @@ function buyerMatchesFilters(b) {
   // defaults to "not-hidden" rather than "Any".
   if (f.hidden === "not-hidden" && b.hidden) return false;
   if (f.hidden === "hidden" && !b.hidden) return false;
+  // Added 2026-09-16 -- see BUYERS_FILTER's own comment on why this
+  // defaults to null/"any" rather than excluding DNC buyers by default.
+  if (f.dnc === "dnc" && !b.dnc) return false;
   return true;
 }
 
@@ -3087,6 +3097,8 @@ function activeBuyersFilterCount() {
   // IS the default, not something Aaron actively turned on, so it
   // shouldn't inflate the badge every single time.
   if (f.hidden === "hidden") n++;
+  // Same treatment as hidden above -- only counts when actively toggled on.
+  if (f.dnc === "dnc") n++;
   return n;
 }
 function updateBuyersFilterBadge() {
@@ -3106,6 +3118,7 @@ function applyBuyersFilters() {
   // every time some OTHER filter changes, since this function replaces
   // the whole BUYERS_FILTER object.
   const previousHidden = BUYERS_FILTER.hidden;
+  const previousDnc = BUYERS_FILTER.dnc;
   BUYERS_FILTER = {
     down: parseFloat(document.getElementById("bf-down").value) || null,
     monthly: parseFloat(document.getElementById("bf-monthly").value) || null,
@@ -3120,11 +3133,14 @@ function applyBuyersFilters() {
     sentiment: document.getElementById("bf-sentiment").value || null,
     hidden: previousHidden || "not-hidden",
     favoriteAddress: (document.getElementById("bf-favorite-address") || {}).value || null,
+    dnc: previousDnc || null,
   };
   saveBuyersFilterState();
   updateBuyersFilterBadge();
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
+  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
+  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
   renderBuyersList();
 }
 
@@ -3151,6 +3167,10 @@ function clearBuyersFilters() {
   BUYERS_FILTER.hidden = "not-hidden";
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
+  // Same reset-to-default treatment for the DNC toggle, added 2026-09-16.
+  BUYERS_FILTER.dnc = null;
+  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
+  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
   applyBuyersFilters();
 }
 
@@ -3195,6 +3215,8 @@ function syncBuyersFilterControlsToState() {
   updateBuyersFilterBadge();
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
+  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
+  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
 }
 
 async function loadBuyers() {
@@ -3348,6 +3370,8 @@ function renderBuyersList() {
   if (cardModeBtn) updateCardModeToggleLabel(cardModeBtn);
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
+  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
+  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
 
   const listEl = document.getElementById("buyers-list");
   const buyers = sortedBuyers();
@@ -3451,19 +3475,19 @@ function renderBuyersList() {
     // Outline color, changed 2026-09-12 per Aaron's direct follow-up --
     // was a flat red for any upcoming appointment; now uses that buyer's
     // OWN current-stage color (STAGE_COLORS/stageColorFor) instead, so the
-    // card border tells you both "there's a showing coming up" (whether
-    // it's outlined at all) AND roughly where they are in the pipeline
-    // (which color). Falls back to a neutral gray if they have an
-    // appointment but no stage set yet, rather than no outline at all.
+    // card border tells you roughly where they are in the pipeline at a
+    // glance. Every card now gets this outline (2026-09-16 per Aaron's
+    // direct request, "outline every card with the color associated with
+    // its stage") -- previously only cards with an upcoming appointment
+    // were outlined at all; that gate is gone, this is unconditional now.
+    // Falls back to a neutral gray for a buyer with no stage set at all.
     // "Currently logged in" (added 2026-09-15 per Aaron's direct request)
-    // takes priority over the stage-color outline when both apply -- it's
-    // the more time-sensitive signal (they're on the site RIGHT NOW),
-    // whereas an upcoming appointment is true regardless of the moment
-    // you happen to be looking at the card.
+    // still takes priority over the stage-color outline when both apply --
+    // it's the more time-sensitive signal (they're on the site RIGHT NOW).
     const currentlyLoggedIn = isCurrentlyLoggedIn(b.loginsMatch && b.loginsMatch.lastLogin);
     const stageOutlineColor = currentlyLoggedIn
       ? CURRENTLY_LOGGED_IN_OUTLINE_COLOR
-      : upcomingCount > 0 ? (stageColorFor(b.stage) || "#9ca3af") : null;
+      : (stageColorFor(b.stage) || "#9ca3af");
     // Detailed-card layout, redone a third time 2026-09-12 per Aaron's
     // explicit correction -- NOT one unified grid. Two independent
     // stacked sections: top splits into two EQUAL HALVES (left = ID
@@ -3739,10 +3763,32 @@ async function updateAppointment(phone, slot, address, date, status, onDone) {
   }
 }
 
-function formatShortDate(iso) {
-  if (!iso) return "";
+// Real bug fix, 2026-09-16 -- Aaron reported an appointment for the 14th
+// displaying as the 13th (and Alexis's 13th as the 12th): a bare
+// date-only string like "2026-09-14" (no time/zone component -- exactly
+// what appointment dates are) gets parsed by `new Date(...)` as UTC
+// MIDNIGHT per the JS spec, then .toLocaleDateString renders it in the
+// browser's LOCAL timezone -- in any zone behind UTC (Pacific included),
+// UTC midnight of the 14th is still the AFTERNOON/EVENING of the 13th
+// locally, so it displays one day early, every time, for everyone west
+// of Greenwich. A real timestamp (has a "T", e.g. a login/message time)
+// parses and displays correctly as-is -- this only ever bit bare
+// calendar-date strings. Fixed by constructing the Date from its
+// literal Y/M/D components (local, no UTC round-trip) whenever the
+// string has no time component, leaving real timestamps untouched.
+function parseLocalDateOrInstant(iso) {
+  if (!iso) return null;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (dateOnly) {
+    const [, y, m, d] = dateOnly;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
+  return isNaN(d.getTime()) ? null : d;
+}
+function formatShortDate(iso) {
+  const d = parseLocalDateOrInstant(iso);
+  if (!d) return "";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
@@ -3753,9 +3799,8 @@ function formatShortDate(iso) {
 // which stays year-less everywhere else it's used (buyer-row cards,
 // appointment cards) -- Aaron only asked for the year on this one line.
 function formatDateWithYear(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
+  const d = parseLocalDateOrInstant(iso);
+  if (!d) return "";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
@@ -5655,8 +5700,52 @@ function initBuyersTab() {
     BUYERS_FILTER.hidden = BUYERS_FILTER.hidden === "hidden" ? "not-hidden" : "hidden";
     saveBuyersFilterState();
     updateBuyersFilterBadge();
+    updateHiddenToggleLabel(showHiddenBtn);
     renderBuyersList();
   });
+
+  // "Show DNC only" quick toggle, added 2026-09-16 per Aaron's direct
+  // request -- same button-driven pattern as Show hidden above, but a
+  // genuine any/dnc-only toggle (see BUYERS_FILTER.dnc's own comment).
+  const showDncBtn = document.getElementById("buyers-show-dnc-toggle");
+  if (showDncBtn) showDncBtn.addEventListener("click", () => {
+    BUYERS_FILTER.dnc = BUYERS_FILTER.dnc === "dnc" ? null : "dnc";
+    saveBuyersFilterState();
+    updateBuyersFilterBadge();
+    updateDncToggleLabel(showDncBtn);
+    renderBuyersList();
+  });
+
+  const backfillStageBtn = document.getElementById("buyers-backfill-stage-btn");
+  if (backfillStageBtn) backfillStageBtn.addEventListener("click", () => backfillStage(backfillStageBtn));
+}
+
+// One-time bulk backfill, added 2026-09-16 per Aaron's direct request --
+// see handleAdminBackfillStage's own comment (admin/worker.js) for the
+// server-side detail. Reloads the buyer list afterward so the newly-set
+// stages (and their card outlines/progress bars) show up immediately.
+async function backfillStage(btn) {
+  if (!confirm('Set every buyer with NO stage currently selected to "First Contact"? This only touches buyers with a blank stage -- anyone with a stage already set is left alone.')) return;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Working…";
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/backfill-stage`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't backfill: ${(data && data.error) || res.status}`); return; }
+    alert(data.updated > 0 ? `Set "${data.stage}" on ${data.updated} buyer(s).` : "Nothing to update -- every buyer already has a stage set.");
+    await loadBuyers();
+    renderBuyersList();
+  } catch (err) {
+    alert(`Couldn't backfill: ${err}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 function updateDateModeToggleLabel(btn) {
@@ -5672,6 +5761,12 @@ function updateCardModeToggleLabel(btn) {
 // tried the same day and removed per Aaron's direct follow-up).
 function updateHiddenToggleLabel(btn) {
   btn.textContent = BUYERS_FILTER.hidden === "hidden" ? "Show active" : "Show hidden";
+}
+
+// "Show DNC only" toggle label, added 2026-09-16 -- same pattern as
+// updateHiddenToggleLabel above.
+function updateDncToggleLabel(btn) {
+  btn.textContent = BUYERS_FILTER.dnc === "dnc" ? "Show all" : "Show DNC only";
 }
 
 // ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------
@@ -5854,7 +5949,19 @@ function renderAppointmentsOverview() {
       // quoName, added 2026-09-13 -- see renderApptCard's own comment on
       // why this and a.name (the login name) are shown separately.
       const entry = { address, ...a, row, quoName: buyer ? buyer.quoName : null };
-      if (a.date < today || alreadyShown) past.push(entry);
+      // Real bug fix, 2026-09-16 -- Aaron reported a 2-DAYS-OUT
+      // appointment (Demi's) landing under "Past Appointments." Root
+      // cause: `shown` is a flat per-ADDRESS list on the buyer (added by
+      // the "Mark as shown" checkbox, whose whole point is moving a
+      // just-completed TODAY'S showing into Past immediately without
+      // waiting for midnight -- see this function's own history above),
+      // not a per-APPOINTMENT flag. Once a buyer had ANY past showing at
+      // an address marked shown, `alreadyShown` stayed true forever for
+      // that address -- so scheduling a brand-new FUTURE appointment at
+      // that same address got force-bucketed into Past too, regardless
+      // of its actual date. Fixed by only letting alreadyShown override
+      // the date check for today-or-earlier, never a genuinely future date.
+      if (a.date < today || (alreadyShown && a.date <= today)) past.push(entry);
       else upcoming.push(entry);
     }
   }

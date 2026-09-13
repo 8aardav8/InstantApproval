@@ -843,6 +843,22 @@
              clicking the button at the top of the page and that will
              work just fine"). See updateHiddenToggleLabel in app.js. -->
         <button id="buyers-show-hidden-toggle" class="btn-outline" type="button">Show hidden</button>
+        <!-- "Show DNC" toggle, added 2026-09-16 per Aaron's direct
+             request -- same pattern as Show hidden above, but a genuine
+             any/dnc-only two-state toggle rather than hidden/not-hidden,
+             since a DNC buyer stays visible in the normal list by design
+             (only Hidden removes a card from the default view). See
+             updateDncToggleLabel in app.js. -->
+        <button id="buyers-show-dnc-toggle" class="btn-outline" type="button">Show DNC only</button>
+        <!-- One-time bulk backfill, added 2026-09-16 per Aaron's direct
+             request ("make the first contact stage selected on every
+             contact that currently has no stage selected") -- a manual
+             button, not something that auto-runs, since it's a real bulk
+             Sheet write across every currently-blank-stage row. See
+             backfillStage() in app.js / handleAdminBackfillStage in
+             admin/worker.js. Safe to click more than once -- it only
+             ever touches rows that are STILL blank at the time it runs. -->
+        <button id="buyers-backfill-stage-btn" class="btn-outline" type="button">Set "First Contact" for blank stages</button>
       </div>
 
       <div id="buyers-sort-panel" class="filter-panel hidden">

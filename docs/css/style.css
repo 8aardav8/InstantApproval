@@ -1003,7 +1003,16 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .stage-progress-segment { flex: 1 1 0; height: 6px; border-radius: 3px; background: #e5e7eb; }
 .stage-progress-filled { background: var(--blue); }
 .stage-progress-label { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
-.buyer-detail-quick-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* Own full-width row, added 2026-09-16 per Aaron's direct request -- was
+   just a left-clustered inline group before; now spans the page and
+   spreads its items across it (mirrors .buyer-row-status-bar's own
+   full-width-thirds look on the buyers-list card, same visual family),
+   with a top border/padding as a real separator line, same as that
+   card's own status bar. */
+.buyer-detail-quick-status {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  width: 100%; padding-top: 12px; margin-top: 4px; border-top: 1px solid #f3f4f6;
+}
 .buyer-detail-quick-status .sentiment-picker { display: flex; gap: 2px; }
 /* DNC toggle, added 2026-09-16. Neutral outline until active, then reads
    as a clear warning color -- same red as the badge it produces

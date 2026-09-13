@@ -2033,6 +2033,65 @@ async function handleAdminSetStage(request, env) {
   }
 }
 
+// One-time bulk backfill, added 2026-09-16 per Aaron's direct request
+// ("make the first contact stage selected on every contact that
+// currently has no stage selected") -- sets Stage to STAGE_VALUES[0]
+// ("First Contact") for every real buyer row (has a phone) whose Stage
+// cell is currently blank. Deliberately a single manually-triggered
+// pass over CURRENT data, not a standing rule -- it does not touch a
+// buyer who already has some stage set, and does nothing at all for a
+// buyer added after this runs (they'll just show "No stage set" like
+// any other new contact always has). Uses batchGet/batchUpdate (2 Sheets
+// API calls total, regardless of row count) rather than one HTTP
+// request per row -- ~150 individual PUTs in one Worker invocation risks
+// the free plan's subrequest cap for no benefit.
+async function handleAdminBackfillStage(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const phoneRange = encodeURIComponent(`${LOGINS_TAB}!D:D`);
+    const stageRange = encodeURIComponent(`${LOGINS_TAB}!AF:AF`);
+    const batchGetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?ranges=${phoneRange}&ranges=${stageRange}`;
+    const getRes = await fetch(batchGetUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!getRes.ok) throw new Error(`backfill-stage read failed: ${await getRes.text()}`);
+    const getData = await getRes.json();
+    const phoneCol = (getData.valueRanges[0] && getData.valueRanges[0].values) || [];
+    const stageCol = (getData.valueRanges[1] && getData.valueRanges[1].values) || [];
+    const firstStage = STAGE_VALUES[0];
+    const updates = [];
+    const affectedPhones = [];
+    const maxLen = Math.max(phoneCol.length, stageCol.length);
+    for (let i = 1; i < maxLen; i++) { // i=0 is the header row
+      const phone = ((phoneCol[i] && phoneCol[i][0]) || "").trim();
+      const stage = ((stageCol[i] && stageCol[i][0]) || "").trim();
+      if (!phone || stage) continue; // not a real row, or already has a stage
+      const row = i + 1; // 1-indexed sheet row
+      updates.push({ range: `${LOGINS_TAB}!AF${row}:AF${row}`, values: [[firstStage]] });
+      affectedPhones.push(phone);
+    }
+    if (updates.length > 0) {
+      const batchUpdateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`;
+      const putRes = await fetch(batchUpdateUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ valueInputOption: "RAW", data: updates }),
+      });
+      if (!putRes.ok) throw new Error(`backfill-stage write failed: ${await putRes.text()}`);
+      for (const phone of affectedPhones) {
+        await patchBuyersCacheField(env, phone, "stage", firstStage);
+      }
+    }
+    return jsonResponse({ ok: true, updated: updates.length, stage: firstStage });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Sets (or clears) whether a buyer is hidden from the default buyers-list
 // view -- added 2026-09-15 per Aaron's direct request ("swipe left on a
 // card and hide it from the list"). Same no-confirmation-needed
@@ -3609,6 +3668,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-stage" && request.method === "POST") {
     return handleAdminSetStage(request, env);
+  }
+  if (url.pathname === "/admin/backfill-stage" && request.method === "POST") {
+    return handleAdminBackfillStage(request, env);
   }
   if (url.pathname === "/admin/set-hidden" && request.method === "POST") {
     return handleAdminSetHidden(request, env);
