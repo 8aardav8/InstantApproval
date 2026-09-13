@@ -265,6 +265,13 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .area-checkbox input { margin: 0; }
 
+/* "+ Add area," added 2026-09-15 per Aaron's direct request -- lets him
+   add a filter checkbox for an area that isn't a real listing area at
+   all. See addBuyersCustomArea()/allBuyersFilterAreas() in app.js. */
+.area-add-row { display: flex; gap: 6px; }
+.area-add-row input { flex: 1 1 auto; min-width: 0; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
+.area-add-row button { flex: 0 0 auto; font-size: 12px; padding: 6px 12px; }
+
 .freshness { font-size: 12px; color: var(--gray-text); margin-bottom: 8px; }
 
 /* ---------- card grid ---------- */

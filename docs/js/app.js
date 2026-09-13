@@ -2735,6 +2735,37 @@ const BUYERS_CANONICAL_AREAS = ["IL - East St Louis", "MO - St. Louis", "AR - Li
 let SHOWN_AVAILABLE_ADDRESSES = [];
 let APPOINTMENT_AVAILABLE_ADDRESSES = []; // added 2026-09-12, same pattern, populated fresh each renderBuyerDetail() call
 
+// Custom areas Aaron's added to the buyers-page filter that AREN'T a real
+// property area at all -- added 2026-09-15 per Aaron's direct request
+// ("add other areas that are not currently available by clicking the
+// check box"). Persisted per-device (this is Aaron's own ad-hoc filter
+// shortcut, not real listing data synced anywhere server-side).
+const BUYERS_CUSTOM_AREAS_STORAGE_KEY = "iah_buyers_custom_areas";
+function getBuyersCustomAreas() {
+  try { return JSON.parse(localStorage.getItem(BUYERS_CUSTOM_AREAS_STORAGE_KEY) || "[]"); } catch (e) { return []; }
+}
+function addBuyersCustomArea(area) {
+  const areas = getBuyersCustomAreas();
+  if (!areas.includes(area)) {
+    areas.push(area);
+    try { localStorage.setItem(BUYERS_CUSTOM_AREAS_STORAGE_KEY, JSON.stringify(areas)); } catch (e) {}
+  }
+}
+// Full area-checkbox list for the buyers-page filter -- the 5 canonical
+// buyer-tag areas UNION every area that shows up in the Home page's own
+// search filter (ALL_LISTINGS, same source renderAreaCheckboxes() reads)
+// UNION Aaron's own custom-added areas above. Added 2026-09-15 per
+// Aaron's direct request ("add all of the areas from the Home page
+// search filters to the buyers page filters"). buyerMatchesFilters
+// itself needed no changes for this -- its area check already does a
+// plain array-includes/substring match against whatever labels are
+// checked, canonical or not.
+function allBuyersFilterAreas() {
+  const fromListings = (typeof ALL_LISTINGS !== "undefined" && ALL_LISTINGS) ? [...new Set(ALL_LISTINGS.map((l) => l.area).filter(Boolean))] : [];
+  const combined = new Set([...BUYERS_CANONICAL_AREAS, ...fromListings, ...getBuyersCustomAreas()]);
+  return [...combined].sort();
+}
+
 let BUYERS_FILTER = {
   down: null, monthly: null, beds: null, areas: [],
   // Added 2026-09-11 per Aaron's direct request.
@@ -2751,6 +2782,9 @@ let BUYERS_FILTER = {
   // which would be the default." Only "hidden" | "not-hidden", no "Any" --
   // a hidden buyer shouldn't silently reappear mixed in with everyone else.
   hidden: "not-hidden",
+  // Added 2026-09-15 per Aaron's direct request -- only meaningful when
+  // hasFavorites === "specific" (see buyerMatchesFilters below).
+  favoriteAddress: null,
 };
 
 // Pipeline stages, added 2026-09-12 per Aaron's direct request -- kept as
@@ -2848,10 +2882,12 @@ function periodStartDate(period) {
   return null;
 }
 
+// Expanded 2026-09-15 -- see allBuyersFilterAreas()'s own comment above
+// for why this is no longer just BUYERS_CANONICAL_AREAS.
 function renderBuyersAreaCheckboxes() {
   const container = document.getElementById("buyers-area-checkboxes");
   if (!container) return;
-  container.innerHTML = BUYERS_CANONICAL_AREAS.map((area) => `
+  container.innerHTML = allBuyersFilterAreas().map((area) => `
     <label class="area-checkbox"><input type="checkbox" value="${escapeAttr(area)}">${escapeHtml(area)}</label>
   `).join("");
   container.querySelectorAll("input[type=checkbox]").forEach((cb) => cb.addEventListener("change", applyBuyersFilters));
@@ -2891,6 +2927,16 @@ function buyerMatchesFilters(b) {
   if (f.idOnFile === "no" && lm && lm.idLink) return false;
   if (f.hasFavorites === "yes" && !(lm && lm.favorites && lm.favorites.length)) return false;
   if (f.hasFavorites === "no" && lm && lm.favorites && lm.favorites.length) return false;
+  // "Specific favorite…" added 2026-09-15 per Aaron's direct request --
+  // shows only buyers who favorited the ONE address chosen via the
+  // autocomplete. Nobody matches until an address is actually picked
+  // (favoriteAddress still null/empty) -- safer than silently falling
+  // back to "show everyone" the moment "Specific favorite…" is selected
+  // but before a real address has been typed in.
+  if (f.hasFavorites === "specific") {
+    if (!f.favoriteAddress) return false;
+    if (!(lm && lm.favorites && lm.favorites.includes(f.favoriteAddress))) return false;
+  }
   // "Logged in" means a real first-login timestamp on file, not merely
   // having a matching Sheet row (a row can exist from other activity).
   if (f.loggedIn === "yes" && !(lm && lm.firstLogin)) return false;
@@ -2983,6 +3029,7 @@ function applyBuyersFilters() {
     stages: [...document.querySelectorAll("#buyers-stage-checkboxes input:checked")].map((cb) => cb.value),
     sentiment: document.getElementById("bf-sentiment").value || null,
     hidden: document.getElementById("bf-hidden").value || "not-hidden",
+    favoriteAddress: (document.getElementById("bf-favorite-address") || {}).value || null,
   };
   updateBuyersFilterBadge();
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
@@ -2998,6 +3045,10 @@ function clearBuyersFilters() {
   document.querySelectorAll("#buyers-stage-checkboxes input:checked").forEach((cb) => { cb.checked = false; });
   document.getElementById("bf-id").value = "";
   document.getElementById("bf-favorites").value = "";
+  const favAddrInput = document.getElementById("bf-favorite-address");
+  if (favAddrInput) favAddrInput.value = "";
+  const favAddrWrap = document.getElementById("bf-favorite-address-wrap");
+  if (favAddrWrap) favAddrWrap.classList.add("hidden");
   document.getElementById("bf-loggedin").value = "";
   document.getElementById("bf-contact-op").value = "";
   document.getElementById("bf-contact-period").value = "week";
@@ -4266,6 +4317,59 @@ function initApptPropertyAutocomplete() {
   });
 }
 
+// Address list for the "Specific favorite…" filter, added 2026-09-15 --
+// union of every listing address AND every address any buyer has ever
+// favorited (BUYERS_CACHE), so an address that's since gone off-market
+// but is still someone's saved favorite stays selectable here, unlike
+// ALL_LISTINGS alone.
+function allFavoritableAddresses() {
+  const fromListings = (typeof ALL_LISTINGS !== "undefined" && ALL_LISTINGS) ? ALL_LISTINGS.map((l) => l.address) : [];
+  const fromFavorites = (BUYERS_CACHE || []).flatMap((b) => (b.loginsMatch && b.loginsMatch.favorites) || []);
+  return [...new Set([...fromListings, ...fromFavorites].filter(Boolean))].sort();
+}
+
+// Same pattern as the autocompletes above, for the buyers-page "Specific
+// favorite…" filter -- added 2026-09-15 per Aaron's direct request.
+// Selecting a suggestion (or pressing Enter with one showing) applies the
+// filter immediately, not just fills the input -- picking an address IS
+// the point of this control, there's nothing else to submit.
+function initFavoriteAddressAutocomplete() {
+  const input = document.getElementById("bf-favorite-address");
+  const dropdown = document.getElementById("bf-favorite-address-suggestions");
+  if (!input || !dropdown) return;
+
+  function renderSuggestions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    const matches = allFavoritableAddresses().filter((a) => a.toLowerCase().includes(q)).slice(0, AUTOCOMPLETE_MAX_RESULTS);
+    if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    dropdown.innerHTML = matches.map((a) => `<div class="autocomplete-option" data-address="${escapeAttr(a)}">${escapeHtml(a)}</div>`).join("");
+    dropdown.classList.remove("hidden");
+    dropdown.querySelectorAll(".autocomplete-option").forEach((opt) => {
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = opt.dataset.address;
+        dropdown.classList.add("hidden");
+        dropdown.innerHTML = "";
+        applyBuyersFilters();
+      });
+    });
+  }
+
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => { if (input.value.trim()) renderSuggestions(input.value); });
+  input.addEventListener("blur", () => { dropdown.classList.add("hidden"); applyBuyersFilters(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { dropdown.classList.add("hidden"); return; }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const first = dropdown.querySelector(".autocomplete-option");
+      if (first && !dropdown.classList.contains("hidden")) { input.value = first.dataset.address; dropdown.classList.add("hidden"); }
+      applyBuyersFilters();
+    }
+  });
+}
+
 // Quick-jump search at the top of the buyer detail page, added 2026-09-12
 // per Aaron's direct request. initBuyersTab() (the sole caller) only runs
 // once at page load, so this only needs to wire its listeners once too --
@@ -4737,6 +4841,38 @@ function initBuyersTab() {
   });
   const clearBtn = document.getElementById("buyers-filter-clear");
   if (clearBtn) clearBtn.addEventListener("click", clearBuyersFilters);
+
+  // "Specific favorite…" address autocomplete, added 2026-09-15 per
+  // Aaron's direct request. Show/hide is separate from the generic
+  // change->applyBuyersFilters wiring just above (both fire on the same
+  // event, this one's purely a UI concern).
+  const favoritesSel = document.getElementById("bf-favorites");
+  const favoriteAddressWrap = document.getElementById("bf-favorite-address-wrap");
+  if (favoritesSel && favoriteAddressWrap) {
+    favoritesSel.addEventListener("change", () => {
+      favoriteAddressWrap.classList.toggle("hidden", favoritesSel.value !== "specific");
+    });
+  }
+  initFavoriteAddressAutocomplete();
+
+  // "+ Add area" for the buyers-page area filter, added 2026-09-15 per
+  // Aaron's direct request -- adds a custom (non-listing) area label as
+  // its own checkbox, checked immediately so it takes effect right away.
+  const addAreaBtn = document.getElementById("buyers-add-area-btn");
+  const addAreaInput = document.getElementById("buyers-add-area-input");
+  function addCustomBuyerArea() {
+    if (!addAreaInput) return;
+    const val = addAreaInput.value.trim();
+    if (!val) return;
+    addBuyersCustomArea(val);
+    addAreaInput.value = "";
+    renderBuyersAreaCheckboxes();
+    const cb = [...document.querySelectorAll("#buyers-area-checkboxes input[type=checkbox]")].find((el) => el.value === val);
+    if (cb) cb.checked = true;
+    applyBuyersFilters();
+  }
+  if (addAreaBtn) addAreaBtn.addEventListener("click", addCustomBuyerArea);
+  if (addAreaInput) addAreaInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addCustomBuyerArea(); } });
 
   // "Check for ID photo matches" / "Rename ID files in Dropbox" button
   // wiring removed 2026-09-12 -- see the removal comment in index.html for
