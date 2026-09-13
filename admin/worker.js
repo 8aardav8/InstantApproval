@@ -877,10 +877,16 @@ async function handleAdminActivity(request, env) {
       for (let slot = 0; slot < 10; slot++) {
         const raw = (row[13 + slot] || "").trim();
         if (!raw) continue;
-        const parts = raw.split(" | ");
-        const address = (parts[0] || "").trim();
-        const date = (parts[1] || "").trim();
-        if (address && date) appointments.push({ address, date, name, email, phone, idLink });
+        // parseAppointmentCell (defined below, near
+        // readAppointmentRawCells) now also returns a third field,
+        // status, added 2026-09-15 per Aaron's direct request ("click to
+        // reschedule or cancel existing appointments... marked as
+        // no-show unless canceled or completed"). row/slot (1-indexed,
+        // matching the real Sheet row and "Appointment N" column) exposed
+        // too, so the client can target the exact cell for
+        // /admin/update-appointment.
+        const parsed = parseAppointmentCell(raw, slot + 1);
+        if (parsed) appointments.push({ address: parsed.address, date: parsed.date, status: parsed.status, name, email, phone, idLink, row: i + 1, slot: slot + 1 });
       }
       const favRaw = (row[23] || "").trim();
       if (favRaw) {
@@ -1860,6 +1866,57 @@ async function handleAdminAddAppointment(request, env) {
   }
 }
 
+// Reschedule (new date, status reset to Scheduled), Cancel (status
+// "Canceled"), or set an outcome (status "Completed"/""/"Canceled") on
+// ONE existing appointment slot -- added 2026-09-15 per Aaron's direct
+// request ("click to reschedule or cancel existing appointments" on both
+// the Appointments-tab cards and the buyer's own page). One endpoint for
+// all three actions -- they're really the same write (overwrite one
+// slot's cell with a new address/date/status combo), just different
+// fields changed by the caller. row/slot come from handleAdminActivity's
+// own response (added there the same day) -- re-verified against a fresh
+// phone lookup before writing, same "never trust a stale row number"
+// caution writeIdLink's own callers already use elsewhere in this file,
+// in case the Sheet's rows shifted since the client last loaded.
+async function handleAdminUpdateAppointment(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const slot = Number(body.slot);
+  const address = (body.address || "").trim();
+  const date = (body.date || "").trim();
+  const status = (body.status || "").trim();
+  if (!phone || !address || !date) return jsonResponse({ error: "missing phone, address, or date" }, 400);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return jsonResponse({ error: "date must be YYYY-MM-DD" }, 400);
+  if (!Number.isInteger(slot) || slot < 1 || slot > APPOINTMENT_SLOT_COUNT) return jsonResponse({ error: "invalid slot" }, 400);
+  if (status && status !== "Canceled" && status !== "Completed") return jsonResponse({ error: "invalid status" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) return jsonResponse({ error: "buyer not found" }, 404);
+    const col = APPOINTMENT_COLS[slot - 1];
+    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
+    const cellValue = buildAppointmentCell(address, date, status);
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
+    });
+    if (!res.ok) return jsonResponse({ error: "appointment write failed", detail: await res.text() }, 500);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Sets (or clears, with sentiment: "") a buyer's personal-impression
 // sentiment. Added 2026-09-12 per Aaron's direct request -- purely his own
 // note, no confirmation dialog needed client-side (unlike areas/name,
@@ -2686,13 +2743,26 @@ async function readAppointmentRawCells(accessToken, row) {
   return out;
 }
 
+// Third pipe segment (status), added 2026-09-15 per Aaron's direct
+// request ("click to reschedule or cancel existing appointments...
+// marked as no-show unless canceled or completed"): "" (Scheduled -- the
+// default; an appointment written before this feature existed, with no
+// third segment at all, parses to "" here exactly the same way, no
+// migration needed), "Canceled", or "Completed". "No-show" is
+// deliberately NEVER a stored value -- a PAST appointment with blank
+// status just READS as an automatic no-show, both client-side and in
+// appointment-notifier-worker.js's own Job 3 exclusion.
 function parseAppointmentCell(raw, slot) {
   if (!raw) return null;
   const parts = raw.split(" | ");
   const address = (parts[0] || "").trim();
   const date = (parts[1] || "").trim();
+  const status = (parts[2] || "").trim();
   if (!address || !date) return null;
-  return { slot, address, date };
+  return { slot, address, date, status };
+}
+function buildAppointmentCell(address, date, status) {
+  return `${address} | ${date} | ${status || ""}`;
 }
 
 // Drops any already-past slots, appends the new one, and FIFO-caps at 10 if
@@ -2703,11 +2773,16 @@ function parseAppointmentCell(raw, slot) {
 async function addAppointment(accessToken, row, address, date) {
   const cells = await readAppointmentRawCells(accessToken, row);
   const todayUtc = new Date().toISOString().slice(0, 10);
+  // Real bug fixed 2026-09-15, found while adding the status field: this
+  // used to rebuild every SURVIVING active cell as bare "<address> |
+  // <date>", silently dropping its status -- so scheduling any new
+  // showing would reset every OTHER still-active appointment's Canceled/
+  // Completed status back to blank. buildAppointmentCell preserves it now.
   let active = cells
     .map((raw, i) => parseAppointmentCell(raw, i + 1))
     .filter((a) => a && a.date >= todayUtc)
-    .map((a) => `${a.address} | ${a.date}`);
-  active.push(`${address} | ${date}`);
+    .map((a) => buildAppointmentCell(a.address, a.date, a.status));
+  active.push(buildAppointmentCell(address, date, ""));
   if (active.length > APPOINTMENT_SLOT_COUNT) active = active.slice(active.length - APPOINTMENT_SLOT_COUNT);
   while (active.length < APPOINTMENT_SLOT_COUNT) active.push("");
 
@@ -3448,6 +3523,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/add-appointment" && request.method === "POST") {
     return handleAdminAddAppointment(request, env);
+  }
+  if (url.pathname === "/admin/update-appointment" && request.method === "POST") {
+    return handleAdminUpdateAppointment(request, env);
   }
   if (url.pathname === "/admin/set-sentiment" && request.method === "POST") {
     return handleAdminSetSentiment(request, env);

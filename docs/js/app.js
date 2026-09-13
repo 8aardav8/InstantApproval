@@ -3673,6 +3673,28 @@ async function setCoBuyer(phone, slot, coBuyerPhone, fullName, onDone) {
   }
 }
 
+// Reschedule/cancel/reactivate/outcome, added 2026-09-15 per Aaron's
+// direct request ("click to reschedule or cancel existing appointments"
+// on both the Appointments-tab cards and Buyer pages). One shared write
+// underneath all of these (/admin/update-appointment overwrites ONE
+// appointment slot's whole cell) -- see appointmentManageControlsHtml's
+// own comment for the row/slot targeting.
+async function updateAppointment(phone, slot, address, date, status, onDone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/update-appointment`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, slot, address, date, status }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
+    if (onDone) onDone();
+  } catch (err) {
+    alert(`Couldn't save: ${err}`);
+  }
+}
+
 function formatShortDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -3800,6 +3822,104 @@ function formatApptDate(dateStr) {
   if (days === 0) return "Today";
   if (days > 0) return days === 1 ? "in 1d" : `in ${days}d`;
   return days === -1 ? "1d ago" : `${-days}d ago`;
+}
+
+// Shared Reschedule/Cancel/Reactivate/Outcome controls for ONE
+// appointment -- added 2026-09-15 per Aaron's direct request, used by
+// BOTH renderApptCard (Appointments tab) and the buyer detail page's own
+// Scheduled/Past Showings list, so the exact same markup+behavior shows
+// up in both places rather than two separately-maintained versions.
+// Requires phone+row+slot (added to the appointment object server-side
+// the same day, see handleAdminActivity/admin-buyers-worker.js) to know
+// which of the 10 "Appointment N" cells to target -- renders nothing at
+// all if any of those are missing rather than a control that can't
+// actually save anywhere.
+function appointmentManageControlsHtml(a) {
+  if (!(a.phone && a.row && a.slot)) return "";
+  const today = localTodayISO();
+  const isPast = a.date < today;
+  // "No-show" is never a stored value -- see admin/worker.js's
+  // parseAppointmentCell comment. A past appointment with no explicit
+  // status just READS as one here.
+  const effectiveStatus = a.status || (isPast ? "No-show" : "Scheduled");
+  const dataAttrs = `data-phone="${escapeAttr(a.phone)}" data-slot="${a.slot}" data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}"`;
+  if (isPast) {
+    return `
+      <div class="appt-outcome-row">
+        <label>Outcome
+          <select class="appt-outcome-select" ${dataAttrs}>
+            <option value=""${effectiveStatus === "No-show" ? " selected" : ""}>No-show</option>
+            <option value="Completed"${effectiveStatus === "Completed" ? " selected" : ""}>Completed</option>
+            <option value="Canceled"${effectiveStatus === "Canceled" ? " selected" : ""}>Canceled</option>
+          </select>
+        </label>
+      </div>
+    `;
+  }
+  const isCanceled = a.status === "Canceled";
+  return `
+    <div class="appt-manage-row">
+      <button type="button" class="btn-outline appt-reschedule-btn" ${dataAttrs}>Reschedule</button>
+      ${isCanceled
+        ? `<span class="appt-status-label appt-status-canceled">Canceled</span><button type="button" class="btn-outline appt-reactivate-btn" ${dataAttrs}>Reactivate</button>`
+        : `<button type="button" class="btn-outline appt-cancel-btn" ${dataAttrs}>Cancel</button>`}
+    </div>
+    <div class="appt-reschedule-panel hidden">
+      <select class="appt-reschedule-date-select">
+        <option value="" disabled selected>Choose a new date</option>
+        ${buildDateOptions().map(({ value, label }) => `<option value="${value}">${escapeHtml(label)}</option>`).join("")}
+      </select>
+      <button type="button" class="btn-primary appt-reschedule-save-btn" ${dataAttrs}>Save</button>
+    </div>
+  `;
+}
+
+// Wires the controls appointmentManageControlsHtml renders, inside
+// `container` -- called from BOTH renderAppointmentsOverview and
+// renderBuyerDetail after their own innerHTML is set, since the same
+// markup/classes appear in both places. `onDone` is each caller's own
+// "refresh myself" callback (renderAppointmentsOverview or
+// renderBuyerDetail(findBuyer(phone))).
+function wireAppointmentManageControls(container, onDone) {
+  container.querySelectorAll(".appt-reschedule-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const panel = btn.closest(".appt-manage-row").nextElementSibling;
+      panel.classList.toggle("hidden");
+    });
+  });
+  container.querySelectorAll(".appt-reschedule-panel").forEach((panel) => {
+    panel.addEventListener("click", (e) => e.stopPropagation());
+  });
+  container.querySelectorAll(".appt-reschedule-save-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const panel = btn.closest(".appt-reschedule-panel");
+      const newDate = panel.querySelector(".appt-reschedule-date-select").value;
+      if (!newDate) { alert("Choose a date first."); return; }
+      updateAppointment(btn.dataset.phone, Number(btn.dataset.slot), btn.dataset.address, newDate, "", onDone);
+    });
+  });
+  container.querySelectorAll(".appt-cancel-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!confirm(`Cancel the appointment at ${btn.dataset.address}? No text will be sent the morning of.`)) return;
+      updateAppointment(btn.dataset.phone, Number(btn.dataset.slot), btn.dataset.address, btn.dataset.date, "Canceled", onDone);
+    });
+  });
+  container.querySelectorAll(".appt-reactivate-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      updateAppointment(btn.dataset.phone, Number(btn.dataset.slot), btn.dataset.address, btn.dataset.date, "", onDone);
+    });
+  });
+  container.querySelectorAll(".appt-outcome-select").forEach((sel) => {
+    sel.addEventListener("click", (e) => e.stopPropagation());
+    sel.addEventListener("change", (e) => {
+      e.stopPropagation();
+      updateAppointment(sel.dataset.phone, Number(sel.dataset.slot), sel.dataset.address, sel.dataset.date, sel.value, onDone);
+    });
+  });
 }
 
 function findBuyer(phone) {
@@ -4201,7 +4321,13 @@ function renderBuyerDetail(buyer) {
   // and automatically switch to a Red X if they have gone unavailable").
   // A past showing's current availability isn't the same actionable
   // signal, so that list stays as it was.
-  const apptItem = (a, showAvailability) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}</div>`;
+  // appointmentManageControlsHtml needs a.phone -- lm.appointments entries
+  // don't carry it individually (scoped to this one buyer already), so
+  // it's merged in here from the buyer object itself. Added 2026-09-15
+  // per Aaron's direct request ("click to reschedule or cancel existing
+  // appointments... on Buyer pages") -- same shared controls/wiring the
+  // Appointments-tab cards use (renderApptCard/wireAppointmentManageControls).
+  const apptItem = (a, showAvailability) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}${appointmentManageControlsHtml({ ...a, phone: buyer.phone })}</div>`;
   // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
   // an appointment for a buyer for a property from their Buyer page
   // myself"). Same autocomplete pattern as Shown Properties above, but
@@ -4504,6 +4630,11 @@ function renderBuyerDetail(buyer) {
   if (prevBtn) prevBtn.addEventListener("click", () => showAdjacentBuyer(-1));
   const nextBtn = container.querySelector("#buyer-nav-next");
   if (nextBtn) nextBtn.addEventListener("click", () => showAdjacentBuyer(1));
+
+  // Reschedule/Cancel/Outcome controls on Scheduled/Past Showings, added
+  // 2026-09-15 per Aaron's direct request -- same shared helper/wiring
+  // the Appointments-tab cards use.
+  wireAppointmentManageControls(container, () => renderBuyerDetail(findBuyer(buyer.phone)));
 
   // Co-Buyers, added 2026-09-15 per Aaron's direct request.
   container.querySelectorAll(".co-buyer-block").forEach((block) => {
@@ -5563,9 +5694,10 @@ function renderApptCard(a, showMarkShown) {
         ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
         ${showMarkShown && a.row ? `
           <label class="appt-mark-shown-label">
-            <input type="checkbox" class="appt-mark-shown-checkbox" data-row="${a.row}" data-address="${escapeAttr(a.address)}" data-phone="${escapeAttr(a.phone)}">
+            <input type="checkbox" class="appt-mark-shown-checkbox" data-row="${a.row}" data-slot="${a.slot || ""}" data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" data-phone="${escapeAttr(a.phone)}">
             Mark as shown
           </label>` : ""}
+        ${appointmentManageControlsHtml(a)}
       </div>
     </div>
   `;
@@ -5634,8 +5766,14 @@ function renderAppointmentsOverview() {
       cb.addEventListener("change", () => {
         if (!cb.checked) return; // one-way -- unchecking doesn't un-mark, same as the buyer-page Remove button being the only way back
         markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, renderAppointmentsOverview);
+        // Also sets this SPECIFIC appointment's own status to Completed
+        // (not just the general Shown Properties ledger) -- added
+        // 2026-09-15, so it reads consistently with the new Reschedule/
+        // Cancel/Outcome controls below once it lands in Past.
+        if (cb.dataset.slot) updateAppointment(cb.dataset.phone, Number(cb.dataset.slot), cb.dataset.address, cb.dataset.date, "Completed");
       });
     });
+    wireAppointmentManageControls(c, renderAppointmentsOverview);
   }
 }
 
