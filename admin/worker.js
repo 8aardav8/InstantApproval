@@ -1753,133 +1753,6 @@ async function listDropboxFolder(dropboxToken, path) {
   return entries.filter((e) => e[".tag"] === "file");
 }
 
-// Strips buildIdFilename's own " - 1234" phone-suffix and "(Co-buyer of
-// X)" tag if present (so a file the site itself already named still
-// extracts a clean name), then lowercases and splits into word tokens --
-// deliberately loose since Aaron's manually-dropped files won't
-// necessarily follow that convention at all, could just be "John Smith.jpg"
-// or "smith_john.png".
-function nameTokensFromFilename(filename) {
-  const noExt = filename.replace(/\.[a-zA-Z0-9]+$/, "");
-  const noCoBuyerTag = noExt.replace(/\s*\(Co-buyer of [^)]*\)\s*$/i, "");
-  const noPhoneSuffix = noCoBuyerTag.replace(/\s*-\s*\d{4}\s*$/, "");
-  return noPhoneSuffix.toLowerCase().split(/[^a-z]+/).filter((t) => t.length > 1);
-}
-function nameTokensFromSheetName(name) {
-  return (name || "").toLowerCase().split(/[^a-z]+/).filter((t) => t.length > 1);
-}
-
-// Shared by handleSuggestedIdMatches and handleRenameIdFiles -- both need
-// the exact same "files in the folder fuzzy-matched against buyers with
-// no ID Link yet" computation, just do different things with the result
-// (surface for confirmation vs. actually rename).
-// Real gap found 2026-09-11 (Aaron noticed the count was suspiciously
-// low -- "why only check against 8?"): this used to source its "needs an
-// ID" population from App: Logins rows alone, which only exist for
-// buyers who actually used the site's own login gate. Most buyers in the
-// real buyer list come from Quo conversations and never touch that gate
-// at all -- invisible to this check entirely, not just uncounted. Fixed
-// by sourcing the population from the SAME full buyer list the Buyers tab
-// itself shows (the standalone iah-buyers Worker's own /buyers endpoint,
-// forwarding this same admin's auth token -- both workers verify against
-// the same Google OAuth client), filtered to no ID Link, matched by
-// quoName (or the BUYERS-tab lead's contactName as a fallback) since
-// App: Logins' own Name column is usually blank for these buyers.
-async function computeSuggestedIdMatches(env) {
-  const [dropboxToken, cached] = await Promise.all([
-    getDropboxAccessToken(env),
-    env.BUYERS_KV.get('buyers_cache'), // same key iah-buyers itself writes/serves from -- see wrangler-admin.toml's own comment on why this is a KV read, not a fetch() to that Worker
-  ]);
-  const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
-  if (!cached) throw new Error('buyers cache not ready yet -- the background sync has not completed its first cycle');
-  const buyersData = JSON.parse(cached);
-
-  const needsId = (buyersData.buyers || [])
-    .filter((b) => !(b.loginsMatch && b.loginsMatch.idLink))
-    .map((b) => {
-      const name = b.quoName || (b.leadInfo && b.leadInfo.contactName) || "";
-      return { phone: b.phone, name, tokens: nameTokensFromSheetName(name) };
-    })
-    .filter((b) => b.name);
-
-  const matches = [];
-  for (const file of files) {
-    const fileTokens = nameTokensFromFilename(file.name);
-    if (fileTokens.length < 2) continue; // need at least a first + last token to judge anything
-    for (const buyer of needsId) {
-      if (buyer.tokens.length < 2) continue;
-      const overlap = buyer.tokens.filter((t) => fileTokens.includes(t)).length;
-      // Require both the buyer's first and last name token to appear in
-      // the filename -- deliberately strict (see the header comment on
-      // why a false match here is worse than missing a real one).
-      if (overlap >= 2) {
-        matches.push({ dropboxPath: file.path_display, filename: file.name, buyerPhone: buyer.phone, buyerName: buyer.name });
-        break; // one filename shouldn't be offered against more than one buyer
-      }
-    }
-  }
-  return { matches, filesScanned: files.length, buyersNeedingId: needsId.length };
-}
-
-async function handleSuggestedIdMatches(request, env) {
-  const authHeader = request.headers.get("Authorization") || "";
-  const idToken = authHeader.replace(/^Bearer\s+/i, "");
-  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
-  const verified = await verifyIdToken(idToken);
-  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
-
-  try {
-    return jsonResponse(await computeSuggestedIdMatches(env));
-  } catch (e) {
-    return jsonResponse({ error: "server error", detail: String(e) }, 500);
-  }
-}
-
-// "Rename all ID files loaded into the Dropbox folder," added 2026-09-11
-// per Aaron's direct request -- normalizes manually-dropped files onto
-// the same "<Last>, <First> - <last4>.<ext>" convention buildIdFilename
-// already uses for site-uploaded ones. Deliberately scoped to ONLY the
-// same candidate set as computeSuggestedIdMatches (files fuzzy-matched to
-// a buyer with no ID Link yet) -- a file that's already linked has a real
-// shared link + Sheet reference pointing at its current path, and
-// renaming it isn't guaranteed to carry that link over safely. This never
-// touches an already-linked file, only ones nothing points to yet.
-async function handleRenameIdFiles(request, env) {
-  const authHeader = request.headers.get("Authorization") || "";
-  const idToken = authHeader.replace(/^Bearer\s+/i, "");
-  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
-  const verified = await verifyIdToken(idToken);
-  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
-
-  try {
-    const { matches } = await computeSuggestedIdMatches(env);
-    const dropboxToken = await getDropboxAccessToken(env);
-    const renamed = [];
-    const skipped = [];
-    const errors = [];
-
-    for (const m of matches) {
-      const targetName = buildIdFilename(m.buyerName, m.buyerPhone, m.filename);
-      if (targetName === m.filename) { skipped.push({ filename: m.filename, reason: "already matches the convention" }); continue; }
-      const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
-      try {
-        const res = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ from_path: m.dropboxPath, to_path: targetPath, autorename: false }),
-        });
-        if (!res.ok) { errors.push({ filename: m.filename, detail: await res.text() }); continue; }
-        renamed.push({ from: m.filename, to: targetName, buyerName: m.buyerName });
-      } catch (e) {
-        errors.push({ filename: m.filename, detail: String(e) });
-      }
-    }
-    return jsonResponse({ renamed, skipped, errors });
-  } catch (e) {
-    return jsonResponse({ error: "server error", detail: String(e) }, 500);
-  }
-}
-
 // ---------- Buyer-page editing (admin UI), added 2026-09-12 ----------
 // Per Aaron's direct request: "I'd like to be able to update the contacts
 // from their page on the buyer site, eg associate them with areas, upload
@@ -2675,6 +2548,61 @@ async function handleInternalContacts(request, env) {
 // confident. Deliberately a single-file call, not a batch like
 // /rename-id-files -- the caller already knows exactly which file goes
 // with which buyer, no server-side matching to redo.
+// Shared core of the two "link an existing Dropbox file to a buyer" paths
+// -- consolidated 2026-09-13 as part of a real ID-linking simplification
+// pass (Aaron: "let's simplify the IDs"). Before this, handleConfirmIdMatch
+// (the manual "Browse existing ID photos" panel) and handleInternalAutoLinkId
+// (the automated OCR watcher) each carried their own copy of this exact
+// rename+link+Sheet-write+cache-patch sequence -- genuinely risky
+// duplication: the two had already drifted once (one had the real-time
+// cache-patch fix before the other, earlier the same day). autorename is
+// the one real behavioral difference between the two callers: the browse
+// panel always expects a fresh target path (never collides, so autorename
+// doesn't matter in practice, kept true for historical parity with what
+// handleConfirmIdMatch always did); the OCR watcher passes false since it
+// already knows a distinct name should be safe and wants a hard failure
+// surfaced (flagged to Telegram) rather than a silent "(1)" suffix if that
+// assumption is ever wrong. idName (the OCR'd name off the ID itself) is
+// optional -- only the auto-link caller ever has one.
+async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename }) {
+  await ensureBuyerInCache(env, toE164(buyerPhone));
+  const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
+
+  const originalFilename = dropboxPath.split("/").pop() || "";
+  const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
+  const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
+  let finalPath = dropboxPath;
+  if (targetName !== originalFilename) {
+    const moveRes = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from_path: dropboxPath, to_path: targetPath, autorename }),
+    });
+    if (!moveRes.ok) throw Object.assign(new Error("rename failed"), { httpDetail: await moveRes.text() });
+    const moveData = await moveRes.json();
+    finalPath = moveData.metadata.path_display;
+  }
+
+  const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
+  // Most matched buyers have no App: Logins row at all -- find one if it
+  // exists, otherwise create a minimal new row rather than requiring one.
+  const row = await findLoginsRowByPhone(accessToken, buyerPhone);
+  if (row) {
+    await writeIdLink(accessToken, row, idLink);
+    if (idName) await writeIdName(accessToken, row, idName);
+  } else {
+    await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
+    if (idName) {
+      const newRow = await findLoginsRowByPhone(accessToken, buyerPhone);
+      if (newRow) await writeIdName(accessToken, newRow, idName);
+    }
+  }
+  await patchLoginsMatchField(env, buyerPhone, "idLink", idLink);
+  if (idName) await patchLoginsMatchField(env, buyerPhone, "idName", idName);
+
+  return { finalPath, idLink };
+}
+
 async function handleInternalAutoLinkId(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   let body;
@@ -2682,7 +2610,6 @@ async function handleInternalAutoLinkId(request, env) {
   const dropboxPath = (body.dropboxPath || "").trim();
   const buyerPhone = (body.buyerPhone || "").trim();
   const buyerName = (body.buyerName || "").trim();
-  const originalFilename = (body.filename || dropboxPath.split("/").pop() || "").trim();
   // The name actually read off the ID itself (AAMVA field 1/2 parse, best
   // effort -- see id-photo-watch.ts), added 2026-09-12 per Aaron's direct
   // request to be able to tell a buyer's Quo name, IAH login name, and ID
@@ -2693,44 +2620,10 @@ async function handleInternalAutoLinkId(request, env) {
   if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
-    // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(buyerPhone));
-    const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
-
-    const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
-    const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
-    let finalPath = dropboxPath;
-    if (targetName !== originalFilename) {
-      const moveRes = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from_path: dropboxPath, to_path: targetPath, autorename: false }),
-      });
-      if (!moveRes.ok) return jsonResponse({ error: "rename failed", detail: await moveRes.text() }, 500);
-      finalPath = targetPath;
-    }
-
-    const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
-    const row = await findLoginsRowByPhone(accessToken, buyerPhone);
-    if (row) {
-      await writeIdLink(accessToken, row, idLink);
-      if (idName) await writeIdName(accessToken, row, idName);
-    } else {
-      await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
-      if (idName) {
-        const newRow = await findLoginsRowByPhone(accessToken, buyerPhone);
-        if (newRow) await writeIdName(accessToken, newRow, idName);
-      }
-    }
-    // Real-time cache patch, added 2026-09-13 -- see patchLoginsMatchField's
-    // own comment for why this was missing and what it fixes. This is the
-    // path id-photo-watch.ts's automated OCR watch actually calls, so this
-    // is the more common real-world case of the two.
-    await patchLoginsMatchField(env, buyerPhone, "idLink", idLink);
-    if (idName) await patchLoginsMatchField(env, buyerPhone, "idName", idName);
-
+    const { finalPath, idLink } = await linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename: false });
     return jsonResponse({ ok: true, renamedTo: finalPath, idLink });
   } catch (e) {
+    if (e.httpDetail) return jsonResponse({ error: "rename failed", detail: e.httpDetail }, 500);
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
 }
@@ -2750,41 +2643,10 @@ async function handleConfirmIdMatch(request, env) {
   if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
-    // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(buyerPhone));
-    const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
-    // Renames onto the same "<Last>, <First> - <last4>.<ext>" convention
-    // every other successful link path uses (upload-from-device, the
-    // automated OCR watcher) -- added 2026-09-15. This endpoint used to
-    // link WITHOUT renaming, the only one of the three that didn't;
-    // brought into parity now that it's being reused for the new
-    // "browse existing Dropbox photos" picker (see handleAdminBrowseIdPhotos).
-    const originalFilename = dropboxPath.split("/").pop() || "";
-    const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
-    const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
-    let finalPath = dropboxPath;
-    if (targetName !== originalFilename) {
-      const moveRes = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from_path: dropboxPath, to_path: targetPath, autorename: true }),
-      });
-      if (!moveRes.ok) return jsonResponse({ error: "rename failed", detail: await moveRes.text() }, 500);
-      const moveData = await moveRes.json();
-      finalPath = moveData.metadata.path_display;
-    }
-    const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
-    // Most matched buyers have no App: Logins row at all (see
-    // computeSuggestedIdMatches' own comment) -- find one if it exists,
-    // otherwise create a minimal new row rather than requiring one.
-    const row = await findLoginsRowByPhone(accessToken, buyerPhone);
-    if (row) await writeIdLink(accessToken, row, idLink);
-    else await appendLoginsRow(accessToken, toE164(buyerPhone), buyerName, idLink);
-    // Real-time cache patch, added 2026-09-13 -- see patchLoginsMatchField's
-    // own comment for why this was missing and what it fixes.
-    await patchLoginsMatchField(env, buyerPhone, "idLink", idLink);
+    const { finalPath, idLink } = await linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName: "", autorename: true });
     return jsonResponse({ ok: true, idLink, renamedTo: finalPath });
   } catch (e) {
+    if (e.httpDetail) return jsonResponse({ error: "rename failed", detail: e.httpDetail }, 500);
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
 }
@@ -4012,17 +3874,10 @@ async function route(request, env) {
     return handleUploadId(request, env);
   }
 
-  if (url.pathname === "/suggested-id-matches" && request.method === "GET") {
-    return handleSuggestedIdMatches(request, env);
-  }
-
   if (url.pathname === "/confirm-id-match" && request.method === "POST") {
     return handleConfirmIdMatch(request, env);
   }
 
-  if (url.pathname === "/rename-id-files" && request.method === "POST") {
-    return handleRenameIdFiles(request, env);
-  }
   if (url.pathname === "/admin/upload-id" && request.method === "POST") {
     return handleAdminUploadId(request, env);
   }

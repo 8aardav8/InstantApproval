@@ -1007,15 +1007,20 @@
       </div>
       <!-- "Check for ID photo matches" / "Rename ID files in Dropbox" buttons
            removed 2026-09-12, per Aaron's direct question ("are these
-           necessary anymore?") -- both used filename-only matching
-           (computeSuggestedIdMatches, admin/worker.js), which the automated
-           id-photo-watch.ts watcher (real OCR of the ID photo itself,
-           auto-links a confident match, flags anything ambiguous to
-           Telegram) has superseded for the normal case. The underlying
-           /suggested-id-matches, /confirm-id-match, /rename-id-files
-           endpoints and their JS (loadSuggestedIdMatches/confirmIdMatch/
-           renameIdFiles in app.js) are left in place, unwired -- easy to
-           re-add a button here if a manual fallback is ever wanted again. -->
+           necessary anymore?") -- both used filename-only matching, which
+           the automated id-photo-watch.ts watcher (real OCR of the ID
+           photo itself, auto-links a confident match, flags anything
+           ambiguous to Telegram) has superseded for the normal case. Left
+           unwired-but-in-place for almost a year as a possible fallback;
+           actually deleted 2026-09-13 as part of a real ID-linking
+           simplification pass (Aaron: "let's simplify the IDs") -- the
+           manual fallback that's still genuinely needed is "Browse
+           existing ID photos" (added 2026-09-15, still live), which covers
+           the same real need without this file-name-only matcher's much
+           higher false-positive risk. computeSuggestedIdMatches,
+           handleSuggestedIdMatches, handleRenameIdFiles, and the matching
+           client JS (loadSuggestedIdMatches/confirmIdMatch/renameIdFiles)
+           are gone from the codebase entirely, not just unwired. -->
       <div id="buyers-list"></div>
     </div>
     <div id="buyers-detail-view" class="hidden">
