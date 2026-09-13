@@ -3118,7 +3118,6 @@ function applyBuyersFilters() {
   // every time some OTHER filter changes, since this function replaces
   // the whole BUYERS_FILTER object.
   const previousHidden = BUYERS_FILTER.hidden;
-  const previousDnc = BUYERS_FILTER.dnc;
   BUYERS_FILTER = {
     down: parseFloat(document.getElementById("bf-down").value) || null,
     monthly: parseFloat(document.getElementById("bf-monthly").value) || null,
@@ -3133,14 +3132,15 @@ function applyBuyersFilters() {
     sentiment: document.getElementById("bf-sentiment").value || null,
     hidden: previousHidden || "not-hidden",
     favoriteAddress: (document.getElementById("bf-favorite-address") || {}).value || null,
-    dnc: previousDnc || null,
+    // Moved into this panel 2026-09-13 (was a standalone toggle button) --
+    // read directly from the dropdown now, same as every other bf-* field
+    // above, instead of carried forward from the previous state.
+    dnc: document.getElementById("bf-dnc").value || null,
   };
   saveBuyersFilterState();
   updateBuyersFilterBadge();
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
-  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
-  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
   renderBuyersList();
 }
 
@@ -3160,6 +3160,7 @@ function clearBuyersFilters() {
   document.getElementById("bf-contact-op").value = "";
   document.getElementById("bf-contact-period").value = "week";
   document.getElementById("bf-sentiment").value = "";
+  document.getElementById("bf-dnc").value = "";
   // Resets to "not-hidden" (the actual default) directly on BUYERS_FILTER
   // -- there's no dropdown for this anymore (removed 2026-09-15 per
   // Aaron's direct request), only the "Show hidden" toggle button, whose
@@ -3167,10 +3168,6 @@ function clearBuyersFilters() {
   BUYERS_FILTER.hidden = "not-hidden";
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
-  // Same reset-to-default treatment for the DNC toggle, added 2026-09-16.
-  BUYERS_FILTER.dnc = null;
-  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
-  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
   applyBuyersFilters();
 }
 
@@ -3202,6 +3199,7 @@ function syncBuyersFilterControlsToState() {
   setVal("bf-contact-op", f.contactOp);
   setVal("bf-contact-period", f.contactPeriod || "week");
   setVal("bf-sentiment", f.sentiment);
+  setVal("bf-dnc", f.dnc);
   const favAddrInput = document.getElementById("bf-favorite-address");
   if (favAddrInput) favAddrInput.value = f.favoriteAddress || "";
   const favAddrWrap = document.getElementById("bf-favorite-address-wrap");
@@ -3215,8 +3213,6 @@ function syncBuyersFilterControlsToState() {
   updateBuyersFilterBadge();
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
-  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
-  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
 }
 
 async function loadBuyers() {
@@ -3370,8 +3366,6 @@ function renderBuyersList() {
   if (cardModeBtn) updateCardModeToggleLabel(cardModeBtn);
   const hiddenToggleBtn = document.getElementById("buyers-show-hidden-toggle");
   if (hiddenToggleBtn) updateHiddenToggleLabel(hiddenToggleBtn);
-  const dncToggleBtn = document.getElementById("buyers-show-dnc-toggle");
-  if (dncToggleBtn) updateDncToggleLabel(dncToggleBtn);
 
   const listEl = document.getElementById("buyers-list");
   const buyers = sortedBuyers();
@@ -5636,7 +5630,7 @@ function initBuyersTab() {
   // comment at its call site in loadBuyers() for why calling it eagerly at
   // page-load time (this function runs before this section's own consts
   // are initialized) is what broke the whole page on 2026-09-11.
-  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment"].forEach((id) => {
+  ["bf-down", "bf-monthly", "bf-beds", "bf-id", "bf-favorites", "bf-loggedin", "bf-contact-op", "bf-contact-period", "bf-sentiment", "bf-dnc"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyBuyersFilters);
   });
@@ -5708,48 +5702,15 @@ function initBuyersTab() {
     renderBuyersList();
   });
 
-  // "Show DNC only" quick toggle, added 2026-09-16 per Aaron's direct
-  // request -- same button-driven pattern as Show hidden above, but a
-  // genuine any/dnc-only toggle (see BUYERS_FILTER.dnc's own comment).
-  const showDncBtn = document.getElementById("buyers-show-dnc-toggle");
-  if (showDncBtn) showDncBtn.addEventListener("click", () => {
-    BUYERS_FILTER.dnc = BUYERS_FILTER.dnc === "dnc" ? null : "dnc";
-    saveBuyersFilterState();
-    updateBuyersFilterBadge();
-    updateDncToggleLabel(showDncBtn);
-    renderBuyersList();
-  });
-
-  const backfillStageBtn = document.getElementById("buyers-backfill-stage-btn");
-  if (backfillStageBtn) backfillStageBtn.addEventListener("click", () => backfillStage(backfillStageBtn));
-}
-
-// One-time bulk backfill, added 2026-09-16 per Aaron's direct request --
-// see handleAdminBackfillStage's own comment (admin/worker.js) for the
-// server-side detail. Reloads the buyer list afterward so the newly-set
-// stages (and their card outlines/progress bars) show up immediately.
-async function backfillStage(btn) {
-  if (!confirm('Set every buyer with NO stage currently selected to "First Contact"? This only touches buyers with a blank stage -- anyone with a stage already set is left alone.')) return;
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "Working…";
-  const token = getStoredAdminToken();
-  try {
-    const res = await fetch(`${ADMIN_API_URL}/admin/backfill-stage`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok || !data.ok) { alert(`Couldn't backfill: ${(data && data.error) || res.status}`); return; }
-    alert(data.updated > 0 ? `Set "${data.stage}" on ${data.updated} buyer(s).` : "Nothing to update -- every buyer already has a stage set.");
-    await loadBuyers();
-    renderBuyersList();
-  } catch (err) {
-    alert(`Couldn't backfill: ${err}`);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }
+  // "Show DNC only" standalone toggle button, and the one-time
+  // "Set First Contact for blank stages" backfill button, both removed
+  // 2026-09-13 per Aaron's direct request -- the toolbar row of buttons
+  // was causing layout/responsivity problems on mobile. DNC moved into
+  // the filter panel (see bf-dnc wiring above); the backfill was a
+  // one-time action (see handleAdminBackfillStage in admin/worker.js for
+  // the server-side logic, still there if ever needed again by hand) --
+  // by 2026-09-13 it had already run and there were zero blank-stage rows
+  // left, so there was nothing left for the button to do.
 }
 
 function updateDateModeToggleLabel(btn) {
@@ -5767,11 +5728,6 @@ function updateHiddenToggleLabel(btn) {
   btn.textContent = BUYERS_FILTER.hidden === "hidden" ? "Show active" : "Show hidden";
 }
 
-// "Show DNC only" toggle label, added 2026-09-16 -- same pattern as
-// updateHiddenToggleLabel above.
-function updateDncToggleLabel(btn) {
-  btn.textContent = BUYERS_FILTER.dnc === "dnc" ? "Show all" : "Show DNC only";
-}
 
 // ---------- Suggested ID matches (Dropbox "Buyer IDs" folder), added 2026-09-11 ----------
 // Calls the PRODUCTION admin worker (ADMIN_API_URL), not BUYERS_API_URL --

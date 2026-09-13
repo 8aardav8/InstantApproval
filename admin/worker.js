@@ -6,11 +6,13 @@
 // Database Sheet's "Automations" tab (ID column, "AUTO-000001" style,
 // same convention as TASK-000001/RULE-000001). This file is responsible
 // for: AUTO-000001 (booking write), AUTO-000005 (hide/sentiment/stage/DNC
-// -> Sheet write + immediate cache patch), AUTO-000009 (missed-call/
-// unreplied-text webhook -> Pending Follow-ups), AUTO-000010 (phone/
-// email-change confirmation flow). If a new automation gets added here,
-// add a row to that tab too -- see instant-approval-homes/SESSION_LOG.md
-// for how it was built.
+// -> Sheet write + immediate cache patch), AUTO-000006 (the /internal/
+// auto-link-id half -- the actual Dropbox-rename + Sheet-write; the OCR/
+// fuzzy-match half lives in nanoclaw's id-photo-watch.ts, not here),
+// AUTO-000009 (missed-call/unreplied-text webhook -> Pending Follow-ups),
+// AUTO-000010 (phone/email-change confirmation flow). If a new automation
+// gets added here, add a row to that tab too -- see
+// instant-approval-homes/SESSION_LOG.md for how it was built.
 //
 // Two independent jobs on one Worker (kept together since they already
 // share the same service-account Sheets credential -- no reason to stand up
