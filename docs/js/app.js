@@ -2850,6 +2850,23 @@ function stageColorFor(stage) {
   return idx >= 0 ? STAGE_COLORS[idx] : null;
 }
 
+// Live availability badge for an address, added 2026-09-15 per Aaron's
+// direct request -- a green check if that property is still "Available"
+// (ALL_LISTINGS, same live data the Home page search itself uses), a red
+// X once it's gone Pending/Sold, or nothing if the address doesn't match
+// any current listing at all (can't judge availability for something not
+// in the feed). "Updated in real time" here means: derived fresh from
+// ALL_LISTINGS on every render, not a stored flag that could go stale --
+// used on the buyer detail page's Favorited/Scheduled Showings lists and
+// the Appointments-tab cards (renderApptCard).
+function listingAvailabilityBadgeHtml(address) {
+  const listing = (ALL_LISTINGS || []).find((l) => l.address === address);
+  if (!listing) return "";
+  return listing.status === "Available"
+    ? `<span class="availability-badge availability-yes" title="Still available">✅</span>`
+    : `<span class="availability-badge availability-no" title="No longer available (${escapeHtml(listing.status || "unavailable")})">❌</span>`;
+}
+
 // Sentiment emojis, added 2026-09-12 -- Aaron's own personal-impression
 // note per buyer. Stored server-side as one of these three keys (or "" for
 // unset); the emoji itself is purely a client-side rendering choice.
@@ -4106,7 +4123,7 @@ function renderBuyerDetail(buyer) {
   ` : "";
 
   const favoritesHtml = lm && lm.favorites && lm.favorites.length
-    ? `<div class="buyer-section"><h3>Favorited Properties (${lm.favorites.length})</h3>${lm.favorites.map((f) => `<div class="buyer-list-item">${escapeHtml(f)}</div>`).join("")}</div>`
+    ? `<div class="buyer-section"><h3>Favorited Properties (${lm.favorites.length})</h3>${lm.favorites.map((f) => `<div class="buyer-list-item">${escapeHtml(f)} ${listingAvailabilityBadgeHtml(f)}</div>`).join("")}</div>`
     : "";
 
   // Viewed Properties -- passive, every detail page this buyer opened on
@@ -4165,7 +4182,13 @@ function renderBuyerDetail(buyer) {
   const todayForAppts = localTodayISO();
   const scheduledAppts = (lm && lm.appointments ? lm.appointments : []).filter((a) => a.date >= todayForAppts);
   const pastAppts = (lm && lm.appointments ? lm.appointments : []).filter((a) => a.date < todayForAppts);
-  const apptItem = (a) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)}</div>`;
+  // Availability badge only on UPCOMING showings (not past ones) -- added
+  // 2026-09-15 per Aaron's direct request ("scheduled showings on the
+  // Buyer page should have a green checkmark if they are still available
+  // and automatically switch to a Red X if they have gone unavailable").
+  // A past showing's current availability isn't the same actionable
+  // signal, so that list stays as it was.
+  const apptItem = (a, showAvailability) => `<div class="buyer-list-item">${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}</div>`;
   // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
   // an appointment for a buyer for a property from their Buyer page
   // myself"). Same autocomplete pattern as Shown Properties above, but
@@ -4215,10 +4238,10 @@ function renderBuyerDetail(buyer) {
   ` : "";
 
   const scheduledHtml = scheduledAppts.length
-    ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map(apptItem).join("")}</div>`
+    ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map((a) => apptItem(a, true)).join("")}</div>`
     : "";
   const pastHtml = pastAppts.length
-    ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map(apptItem).join("")}</div>`
+    ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map((a) => apptItem(a, false)).join("")}</div>`
     : "";
 
   // Always 2 slots now (empty ones kept, not filtered out server-side --
@@ -5505,8 +5528,20 @@ function renderApptCard(a, showMarkShown) {
   const namesHtml = (a.quoName || a.name)
     ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)}</div>` : ""}`
     : (a.email ? copyableTextHtml(a.email) : a.phone ? phoneQuoLinkHtml(a.phone) : "Unknown visitor");
+  // Big availability badge, added 2026-09-15 per Aaron's direct request
+  // ("on the appointments page, there should also be a big green
+  // checkmark or red X on all the appointments based on the properties
+  // availability... updated in real time") -- reuses matchingListing
+  // (already looked up above for the address-link) rather than a second
+  // ALL_LISTINGS scan. Corner-badge styling (see .appt-card-availability-
+  // badge in style.css) is deliberately larger/more prominent than
+  // listingAvailabilityBadgeHtml's small inline version used elsewhere.
+  const availabilityBadgeHtml = matchingListing
+    ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
+    : "";
   return `
     <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""}>
+      ${availabilityBadgeHtml}
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
       <div class="appt-card-info">
         <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
