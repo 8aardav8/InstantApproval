@@ -3949,12 +3949,18 @@ const BUYERS_DATE_MODE_STORAGE_KEY = "iah_buyers_date_mode";
 let BUYERS_DATE_MODE = (() => {
   try { return localStorage.getItem(BUYERS_DATE_MODE_STORAGE_KEY) || "date"; } catch (e) { return "date"; }
 })();
+// "today" case changed 2026-09-14 per Aaron's direct request -- the bare
+// word "today" carried no real information on a buyer card (when today?
+// this morning, 5 minutes ago?). Now shows the actual time of day instead
+// (no seconds), same convention formatDateTimeWithYearAndSince already
+// uses elsewhere on the site -- simpler to keep consistent with than a
+// separate "Nh Nm ago" relative format, and more useful at a glance.
 function formatDaysSince(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
   const days = Math.floor((Date.now() - d.getTime()) / 86400000);
-  if (days <= 0) return "today";
+  if (days <= 0) return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   if (days === 1) return "1d ago";
   return `${days}d ago`;
 }
