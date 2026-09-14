@@ -6087,19 +6087,21 @@ function renderApptCard(a, showMarkShown) {
   // own click handler below (wired in renderAppointmentsOverview) that
   // stops propagation so it goes to the property instead of the buyer.
   const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
-  // Quo name vs. login name, added 2026-09-13 per Aaron's direct request
-  // ("show the Quo name and the login name if there is one separately")
-  // -- these are two genuinely different names that can legitimately
-  // differ (a buyer might sign up on the site under one name but have a
-  // different name saved in Quo, or vice versa): a.name is the App:
-  // Logins "Name" field (handleAdminActivity, admin/worker.js) -- what
-  // THIS shows as "Login" -- while a.quoName (set in
-  // renderAppointmentsOverview below, from the same BUYERS_CACHE lookup
-  // the card's own buyer-page link uses) is the Quo contact's own name.
-  // Login name only renders "if there is one" per Aaron's wording; Quo
-  // name renders whenever a matching Quo contact has one.
-  const namesHtml = (a.quoName || a.name)
-    ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)}</div>` : ""}`
+  // Quo name vs. login name vs. ID name, added 2026-09-13 (Quo/Login),
+  // extended 2026-09-14 (ID name + the login check/X) per Aaron's direct
+  // request ("bring these names to show onto each appointments card as
+  // well") -- same three-name-field set the buyer detail page shows. These
+  // can all genuinely differ (a buyer might sign up on the site under one
+  // name, have a different name saved in Quo, and a third name print on
+  // their actual ID): a.name is the App: Logins "Name" field -- shown as
+  // "Login" -- a.quoName is the Quo contact's own name, a.idName is the
+  // OCR'd name off their linked ID (both set in renderAppointmentsOverview
+  // below, from the same BUYERS_CACHE lookup the card's own buyer-page
+  // link uses). Each renders only if there is one; the ✅/❌ next to Login
+  // is the same ever-logged-in signal (hasEverLoggedIn, from firstLogin)
+  // the buyer detail page shows next to its own Login Name field.
+  const namesHtml = (a.quoName || a.name || a.idName)
+    ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)} ${a.hasEverLoggedIn ? "✅" : "❌"}</div>` : ""}${a.idName ? `<div class="appt-card-idname">ID: ${escapeHtml(a.idName)}</div>` : ""}`
     : (a.email ? copyableTextHtml(a.email) : a.phone ? phoneQuoLinkHtml(a.phone) : "Unknown visitor");
   // Big availability badge, added 2026-09-15 per Aaron's direct request
   // ("on the appointments page, there should also be a big green
@@ -6155,7 +6157,18 @@ function renderAppointmentsOverview() {
       const alreadyShown = !!(buyer && buyer.loginsMatch && buyer.loginsMatch.shown && buyer.loginsMatch.shown.includes(address));
       // quoName, added 2026-09-13 -- see renderApptCard's own comment on
       // why this and a.name (the login name) are shown separately.
-      const entry = { address, ...a, row, quoName: buyer ? buyer.quoName : null };
+      // idName + hasEverLoggedIn, added 2026-09-14 per Aaron's direct
+      // request ("bring these names to show onto each appointments card as
+      // well") -- same three-name-field set the buyer detail page shows
+      // (Quo/Login/ID), now on the appointment card too, plus the same
+      // ever-logged-in check/X next to Login. Both pulled straight off
+      // this buyer's own loginsMatch, same source renderBuyerDetail reads.
+      const entry = {
+        address, ...a, row,
+        quoName: buyer ? buyer.quoName : null,
+        idName: buyer && buyer.loginsMatch ? buyer.loginsMatch.idName : null,
+        hasEverLoggedIn: !!(buyer && buyer.loginsMatch && buyer.loginsMatch.firstLogin),
+      };
       // Real bug fix, 2026-09-16 -- Aaron reported a 2-DAYS-OUT
       // appointment (Demi's) landing under "Past Appointments." Root
       // cause: `shown` is a flat per-ADDRESS list on the buyer (added by
