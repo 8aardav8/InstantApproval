@@ -783,12 +783,34 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
      Bottom section ("the status bar," full card width): three EQUAL
      THIRDS -- sentiment emoji | stage | last login/text/call info. */
 .buyer-row {
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 10px; position: relative;
   width: 100%; text-align: left; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
   padding: 16px 18px; margin-bottom: 8px; cursor: pointer; font: inherit;
 }
 .buyer-row:hover { border-color: var(--blue); }
 .buyer-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* Card options (⋮) button + its popup menu, added 2026-09-14 -- replaces
+   the old swipe-left-to-hide gesture (see initBuyerRowMenuDelegation in
+   app.js for why). Small, absolutely positioned in the card's own top-right
+   corner so it costs no layout space, per Aaron's explicit preference for
+   a three-dot popup over a labeled button. */
+.buyer-row-menu-btn {
+  position: absolute; top: 6px; right: 6px; z-index: 2;
+  width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent;
+  color: var(--gray-text, #6b7280); font-size: 18px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.buyer-row-menu-btn:hover { background: #f3f4f6; color: var(--navy); }
+.buyer-row-menu-popup {
+  position: absolute; z-index: 50; background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px; overflow: hidden;
+}
+.buyer-row-menu-option {
+  display: block; width: 100%; text-align: left; padding: 10px 14px; border: none; background: none;
+  font-size: 13px; color: var(--navy); cursor: pointer;
+}
+.buyer-row-menu-option:hover { background: #eef2ff; }
 
 /* Top section -- two equal halves. */
 .buyer-row-top { display: flex; gap: 12px; }

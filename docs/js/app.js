@@ -3658,6 +3658,7 @@ function renderBuyersList() {
       ` : "";
       rows.push(`
         <div class="buyer-row buyer-row-compact" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
+          <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
           <div class="buyer-row-compact-line1">
             <span class="buyer-row-name">${labelHtml}</span>
             ${compactIconsHtml}
@@ -3675,6 +3676,7 @@ function renderBuyersList() {
     } else {
       rows.push(`
         <div class="buyer-row" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
+          <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
           <div class="buyer-row-top">
             <div class="buyer-row-top-half buyer-row-top-thumb-half">
               ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
@@ -4114,32 +4116,52 @@ function findBuyer(phone) {
   return (BUYERS_CACHE || []).find((b) => b.phone === phone);
 }
 
-function showBuyerDetail(phone) {
+// BUYER_NAV_SNAPSHOT freezes the Prev/Next order for the duration of a
+// detail-page visit -- added 2026-09-14 per Aaron's direct request: editing
+// a buyer (stage, sentiment, etc.) can change where they'd now sort, and if
+// Prev/Next recomputed sortedBuyers() live on every step, that edit could
+// silently change what "next" even means mid-flip-through. Snapshotted
+// once, when the page is actually ENTERED (from the list, a search jump, a
+// co-buyer link, etc.) via the `keepSnapshot` opt being falsy; every
+// showAdjacentBuyer() step reuses the same snapshot instead of taking a
+// fresh one, so the position in the list only actually moves once you back
+// out to the list itself (backToBuyersList -> renderBuyersList, a fresh
+// sortedBuyers() call, same as always).
+let BUYER_NAV_SNAPSHOT = null;
+function showBuyerDetail(phone, opts = {}) {
   const buyer = findBuyer(phone);
   if (!buyer) return;
   CURRENT_BUYER_DETAIL_PHONE = phone;
+  if (!opts.keepNavSnapshot) {
+    BUYER_NAV_SNAPSHOT = sortedBuyers().map((b) => b.phone);
+  }
   document.getElementById("buyers-list-view").classList.add("hidden");
   document.getElementById("buyers-detail-view").classList.remove("hidden");
   renderBuyerDetail(buyer);
-  initBuyerDetailSwipe();
 }
 
-// Swipe left/right to move to the next/previous buyer, added 2026-09-12
-// per Aaron's direct request ("go to the next/previous card based on my
-// sorting criteria") -- walks the SAME sortedBuyers() order (current
-// sort + filters + search) the list itself is showing, so this always
-// matches whatever's actually on screen. Same touch-swipe pattern already
-// used for the Steps tab (initStepSwipe/SWIPE_THRESHOLD above).
+// Moves to the next/previous buyer, added 2026-09-12 per Aaron's direct
+// request ("go to the next/previous card based on my sorting criteria").
+// Originally triggered by a swipe gesture on the detail page (removed
+// 2026-09-14, see the comment above showBuyerDetail) and now only by the
+// Prev/Next arrow buttons -- the function itself is unchanged either way.
 function showAdjacentBuyer(direction) {
-  const list = sortedBuyers();
+  // Walks BUYER_NAV_SNAPSHOT (phones only, frozen at page-entry -- see its
+  // own comment above showBuyerDetail) rather than a fresh sortedBuyers(),
+  // so an edit made on the current buyer's page never reshuffles what
+  // Prev/Next means mid-visit. Falls back to a fresh sort if somehow no
+  // snapshot exists yet (defensive only -- showBuyerDetail always sets one).
+  const list = BUYER_NAV_SNAPSHOT || sortedBuyers().map((b) => b.phone);
   if (list.length === 0) return;
   const phone = CURRENT_BUYER_DETAIL_PHONE;
-  const idx = list.findIndex((b) => b.phone === phone);
+  const idx = list.indexOf(phone);
   if (idx === -1) return; // current buyer got filtered out from under us -- nothing sane to step to
   const nextIdx = idx + direction;
   if (nextIdx < 0 || nextIdx >= list.length) return; // at an edge -- no wraparound
-  const next = list[nextIdx];
-  showBuyerDetail(next.phone);
+  const nextPhone = list[nextIdx];
+  const next = findBuyer(nextPhone);
+  if (!next) return; // buyer no longer exists in the cache at all -- nothing sane to step to
+  showBuyerDetail(next.phone, { keepNavSnapshot: true });
   // Visual confirmation, added 2026-09-12 per Aaron's direct request ("I
   // have accidentally swiped before and didn't know that I was on a new
   // page") -- a brief slide-in toast naming who you just landed on and
@@ -4164,48 +4186,80 @@ function flashSwipeIndicator(direction, name) {
   setTimeout(() => toast.remove(), 1000);
 }
 
-// Swipe left on a buyer-row card (list view, NOT the detail-page swipe
-// above) to hide it, added 2026-09-15 per Aaron's direct request --
-// swiping left on an already-hidden card (only reachable via the "Show
-// hidden" view) un-hides it instead, so the same gesture works both
-// directions rather than needing a separate control to undo it from
-// there. Delegated on #buyers-list itself (not each .buyer-row), so this
-// keeps working across every renderBuyersList() re-render without
-// needing to be re-wired -- same reasoning as initCopyableTextDelegation/
-// initPhoneQuoLinkDelegation above.
-let buyerRowSwipeEl = null;
-let buyerRowSwipeStartX = null;
-let buyerRowSwipeStartY = null;
-function initBuyerRowSwipeToHide() {
-  const listEl = document.getElementById("buyers-list");
-  if (!listEl) return;
-  listEl.addEventListener("touchstart", (e) => {
-    const el = e.target.closest(".buyer-row");
-    if (!el || e.touches.length !== 1) { buyerRowSwipeEl = null; return; }
-    buyerRowSwipeEl = el;
-    buyerRowSwipeStartX = e.touches[0].clientX;
-    buyerRowSwipeStartY = e.touches[0].clientY;
-  }, { passive: true });
-  listEl.addEventListener("touchend", (e) => {
-    const el = buyerRowSwipeEl;
-    const startX = buyerRowSwipeStartX, startY = buyerRowSwipeStartY;
-    buyerRowSwipeEl = null;
-    buyerRowSwipeStartX = null;
-    buyerRowSwipeStartY = null;
-    if (!el || startX === null || e.changedTouches.length !== 1) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    // Leftward only (dx sufficiently negative), and more horizontal than
-    // vertical -- same shape check every other swipe gesture here uses,
-    // just one-directional (no right-swipe action defined).
-    if (dx > -SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
-    const phone = el.dataset.phone;
-    if (!phone) return;
-    toggleBuyerHiddenViaSwipe(phone);
-  }, { passive: true });
+// Card menu (⋮ button -> small popup: Hide/Unhide) on a buyer-row card,
+// replacing the old swipe-left-to-hide gesture -- 2026-09-14 per Aaron's
+// direct request: swiping was throwing real "couldn't save: server error"
+// alerts (most likely Google Sheets' own per-minute write-quota being hit
+// by rapid/accidental repeat swipes, each one costing several sequential
+// Sheets API calls -- see handleAdminSetHidden server-side; a deliberate
+// tap is far less likely to trigger that than an easy-to-repeat gesture),
+// and took a real gesture to discover at all. A single ⋮ button costs far
+// less card space than a labeled button, per his own preference.
+// Delegated on #buyers-list itself (not each .buyer-row), so this keeps
+// working across every renderBuyersList() re-render without needing to be
+// re-wired -- same reasoning as initCopyableTextDelegation/
+// initPhoneQuoLinkDelegation above. One shared popup element (built lazily,
+// reused across every card) rather than one per row, same pattern as the
+// ID lightbox.
+let buyerRowMenuPopupEl = null;
+function getBuyerRowMenuPopup() {
+  if (buyerRowMenuPopupEl) return buyerRowMenuPopupEl;
+  const el = document.createElement("div");
+  el.className = "buyer-row-menu-popup hidden";
+  document.body.appendChild(el);
+  buyerRowMenuPopupEl = el;
+  return el;
+}
+function closeBuyerRowMenu() {
+  if (buyerRowMenuPopupEl) buyerRowMenuPopupEl.classList.add("hidden");
+}
+function openBuyerRowMenu(btn, phone) {
+  const buyer = findBuyer(phone);
+  if (!buyer) return;
+  const popup = getBuyerRowMenuPopup();
+  const hideLabel = buyer.hidden ? "Unhide" : "Hide";
+  popup.innerHTML = `<button type="button" class="buyer-row-menu-option" data-action="hide">${hideLabel}</button>`;
+  const rect = btn.getBoundingClientRect();
+  popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  popup.style.left = `${Math.max(8, rect.right + window.scrollX - 120)}px`;
+  popup.classList.remove("hidden");
+  popup.querySelector('[data-action="hide"]').addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeBuyerRowMenu();
+    toggleBuyerHidden(phone);
+  });
+}
+function initBuyerRowMenuDelegation() {
+  // Capture phase on document, NOT a bubble-phase listener on #buyers-list
+  // -- same real gotcha already documented on initCopyableTextDelegation
+  // above (and the same fix): the .buyer-row's own click-to-open-detail
+  // listener is attached directly to the row and fires during the bubble
+  // phase BEFORE a bubble-phase listener on an ancestor like #buyers-list
+  // would ever see the click, so stopPropagation() there is too late.
+  // Listening on document in the capture phase runs first, genuinely
+  // preventing the row's own handler from ever seeing this click.
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".buyer-row-menu-btn");
+    if (!btn) return;
+    e.stopPropagation();
+    const popup = getBuyerRowMenuPopup();
+    const alreadyOpenForThis = !popup.classList.contains("hidden") && popup.dataset.forPhone === btn.dataset.phone;
+    closeBuyerRowMenu();
+    if (alreadyOpenForThis) return; // second click on the same button just closes it
+    popup.dataset.forPhone = btn.dataset.phone;
+    openBuyerRowMenu(btn, btn.dataset.phone);
+  }, true);
+  // Close on any click outside the popup/button, and on Escape -- same
+  // dismiss behavior as every other popup/dropdown in this file. Plain
+  // bubble phase is fine for these two -- nothing needs to be pre-empted.
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".buyer-row-menu-popup") || e.target.closest(".buyer-row-menu-btn")) return;
+    closeBuyerRowMenu();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBuyerRowMenu(); });
 }
 
-function toggleBuyerHiddenViaSwipe(phone) {
+function toggleBuyerHidden(phone) {
   const buyer = findBuyer(phone);
   if (!buyer) return;
   const newHidden = !buyer.hidden;
@@ -4238,29 +4292,12 @@ function flashHiddenToast(hidden, name, phone) {
 }
 
 let CURRENT_BUYER_DETAIL_PHONE = null;
-let buyerDetailSwipeWired = false;
-function initBuyerDetailSwipe() {
-  if (buyerDetailSwipeWired) return;
-  buyerDetailSwipeWired = true;
-  const section = document.getElementById("buyers-detail-view");
-  if (!section) return;
-  let startX = null;
-  let startY = null;
-  section.addEventListener("touchstart", (e) => {
-    if (e.touches.length !== 1) return;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
-  section.addEventListener("touchend", (e) => {
-    if (startX === null || e.changedTouches.length !== 1) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    startX = null;
-    startY = null;
-    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return; // not a real horizontal swipe
-    showAdjacentBuyer(dx < 0 ? 1 : -1); // swipe left = next, swipe right = previous
-  }, { passive: true });
-}
+// Removed 2026-09-14 per Aaron's direct request: swipe-to-navigate on the
+// detail page (initBuyerDetailSwipe, wired in showBuyerDetail) is gone now
+// that the Prev/Next arrow buttons (added 2026-09-15, buyer-nav-prev/next
+// below) cover the same job without a touch gesture that could be
+// triggered by accident. showAdjacentBuyer/flashSwipeIndicator are unchanged
+// and still power those buttons.
 
 // Real bug fixed 2026-09-12, found by Aaron directly: this used to just
 // toggle visibility, never re-rendering the list -- so a sentiment/stage
@@ -4380,8 +4417,17 @@ function renderBuyerDetail(buyer) {
   // right after it (buyer-areas-editable) -- both to save space (per
   // Aaron's direct request) and because they're editable now, unlike
   // everything else still in this read-only list.
+  // Ever-logged-in indicator, added 2026-09-14 per Aaron's direct request,
+  // shown right next to Login Name so it reads at a glance without having
+  // to check First/Last login further down. Based on firstLogin (not
+  // lastLogin, not isCurrentlyLoggedIn -- this is a lifetime "ever," not a
+  // "currently online" signal, which the 🟢 on Last Login already covers).
+  const hasEverLoggedIn = !!(lm && lm.firstLogin);
+  const loginStatusIconHtml = hasEverLoggedIn
+    ? `<span class="login-status-icon login-status-yes" title="Has logged in at least once">✅</span>`
+    : `<span class="login-status-icon login-status-no" title="Never logged in">❌</span>`;
+
   const facts = [
-    ["Login Name (IAH)", (lm && lm.name) || ""],
     ["ID Name (OCR)", (lm && lm.idName) || ""],
     ["Phone", buyer.phone],
     ["Email", (lm && lm.email) || ""],
@@ -4416,7 +4462,12 @@ function renderBuyerDetail(buyer) {
   // stays click-to-copy (copyableTextHtml) -- split 2026-09-14 per Aaron's
   // direct request, see phoneQuoLinkHtml's own comment for why phones and
   // emails are no longer treated the same way here.
-  const factsHtml = facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
+  //
+  // Login Name (IAH) rendered separately, ahead of the filtered facts list,
+  // so it always shows (even with no name on file) and can carry the
+  // ever-logged-in checkmark/X next to it -- added 2026-09-14.
+  const loginNameHtml = `<div class="detail-field"><span class="label">Login Name (IAH)</span><span class="value">${escapeHtml((lm && lm.name) || "(none)")} ${loginStatusIconHtml}</span></div>`;
+  const factsHtml = loginNameHtml + facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
 
   // Lead info from the Filling Sheet's separate "BUYERS" tab (rating,
   // preferences, company/landlord, which Quo number they came in on) --
@@ -4650,16 +4701,20 @@ function renderBuyerDetail(buyer) {
   // progress bar, and the SAME sentiment/stage controls the list card
   // has -- all updatable from the top of the page, not just from the list.
   // Left/right arrows flanking the Quo app button, added 2026-09-15 per
-  // Aaron's direct request -- a visible alternative to the swipe gesture
-  // (showAdjacentBuyer, same function, same sortedBuyers() order) for
-  // stepping to the previous/next buyer without needing a touchscreen.
-  // Disabled (not hidden) at either end of the list -- same "nothing sane
-  // to step to" behavior showAdjacentBuyer already has, just visible here
-  // rather than silently doing nothing.
-  const adjacentList = sortedBuyers();
-  const currentBuyerIdx = adjacentList.findIndex((b) => b.phone === buyer.phone);
+  // Aaron's direct request -- steps to the previous/next buyer
+  // (showAdjacentBuyer). Originally alongside a swipe gesture (removed
+  // 2026-09-14, see the comment above showBuyerDetail); now the only way to
+  // navigate. Disabled (not hidden) at either end of the list -- same
+  // "nothing sane to step to" behavior showAdjacentBuyer already has, just
+  // visible here rather than silently doing nothing.
+  // Uses BUYER_NAV_SNAPSHOT (frozen at page-entry, see showBuyerDetail's own
+  // comment) rather than a fresh sortedBuyers(), so the enabled/disabled
+  // state at the edges stays consistent with what Prev/Next will actually
+  // do mid-visit, not a live-resorted position.
+  const adjacentPhones = BUYER_NAV_SNAPSHOT || sortedBuyers().map((b) => b.phone);
+  const currentBuyerIdx = adjacentPhones.indexOf(buyer.phone);
   const hasPrevBuyer = currentBuyerIdx > 0;
-  const hasNextBuyer = currentBuyerIdx >= 0 && currentBuyerIdx < adjacentList.length - 1;
+  const hasNextBuyer = currentBuyerIdx >= 0 && currentBuyerIdx < adjacentPhones.length - 1;
   const detailHeaderHtml = `
     <div class="buyer-detail-header">
       <div class="buyer-nav-row">
@@ -4816,10 +4871,10 @@ function renderBuyerDetail(buyer) {
   // Sentiment/stage controls at the top of the page, added 2026-09-12 --
   // same handlers as the list card, but re-render THIS page afterward
   // (onDone), not the list underneath it.
-  // Prev/Next arrows, added 2026-09-15 per Aaron's direct request -- same
-  // showAdjacentBuyer() the swipe gesture already calls, so both stay in
-  // sync with the same sortedBuyers() order and the same swipe-toast
-  // confirmation (flashSwipeIndicator) on every step, not just swipes.
+  // Prev/Next arrows, added 2026-09-15 per Aaron's direct request --
+  // showAdjacentBuyer(), same function a swipe gesture used to call before
+  // it was removed 2026-09-14, still with the same swipe-toast confirmation
+  // (flashSwipeIndicator) on every step.
   const prevBtn = container.querySelector("#buyer-nav-prev");
   if (prevBtn) prevBtn.addEventListener("click", () => showAdjacentBuyer(-1));
   const nextBtn = container.querySelector("#buyer-nav-next");
@@ -5184,6 +5239,66 @@ function initBuyerDetailSearch() {
       if (first && !dropdown.classList.contains("hidden")) {
         e.preventDefault();
         input.value = "";
+        dropdown.classList.add("hidden");
+        showBuyerDetail(first.dataset.phone);
+      }
+    }
+  });
+}
+
+// Autofill suggestions on the BUYERS-LIST search box, added 2026-09-14 per
+// Aaron's direct request ("I would like it to auto fill when I start typing
+// similar to the way it does on the search bar at the top of every Buyer
+// page") -- same matchesFor/render shape as initBuyerDetailSearch above,
+// just against #buyers-search-box instead. Picking a suggestion jumps
+// straight to that buyer's detail page, same as the detail-page search;
+// the list underneath keeps its own existing live-filter-on-every-keystroke
+// behavior unchanged (BUYERS_SEARCH, wired separately in initBuyersTab) --
+// this dropdown is an additional faster path, not a replacement for it.
+function initBuyersListSearchAutocomplete() {
+  const input = document.getElementById("buyers-search-box");
+  const dropdown = document.getElementById("buyers-search-suggestions");
+  if (!input || !dropdown) return;
+
+  function matchesFor(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return (BUYERS_CACHE || [])
+      .filter((b) => {
+        const name = b.quoName || (b.leadInfo && b.leadInfo.contactName) || "";
+        const email = (b.loginsMatch && b.loginsMatch.email) || "";
+        return name.toLowerCase().includes(q) || b.phone.includes(q) || email.toLowerCase().includes(q);
+      })
+      .slice(0, AUTOCOMPLETE_MAX_RESULTS);
+  }
+  function renderSuggestions(query) {
+    const matches = matchesFor(query);
+    if (matches.length === 0) { dropdown.classList.add("hidden"); dropdown.innerHTML = ""; return; }
+    dropdown.innerHTML = matches.map((b) => `
+      <div class="autocomplete-option" data-phone="${escapeAttr(b.phone)}">
+        ${escapeHtml(b.quoName || (b.leadInfo && b.leadInfo.contactName) || b.phone)}${buyerAutocompleteBadgesHtml(b)}
+        <span class="buyer-search-option-sub">${escapeHtml(b.phone)}</span>
+      </div>
+    `).join("");
+    dropdown.classList.remove("hidden");
+    dropdown.querySelectorAll(".autocomplete-option").forEach((opt) => {
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        dropdown.classList.add("hidden");
+        dropdown.innerHTML = "";
+        showBuyerDetail(opt.dataset.phone);
+      });
+    });
+  }
+  input.addEventListener("input", () => renderSuggestions(input.value));
+  input.addEventListener("focus", () => { if (input.value.trim()) renderSuggestions(input.value); });
+  input.addEventListener("blur", () => { dropdown.classList.add("hidden"); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { dropdown.classList.add("hidden"); return; }
+    if (e.key === "Enter") {
+      const first = dropdown.querySelector(".autocomplete-option");
+      if (first && !dropdown.classList.contains("hidden")) {
+        e.preventDefault();
         dropdown.classList.add("hidden");
         showBuyerDetail(first.dataset.phone);
       }
@@ -5689,7 +5804,7 @@ function initPhoneQuoLinkDelegation() {
 function initBuyersTab() {
   initCopyableTextDelegation();
   initPhoneQuoLinkDelegation();
-  initBuyerRowSwipeToHide();
+  initBuyerRowMenuDelegation();
   initBuyerDetailSearch();
   // Sort choice + direction persisted on every change, added 2026-09-15
   // per Aaron's direct request ("remember the filter and sort preferences
@@ -5729,6 +5844,7 @@ function initBuyersTab() {
     BUYERS_SEARCH = searchBox.value.trim().toLowerCase();
     renderBuyersList();
   });
+  initBuyersListSearchAutocomplete();
   const filterToggle = document.getElementById("buyers-filter-toggle");
   const sortToggle = document.getElementById("buyers-sort-toggle");
   const filterPanel = document.getElementById("buyers-filter-panel");
