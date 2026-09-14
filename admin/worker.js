@@ -3423,6 +3423,70 @@ async function handleInternalAutoLinkId(request, env) {
   }
 }
 
+// "ID OCR Cache" tab (Filling Sheet, same SHEET_ID -- File ID | File Name |
+// OCR Text | Extracted ID Name | Last OCR), added 2026-09-14 per Aaron's
+// direct request ("OCR search... so I don't have to scroll through them
+// visually if OCR has already picked up the name I'm looking for") on the
+// "Browse existing IDs" picker. Real gap this closes: id-photo-watch.ts
+// already OCRs every new file, but previously only ever DID anything with
+// that text for a CONFIDENT match (auto-link) -- an ambiguous/no-match
+// file's OCR'd text only ever went out in a one-off Telegram flag message
+// and was otherwise discarded, plus `seen` (the script's own state file)
+// permanently marks a file processed by Dropbox's stable id, so it's never
+// re-OCR'd even if it sits unassociated forever. This endpoint gives the
+// script somewhere durable to put that text (called for EVERY file it
+// successfully OCRs, confident match or not -- cheap, and harmless even
+// for a file that gets auto-linked and removed from the browse pool a
+// moment later), so handleAdminBrowseIdPhotos below can surface it and the
+// browse panel can search it client-side, without ever needing to OCR
+// anything on demand (the Worker has no Vision.framework access -- OCR can
+// only ever happen on Aaron's own Mac, via this same local script).
+// Upserts by File ID (col A), same "Dropbox id survives rename" reasoning
+// id-photo-watch.ts already uses for its own `seen` set -- never appends a
+// duplicate row for a file this has already cached.
+async function handleInternalCacheOcrText(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const fileId = (body.fileId || "").trim();
+  const fileName = (body.fileName || "").trim();
+  const ocrText = (body.ocrText || "").trim().slice(0, 4000); // Sheets cell limit is 50k chars -- capped well under that, plenty for search
+  const idName = (body.idName || "").trim();
+  if (!fileId) return jsonResponse({ error: "missing fileId" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const OCR_CACHE_TAB = "ID OCR Cache";
+    const idRange = encodeURIComponent(`'${OCR_CACHE_TAB}'!A:A`);
+    const idRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${idRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!idRes.ok) throw new Error(`ocr-cache id column read failed: ${await idRes.text()}`);
+    const idCol = (await idRes.json()).values || [];
+    let row = null;
+    for (let i = 1; i < idCol.length; i++) {
+      if ((idCol[i][0] || "").trim() === fileId) { row = i + 1; break; }
+    }
+    const nowIso = new Date().toISOString();
+    if (row) {
+      const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${OCR_CACHE_TAB}'!A${row}:E${row}`)}?valueInputOption=RAW`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `'${OCR_CACHE_TAB}'!A${row}:E${row}`, values: [[fileId, fileName, ocrText, idName, nowIso]] }),
+      });
+      if (!putRes.ok) throw new Error(`ocr-cache update failed: ${await putRes.text()}`);
+    } else {
+      const appendRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${OCR_CACHE_TAB}'!A:E`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `'${OCR_CACHE_TAB}'!A:E`, values: [[fileId, fileName, ocrText, idName, nowIso]] }),
+      });
+      if (!appendRes.ok) throw new Error(`ocr-cache append failed: ${await appendRes.text()}`);
+    }
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleConfirmIdMatch(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -3491,6 +3555,25 @@ async function handleAdminBrowseIdPhotos(request, env) {
     const linkedUrls = new Set(
       (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean)
     );
+    // OCR cache lookup, added 2026-09-14 per Aaron's direct request ("OCR
+    // search... once the IDs load") -- see handleInternalCacheOcrText's own
+    // comment for the full why. Keyed by Dropbox's stable file id, same as
+    // that cache-write and id-photo-watch.ts's own `seen` set, so it
+    // survives a file getting renamed between when it was OCR'd and when
+    // it's browsed here. One extra range read, same cheap shape as the
+    // id-link check just above.
+    const ocrRange = encodeURIComponent(`'ID OCR Cache'!A:D`);
+    const ocrRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${ocrRange}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const ocrByFileId = new Map();
+    if (ocrRes.ok) {
+      const ocrData = await ocrRes.json();
+      for (const row of (ocrData.values || []).slice(1)) {
+        const fileId = (row[0] || "").trim();
+        if (fileId) ocrByFileId.set(fileId, { ocrText: row[2] || "", idName: row[3] || "" });
+      }
+    } // best-effort -- a failed cache read just means no search hints attach, browsing itself still works
     const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
     const unassociated = [];
     for (const file of files) {
@@ -3503,7 +3586,8 @@ async function handleAdminBrowseIdPhotos(request, env) {
       const listData = await listRes.json();
       const existingUrl = (listData.links || [])[0] && listData.links[0].url;
       if (existingUrl && linkedUrls.has(existingUrl)) continue; // a real buyer already points at this file -- not a candidate
-      unassociated.push({ path: file.path_display, name: file.name });
+      const cached = ocrByFileId.get(file.id);
+      unassociated.push({ path: file.path_display, name: file.name, ocrText: cached ? cached.ocrText : "", idName: cached ? cached.idName : "" });
     }
     return jsonResponse({ files: unassociated });
   } catch (e) {
@@ -5000,6 +5084,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/auto-link-id" && request.method === "POST") {
     return handleInternalAutoLinkId(request, env);
+  }
+  if (url.pathname === "/internal/cache-ocr-text" && request.method === "POST") {
+    return handleInternalCacheOcrText(request, env);
   }
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {

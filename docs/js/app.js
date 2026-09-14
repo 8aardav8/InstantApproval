@@ -5695,48 +5695,82 @@ async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) 
     if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't load: ${(data && data.error) || res.status}</p>`; return; }
     const files = data.files || [];
     if (files.length === 0) { panel.innerHTML = "<p>No unassociated ID photos found in the Dropbox folder.</p>"; return; }
-    panel.innerHTML = files.map((f) => `
-      <div class="id-browse-item" data-path="${escapeAttr(f.path)}">
-        <img class="id-browse-thumb" alt="${escapeAttr(f.name)}">
-        <span class="id-browse-name">${escapeHtml(f.name)}</span>
-      </div>
-    `).join("");
-    // Lazy per-thumbnail load -- one preview-link request per item actually
-    // rendered here (there's no long scrollable virtualization to worry
-    // about; this panel's own item count is small enough to just load all
-    // of them once the panel opens, still far cheaper than the server
-    // creating every link up front on the SAME request as the list itself).
-    panel.querySelectorAll(".id-browse-item").forEach(async (item) => {
-      const img = item.querySelector(".id-browse-thumb");
-      try {
-        const linkRes = await fetch(`${ADMIN_API_URL}/admin/id-photo-preview-link?path=${encodeURIComponent(item.dataset.path)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const linkData = await linkRes.json();
-        if (linkRes.ok && linkData.idLink) loadAdminIdPhoto(img, linkData.idLink);
-      } catch (e) {
-        // Best-effort -- a thumbnail that fails to load just stays blank; the filename label is still there to pick by.
-      }
-      item.addEventListener("click", async () => {
-        if (!confirm(`Link "${item.querySelector(".id-browse-name").textContent}" as ${fullName || phone}'s ID?`)) return;
-        statusEl.textContent = "Linking…";
+
+    // OCR search box, added 2026-09-14 per Aaron's direct request ("OCR
+    // search once the IDs load so that I don't have to scroll through them
+    // visually if OCR has already picked up the name I'm looking for") --
+    // the whole file list already loaded above in one request, so this
+    // filters entirely client-side on every keystroke, no server round
+    // trip. Matches against the OCR'd text (f.ocrText -- see
+    // handleAdminBrowseIdPhotos/handleInternalCacheOcrText server-side for
+    // where that comes from), the best-guess extracted ID name (f.idName),
+    // and the plain filename, so it still works for a file id-photo-watch.ts
+    // hasn't OCR'd yet (or OCR'd before this cache existed) as long as the
+    // name happens to be in the filename itself.
+    panel.innerHTML = `
+      <input type="search" class="id-browse-search-input" placeholder="Search by name (OCR)…" autocomplete="off">
+      <div class="id-browse-grid"></div>
+    `;
+    const grid = panel.querySelector(".id-browse-grid");
+    const searchInput = panel.querySelector(".id-browse-search-input");
+
+    function renderGrid(list) {
+      grid.innerHTML = list.length ? list.map((f) => `
+        <div class="id-browse-item" data-path="${escapeAttr(f.path)}">
+          <img class="id-browse-thumb" alt="${escapeAttr(f.name)}">
+          <span class="id-browse-name">${escapeHtml(f.name)}</span>
+          ${f.idName ? `<span class="id-browse-ocr-name">OCR: ${escapeHtml(f.idName)}</span>` : ""}
+        </div>
+      `).join("") : `<p>No ID photos match "${escapeHtml(searchInput.value)}".</p>`;
+      // Lazy per-thumbnail load -- one preview-link request per item
+      // actually rendered here (there's no long scrollable virtualization
+      // to worry about; this panel's own item count is small enough to
+      // just load all of them once rendered, still far cheaper than the
+      // server creating every link up front on the SAME request as the
+      // list itself).
+      grid.querySelectorAll(".id-browse-item").forEach(async (item) => {
+        const img = item.querySelector(".id-browse-thumb");
         try {
-          const linkResult = await fetch(`${ADMIN_API_URL}/confirm-id-match`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ dropboxPath: item.dataset.path, buyerPhone: phone, buyerName: fullName }),
+          const linkRes = await fetch(`${ADMIN_API_URL}/admin/id-photo-preview-link?path=${encodeURIComponent(item.dataset.path)}`, {
+            headers: { Authorization: `Bearer ${token}` },
           });
-          const linkData = await linkResult.json();
-          if (!linkResult.ok || !linkData.ok) { statusEl.textContent = `Couldn't link: ${(linkData && linkData.error) || linkResult.status}`; return; }
-          statusEl.textContent = "Linked.";
-          await loadBuyers();
-          closeLightbox();
-          const refreshed = findBuyer(phone);
-          if (refreshed) renderBuyerDetail(refreshed);
-        } catch (err) {
-          statusEl.textContent = `Couldn't link: ${err}`;
+          const linkData = await linkRes.json();
+          if (linkRes.ok && linkData.idLink) loadAdminIdPhoto(img, linkData.idLink);
+        } catch (e) {
+          // Best-effort -- a thumbnail that fails to load just stays blank; the filename label is still there to pick by.
         }
+        item.addEventListener("click", async () => {
+          if (!confirm(`Link "${item.querySelector(".id-browse-name").textContent}" as ${fullName || phone}'s ID?`)) return;
+          statusEl.textContent = "Linking…";
+          try {
+            const linkResult = await fetch(`${ADMIN_API_URL}/confirm-id-match`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ dropboxPath: item.dataset.path, buyerPhone: phone, buyerName: fullName }),
+            });
+            const linkData = await linkResult.json();
+            if (!linkResult.ok || !linkData.ok) { statusEl.textContent = `Couldn't link: ${(linkData && linkData.error) || linkResult.status}`; return; }
+            statusEl.textContent = "Linked.";
+            await loadBuyers();
+            closeLightbox();
+            const refreshed = findBuyer(phone);
+            if (refreshed) renderBuyerDetail(refreshed);
+          } catch (err) {
+            statusEl.textContent = `Couldn't link: ${err}`;
+          }
+        });
       });
+    }
+
+    renderGrid(files);
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q) { renderGrid(files); return; }
+      renderGrid(files.filter((f) =>
+        (f.name || "").toLowerCase().includes(q) ||
+        (f.idName || "").toLowerCase().includes(q) ||
+        (f.ocrText || "").toLowerCase().includes(q)
+      ));
     });
   } catch (err) {
     panel.innerHTML = `<p>Couldn't load: ${err}</p>`;
