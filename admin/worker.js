@@ -2645,6 +2645,55 @@ async function handleInternalIdFileBytes(request, env) {
 // schema support custom fields/tags at all, distinct from defaultFields?
 // Read-only, no KV writes -- safe to use even while the daily KV write
 // cap is exhausted. Remove once the tags question is settled either way.
+// Temporary diagnostic, added 2026-09-14 -- lists the account's real,
+// currently-configured Quo webhook subscriptions (event types, target
+// URL, status), to answer "does Last Quo Activity include outgoing
+// messages and calls" with real data instead of guessing from docs.
+async function handleInternalListWebhooks(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const res = await fetch(`${QUO_BASE}/webhooks`, {
+      headers: { Authorization: env.QUO_API_KEY, "Quo-Api-Version": "2026-03-30" },
+    });
+    const data = await res.json();
+    if (!res.ok) return jsonResponse({ error: "quo error", status: res.status, detail: data }, 500);
+    return jsonResponse(data);
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Temporary tool, added 2026-09-14 alongside handleInternalListWebhooks --
+// PATCH /webhooks/{id}, used once to add message.delivered (outgoing
+// messages) to the existing instant-approval-phone-confirm subscription so
+// Last Quo Activity can include outbound texts, not just inbound.
+async function handleInternalUpdateWebhook(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const webhookId = (body.webhookId || "").trim();
+  if (!webhookId) return jsonResponse({ error: "missing webhookId" }, 400);
+  try {
+    // Real quirk found live: PATCH /v1/webhooks/{id} 404s ("Cannot PATCH
+    // /v1/webhooks/...") even though GET /v1/webhooks (the list) works
+    // fine -- the newer dated-versioned webhooks API apparently doesn't
+    // live under /v1 for this route. Base URL built without QUO_BASE's
+    // own /v1 suffix here specifically.
+    const res = await fetch(`https://api.quo.com/webhooks/${webhookId}`, {
+      method: "PATCH",
+      headers: { Authorization: env.QUO_API_KEY, "Quo-Api-Version": "2026-03-30", "Content-Type": "application/json" },
+      body: JSON.stringify(body.update || {}),
+    });
+    const rawText = await res.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch { data = null; }
+    if (!res.ok || !data) return jsonResponse({ error: "quo error", status: res.status, rawText: rawText.slice(0, 500) }, 500);
+    return jsonResponse(data);
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalRawContact(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   const url = new URL(request.url);
@@ -4680,6 +4729,12 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/backfill-role" && request.method === "POST") {
     return handleInternalBackfillRole(request, env);
+  }
+  if (url.pathname === "/internal/list-webhooks" && request.method === "GET") {
+    return handleInternalListWebhooks(request, env);
+  }
+  if (url.pathname === "/internal/update-webhook" && request.method === "POST") {
+    return handleInternalUpdateWebhook(request, env);
   }
   if (url.pathname === "/internal/raw-contact" && request.method === "GET") {
     return handleInternalRawContact(request, env);
