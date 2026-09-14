@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T18:23:03.798941+00:00",
+  "generatedAt": "2026-09-14T18:23:51.983238+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -823,8 +823,8 @@
       "onMarketDate": "9/11",
       "lastUpdate": "9/11",
       "area": "IL - East St Louis",
-      "down": "$1,995",
-      "monthly": "$595",
+      "down": "$2,995",
+      "monthly": "$995",
       "picsLink": "https://drive.google.com/drive/folders/1NaJ8N3fy6ku_wUS0UWdlvtG59ooK1w3M",
       "beds": "3",
       "baths": "2",
@@ -4263,7 +4263,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "728",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8598889,
       "lng": -88.9365179
