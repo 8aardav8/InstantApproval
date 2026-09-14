@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T22:21:56.456601+00:00",
+  "generatedAt": "2026-09-14T22:22:54.192476+00:00",
   "listings": [
     {
       "id": "1310-e-poplar-st-west-frankfort-il-62896",
@@ -867,23 +867,6 @@
       "livability": 3,
       "lat": 38.6203961,
       "lng": -90.12868089999999
-    },
-    {
-      "id": "225-n-63rd-st-east-st-louis-il-62203",
-      "address": "225 N 63rd St East St Louis IL 62203",
-      "onMarketDate": "9/11",
-      "lastUpdate": "9/11",
-      "area": "IL - East St Louis",
-      "down": "$2,995",
-      "monthly": "$995",
-      "picsLink": "https://drive.google.com/drive/folders/1NaJ8N3fy6ku_wUS0UWdlvtG59ooK1w3M",
-      "beds": "3",
-      "baths": "2",
-      "sqft": "1338",
-      "status": "Available",
-      "livability": 2,
-      "lat": 38.598555,
-      "lng": -90.0897786
     },
     {
       "id": "2810-norwood-ave-saint-louis-mo-63115",
