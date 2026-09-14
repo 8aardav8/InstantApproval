@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T15:22:36.528244+00:00",
+  "generatedAt": "2026-09-14T15:33:57.581429+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -872,7 +872,7 @@
       "id": "1739-n-gulick-ave-decatur-il-62-526",
       "address": "1739 N Gulick Ave Decatur IL 62,526",
       "onMarketDate": "8/16",
-      "lastUpdate": "9/5",
+      "lastUpdate": "9/11",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$950",
@@ -880,7 +880,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8596692,
       "lng": -88.9717967
