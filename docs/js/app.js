@@ -6173,9 +6173,15 @@ function renderApptCard(a, showMarkShown) {
   // cards") -- ADMIN_LOCKBOX_BY_ADDRESS comes from the PROPERTIES tab's
   // "Lock box " column via handleAdminActivity (admin-gated, deliberately
   // NOT part of the public properties.json -- see that endpoint's own
-  // comment). Free text in the Sheet, not always just a bare 4-digit code
-  // (real examples on file: "Front door 5060", "1772 box on front door
-  // knob") -- shown as-is rather than trying to extract just digits.
+  // comment). Free text in the Sheet, not always just a bare digit code --
+  // some rows carry a location note alongside or instead of one -- so this
+  // is shown as-is rather than trying to extract just digits. Do NOT quote
+  // real Sheet values in this comment or anywhere else in a committed
+  // file: this repo is public, and generate_properties.py's own
+  // verify_no_sensitive_data.py check (deliberately) fails the publish
+  // pipeline if any real Lock box value it read from the Sheet turns up
+  // verbatim in a static template file -- caught exactly this mistake live
+  // 2026-09-14, see SESSION_LOG.md for the incident.
   const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || "";
   const lockboxHtml = lockboxCode ? `<div class="appt-card-lockbox">🔑 ${escapeHtml(lockboxCode)}</div>` : "";
   // data-address/data-date, added 2026-09-16 -- lets
