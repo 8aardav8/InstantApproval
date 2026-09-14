@@ -893,6 +893,29 @@
              to date sorts too, not just Name -- see
              updateSortDirToggleLabel() in app.js. -->
         <button id="buyers-sort-dir-toggle" class="btn-outline" type="button"></button>
+        <!-- Secondary sort ("Then by"), added 2026-09-14 per Aaron's direct
+             request -- ties within the primary sort (e.g. every buyer in
+             the same area) now break by a second, independently chosen
+             field instead of a hardcoded "most recent" -- see
+             BUYER_SORT_COMPARATORS in app.js. Same field list as the
+             primary (minus a "None" option at the top); always applies in
+             its own natural default direction (A-Z, most-recent-first,
+             etc.) -- not independently reversible, to keep this one control
+             simple rather than doubling the UI. -->
+        <label>Then by
+          <select id="buyers-sort-secondary">
+            <option value="">None</option>
+            <option value="appointments">Appointments (soonest first)</option>
+            <option value="area">Area</option>
+            <option value="stage">Stage</option>
+            <option value="sentiment">Sentiment</option>
+            <option value="name">Name (A–Z)</option>
+            <option value="last-contact">Last Contact (any)</option>
+            <option value="last-login">Last Login</option>
+            <option value="last-message">Last Message</option>
+            <option value="last-call">Last Call</option>
+          </select>
+        </label>
       </div>
 
       <!-- Mirrors the homes search filter panel (f-down/f-monthly/f-beds/

@@ -2830,6 +2830,7 @@ let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on 
 // show-hidden click handlers in initBuyersTab.
 const BUYERS_SORT_STORAGE_KEY = "iah_buyers_sort";
 const BUYERS_SORT_DIR_STORAGE_KEY = "iah_buyers_sort_dir";
+const BUYERS_SORT_SECONDARY_STORAGE_KEY = "iah_buyers_sort_secondary";
 const BUYERS_FILTER_STORAGE_KEY = "iah_buyers_filter";
 
 // Default sort, changed 2026-09-11 per Aaron's direct request ("Buyers
@@ -2837,6 +2838,19 @@ const BUYERS_FILTER_STORAGE_KEY = "iah_buyers_filter";
 // "area". Restored from localStorage if a previous choice was saved.
 let BUYERS_SORT = (() => {
   try { return localStorage.getItem(BUYERS_SORT_STORAGE_KEY) || "last-contact"; } catch (e) { return "last-contact"; }
+})();
+// Secondary ("Then by") sort, added 2026-09-14 per Aaron's direct request
+// ("sorted by area... but then within all the St Louis area, sorted
+// alphabetically... or by most recent"). Defaults to "last-contact" the
+// very first time (no saved preference at all) so the out-of-the-box
+// behavior matches what Area/Appointments already did before this existed
+// (a hardcoded most-recent-first tie-break) -- fully overridable from here
+// on via the new "Then by" dropdown. Empty string = no secondary at all.
+let BUYERS_SORT_SECONDARY = (() => {
+  try {
+    const saved = localStorage.getItem(BUYERS_SORT_SECONDARY_STORAGE_KEY);
+    return saved === null ? "last-contact" : saved;
+  } catch (e) { return "last-contact"; }
 })();
 // 1 = today's real default order for whichever sort is selected, -1 =
 // reversed. Reset to 1 whenever the sort TYPE changes (see initBuyersTab)
@@ -3278,6 +3292,8 @@ function clearBuyersFilters() {
 function syncBuyersFilterControlsToState() {
   const sortSel = document.getElementById("buyers-sort");
   if (sortSel) sortSel.value = BUYERS_SORT;
+  const sortSecondarySel = document.getElementById("buyers-sort-secondary");
+  if (sortSecondarySel) sortSecondarySel.value = BUYERS_SORT_SECONDARY;
   const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
   if (sortDirBtn) updateSortDirToggleLabel(sortDirBtn);
 
@@ -3375,78 +3391,68 @@ function soonestUpcomingAppointmentDate(buyer) {
   return upcoming.length ? upcoming[0] : null;
 }
 
+// One comparator per sort field, added/refactored 2026-09-14 alongside the
+// new secondary ("Then by") sort -- each returns a number in its OWN
+// natural default order (ascending name, most-recent-first for dates,
+// pipeline order for stage, soonest-first for appointments, etc.), with NO
+// direction or tie-break logic baked in. BUYERS_SORT_DIR (the existing
+// reverse toggle) is applied only to whichever one is the PRIMARY; the
+// secondary always runs in its own natural order, same as how Area's own
+// hardcoded "most recent within a group" tie-break always worked before
+// this was made choosable -- now that behavior is just the default
+// secondary rather than something only Area/Appointments got for free.
+const lastContactOf = (x) => Math.max(
+  new Date(x.lastActivityAt || 0),
+  new Date(x.lastCallAt || 0),
+  new Date((x.loginsMatch && x.loginsMatch.lastLogin) || 0),
+);
+const buyerNameOf = (x) => x.quoName || (x.leadInfo && x.leadInfo.contactName) || x.phone;
+const BUYER_SORT_COMPARATORS = {
+  appointments: (a, b) => {
+    const aDate = soonestUpcomingAppointmentDate(a), bDate = soonestUpcomingAppointmentDate(b);
+    if (aDate && bDate) return aDate.localeCompare(bDate);
+    if (aDate !== bDate) return aDate ? -1 : 1;
+    return 0; // neither has one -- no opinion, same as any other tie
+  },
+  name: (a, b) => buyerNameOf(a).localeCompare(buyerNameOf(b)),
+  "last-contact": (a, b) => lastContactOf(b) - lastContactOf(a),
+  "last-message": (a, b) => new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0),
+  "last-login": (a, b) => new Date((b.loginsMatch && b.loginsMatch.lastLogin) || 0) - new Date((a.loginsMatch && a.loginsMatch.lastLogin) || 0),
+  "last-call": (a, b) => new Date(b.lastCallAt || 0) - new Date(a.lastCallAt || 0),
+  area: (a, b) => {
+    const aHas = a.areas && a.areas.length > 0, bHas = b.areas && b.areas.length > 0;
+    if (aHas !== bHas) return aHas ? -1 : 1;
+    if (aHas && bHas && a.areas[0] !== b.areas[0]) return a.areas[0].localeCompare(b.areas[0]);
+    return 0; // same area (or both unclassified) -- no opinion, that's the secondary's job now
+  },
+  stage: (a, b) => {
+    const stageIndex = (s) => (s ? BUYER_STAGES.indexOf(s) : -1);
+    const aIdx = stageIndex(a.stage), bIdx = stageIndex(b.stage);
+    if (aIdx === -1 || bIdx === -1) { if (aIdx !== bIdx) return aIdx === -1 ? 1 : -1; }
+    return aIdx - bIdx;
+  },
+  sentiment: (a, b) => {
+    const order = { frown: 0, neutral: 1, smile: 2 };
+    const sentIndex = (s) => (s in order ? order[s] : 99);
+    return sentIndex(a.sentiment) - sentIndex(b.sentiment);
+  },
+};
+
 function sortedBuyers() {
   const buyers = (BUYERS_CACHE || []).filter((b) => buyerMatchesFilters(b) && buyerMatchesSearch(b));
   const dir = BUYERS_SORT_DIR;
-  if (BUYERS_SORT === "appointments") {
-    // Buyers with an upcoming appointment first (soonest date first), then
-    // everyone else falls back to Last Contact (any) so the list doesn't
-    // just go alphabetical/random underneath the appointment block.
-    const lastContactOf = (x) => Math.max(
-      new Date(x.lastActivityAt || 0),
-      new Date(x.lastCallAt || 0),
-      new Date((x.loginsMatch && x.loginsMatch.lastLogin) || 0),
-    );
-    buyers.sort((a, b) => {
-      const aDate = soonestUpcomingAppointmentDate(a), bDate = soonestUpcomingAppointmentDate(b);
-      if (aDate && bDate) return dir * aDate.localeCompare(bDate);
-      if (aDate !== bDate) return dir * (aDate ? -1 : 1);
-      return dir * (lastContactOf(b) - lastContactOf(a));
-    });
-  } else if (BUYERS_SORT === "name") {
-    const nameOf = (x) => x.quoName || (x.leadInfo && x.leadInfo.contactName) || x.phone;
-    buyers.sort((a, b) => dir * nameOf(a).localeCompare(nameOf(b)));
-  } else if (BUYERS_SORT === "last-contact") {
-    // Added 2026-09-11 per Aaron's direct request -- the most recent of
-    // texted, called, OR logged in, whichever is latest for each buyer.
-    // Same "missing data sorts to the bottom" convention as the
-    // individual sorts below (epoch 0 for anything absent).
-    const lastContactOf = (x) => Math.max(
-      new Date(x.lastActivityAt || 0),
-      new Date(x.lastCallAt || 0),
-      new Date((x.loginsMatch && x.loginsMatch.lastLogin) || 0),
-    );
-    buyers.sort((a, b) => dir * (lastContactOf(b) - lastContactOf(a)));
-  } else if (BUYERS_SORT === "last-message") {
-    // Renamed from "recent" 2026-09-11 (same underlying date, Quo
-    // conversation activity) -- now one of three explicit last-contact
-    // sorts instead of one vague "Most Recent Activity" option.
-    buyers.sort((a, b) => dir * (new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0)));
-  } else if (BUYERS_SORT === "last-login") {
-    buyers.sort((a, b) => dir * (new Date((b.loginsMatch && b.loginsMatch.lastLogin) || 0) - new Date((a.loginsMatch && a.loginsMatch.lastLogin) || 0)));
-  } else if (BUYERS_SORT === "last-call") {
-    // lastCallAt comes from the worker's separate, slower calls_cache --
-    // a buyer this hasn't reached yet just sorts to the bottom (epoch 0),
-    // same as anyone genuinely never called.
-    buyers.sort((a, b) => dir * (new Date(b.lastCallAt || 0) - new Date(a.lastCallAt || 0)));
-  } else if (BUYERS_SORT === "area") {
-    // Used to arrive pre-sorted from the API and need no client-side work
-    // -- now sorted here explicitly so the direction toggle has something
-    // to reverse. Same tie-break composition as before: classified before
-    // unclassified, then A-Z by area, then most-recent-first within a group.
-    buyers.sort((a, b) => {
-      const aHas = a.areas && a.areas.length > 0, bHas = b.areas && b.areas.length > 0;
-      if (aHas !== bHas) return dir * (aHas ? -1 : 1);
-      if (aHas && bHas && a.areas[0] !== b.areas[0]) return dir * a.areas[0].localeCompare(b.areas[0]);
-      return dir * (new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
-    });
-  } else if (BUYERS_SORT === "stage") {
-    // Added 2026-09-12 per Aaron's direct request -- pipeline order (First
-    // Contact through Multiple Buyer), same "set first, unset sorts to the
-    // bottom" convention as the other sorts.
-    const stageIndex = (s) => (s ? BUYER_STAGES.indexOf(s) : -1);
-    buyers.sort((a, b) => {
-      const aIdx = stageIndex(a.stage), bIdx = stageIndex(b.stage);
-      if (aIdx === -1 || bIdx === -1) { if (aIdx !== bIdx) return dir * (aIdx === -1 ? 1 : -1); }
-      return dir * (aIdx - bIdx);
-    });
-  } else if (BUYERS_SORT === "sentiment") {
-    // Added 2026-09-12 per Aaron's direct request -- frown, then neutral,
-    // then smile (most-to-least concerning); unset sorts to the bottom.
-    const order = { frown: 0, neutral: 1, smile: 2 };
-    const sentIndex = (s) => (s in order ? order[s] : 99);
-    buyers.sort((a, b) => dir * (sentIndex(a.sentiment) - sentIndex(b.sentiment)));
-  }
+  const primary = BUYER_SORT_COMPARATORS[BUYERS_SORT];
+  if (!primary) return buyers;
+  // Secondary only kicks in when it's actually a different field -- picking
+  // the same sort for both would just be a no-op tie-break anyway.
+  const secondary = BUYERS_SORT_SECONDARY && BUYERS_SORT_SECONDARY !== BUYERS_SORT
+    ? BUYER_SORT_COMPARATORS[BUYERS_SORT_SECONDARY]
+    : null;
+  buyers.sort((a, b) => {
+    const primaryResult = dir * primary(a, b);
+    if (primaryResult !== 0) return primaryResult;
+    return secondary ? secondary(a, b) : 0;
+  });
   return buyers;
 }
 
@@ -4390,12 +4396,11 @@ function renderBuyerDetail(buyer) {
     // appended on this SAME line, also per his direct request -- he
     // first said "sentiment," then corrected himself: "I didn't mean
     // sentiment I meant the time since."
-    // Real cleanup 2026-09-13: this used to duplicate formatDateWithYear +
-    // formatDaysSince inline instead of calling the dedicated helper
-    // written for exactly this format (formatDateWithYearAndSince, added
-    // 2026-09-15 alongside this same fact but apparently never actually
-    // wired in) -- found during a full site sweep, zero visible change.
-    ["Last activity (Quo)", formatDateWithYearAndSince(buyer.lastActivityAt)],
+    // Switched to formatDateTimeWithYearAndSince 2026-09-14 per Aaron's
+    // direct request -- same date+time+days-since format First/Last Login
+    // use above, not the date-only version this used to call
+    // (formatDateWithYearAndSince, now unused -- no other caller left).
+    ["Last activity (Quo)", formatDateTimeWithYearAndSince(buyer.lastActivityAt)],
   ].filter(([, v]) => v);
 
   // Phone/Email copy-to-clipboard, added 2026-09-12 per Aaron's direct
@@ -5689,6 +5694,15 @@ function initBuyersTab() {
     BUYERS_SORT = sortSel.value;
     BUYERS_SORT_DIR = 1;
     try { localStorage.setItem(BUYERS_SORT_STORAGE_KEY, BUYERS_SORT); localStorage.setItem(BUYERS_SORT_DIR_STORAGE_KEY, "1"); } catch (e) {}
+    renderBuyersList();
+  });
+  // Secondary ("Then by") sort, added 2026-09-14 -- see
+  // BUYER_SORT_COMPARATORS/sortedBuyers' own comment for how this composes
+  // with the primary above.
+  const sortSecondarySel = document.getElementById("buyers-sort-secondary");
+  if (sortSecondarySel) sortSecondarySel.addEventListener("change", () => {
+    BUYERS_SORT_SECONDARY = sortSecondarySel.value;
+    try { localStorage.setItem(BUYERS_SORT_SECONDARY_STORAGE_KEY, BUYERS_SORT_SECONDARY); } catch (e) {}
     renderBuyersList();
   });
   const sortDirBtn = document.getElementById("buyers-sort-dir-toggle");
