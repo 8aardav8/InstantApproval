@@ -4067,30 +4067,38 @@ function formatApptDate(dateStr) {
 // which of the 10 "Appointment N" cells to target -- renders nothing at
 // all if any of those are missing rather than a control that can't
 // actually save anywhere.
+// Both the Outcome dropdown AND Reschedule/Cancel now show on EVERY
+// appointment card regardless of date -- added 2026-09-14 per Aaron's
+// direct follow-up, after noticing Demi's card (date-wise not past) had
+// Reschedule/Cancel but not Outcome, while Alexis's (genuinely past) had
+// only Outcome: "I would actually like both of those options on all
+// appointments regardless of if they were in the past or present or
+// future." Previously these were mutually exclusive, gated on `isPast`
+// (a.date < today) -- that gate now only decides the Outcome dropdown's
+// EMPTY-value option label (still just one such option, still stored as
+// "" either way -- handleAdminUpdateAppointment server-side only ever
+// accepts "", "Canceled", or "Completed", so "No-show"/"Scheduled" must
+// stay display-only labels on the SAME empty value, never a real distinct
+// stored status; a real bug caught here before shipping: an earlier draft
+// added "No-show" as its own literal option value, which the server would
+// have rejected outright with "invalid status").
 function appointmentManageControlsHtml(a) {
   if (!(a.phone && a.row && a.slot)) return "";
   const today = localTodayISO();
   const isPast = a.date < today;
-  // "No-show" is never a stored value -- see admin/worker.js's
-  // parseAppointmentCell comment. A past appointment with no explicit
-  // status just READS as one here.
-  const effectiveStatus = a.status || (isPast ? "No-show" : "Scheduled");
+  const emptyOptionLabel = isPast ? "No-show" : "Scheduled";
   const dataAttrs = `data-phone="${escapeAttr(a.phone)}" data-slot="${a.slot}" data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}"`;
-  if (isPast) {
-    return `
-      <div class="appt-outcome-row">
-        <label>Outcome
-          <select class="appt-outcome-select" ${dataAttrs}>
-            <option value=""${effectiveStatus === "No-show" ? " selected" : ""}>No-show</option>
-            <option value="Completed"${effectiveStatus === "Completed" ? " selected" : ""}>Completed</option>
-            <option value="Canceled"${effectiveStatus === "Canceled" ? " selected" : ""}>Canceled</option>
-          </select>
-        </label>
-      </div>
-    `;
-  }
   const isCanceled = a.status === "Canceled";
   return `
+    <div class="appt-outcome-row">
+      <label>Outcome
+        <select class="appt-outcome-select" ${dataAttrs}>
+          <option value=""${!a.status ? " selected" : ""}>${emptyOptionLabel}</option>
+          <option value="Completed"${a.status === "Completed" ? " selected" : ""}>Completed</option>
+          <option value="Canceled"${a.status === "Canceled" ? " selected" : ""}>Canceled</option>
+        </select>
+      </label>
+    </div>
     <div class="appt-manage-row">
       <button type="button" class="btn-outline appt-reschedule-btn" ${dataAttrs}>Reschedule</button>
       ${isCanceled
@@ -6237,9 +6245,9 @@ function renderAppointmentsOverview() {
   // Today/Upcoming/Past split, added 2026-09-14 per Aaron's direct request
   // ("three sections at the top: today's appointments, upcoming
   // appointments, past appointments") -- Today used to be silently folded
-  // into Upcoming (any date >= today). Same alreadyShown/past-bucketing
-  // logic as before, just with Today carved out of what used to be a
-  // single "upcoming" bucket.
+  // into Upcoming (any date >= today). Past-bucketing logic for a
+  // today-dated appointment was also fixed the same day -- see the
+  // "Real bug fix" comment just below.
   const todayList = [];
   const upcoming = [];
   const past = [];
@@ -6247,7 +6255,6 @@ function renderAppointmentsOverview() {
     for (const a of appts) {
       const buyer = a.phone ? findBuyer(a.phone) : null;
       const row = buyer && buyer.loginsMatch ? buyer.loginsMatch.row : null;
-      const alreadyShown = !!(buyer && buyer.loginsMatch && buyer.loginsMatch.shown && buyer.loginsMatch.shown.includes(address));
       // quoName, added 2026-09-13 -- see renderApptCard's own comment on
       // why this and a.name (the login name) are shown separately.
       // idName + hasEverLoggedIn, added 2026-09-14 per Aaron's direct
@@ -6263,19 +6270,27 @@ function renderAppointmentsOverview() {
         hasEverLoggedIn: !!(buyer && buyer.loginsMatch && buyer.loginsMatch.firstLogin),
       };
       if (!appointmentMatchesSearch(entry, q)) continue;
-      // Real bug fix, 2026-09-16 -- Aaron reported a 2-DAYS-OUT
-      // appointment (Demi's) landing under "Past Appointments." Root
-      // cause: `shown` is a flat per-ADDRESS list on the buyer (added by
-      // the "Mark as shown" checkbox, whose whole point is moving a
-      // just-completed TODAY'S showing into Past immediately without
-      // waiting for midnight -- see this function's own history above),
-      // not a per-APPOINTMENT flag. Once a buyer had ANY past showing at
-      // an address marked shown, `alreadyShown` stayed true forever for
-      // that address -- so scheduling a brand-new FUTURE appointment at
-      // that same address got force-bucketed into Past too, regardless
-      // of its actual date. Fixed by only letting alreadyShown override
-      // the date check for today-or-earlier, never a genuinely future date.
-      if (a.date < today || (alreadyShown && a.date <= today)) past.push(entry);
+      // Real bug fix, 2026-09-14 -- Aaron reported a TODAY'S appointment
+      // (Demi's) landing under "Past Appointments." Root cause: this used
+      // to force a today-or-earlier appointment to Past whenever
+      // `alreadyShown` was true -- a flat per-ADDRESS list on the buyer
+      // (Shown Properties), not a per-APPOINTMENT flag. Demi's Shown
+      // Properties genuinely already listed this exact address, from a
+      // PAST visit -- but she'd since been re-booked for a brand-new
+      // showing at the SAME address today, and the stale address-level
+      // flag couldn't tell "shown once before" apart from "today's
+      // specific booking already happened," so it force-moved the new one
+      // to Past too. (A 2026-09-16 fix already narrowed this same flaw
+      // once, for a FUTURE-dated re-booking -- this closes the remaining
+      // today-dated case it deliberately left alone, since back then nothing
+      // yet marked a re-booking's own appointment status.) Fixed by
+      // dropping the address-level signal for this decision entirely,
+      // in favor of the appointment's own status field -- "Mark as shown"
+      // has stamped the SPECIFIC appointment slot Completed (not just the
+      // Shown Properties ledger) since 2026-09-15, so that status is now a
+      // reliable, per-booking source of truth this can check directly.
+      const outcomeRecorded = a.status === "Completed" || a.status === "Canceled";
+      if (a.date < today || (a.date === today && outcomeRecorded)) past.push(entry);
       else if (a.date === today) todayList.push(entry);
       else upcoming.push(entry);
     }
