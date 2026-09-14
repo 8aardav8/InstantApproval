@@ -1098,12 +1098,36 @@
   </section>
 
   <section id="tab-appointments" class="tab-panel hidden">
-    <p class="appointments-intro">Every upcoming appointment across all buyers, soonest first.</p>
+    <p class="appointments-intro">Every appointment across all buyers, split into Today / Upcoming / Past.</p>
+    <!-- Search bar, added 2026-09-14 per Aaron's direct request ("a search
+         bar so that I can search by Buyer name, home address, or any other
+         thing like that") -- plain live filter across all three sections
+         at once, same instant client-side pattern as buyers-search-box,
+         wired in initAppointmentsSearch (app.js). Not the autofill-dropdown
+         style search (that's for JUMPING to one specific record); this one
+         narrows all three lists in place. -->
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input id="appointments-search-box" type="search" placeholder="Search buyer name or address" aria-label="Search appointments" autocomplete="off">
+      </div>
+    </div>
     <!-- Shares the SAME toggle/state as the buyers list's own "Show days
          since" button (BUYERS_DATE_MODE) -- added 2026-09-12 per Aaron's
          direct request, since appointment dates had no toggle at all
          before. -->
     <button id="appointments-date-mode-toggle" class="btn-outline" type="button">Show days since</button>
+
+    <!-- Today's Appointments, added 2026-09-14 per Aaron's direct request
+         ("three sections at the top: today's appointments, upcoming
+         appointments, past appointments") -- split out of what used to be
+         a single "Upcoming" list that silently included today. Hidden when
+         empty (search filtered to nothing, or genuinely no showings today),
+         same convention Past already used. -->
+    <h3 class="appointments-today-heading hidden" id="appointments-today-heading">Today's Appointments</h3>
+    <div id="appointments-today-list"></div>
+
+    <h3 class="appointments-upcoming-heading hidden" id="appointments-upcoming-heading">Upcoming Appointments</h3>
     <div id="appointments-list"></div>
     <!-- Past Appointments, added 2026-09-12 per Aaron's direct request --
          populated by renderAppointmentsOverview() in app.js. Below the

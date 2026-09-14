@@ -36,6 +36,14 @@ let MY_APPOINTMENTS = [];
 let ADMIN_APPOINTMENTS_BY_ADDRESS = {};
 let ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {}; // added 2026-09-12, upcoming AND past, for the Appointments tab's own Past section
 let ADMIN_FAVORITES_BY_ADDRESS = {};
+// Lockbox code per address, added 2026-09-14 per Aaron's direct request --
+// admin-only (see handleAdminActivity's own comment server-side for why
+// this is deliberately NOT in the public properties.json), fetched in the
+// same round trip as appointments/favorites.
+let ADMIN_LOCKBOX_BY_ADDRESS = {};
+// Live search filter across all three Appointments-tab sections at once
+// (Today/Upcoming/Past), added 2026-09-14 per Aaron's direct request.
+let APPOINTMENTS_SEARCH = "";
 // Public "most popular" sort support, added 2026-08-29 per Aaron's direct
 // request. Deliberately NOT the same data as ADMIN_FAVORITES_BY_ADDRESS
 // above -- that one carries real visitor names/emails/phones and is
@@ -1544,6 +1552,7 @@ async function refreshAdminActivity() {
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_FAVORITES_BY_ADDRESS = {};
+    ADMIN_LOCKBOX_BY_ADDRESS = {};
     return;
   }
   try {
@@ -1577,10 +1586,12 @@ async function refreshAdminActivity() {
       (groupedFavs[fav.address] = groupedFavs[fav.address] || []).push(fav);
     }
     ADMIN_FAVORITES_BY_ADDRESS = groupedFavs;
+    ADMIN_LOCKBOX_BY_ADDRESS = data.lockboxByAddress || {};
   } catch (err) {
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_FAVORITES_BY_ADDRESS = {};
+    ADMIN_LOCKBOX_BY_ADDRESS = {};
   }
 }
 
@@ -6044,6 +6055,15 @@ function initBuyersTab() {
   const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
   if (apptDateModeBtn) apptDateModeBtn.addEventListener("click", toggleDateMode);
 
+  // Appointments-tab search box, added 2026-09-14 per Aaron's direct
+  // request -- live filter across Today/Upcoming/Past at once, see
+  // appointmentMatchesSearch/renderAppointmentsOverview's own comments.
+  const apptSearchBox = document.getElementById("appointments-search-box");
+  if (apptSearchBox) apptSearchBox.addEventListener("input", () => {
+    APPOINTMENTS_SEARCH = apptSearchBox.value;
+    renderAppointmentsOverview();
+  });
+
   // Compact/Detailed card toggle, added 2026-09-13 per Aaron's direct
   // request -- same persisted-toggle pattern as toggleDateMode above.
   const cardModeBtn = document.getElementById("buyers-card-mode-toggle");
@@ -6148,6 +6168,16 @@ function renderApptCard(a, showMarkShown) {
   const availabilityBadgeHtml = matchingListing
     ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
     : "";
+  // Lockbox code, added 2026-09-14 per Aaron's direct request ("I would
+  // also like the current lockbox code displayed on the appointment
+  // cards") -- ADMIN_LOCKBOX_BY_ADDRESS comes from the PROPERTIES tab's
+  // "Lock box " column via handleAdminActivity (admin-gated, deliberately
+  // NOT part of the public properties.json -- see that endpoint's own
+  // comment). Free text in the Sheet, not always just a bare 4-digit code
+  // (real examples on file: "Front door 5060", "1772 box on front door
+  // knob") -- shown as-is rather than trying to extract just digits.
+  const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || "";
+  const lockboxHtml = lockboxCode ? `<div class="appt-card-lockbox">🔑 ${escapeHtml(lockboxCode)}</div>` : "";
   // data-address/data-date, added 2026-09-16 -- lets
   // goToAppointmentFromBuyer (below) find THIS specific card again after
   // switching to the Appointments tab, distinct from data-phone which
@@ -6160,6 +6190,7 @@ function renderApptCard(a, showMarkShown) {
       <div class="appt-card-info">
         <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
         <div class="appt-card-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
+        ${lockboxHtml}
         <div class="appt-card-visitor">${namesHtml}</div>
         ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
         ${showMarkShown && a.row ? `
@@ -6173,15 +6204,37 @@ function renderApptCard(a, showMarkShown) {
   `;
 }
 
+// Matches the live search box (APPOINTMENTS_SEARCH) against every name
+// field an appt-card shows, plus address/phone/email -- added 2026-09-14
+// per Aaron's direct request ("a search bar so that I can search by Buyer
+// name, home address, or any other thing like that"). Same substring,
+// case-insensitive shape as every other search in this file.
+function appointmentMatchesSearch(a, q) {
+  if (!q) return true;
+  const haystack = [a.address, a.quoName, a.name, a.idName, a.phone, a.email].filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes(q);
+}
+
 function renderAppointmentsOverview() {
+  const todayContainer = document.getElementById("appointments-today-list");
+  const todayHeading = document.getElementById("appointments-today-heading");
   const container = document.getElementById("appointments-list");
+  const upcomingHeading = document.getElementById("appointments-upcoming-heading");
   const pastContainer = document.getElementById("appointments-past-list");
   const pastHeading = document.getElementById("appointments-past-heading");
   if (!container) return;
   const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
   if (apptDateModeBtn) updateDateModeToggleLabel(apptDateModeBtn);
   const today = localTodayISO(); // already defined in app.js
+  const q = (APPOINTMENTS_SEARCH || "").trim().toLowerCase();
 
+  // Today/Upcoming/Past split, added 2026-09-14 per Aaron's direct request
+  // ("three sections at the top: today's appointments, upcoming
+  // appointments, past appointments") -- Today used to be silently folded
+  // into Upcoming (any date >= today). Same alreadyShown/past-bucketing
+  // logic as before, just with Today carved out of what used to be a
+  // single "upcoming" bucket.
+  const todayList = [];
   const upcoming = [];
   const past = [];
   for (const [address, appts] of Object.entries(ADMIN_ALL_APPOINTMENTS_BY_ADDRESS || {})) {
@@ -6203,6 +6256,7 @@ function renderAppointmentsOverview() {
         idName: buyer && buyer.loginsMatch ? buyer.loginsMatch.idName : null,
         hasEverLoggedIn: !!(buyer && buyer.loginsMatch && buyer.loginsMatch.firstLogin),
       };
+      if (!appointmentMatchesSearch(entry, q)) continue;
       // Real bug fix, 2026-09-16 -- Aaron reported a 2-DAYS-OUT
       // appointment (Demi's) landing under "Past Appointments." Root
       // cause: `shown` is a flat per-ADDRESS list on the buyer (added by
@@ -6216,21 +6270,29 @@ function renderAppointmentsOverview() {
       // of its actual date. Fixed by only letting alreadyShown override
       // the date check for today-or-earlier, never a genuinely future date.
       if (a.date < today || (alreadyShown && a.date <= today)) past.push(entry);
+      else if (a.date === today) todayList.push(entry);
       else upcoming.push(entry);
     }
   }
+  todayList.sort((a, b) => a.address.localeCompare(b.address)); // no time-of-day on these -- alphabetical by address is as good an order as any
   upcoming.sort((a, b) => a.date.localeCompare(b.date));
   past.sort((a, b) => b.date.localeCompare(a.date)); // most-recently-past first
 
+  if (todayHeading) todayHeading.classList.toggle("hidden", todayList.length === 0);
+  todayContainer.innerHTML = todayList.map((a) => renderApptCard(a, true)).join("");
+  if (upcomingHeading) upcomingHeading.classList.toggle("hidden", upcoming.length === 0);
   container.innerHTML = upcoming.length
     ? upcoming.map((a) => renderApptCard(a, true)).join("")
-    : "<p>No upcoming appointments.</p>";
+    : (q ? "" : "<p>No upcoming appointments.</p>"); // a genuinely empty state only makes sense with no search active
   if (pastContainer) {
     pastHeading.classList.toggle("hidden", past.length === 0);
     pastContainer.innerHTML = past.map((a) => renderApptCard(a, false)).join("");
   }
+  if (q && todayList.length === 0 && upcoming.length === 0 && past.length === 0) {
+    container.innerHTML = `<p>No appointments match "${escapeHtml(APPOINTMENTS_SEARCH)}".</p>`;
+  }
 
-  const both = [container, pastContainer].filter(Boolean);
+  const both = [todayContainer, container, pastContainer].filter(Boolean);
   for (const c of both) {
     // Same blob-fetch as everywhere else an admin-id-photo placeholder
     // appears -- a raw Dropbox share link can't go straight into <img src>.

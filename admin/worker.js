@@ -1067,7 +1067,35 @@ async function handleAdminActivity(request, env) {
         }
       }
     }
-    return jsonResponse({ appointments, favorites });
+
+    // Lockbox codes, added 2026-09-14 per Aaron's direct request ("I would
+    // also like the current lockbox code displayed on the appointment
+    // cards"). Real column already exists on PROPERTIES (D=Address,
+    // G="Lock box " -- confirmed live, trailing space and all, hence
+    // reading by fixed column letter rather than a header-name lookup) but
+    // was never read anywhere in this codebase before. Deliberately kept
+    // OUT of data/properties.json (the public listings feed every visitor's
+    // browser downloads) -- a lockbox code is sensitive, admin-only
+    // information, so it only ever goes out through this same OAuth-gated
+    // endpoint the rest of the Appointments tab's admin data already uses,
+    // never the public site.
+    const lockboxByAddress = {};
+    try {
+      const lockboxRange = encodeURIComponent(`${SHEET_TAB}!D:G`);
+      const lockboxRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${lockboxRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (lockboxRes.ok) {
+        const lockboxData = await lockboxRes.json();
+        for (const row of (lockboxData.values || []).slice(1)) {
+          const address = (row[0] || "").trim();
+          const code = (row[3] || "").trim();
+          if (address && code) lockboxByAddress[address] = code;
+        }
+      } // best-effort -- a failed read just means no codes show, appointments themselves still load fine
+    } catch (e) {
+      // Swallowed -- see comment above.
+    }
+
+    return jsonResponse({ appointments, favorites, lockboxByAddress });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }

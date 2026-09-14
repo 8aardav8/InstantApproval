@@ -1188,8 +1188,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* Appointments overview, added 2026-09-11 */
 .appointments-intro { font-size: 13px; color: var(--gray-text, #6b7280); margin: 10px 0; }
-/* Past Appointments split, added 2026-09-12 per Aaron's direct request. */
-.appointments-past-heading { font-size: 15px; font-weight: 800; color: var(--navy); margin: 24px 0 10px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+/* Today/Upcoming/Past section split -- Past added 2026-09-12, Today and
+   Upcoming added 2026-09-14, all three per Aaron's direct request. Same
+   heading look throughout, Today gets no top border since it's always the
+   first section on the page (nothing above it to separate from). */
+.appointments-today-heading, .appointments-upcoming-heading, .appointments-past-heading { font-size: 15px; font-weight: 800; color: var(--navy); margin: 24px 0 10px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+.appointments-today-heading { margin-top: 14px; padding-top: 0; border-top: none; }
+/* Lockbox code, added 2026-09-14 per Aaron's direct request. */
+.appt-card-lockbox { font-size: 13px; font-weight: 700; color: var(--navy); margin-top: 2px; }
 .appt-mark-shown-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--blue); margin-top: 6px; cursor: pointer; }
 /* Reschedule/Cancel/Reactivate/Outcome controls, added 2026-09-15 per
    Aaron's direct request -- shared between the Appointments-tab cards
