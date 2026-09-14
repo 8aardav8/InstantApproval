@@ -5000,8 +5000,12 @@ function renderBuyerDetail(buyer) {
 
   // Reschedule/Cancel/Outcome controls on Scheduled/Past Showings, added
   // 2026-09-15 per Aaron's direct request -- same shared helper/wiring
-  // the Appointments-tab cards use.
-  wireAppointmentManageControls(container, () => renderBuyerDetail(findBuyer(buyer.phone)));
+  // the Appointments-tab cards use. onDone refetches BUYERS_CACHE first
+  // (loadBuyers()) -- added 2026-09-14, same real bug/fix as
+  // refreshAppointmentsAndRerender on the Appointments tab: a write here
+  // succeeded server-side but the page kept showing pre-write data, since
+  // a bare re-render just redraws whatever's already cached client-side.
+  wireAppointmentManageControls(container, async () => { await loadBuyers(); renderBuyerDetail(findBuyer(buyer.phone)); });
 
   // Scheduled Showing -> its own card on the Appointments tab, added
   // 2026-09-16 per Aaron's direct request. Manage-controls clicks inside
@@ -6341,16 +6345,39 @@ function renderAppointmentsOverview() {
     c.querySelectorAll(".appt-mark-shown-checkbox").forEach((cb) => {
       cb.addEventListener("change", () => {
         if (!cb.checked) return; // one-way -- unchecking doesn't un-mark, same as the buyer-page Remove button being the only way back
-        markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, renderAppointmentsOverview);
+        markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, refreshAppointmentsAndRerender);
         // Also sets this SPECIFIC appointment's own status to Completed
         // (not just the general Shown Properties ledger) -- added
         // 2026-09-15, so it reads consistently with the new Reschedule/
-        // Cancel/Outcome controls below once it lands in Past.
-        if (cb.dataset.slot) updateAppointment(cb.dataset.phone, Number(cb.dataset.slot), cb.dataset.address, cb.dataset.date, "Completed");
+        // Cancel/Outcome controls below once it lands in Past. onDone
+        // added 2026-09-14 -- see refreshAppointmentsAndRerender's own
+        // comment for why this write needs one too, same as markShown just
+        // above (previously omitted entirely, so THIS write's own result
+        // never triggered any re-render on its own).
+        if (cb.dataset.slot) updateAppointment(cb.dataset.phone, Number(cb.dataset.slot), cb.dataset.address, cb.dataset.date, "Completed", refreshAppointmentsAndRerender);
       });
     });
-    wireAppointmentManageControls(c, renderAppointmentsOverview);
+    wireAppointmentManageControls(c, refreshAppointmentsAndRerender);
   }
+}
+
+// Real bug fix, 2026-09-14 -- Aaron reported that checking "Mark as shown"
+// or picking an Outcome did nothing visible on the page. Root cause: every
+// appointment-write path's own onDone was just renderAppointmentsOverview
+// itself -- a pure re-render of whatever's ALREADY in
+// ADMIN_ALL_APPOINTMENTS_BY_ADDRESS, which the write never touches (that's
+// only ever refreshed by refreshAdminActivity(), a separate fetch). So the
+// write genuinely succeeded server-side, but the card kept showing
+// whatever it showed before the click, because nothing ever asked the
+// server for the new state. (This is very likely also the real explanation
+// for a to-be-confirmed report of a card showing "NaNd ago"/no date after
+// some sequence of edits -- a stale, no-longer-accurate copy of an
+// appointment object being re-rendered indefinitely, not a genuine data
+// problem; the Sheet's own row was verified clean.) Fixed by making every
+// appointment-write onDone actually refetch first.
+async function refreshAppointmentsAndRerender() {
+  await refreshAdminActivity();
+  renderAppointmentsOverview();
 }
 
 // Jumps from an appointment card straight to that buyer's own page --
