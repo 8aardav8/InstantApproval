@@ -2820,6 +2820,77 @@ async function handleInternalQuoNameStats(request, env) {
   }
 }
 
+// Server-side port of app.js's own stripAreaTagsFromName, added 2026-09-14
+// for the Name backfill below -- KEEP THIS IN SYNC with that copy if the
+// canonical area-tag list ever changes (same warning that copy's own
+// comment already carries). Quo Name often carries a trailing area tag
+// ("Alexis Langston WMTB") or a parenthetical aside ("LaMonica Henderson
+// (2504A Denver Buyer)") -- the LOGIN name column shown throughout the
+// site (My Info, Buyer page) should read as a clean, plain name, not carry
+// either of those through.
+const SERVER_AREA_TAG_TOKENS = new Set(["estltb", "stltb", "lrtb", "wmtb", "springfieldtb", "tb"]);
+function stripAreaTagsFromName(name) {
+  const noParens = (name || "").replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+  const parts = noParens.split(/\s+/).filter(Boolean);
+  while (parts.length > 1 && SERVER_AREA_TAG_TOKENS.has(parts[parts.length - 1].toLowerCase())) {
+    parts.pop();
+  }
+  return parts.join(" ");
+}
+
+// Bulk Name (E) backfill from Quo Name (AJ), added 2026-09-14 per Aaron's
+// direct request: "fill the names in column E based on the phone numbers
+// in column D." Every row's own Quo Name was already resolved BY that
+// exact phone (see syncBuyerToSheet) -- this just uses it to fill the
+// LOGIN name wherever it's still blank, same-row, no new cross-referencing
+// needed. Non-destructive: only ever fills E when it's genuinely blank,
+// never overwrites a real name already there. Pure Sheet-to-Sheet -- one
+// read, one batchUpdate, no Quo API calls at all, so no rate-limit
+// throttling needed (unlike tonight's earlier per-buyer Quo backfills).
+// Dry-run by default; apply=true to actually write.
+async function handleInternalBackfillNamesFromQuo(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const apply = url.searchParams.get("apply") === "true";
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
+    const rows = (await res.json()).values || [];
+
+    const candidates = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const phone = (r[3] || "").trim();
+      const name = (r[4] || "").trim();
+      const quoName = (r[35] || "").trim();
+      if (!phone || name || !quoName) continue;
+      const cleaned = stripAreaTagsFromName(quoName);
+      if (!cleaned) continue;
+      candidates.push({ row: i + 1, phone, quoName, cleanedName: cleaned });
+    }
+
+    if (!apply) {
+      return jsonResponse({ dryRun: true, candidateCount: candidates.length, candidates });
+    }
+
+    if (candidates.length === 0) return jsonResponse({ applied: 0 });
+    const data = candidates.map((c) => ({ range: `${LOGINS_TAB}!E${c.row}:E${c.row}`, values: [[c.cleanedName]] }));
+    const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ valueInputOption: "RAW", data }),
+    });
+    if (!putRes.ok) throw new Error(`name backfill write failed: ${await putRes.text()}`);
+    return jsonResponse({ applied: candidates.length, detail: candidates });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalGlideMatch(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   const url = new URL(request.url);
@@ -4712,6 +4783,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/quo-name-stats" && request.method === "GET") {
     return handleInternalQuoNameStats(request, env);
+  }
+  if (url.pathname === "/internal/backfill-names-from-quo" && request.method === "GET") {
+    return handleInternalBackfillNamesFromQuo(request, env);
   }
   if (url.pathname === "/internal/glide-match" && request.method === "GET") {
     return handleInternalGlideMatch(request, env);
