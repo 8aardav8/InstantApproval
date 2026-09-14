@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T15:44:03.800204+00:00",
+  "generatedAt": "2026-09-14T15:44:54.907260+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -1127,7 +1127,7 @@
       "id": "314-clubview-dr-jackson-ms-39209",
       "address": "314 Clubview Dr, Jackson, MS 39209",
       "onMarketDate": "8/4",
-      "lastUpdate": "9/2",
+      "lastUpdate": "9/11",
       "area": "MS",
       "down": "$3,000",
       "monthly": "$1,095",
@@ -1135,7 +1135,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 32.3372416,
       "lng": -90.2575751
