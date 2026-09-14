@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T15:35:36.073996+00:00",
+  "generatedAt": "2026-09-14T15:36:18.894212+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -328,7 +328,7 @@
       "id": "1828-w-latrobe-st-peoria-il-61605",
       "address": "1828 W Latrobe St, Peoria, IL 61605",
       "onMarketDate": "9/3",
-      "lastUpdate": "9/6",
+      "lastUpdate": "9/11",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$800",
@@ -2742,7 +2742,7 @@
       "id": "2109-s-martin-luther-king-jr-dr-springfield-il-62703",
       "address": "2109 S Martin Luther King Jr. Dr Springfield IL 62703",
       "onMarketDate": "8/20",
-      "lastUpdate": "8/29",
+      "lastUpdate": "9/11",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$950",
@@ -2750,7 +2750,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "750",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.7790897,
       "lng": -89.63112699999999
