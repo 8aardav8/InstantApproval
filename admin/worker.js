@@ -314,46 +314,92 @@ async function fetchSheetRows(accessToken) {
 // captured them) never got backfilled on a later visit that DID provide
 // real values, since writeLoginsRow's returning-visitor branch only ever
 // touched Last Login.
-async function findOrNextLoginsRow(accessToken, email) {
+// Real gap found and fixed 2026-09-14, per Aaron's direct question ("if
+// anyone signs in for the first time using a phone number that's already
+// in the sheet... their name and email... will just be added to that
+// row?"): traced through and confirmed the answer was NO -- this matched
+// EMAIL only, so a visitor's first-ever gate sign-in with a phone that
+// already had a row (from a Quo conversation, tonight's Sheet backfill, or
+// anything else phone-first) would create a genuine DUPLICATE row instead
+// of reusing the existing one, since their (new) email never matched
+// anything.
+//
+// Priority flipped the same day, per Aaron's direct follow-up ("base
+// everything off phone numbers now since we're not using Glide -- Glide
+// was missing phone numbers, but Quo and the current site always take a
+// phone number"): PHONE is now the primary match, email only a fallback
+// for matching a legacy Glide-era row (email + name, no phone at all --
+// exactly the shape email-matching existed for in the first place). Every
+// row created by anything BUT old Glide already guarantees a real phone
+// (isPlausiblePhone is a hard requirement at both call sites below), so
+// phone is now the more reliable identity signal, not email.
+// Also returns existingEmail/existingAgreed so writeLoginsRow below can
+// fill those in too, same non-destructive "only fill a gap" stance already
+// applied to phone/name.
+async function findOrNextLoginsRow(accessToken, email, phone) {
   const range = encodeURIComponent(`${LOGINS_TAB}!A:F`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
   const data = await res.json();
   const col = data.values || [];
-  const target = email.trim().toLowerCase();
+  const targetEmail = email.trim().toLowerCase();
+  const targetPhone = phone ? toE164(phone) : "";
+  let emailMatchIndex = -1;
+  let phoneMatchIndex = -1;
   for (let i = 1; i < col.length; i++) {
-    if ((col[i][1] || "").trim().toLowerCase() === target) {
-      const existing = col[i] || [];
-      return {
-        row: i + 1, // 1-indexed sheet row
-        isNew: false,
-        existingPhone: (existing[3] || "").trim(),
-        existingName: (existing[4] || "").trim(),
-        existingIdLink: (existing[5] || "").trim(),
-      };
+    const existing = col[i] || [];
+    if (emailMatchIndex === -1 && (existing[1] || "").trim().toLowerCase() === targetEmail) {
+      emailMatchIndex = i;
     }
+    if (targetPhone && phoneMatchIndex === -1 && toE164((existing[3] || "").trim()) === targetPhone) {
+      phoneMatchIndex = i;
+    }
+    // Stop early once both are found (or phone doesn't apply) -- no point
+    // scanning the rest of a 700+ row sheet once nothing left to learn.
+    if (phoneMatchIndex !== -1 && (emailMatchIndex !== -1 || !targetEmail)) break;
+  }
+  // Phone wins if found anywhere -- email is the fallback, used only when
+  // phone matches nothing (the legacy-Glide case, or a phone typo).
+  const matchIndex = phoneMatchIndex !== -1 ? phoneMatchIndex : emailMatchIndex;
+  if (matchIndex !== -1) {
+    const existing = col[matchIndex] || [];
+    return {
+      row: matchIndex + 1, // 1-indexed sheet row
+      isNew: false,
+      existingEmail: (existing[1] || "").trim(),
+      existingAgreed: (existing[2] || "").trim(),
+      existingPhone: (existing[3] || "").trim(),
+      existingName: (existing[4] || "").trim(),
+      existingIdLink: (existing[5] || "").trim(),
+    };
   }
   return { row: col.length + 1, isNew: true };
 }
 
 // Writes the full A:G span for a gate-login event. For a brand-new visitor
 // this fills First Login through Last Login (columns A-G). For a returning
-// visitor (isNew: false) this writes Phone/Name/Last Login (D, E, G) --
-// NOT a blind overwrite: each of Phone/Name keeps its EXISTING value if one
-// is already on file, and only takes the newly-submitted value to fill in
-// a gap that was previously blank (see findOrNextLoginsRow above, which
-// supplies existingPhone/existingName/existingIdLink for exactly this).
-// Real reported bug, fixed 2026-08-29: this used to only ever touch Last
-// Login for a returning visitor, so a legacy blank-Name row (e.g. from
-// before the gate collected a name at all) could never be filled in later,
-// even by a visitor who then typed their real name on a subsequent visit.
-// ID Link (F) is always echoed back untouched either way -- the gate never
-// collects it, so there's nothing to backfill or protect there, just don't
-// let it get wiped by the batch write. Explicit-row values.update, not
-// :append -- see the real auto-detection bug this avoided, documented in
-// git history for this file (values:append landed a real submission's data
-// starting at column O instead of A, on a row far past the real last row).
+// visitor (isNew: false) this writes Email/Agreed/Phone/Name/Last Login
+// (B, C, D, E, G) -- NOT a blind overwrite: each of Email/Agreed/Phone/Name
+// keeps its EXISTING value if one is already on file, and only takes the
+// newly-submitted value to fill in a gap that was previously blank (see
+// findOrNextLoginsRow above, which supplies existingEmail/existingAgreed/
+// existingPhone/existingName/existingIdLink for exactly this).
+// Email/Agreed added 2026-09-14, alongside findOrNextLoginsRow's new
+// phone-fallback match -- without this, reusing a phone-matched row (one
+// found via that fallback, not by email) would fill in Phone/Name but
+// leave Email permanently blank, since this branch never touched B/C at
+// all before. Real reported bug, fixed 2026-08-29: this used to only ever
+// touch Last Login for a returning visitor, so a legacy blank-Name row
+// (e.g. from before the gate collected a name at all) could never be
+// filled in later, even by a visitor who then typed their real name on a
+// subsequent visit. ID Link (F) is always echoed back untouched either
+// way -- the gate never collects it, so there's nothing to backfill or
+// protect there, just don't let it get wiped by the batch write.
+// Explicit-row values.update, not :append -- see the real auto-detection
+// bug this avoided, documented in git history for this file (values:append
+// landed a real submission's data starting at column O instead of A, on a
+// row far past the real last row).
 async function writeLoginsRow(accessToken, target, { name, email, phone, agreed }) {
   const { row, isNew } = target;
   const nowIso = new Date().toISOString();
@@ -368,16 +414,18 @@ async function writeLoginsRow(accessToken, target, { name, email, phone, agreed 
     });
     if (!res.ok) throw new Error(`logins row create failed: ${await res.text()}`);
   } else {
+    const finalEmail = target.existingEmail || email || "";
+    const finalAgreed = target.existingAgreed || (agreed ? "TRUE" : "");
     const finalPhone = target.existingPhone || phone || "";
     const finalName = target.existingName || name || "";
     const finalIdLink = target.existingIdLink || "";
-    const values = [[finalPhone, finalName, finalIdLink, nowIso]];
-    const range = encodeURIComponent(`${LOGINS_TAB}!D${row}:G${row}`);
+    const values = [[finalEmail, finalAgreed, finalPhone, finalName, finalIdLink, nowIso]];
+    const range = encodeURIComponent(`${LOGINS_TAB}!B${row}:G${row}`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
     const res = await fetch(url, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!D${row}:G${row}`, values }),
+      body: JSON.stringify({ range: `${LOGINS_TAB}!B${row}:G${row}`, values }),
     });
     if (!res.ok) throw new Error(`logins row update failed: ${await res.text()}`);
   }
@@ -650,9 +698,27 @@ function toE164(phone) {
   return digits ? `+${digits}` : "";
 }
 
+// Real bug found and fixed 2026-09-13/14: the old 10-page cap (500
+// contacts) against a ~2800+-contact workspace meant this function's
+// success was essentially a coin flip for anyone not near the front of
+// Quo's own list ordering -- confirmed live and reproduced directly: the
+// exact same phone (+13142953192, "jasmine jelks") resolved via
+// /internal/resync-buyer, then came back NOT FOUND moments later via
+// /internal/raw-contact and via syncBuyerToSheet, with nothing else
+// changing between calls. Quo's own contact-list ordering isn't stable
+// call-to-call, so a contact sitting past position ~500 at one moment can
+// sit before it the next -- this was the real, larger root cause behind
+// tonight's whole "names aren't populating" incident, bigger than the
+// ensureBuyerInCache freeze bug found earlier. Raised to 40 pages (2000
+// contacts) -- matches the cap already proven safe in
+// handleInternalFindQuoContact, and leaves enough of the Workers free
+// plan's 50-subrequest-per-invocation budget for whatever else the calling
+// handler does in the same request (checked every caller: none does more
+// than a handful of other subrequests). Not a full guarantee for a contact
+// sitting past 2000, but a real, large improvement over 500.
 async function quoFindContactByPhone(env, e164Phone) {
   let pageToken;
-  for (let page = 0; page < 10; page++) {
+  for (let page = 0; page < 40; page++) {
     const resp = await quoCall(env, "/contacts", { maxResults: "50", pageToken });
     const found = (resp.data || []).find((c) => (c.defaultFields.phoneNumbers || []).some((p) => p.value === e164Phone));
     if (found) return found;
@@ -833,6 +899,8 @@ async function pushTelegramPing(env, name, email, phone, quoResult, kind = "new"
   const headline =
     kind === "phone-backfilled"
       ? `Phone number added (first time on file) — ${name}, ${email}, ${phone}.`
+      : kind === "email-backfilled"
+      ? `Email added (first time on file, via gate sign-in) — ${name}, ${email}, ${phone}.`
       : `New site visitor — ${name}, ${email}, ${phone}.`;
   const lines = [headline];
   if (quoResult) {
@@ -874,12 +942,22 @@ async function handleGateLogin(request, env) {
   let accessToken, target;
   try {
     accessToken = await getSheetsAccessToken(env);
-    target = await findOrNextLoginsRow(accessToken, email);
+    // phone now passed through -- see findOrNextLoginsRow's own comment on
+    // the phone-fallback match added 2026-09-14 (a first-ever gate sign-in
+    // with a new email but a phone that already has a row used to create a
+    // genuine duplicate row instead of reusing the existing one).
+    target = await findOrNextLoginsRow(accessToken, email, phone);
     // Captured BEFORE writeLoginsRow, which is what actually fills the gap --
     // this reflects the row's state as it stood coming into this request.
     const phoneWasBlank = !target.isNew && !target.existingPhone;
+    const emailWasBlank = !target.isNew && !target.existingEmail;
     await writeLoginsRow(accessToken, target, { name, email, phone, agreed });
     target.phoneJustBackfilled = phoneWasBlank && !!phone;
+    // Mirrors phoneJustBackfilled -- the new real case this covers: a
+    // buyer found only via the phone-fallback match above (a Quo
+    // conversation, or tonight's Sheet backfill) signing into the gate for
+    // the first time and having their email attached to that same row.
+    target.emailJustBackfilled = emailWasBlank && !!email;
   } catch (e) {
     // The Sheet row is the one thing this endpoint can't silently skip --
     // if writing it fails, report the real error (app.js shows its own
@@ -926,6 +1004,8 @@ async function handleGateLogin(request, env) {
     await pushTelegramPing(env, name, email, phone, quoResult);
   } else if (target.phoneJustBackfilled) {
     await pushTelegramPing(env, name, email, phone, quoResult, "phone-backfilled");
+  } else if (target.emailJustBackfilled) {
+    await pushTelegramPing(env, name, email, phone, quoResult, "email-backfilled");
   }
 
   return jsonResponse({ ok: true });
@@ -1136,21 +1216,32 @@ async function handleMyInfo(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // identityPhone added 2026-09-14, now the PRIMARY identity (see
+  // findLoginsRowByIdentity's own comment) -- email kept as a fallback.
+  // Named distinctly from the ON-FILE phone read from the row below (the
+  // two can legitimately differ -- e.g. looking this up by email alone).
   const email = (body.email || "").trim();
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  const identityPhone = (body.phone || "").trim();
+  if (!isPlausiblePhone(identityPhone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, identityPhone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
-    const range = encodeURIComponent(`${LOGINS_TAB}!D${row}:F${row}`);
+    // Widened from D:F to B:F 2026-09-14 -- the response used to just
+    // echo back whatever email the REQUEST carried, which silently went
+    // wrong the moment phone became a valid way to look this up alone (no
+    // email in the request at all): a phone-only request would report
+    // email: "" even when the row genuinely has one on file. Now reads the
+    // real on-file email (B) same as everything else here.
+    const range = encodeURIComponent(`${LOGINS_TAB}!B${row}:F${row}`);
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) throw new Error(`my-info read failed: ${await res.text()}`);
     const data = await res.json();
-    const [phone, name, idLink] = (data.values || [[]])[0] || [];
+    const [onFileEmail, , phone, name, idLink] = (data.values || [[]])[0] || [];
 
     // Separate read for the Co-Buyer columns (Z:AA) -- kept isolated from
     // the D:F read above rather than widening it across 20+ intervening
@@ -1165,7 +1256,7 @@ async function handleMyInfo(request, env) {
     const [coBuyer1Raw, coBuyer2Raw] = (coData.values || [[]])[0] || [];
     const coBuyers = [parseCoBuyerCell(coBuyer1Raw), parseCoBuyerCell(coBuyer2Raw)];
 
-    return jsonResponse({ name: name || "", phone: phone || "", email, idOnFile: !!idLink, coBuyers });
+    return jsonResponse({ name: name || "", phone: phone || "", email: onFileEmail || email || "", idOnFile: !!idLink, coBuyers });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -1194,14 +1285,17 @@ async function handleUpdateName(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (body.email || "").trim();
+  const phone = (body.phone || "").trim();
   const name = (body.name || "").trim();
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(phone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
   if (!name) return jsonResponse({ error: "invalid name" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
     const range = encodeURIComponent(`${LOGINS_TAB}!E${row}:E${row}`);
@@ -1224,7 +1318,7 @@ async function handleUpdateName(request, env) {
     // this file (an unawaited promise can be killed the moment the
     // response returns in Workers).
     if (env.TELEGRAM_BOT_TOKEN && oldName !== name) {
-      const text = `Login name CHANGED (My Info) — ${email}.\nOld: ${oldName || "(blank)"}\nNew: ${name}`;
+      const text = `Login name CHANGED (My Info) — ${phone || email}.\nOld: ${oldName || "(blank)"}\nNew: ${name}`;
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1251,18 +1345,22 @@ async function handleUpdateCoBuyer(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment. Distinct from coPhone below,
+  // which is the CO-BUYER's own phone being saved, not visitor identity.
   const email = (body.email || "").trim();
+  const phone = (body.phone || "").trim();
   const slot = Number(body.slot);
   const coName = (body.name || "").trim();
   const coEmail = (body.coBuyerEmail || "").trim();
   const coPhone = (body.coBuyerPhone || "").trim();
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(phone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
   if (slot !== 1 && slot !== 2) return jsonResponse({ error: "invalid slot" }, 400);
   if (!coName) return jsonResponse({ error: "invalid co-buyer name" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
     const col = slot === 1 ? "Z" : "AA";
@@ -1302,17 +1400,20 @@ async function handleUploadCoBuyerId(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid form data" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (form.get("email") || "").toString().trim();
+  const phone = (form.get("phone") || "").toString().trim();
   const slot = Number((form.get("slot") || "").toString());
   const idPhoto = form.get("idPhoto");
 
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(phone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
   if (slot !== 1 && slot !== 2) return jsonResponse({ error: "invalid slot" }, 400);
   if (!idPhoto || typeof idPhoto === "string") return jsonResponse({ error: "missing ID photo" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
     const col = slot === 1 ? "Z" : "AA";
@@ -1427,24 +1528,31 @@ async function handleIdPhoto(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (body.email || "").trim();
+  const phone = (body.phone || "").trim();
   // Optional -- added 2026-09-02 for co-buyer ID thumbnails. Absent/blank
   // means the primary buyer's own ID (column F), same as before.
   const coBuyerSlot = (body.coBuyerSlot || "").trim();
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(phone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
   if (coBuyerSlot && coBuyerSlot !== "1" && coBuyerSlot !== "2") {
     return jsonResponse({ error: "invalid coBuyerSlot" }, 400);
   }
 
   const cache = caches.default;
   const cacheSuffix = coBuyerSlot ? `-cobuyer${coBuyerSlot}` : "";
-  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent(email.toLowerCase())}${cacheSuffix}`, { method: "GET" });
+  // Cache key now keyed on whichever identity was actually sent, phone
+  // preferred -- a phone-only request used to build a key from an empty
+  // email string (every phone-only visitor colliding on the same cache
+  // entry) before phone existed as valid identity here.
+  const cacheKey = new Request(`https://id-photo-cache.internal/${encodeURIComponent((phone || email).toLowerCase())}${cacheSuffix}`, { method: "GET" });
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
     let sharedLink;
@@ -1552,6 +1660,24 @@ async function findLoginsRowByPhone(accessToken, phone) {
   return null;
 }
 
+// Shared identity lookup, added 2026-09-14 -- phone is now the PRIMARY key
+// across the whole visitor-facing self-service surface (My Info, My
+// Showings, appointments, co-buyers), per Aaron's direct request: "base
+// everything off phone numbers now since we're not using Glide -- Glide
+// was missing phone numbers, but Quo and the current site always take a
+// phone number." Email kept as a fallback, not removed -- covers a
+// genuinely phone-less legacy Glide row, and a visitor's browser that
+// still has an old cached page open at the exact moment of this rollout
+// (self-healing on next reload, no hard cutover needed).
+async function findLoginsRowByIdentity(accessToken, phone, email) {
+  if (phone) {
+    const row = await findLoginsRowByPhone(accessToken, phone);
+    if (row) return row;
+  }
+  if (email) return await findLoginsRowByEmail(accessToken, email);
+  return null;
+}
+
 // Appends a brand-new App: Logins row for a buyer who has none at all
 // (the common case now that suggested-ID-matches is scoped to the full
 // buyer list, not just existing Sheet rows) -- only Phone (D), Name (E),
@@ -1576,14 +1702,17 @@ async function handleSyncVisitor(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (body.email || "").trim();
-  if (!email) return jsonResponse({ error: "missing email" }, 400);
+  const phone = (body.phone || "").trim();
+  if (!email && !phone) return jsonResponse({ error: "missing identity" }, 400);
   const filters = body.filters || {};
   const search = (body.search || "").trim();
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ ok: true, action: "skipped", reason: "no matching row -- sync never creates one" });
 
     // G:M only -- Last Login, Filter: Sort, Filter: Max Down, Filter: Max
@@ -2461,6 +2590,28 @@ async function handleInternalPatchCache(request, env) {
 // use) patches back fine. Simplest safe fix: just delegate to the
 // already-proven writeContactAreas rather than a separate, more fragile
 // path -- slower (a phone search instead of a direct ID GET) but reliable.
+// Manual trigger for syncBuyerToSheet (defined near ensureBuyerInCache
+// below), added 2026-09-13 -- lets one buyer's Quo Name/Link/Last-Activity
+// be backfilled onto the Sheet by hand, and doubles as the per-buyer call
+// a bulk backfill script loops over for the existing buyer population.
+// Optional `areas` (array of canonical labels) backfills Manual Area
+// Override too, only if it's still blank -- see syncBuyerToSheet's own
+// comment on the 429-buyer Quo-tag-only area migration this exists for.
+async function handleInternalSyncBuyerToSheet(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const areas = Array.isArray(body.areas) ? body.areas : null;
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  try {
+    await syncBuyerToSheet(env, toE164(phone), areas && areas.length ? areas.join(", ") : undefined);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalBackfillRole(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   let body;
@@ -2593,6 +2744,219 @@ async function handleInternalRawContact(request, env) {
   }
 }
 
+// Temporary diagnostic endpoint, added 2026-09-13 -- sweeps LIVE Quo
+// contacts (not buyers_cache, not the Sheet) for a name substring. Ground
+// truth on the Quo side specifically, since both of the other two are
+// exactly what's suspected of being stuck for a given buyer.
+//
+// Capped at 40 pages (2000 contacts) per CALL, not per sweep -- real limit
+// hit live: Cloudflare Workers' free-plan hard cap of 50 subrequests per
+// invocation, no daily-quota workaround like KV has. At ~2800+ real
+// contacts / 50 per page that's ~56 requests, over the cap in one shot.
+// Accepts `pageToken` so the caller can resume a truncated sweep across
+// multiple calls -- `truncated: true` + `nextPageToken` in the response
+// means keep going, not "no match."
+// Glide-era email-only row -> Quo-name fuzzy match, added 2026-09-13 per
+// Aaron's direct request: "go through the quo contact names and look for
+// obvious parallels with the glide email addresses to merge the two
+// contacts if no login has occurred yet in the new site." Reuses the exact
+// email-localPart/first+last-name substring heuristic already proven live
+// in admin-buyers-worker.js's matchEmailToContact -- not a new, untested
+// guess -- but tightened here to require EXACTLY ONE candidate (0 or 2+ is
+// ambiguous, flagged not guessed), same conservative bar as id-photo-
+// watch.ts's OCR matching.
+//
+// "Merge" does NOT mean writing the matched phone onto the Glide row --
+// there are two real, separate Sheet rows for the same person (the old
+// Glide row: email+name, no phone; the phone-keyed row: phone+Quo Name,
+// often no email, either pre-existing or created by tonight's
+// syncBuyerToSheet backfill) -- doing that would create a genuine
+// DUPLICATE-phone row, not a merge. The phone-keyed row is the one the
+// whole system actually indexes on (loadLoginsByPhone is phone-keyed), so
+// this enriches THAT row's Email/Name/First Login/Last Login wherever
+// they're still blank, and leaves
+// the old Glide row completely untouched -- an inert historical record,
+// never deleted, same as everywhere else in this codebase only ever adds.
+// "No login has occurred yet" is exactly the Glide row's own blank-Phone
+// condition -- a real login/backfill would already have filled it (see
+// writeLoginsRow's existingPhone-wins logic).
+//
+// Dry-run by default (GET, no writes) -- returns matches/ambiguous/noMatch
+// for review. Pass apply=true to actually write the accepted matches.
+// Diagnostic, added 2026-09-13 to actually answer "why are no contact
+// names being added to the sheet with the quo phone numbers?" rather than
+// guess -- counts phone-having rows by whether they have a Quo Link, and of
+// those, whether Quo Name actually got filled in.
+async function handleInternalQuoNameStats(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
+    const rows = (await res.json()).values || [];
+    let hasPhone = 0, hasPhoneAndQuoLink = 0, hasPhoneAndQuoName = 0, hasPhoneNoQuoLink = 0;
+    const sampleNoName = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const phone = (r[3] || "").trim();
+      const quoLink = (r[13] || "").trim();
+      const quoName = (r[35] || "").trim();
+      if (!phone) continue;
+      hasPhone++;
+      if (quoLink) {
+        hasPhoneAndQuoLink++;
+        if (quoName) hasPhoneAndQuoName++;
+        else if (sampleNoName.length < 10) sampleNoName.push({ row: i + 1, phone, quoLink });
+      } else {
+        hasPhoneNoQuoLink++;
+      }
+    }
+    return jsonResponse({ hasPhone, hasPhoneAndQuoLink, hasPhoneAndQuoName, hasPhoneNoQuoLink, sampleNoName });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleInternalGlideMatch(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const apply = url.searchParams.get("apply") === "true";
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
+    const rows = (await res.json()).values || [];
+
+    const glideOnly = []; // { row, email, name, firstLogin, lastLogin }
+    const namedPhoneRows = []; // { row, phone, email, name, quoName, firstLogin, lastLogin }
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const firstLogin = (r[0] || "").trim();
+      const email = (r[1] || "").trim();
+      const phone = (r[3] || "").trim();
+      const name = (r[4] || "").trim();
+      const lastLogin = (r[6] || "").trim();
+      const quoName = (r[35] || "").trim();
+      if (!phone && email && firstLogin) {
+        glideOnly.push({ row: i + 1, email, name, firstLogin, lastLogin });
+      } else if (phone && quoName) {
+        namedPhoneRows.push({ row: i + 1, phone, email, name, quoName, firstLogin, lastLogin });
+      }
+    }
+
+    const matches = [];
+    const ambiguous = [];
+    const noMatch = [];
+    for (const g of glideOnly) {
+      const localPart = g.email.split("@")[0].toLowerCase().replace(/[^a-z]/g, "");
+      if (localPart.length < 4) { noMatch.push({ ...g, reason: "email local part too short to judge safely" }); continue; }
+      // Exact email match first (the phone-row already has this exact
+      // email on file somehow -- trivially confident, no fuzzy needed).
+      const exact = namedPhoneRows.filter((n) => n.email && n.email.toLowerCase() === g.email.toLowerCase());
+      if (exact.length === 1) { matches.push({ glide: g, candidate: exact[0], via: "exact email" }); continue; }
+
+      const fuzzy = namedPhoneRows.filter((n) => {
+        const parts = n.quoName.split(/\s+/).filter(Boolean);
+        if (parts.length < 2) return false;
+        const first = parts[0].toLowerCase();
+        const last = parts[parts.length - 1].toLowerCase();
+        return first.length >= 3 && last.length >= 3 && localPart.includes(first) && localPart.includes(last);
+      });
+      if (fuzzy.length === 1) matches.push({ glide: g, candidate: fuzzy[0], via: "name fuzzy-match" });
+      else if (fuzzy.length === 0) noMatch.push({ ...g, reason: "no candidate's Quo Name appears in the email" });
+      else ambiguous.push({ glide: g, candidates: fuzzy.map((c) => ({ row: c.row, phone: c.phone, quoName: c.quoName })) });
+    }
+
+    if (!apply) {
+      return jsonResponse({
+        dryRun: true,
+        matchCount: matches.length, ambiguousCount: ambiguous.length, noMatchCount: noMatch.length,
+        matches: matches.map((m) => ({ glideRow: m.glide.row, glideEmail: m.glide.email, glideName: m.glide.name, glideFirstLogin: m.glide.firstLogin, glideLastLogin: m.glide.lastLogin, matchedRow: m.candidate.row, matchedPhone: m.candidate.phone, matchedQuoName: m.candidate.quoName, matchedExistingEmail: m.candidate.email, matchedExistingName: m.candidate.name, matchedExistingFirstLogin: m.candidate.firstLogin, matchedExistingLastLogin: m.candidate.lastLogin, via: m.via })),
+        ambiguous, noMatch,
+      });
+    }
+
+    // Apply: enrich the phone-keyed row's Email/Name/First Login/Last
+    // Login, only where blank -- never overwrite anything already there
+    // (per Aaron's direct request, First/Last Login carry over from the
+    // Glide row same as Email/Name do). One batchUpdate for everything,
+    // regardless of match count.
+    const data = [];
+    const applied = [];
+    for (const m of matches) {
+      // m.glide.name guarded too, added 2026-09-13 -- Aaron confirmed the
+      // Glide rows themselves carry no Name at all (confirmed in the dry
+      // run: every one of the 139 came back with name: ""), so without
+      // this a "match" would write an empty string over an already-blank
+      // Name cell -- harmless but pointless, and wroteName below would
+      // wrongly claim a write happened when nothing real was brought over.
+      if (!m.candidate.email && m.glide.email) data.push({ range: `${LOGINS_TAB}!B${m.candidate.row}:B${m.candidate.row}`, values: [[m.glide.email]] });
+      if (!m.candidate.name && m.glide.name) data.push({ range: `${LOGINS_TAB}!E${m.candidate.row}:E${m.candidate.row}`, values: [[m.glide.name]] });
+      if (!m.candidate.firstLogin && m.glide.firstLogin) data.push({ range: `${LOGINS_TAB}!A${m.candidate.row}:A${m.candidate.row}`, values: [[m.glide.firstLogin]] });
+      if (!m.candidate.lastLogin && m.glide.lastLogin) data.push({ range: `${LOGINS_TAB}!G${m.candidate.row}:G${m.candidate.row}`, values: [[m.glide.lastLogin]] });
+      applied.push({
+        glideRow: m.glide.row, matchedRow: m.candidate.row,
+        wroteEmail: !m.candidate.email && !!m.glide.email,
+        wroteName: !m.candidate.name && !!m.glide.name,
+        wroteFirstLogin: !m.candidate.firstLogin && !!m.glide.firstLogin,
+        wroteLastLogin: !m.candidate.lastLogin && !!m.glide.lastLogin,
+      });
+    }
+    if (data.length > 0) {
+      const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ valueInputOption: "RAW", data }),
+      });
+      if (!putRes.ok) throw new Error(`glide-match write failed: ${await putRes.text()}`);
+    }
+    return jsonResponse({ applied: applied.length, detail: applied, ambiguousCount: ambiguous.length, noMatchCount: noMatch.length });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleInternalFindQuoContact(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const nameQuery = (url.searchParams.get("name") || "").trim().toLowerCase();
+  if (!nameQuery) return jsonResponse({ error: "missing name query param" }, 400);
+  try {
+    const matches = [];
+    let pageToken = url.searchParams.get("pageToken") || undefined;
+    let pages = 0;
+    const MAX_PAGES_PER_CALL = 40;
+    do {
+      const resp = await quoCall(env, "/contacts", { maxResults: "50", pageToken });
+      for (const c of resp.data || []) {
+        const d = c.defaultFields || {};
+        const fullName = [d.firstName, d.lastName].filter(Boolean).join(" ");
+        if (fullName.toLowerCase().includes(nameQuery)) {
+          matches.push({
+            id: c.id,
+            name: fullName,
+            phones: (d.phoneNumbers || []).map((p) => p.value),
+            emails: (d.emails || []).map((e) => e.value),
+            role: d.role || "",
+            quoUrl: `https://my.quo.com/contacts/${c.id}`,
+          });
+        }
+      }
+      pageToken = resp.nextPageToken;
+      pages++;
+    } while (pageToken && pages < MAX_PAGES_PER_CALL);
+    return jsonResponse({ matches, pagesScanned: pages, truncated: !!pageToken, nextPageToken: pageToken || null });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalContacts(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
@@ -2603,6 +2967,152 @@ async function handleInternalContacts(request, env) {
       .filter((b) => b.quoName || (b.leadInfo && b.leadInfo.contactName))
       .map((b) => ({ phone: b.phone, name: b.quoName || b.leadInfo.contactName, hasId: !!(b.loginsMatch && b.loginsMatch.idLink) }));
     return jsonResponse({ contacts });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Temporary diagnostic endpoint, added 2026-09-13 -- ground-truth Sheet
+// lookup by name substring, independent of buyers_cache/Quo entirely (both
+// of those are exactly what's suspected of being stuck for a given buyer,
+// so a tool that only reads THEM can't tell "not in the Sheet at all" apart
+// from "in the Sheet but not synced into cache yet"). Read-only, same
+// INTERNAL_TOOLS_SECRET tier as the other /internal/* tools above.
+// Tiny diagnostic, added 2026-09-13 -- the real header row (names + which
+// letter each lives at), needed before adding any new column safely: this
+// Sheet is read/written all over this file by hardcoded LETTER (D, E, F,
+// AD, AF, ...), so a column inserted in the MIDDLE would silently shift
+// every one of those and corrupt unrelated reads/writes. New columns only
+// ever get APPENDED after whatever the real last one is.
+async function handleInternalSheetHeaders(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`'${LOGINS_TAB}'!A1:BZ1`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`headers read failed: ${await res.text()}`);
+    const data = await res.json();
+    const headers = (data.values && data.values[0]) || [];
+    const colLetter = (i) => { let n = i, s = ""; while (n >= 0) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } return s; };
+    return jsonResponse({ headers: headers.map((h, i) => ({ col: colLetter(i), name: h })) });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// A1 column letters -> 1-indexed number (A=1, Z=26, AA=27, ...).
+function columnLetterToNumber(col) {
+  let n = 0;
+  for (const ch of col.toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
+}
+
+// Real limit hit live 2026-09-13 adding the Quo-Name/Last-Activity columns:
+// a Sheet's grid has a fixed column COUNT independent of how many columns
+// actually have data -- App: Logins' grid was sized to exactly 35 (through
+// AI), so writing AJ/AK 400'd with "exceeds grid limits" even though
+// values.update can normally write to any UNUSED cell within the grid.
+// Growing the grid (spreadsheets.batchUpdate updateSheetProperties) is a
+// different call than writing a value to it -- values.update alone can
+// never do this. Pads to at least 10 past what's asked for, once, so this
+// doesn't recur on the next column added after these two.
+async function ensureSheetGridWidth(env, accessToken, minColumns) {
+  const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!metaRes.ok) throw new Error(`sheet metadata read failed: ${await metaRes.text()}`);
+  const metaData = await metaRes.json();
+  const sheet = (metaData.sheets || []).find((s) => s.properties.title === LOGINS_TAB);
+  if (!sheet) throw new Error(`sheet tab not found: ${LOGINS_TAB}`);
+  const current = sheet.properties.gridProperties.columnCount;
+  if (current >= minColumns) return;
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requests: [{
+        updateSheetProperties: {
+          properties: { sheetId: sheet.properties.sheetId, gridProperties: { columnCount: minColumns + 10 } },
+          fields: "gridProperties.columnCount",
+        },
+      }],
+    }),
+  });
+  if (!res.ok) throw new Error(`grid expand failed: ${await res.text()}`);
+}
+
+// Generic one-cell write, added 2026-09-13 for the Quo-Name/Last-Activity
+// column setup below -- kept as a permanent tool alongside sheet-headers
+// (same tier: read the layout, write one cell by col+row) rather than a
+// one-off throwaway, since "add/fix one Sheet cell by hand" is a recurring
+// need for this kind of incident work.
+async function handleInternalWriteCell(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const col = (body.col || "").trim();
+  const row = Number(body.row);
+  const value = body.value ?? "";
+  if (!/^[A-Z]{1,3}$/.test(col) || !Number.isInteger(row) || row < 1) {
+    return jsonResponse({ error: "invalid col or row" }, 400);
+  }
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    await ensureSheetGridWidth(env, accessToken, columnLetterToNumber(col));
+    const a1 = `'${LOGINS_TAB}'!${col}${row}:${col}${row}`;
+    const range = encodeURIComponent(a1);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: a1, values: [[value]] }),
+    });
+    if (!res.ok) throw new Error(`cell write failed: ${await res.text()}`);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleInternalFindLoginsRow(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const nameQuery = (url.searchParams.get("name") || "").trim().toLowerCase();
+  if (!nameQuery) return jsonResponse({ error: "missing name query param" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
+    const data = await res.json();
+    const rows = data.values || [];
+    const matches = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const name = (r[4] || "").trim(); // column E
+      // Search every column, not just Name -- a blank Name cell (the exact
+      // thing suspected of being stuck) would never match a name-only
+      // search, but the row could still be findable by email or phone.
+      const rowMatches = r.some((cell) => (cell || "").toString().toLowerCase().includes(nameQuery));
+      if (rowMatches) {
+        matches.push({
+          row: i + 1,
+          email: r[1] || "",
+          phone: r[3] || "",
+          name,
+          idLink: r[5] || "",
+          quoLink: r[13] || "", // column N
+          quoName: r[35] || "", // column AJ
+          lastActivity: r[36] || "", // column AK
+          stage: r[31] || "", // column AF
+          manualAreaOverride: r[29] || "", // column AD
+        });
+      }
+    }
+    return jsonResponse({ matches });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2961,7 +3471,11 @@ async function handleUploadId(request, env) {
     // checked server-side -- never just trusted from the client -- before
     // deciding whether a fresh photo is actually required.
     const accessToken = await getSheetsAccessToken(env);
-    const target = await findOrNextLoginsRow(accessToken, email);
+    // phone passed through 2026-09-14 -- same fix as handleGateLogin's own
+    // call, same reason: a first-ever booking with a new email but a phone
+    // that already has a row (Quo conversation, Sheet backfill, etc.) used
+    // to create a duplicate row instead of reusing the existing one.
+    const target = await findOrNextLoginsRow(accessToken, email, phone);
 
     if (!hasIdPhoto && !target.existingIdLink) {
       return jsonResponse({ error: "missing ID photo" }, 400);
@@ -3080,15 +3594,21 @@ async function handleUploadMyId(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid form data" }, 400);
   }
+  // identityPhone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment. Named distinctly from the
+  // on-file phone read from the row below (this handler already required
+  // Phone to be saved on the row before an ID could attach, independent of
+  // how the row was found).
   const email = (form.get("email") || "").toString().trim();
+  const identityPhone = (form.get("phone") || "").toString().trim();
   const idPhoto = form.get("idPhoto");
 
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(identityPhone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
   if (!idPhoto || typeof idPhoto === "string") return jsonResponse({ error: "missing ID photo" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, identityPhone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
     const infoRange = encodeURIComponent(`${LOGINS_TAB}!D${row}:E${row}`);
@@ -3254,11 +3774,14 @@ async function handleMyAppointments(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (body.email || "").trim();
-  if (!email) return jsonResponse({ error: "missing email" }, 400);
+  const phone = (body.phone || "").trim();
+  if (!email && !phone) return jsonResponse({ error: "missing identity" }, 400);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ appointments: [] });
     const cells = await readAppointmentRawCells(accessToken, row);
     const appointments = cells.map((raw, i) => parseAppointmentCell(raw, i + 1)).filter(Boolean);
@@ -3289,14 +3812,17 @@ async function handleCancelAppointment(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (body.email || "").trim();
+  const phone = (body.phone || "").trim();
   const slot = parseInt(body.slot, 10);
-  if (!email || !slot || slot < 1 || slot > APPOINTMENT_SLOT_COUNT) {
-    return jsonResponse({ error: "missing/invalid email or slot" }, 400);
+  if ((!email && !phone) || !slot || slot < 1 || slot > APPOINTMENT_SLOT_COUNT) {
+    return jsonResponse({ error: "missing/invalid identity or slot" }, 400);
   }
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
     const col = APPOINTMENT_COLS[slot - 1];
     const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
@@ -3328,15 +3854,18 @@ async function handleUpdateAppointmentDate(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // phone added 2026-09-14, now the PRIMARY identity -- see
+  // findLoginsRowByIdentity's own comment.
   const email = (body.email || "").trim();
+  const phone = (body.phone || "").trim();
   const slot = parseInt(body.slot, 10);
   const newDate = (body.newDate || "").trim();
-  if (!email || !slot || slot < 1 || slot > APPOINTMENT_SLOT_COUNT || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-    return jsonResponse({ error: "missing/invalid email, slot, or newDate" }, 400);
+  if ((!email && !phone) || !slot || slot < 1 || slot > APPOINTMENT_SLOT_COUNT || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+    return jsonResponse({ error: "missing/invalid identity, slot, or newDate" }, 400);
   }
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const row = await findLoginsRowByEmail(accessToken, email);
+    const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
     const col = APPOINTMENT_COLS[slot - 1];
     const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
@@ -3499,16 +4028,22 @@ async function handleRequestPhoneChange(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // identityPhone added 2026-09-14, now the PRIMARY identity for finding
+  // the requester's row -- see findLoginsRowByIdentity's own comment.
+  // Distinct from newPhone below (the value being requested); email stays
+  // in play unchanged for the pending-change record itself, which is
+  // legitimately keyed by email as a value, not as an identity mechanism.
   const email = (body.email || "").trim();
+  const identityPhone = (body.phone || "").trim();
   const newPhoneRaw = (body.newPhone || "").trim();
-  if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid email" }, 400);
+  if (!isPlausiblePhone(identityPhone) && !isPlausibleEmail(email)) return jsonResponse({ error: "invalid identity" }, 400);
   if (!isPlausiblePhone(newPhoneRaw)) return jsonResponse({ error: "invalid phone" }, 400);
   const newPhoneE164 = toE164(newPhoneRaw);
   if (!newPhoneE164) return jsonResponse({ error: "invalid phone" }, 400);
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const targetRow = await findLoginsRowByEmail(accessToken, email);
+    const targetRow = await findLoginsRowByIdentity(accessToken, identityPhone, email);
     if (!targetRow) {
       return jsonResponse({ error: "not found", message: "We couldn't find an account with that email." }, 404);
     }
@@ -3528,11 +4063,19 @@ async function handleRequestPhoneChange(request, env) {
 
     const nowIso = new Date().toISOString();
     const expiresIso = new Date(Date.now() + PHONE_CHANGE_TIMEOUT_MS).toISOString();
-    const rowValues = [email, oldPhone, newPhoneE164, nowIso, expiresIso, "Pending", String(targetRow)];
+    // pendingKey falls back to identityPhone when email is blank (a
+    // phone-only visitor, possible now that phone alone is valid identity)
+    // -- avoids every blank-email requester colliding on the same "pending"
+    // dedup lookup below. Confirmation itself still matches by the NEW
+    // phone actually replying YES (see handleQuoMessageWebhook), so this
+    // only affects the upsert-dedup, not correctness of the confirmation.
+    const pendingKey = email || identityPhone;
+    const rowValues = [pendingKey, oldPhone, newPhoneE164, nowIso, expiresIso, "Pending", String(targetRow)];
 
-    // Upsert-in-place: refresh an existing pending request for this email
-    // rather than piling up duplicates if someone submits more than once.
-    const existingPending = await findPendingPhoneChangeByEmail(accessToken, email);
+    // Upsert-in-place: refresh an existing pending request for this
+    // requester rather than piling up duplicates if someone submits more
+    // than once.
+    const existingPending = await findPendingPhoneChangeByEmail(accessToken, pendingKey);
     const pendingRow = existingPending ? existingPending.row : await nextPendingPhoneChangeRow(accessToken);
     await writePendingPhoneChangeRow(accessToken, pendingRow, rowValues);
 
@@ -3559,7 +4102,15 @@ async function handleRequestEmailChange(request, env) {
   } catch (e) {
     return jsonResponse({ error: "invalid JSON body" }, 400);
   }
+  // identityPhone added 2026-09-14 -- preferred for finding the requester's
+  // row (see findLoginsRowByIdentity's own comment), more reliable than
+  // the current email itself (a slight mistype of it would otherwise fail
+  // this lookup entirely). `email` (the CURRENT email being moved away
+  // from) stays required regardless -- this flow inherently needs a real
+  // value to record as the "old" email, unlike the other endpoints above
+  // where email was ever only a lookup key.
   const email = (body.email || "").trim();
+  const identityPhone = (body.phone || "").trim();
   const newEmail = (body.newEmail || "").trim();
   if (!isPlausibleEmail(email)) return jsonResponse({ error: "invalid current email" }, 400);
   if (!isPlausibleEmail(newEmail)) return jsonResponse({ error: "invalid new email" }, 400);
@@ -3569,7 +4120,7 @@ async function handleRequestEmailChange(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const targetRow = await findLoginsRowByEmail(accessToken, email);
+    const targetRow = await findLoginsRowByIdentity(accessToken, identityPhone, email);
     if (!targetRow) {
       return jsonResponse({ error: "not found", message: "We couldn't find an account with that email." }, 404);
     }
@@ -3695,27 +4246,132 @@ async function ensureBuyerInCache(env, e164Phone) {
     if (!cachedRaw) return; // cache not ready yet -- the next full sync covers it
     const cacheData = JSON.parse(cachedRaw);
     const buyers = cacheData.buyers || [];
-    if (buyers.some((b) => b.phone === e164Phone)) return; // already there, nothing to do
+    const existing = buyers.find((b) => b.phone === e164Phone);
+    // Real bug found and fixed 2026-09-13 (the Mouton incident): this used
+    // to skip the Quo lookup entirely the instant ANY entry existed for
+    // this phone -- including an incomplete stub whose OWN Quo lookup had
+    // come back empty that one time (a transient hiccup, a race with her
+    // Quo contact not existing yet at that exact moment, whatever). That
+    // permanently froze her quoContactId/quoName at null forever: every
+    // later write (stage, area, ID) correctly updated the Sheet, but her
+    // name never had a second chance to resolve, since this guard never
+    // tried again. Confirmed live: an independent quoFindContactByPhone
+    // call for her exact phone found her real contact fine on the very
+    // next attempt -- nothing was wrong with her Quo contact, just with
+    // never retrying. Now only short-circuits once the existing entry is
+    // actually enriched (has a quoContactId); an incomplete stub gets a
+    // real retry every time this runs, and only writes to KV when
+    // something actually changed (new stub, or a stub just got resolved).
+    if (existing && existing.quoContactId) return;
 
     const contact = await quoFindContactByPhone(env, e164Phone);
+    if (!contact && existing) return; // still unresolved, stub already present -- nothing changed, don't burn a KV write
+
     const d = (contact && contact.defaultFields) || {};
     const name = [d.firstName, d.lastName].filter(Boolean).join(" ").trim() || null;
-    buyers.push({
-      phone: e164Phone,
-      quoContactId: contact ? contact.id : null,
-      quoName: name,
-      quoUrl: contact ? `https://my.quo.com/contacts/${contact.id}` : null,
-      areas: [], // left for the next full sync to classify -- see comment above
-      lastActivityAt: new Date().toISOString(),
-      loginsMatch: null,
-      leadInfo: null,
-    });
+    if (existing) {
+      existing.quoContactId = contact.id;
+      existing.quoName = name;
+      existing.quoUrl = `https://my.quo.com/contacts/${contact.id}`;
+    } else {
+      buyers.push({
+        phone: e164Phone,
+        quoContactId: contact ? contact.id : null,
+        quoName: name,
+        quoUrl: contact ? `https://my.quo.com/contacts/${contact.id}` : null,
+        areas: [], // left for the next full sync to classify -- see comment above
+        lastActivityAt: new Date().toISOString(),
+        loginsMatch: null,
+        leadInfo: null,
+      });
+    }
     cacheData.buyers = buyers;
     await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
   } catch (e) {
     // Best-effort -- the next full sync is the real safety net; a failure
     // here should never break this webhook's own ack to Quo (see below).
   }
+
+  // Parallel write onto the Sheet itself, added 2026-09-13 -- step one of
+  // moving the buyers page OFF buyers_cache entirely and onto a direct
+  // Sheet read, same as properties.json already does for listings (Aaron's
+  // direct request, same incident: "preload all names and numbers from
+  // conversations... onto the sheet... use a direct link to the sheet at
+  // all times"). Deliberately runs ALONGSIDE the KV-cache logic above, not
+  // instead of it, for now -- the admin Buyers page still reads
+  // buyers_cache until the new Sheet-direct read endpoint replaces it;
+  // ripping the KV path out before that exists would go dark immediately.
+  // Once that switch lands and is verified, the block above (and every
+  // other ensureBuyerInCache/patch* KV-cache machinery) comes out.
+  try {
+    await syncBuyerToSheet(env, e164Phone);
+  } catch (e) {
+    // Best-effort, same reasoning as above.
+  }
+}
+
+// Writes Quo-sourced identity onto this buyer's own App: Logins row: Quo
+// Name (AJ) and Quo Link (N) if either is still blank -- non-destructive,
+// same "fill a gap, never clobber" stance as writeLoginsRow's phone/name --
+// and Last Activity (AK), which always refreshes since "most recent" is
+// the only correct value for that one. Creates a bare phone-only row if
+// none exists yet (a Quo-only buyer who's never been gated or booked a
+// showing has no row at all otherwise) -- same convention as
+// appendLoginsRow's other callers. Looks the Quo contact up itself rather
+// than taking one as a parameter -- called standalone from several places
+// below, not just ensureBuyerInCache, so it can't assume a caller already
+// has one in hand.
+// areasIfBlank (optional), added 2026-09-13 for the one-time area
+// migration: 429 buyers had areas known ONLY via the old Quo-name-TB-tag
+// parsing (admin-buyers-worker.js's parseAreasFromName, read at crawl
+// time), with nothing ever written to this Sheet's own Manual Area
+// Override column -- confirmed live via buyers_cache: 429 had a non-empty
+// `areas` array with an EMPTY manualAreaOverride. Moving the buyers page
+// off buyers_cache entirely (see comment above ensureBuyerInCache) would
+// have silently blanked every one of their areas the moment that Quo-side
+// parsing stopped running. Backfills AD from the caller's already-known
+// areas, same non-destructive "only fill a gap" stance as Quo Name/Link.
+async function syncBuyerToSheet(env, e164Phone, areasIfBlank) {
+  const [contact, accessToken] = await Promise.all([
+    quoFindContactByPhone(env, e164Phone),
+    getSheetsAccessToken(env),
+  ]);
+  const d = (contact && contact.defaultFields) || {};
+  const quoName = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
+  const quoLink = contact ? `https://my.quo.com/contacts/${contact.id}` : "";
+  const nowIso = new Date().toISOString();
+
+  let row = await findLoginsRowByPhone(accessToken, e164Phone);
+  if (!row) {
+    await appendLoginsRow(accessToken, e164Phone, "", "");
+    row = await findLoginsRowByPhone(accessToken, e164Phone);
+    if (!row) return; // shouldn't happen -- just appended it moments ago
+  }
+
+  // One read (N, AJ, AD together, via batchGet) to decide what's actually
+  // still blank, then one write (batchUpdate) for whatever needs it.
+  const getUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet`);
+  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!N${row}:N${row}`);
+  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AJ${row}:AJ${row}`);
+  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AD${row}:AD${row}`);
+  const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!getRes.ok) throw new Error(`quo-name/link/area read failed: ${await getRes.text()}`);
+  const getData = await getRes.json();
+  const existingQuoLink = (((getData.valueRanges || [])[0] || {}).values || [[]])[0]?.[0] || "";
+  const existingQuoName = (((getData.valueRanges || [])[1] || {}).values || [[]])[0]?.[0] || "";
+  const existingAreas = (((getData.valueRanges || [])[2] || {}).values || [[]])[0]?.[0] || "";
+
+  const data = [{ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[nowIso]] }];
+  if (!existingQuoLink && quoLink) data.push({ range: `${LOGINS_TAB}!N${row}:N${row}`, values: [[quoLink]] });
+  if (!existingQuoName && quoName) data.push({ range: `${LOGINS_TAB}!AJ${row}:AJ${row}`, values: [[quoName]] });
+  if (!existingAreas && areasIfBlank) data.push({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[areasIfBlank]] });
+
+  const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ valueInputOption: "RAW", data }),
+  });
+  if (!putRes.ok) throw new Error(`quo-name/link/activity/area write failed: ${await putRes.text()}`);
 }
 
 // Step 2: Quo calls this when a message.received event fires on the Filling
@@ -4044,6 +4700,27 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/raw-contact" && request.method === "GET") {
     return handleInternalRawContact(request, env);
+  }
+  if (url.pathname === "/internal/sheet-headers" && request.method === "GET") {
+    return handleInternalSheetHeaders(request, env);
+  }
+  if (url.pathname === "/internal/write-cell" && request.method === "POST") {
+    return handleInternalWriteCell(request, env);
+  }
+  if (url.pathname === "/internal/sync-buyer-to-sheet" && request.method === "POST") {
+    return handleInternalSyncBuyerToSheet(request, env);
+  }
+  if (url.pathname === "/internal/quo-name-stats" && request.method === "GET") {
+    return handleInternalQuoNameStats(request, env);
+  }
+  if (url.pathname === "/internal/glide-match" && request.method === "GET") {
+    return handleInternalGlideMatch(request, env);
+  }
+  if (url.pathname === "/internal/find-logins-row" && request.method === "GET") {
+    return handleInternalFindLoginsRow(request, env);
+  }
+  if (url.pathname === "/internal/find-quo-contact" && request.method === "GET") {
+    return handleInternalFindQuoContact(request, env);
   }
   if (url.pathname === "/internal/list-id-files" && request.method === "GET") {
     return handleInternalListIdFiles(request, env);

@@ -391,7 +391,7 @@ function buildListingCard(listing) {
   // visitor's, which is exactly why this reads MY_APPOINTMENTS (this
   // browser's own fetch), not the admin-only bulk map above.
   for (const appt of appointmentsForAddress(listing.address)) {
-    card.appendChild(buildAppointmentBanner(appt, localStorage.getItem(GATE_EMAIL_STORAGE_KEY)));
+    card.appendChild(buildAppointmentBanner(appt, localStorage.getItem(GATE_PHONE_STORAGE_KEY), localStorage.getItem(GATE_EMAIL_STORAGE_KEY)));
   }
 
   return card;
@@ -1069,15 +1069,19 @@ function populateGetStartedPropertyDropdown() {
 // 404 specifically means "this device's stored identity is stale" (e.g.
 // the email changed and was confirmed on a different channel) and gets
 // handled by handleStaleIdentity below.
-async function fetchMyInfo(email) {
-  if (!email) return null;
+// phone added 2026-09-14, now the PRIMARY identity sent to the server --
+// see admin/worker.js's findLoginsRowByIdentity for why (Glide is dead,
+// Quo and the current gate both always carry a real phone number now).
+// email kept as a fallback parameter, not removed.
+async function fetchMyInfo(phone, email) {
+  if (!phone && !email) return null;
   try {
     // POST-with-body 2026-09-06, was GET ?email= -- moved off the URL so
     // Cloudflare's own access logs stop recording every visitor's email.
     const res = await fetch(`${ADMIN_API_URL}/my-info`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ phone, email }),
     });
     if (res.status === 404) return { staleIdentity: true };
     if (!res.ok) return null;
@@ -1116,7 +1120,8 @@ async function prefillGetStartedContactFields() {
   document.getElementById("get-started-phone").value = localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "";
 
   const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
-  const data = await fetchMyInfo(email);
+  const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
+  const data = await fetchMyInfo(phone, email);
   if (data && data.staleIdentity) return handleStaleIdentity();
   if (data) {
     if (data.name) document.getElementById("get-started-name").value = data.name;
@@ -1137,7 +1142,7 @@ async function prefillGetStartedContactFields() {
     if (hasIdEl) {
       hasIdEl.classList.toggle("hidden", !serverIdOnFile);
       if (serverIdOnFile) {
-        loadIdPhotoThumbnail(document.getElementById("get-started-id-thumbnail"), data.email || email, null);
+        loadIdPhotoThumbnail(document.getElementById("get-started-id-thumbnail"), data.phone || phone, data.email || email, null);
       }
     }
   }
@@ -1188,8 +1193,11 @@ function buildDateOptions() {
 // Cancel/Change Date always re-fetch fresh afterward rather than trusting
 // an optimistic local update.
 async function refreshMyAppointments() {
+  // phone added 2026-09-14, now the PRIMARY identity -- see fetchMyInfo's
+  // own comment.
   const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
-  if (!email) {
+  const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
+  if (!phone && !email) {
     MY_APPOINTMENTS = [];
     return;
   }
@@ -1199,7 +1207,7 @@ async function refreshMyAppointments() {
     const res = await fetch(MY_APPOINTMENTS_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ phone, email }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -1430,7 +1438,9 @@ async function refreshAndRerenderAppointments() {
 // it) and a single stopPropagation on the whole banner replaces needing it
 // on every individual button, since any click here must never also
 // trigger the card's own click-to-detail handler.
-function buildAppointmentBanner(appt, email) {
+// phone added 2026-09-14, now the PRIMARY identity -- see fetchMyInfo's
+// own comment.
+function buildAppointmentBanner(appt, phone, email) {
   const banner = document.createElement("div");
   banner.className = "appointment-banner";
   banner.dataset.slot = appt.slot;
@@ -1481,7 +1491,7 @@ function buildAppointmentBanner(appt, email) {
       const res = await fetch(UPDATE_APPOINTMENT_DATE_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, slot: appt.slot, newDate }),
+        body: JSON.stringify({ phone, email, slot: appt.slot, newDate }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {
@@ -1504,7 +1514,7 @@ function buildAppointmentBanner(appt, email) {
       const res = await fetch(CANCEL_APPOINTMENT_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, slot: appt.slot }),
+        body: JSON.stringify({ phone, email, slot: appt.slot }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {
@@ -1799,16 +1809,20 @@ function initDrawer() {
 // every visit.
 function initMyInfoUI() {
   document.getElementById("my-info-save-name-btn").addEventListener("click", async () => {
+    // phone added 2026-09-14, now the PRIMARY identity -- see
+    // fetchMyInfo's own comment.
     const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
     const name = document.getElementById("my-info-name").value.trim();
     const status = document.getElementById("my-info-name-status");
-    if (!email || !name) return;
+    if (!phone && !email) return;
+    if (!name) return;
     status.textContent = "Saving...";
     try {
       const res = await fetch(`${ADMIN_API_URL}/update-name`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({ phone, email, name }),
       });
       status.textContent = res.ok ? "Saved!" : "Something went wrong -- please try again.";
     } catch (e) {
@@ -1825,16 +1839,19 @@ function initMyInfoUI() {
   // here, this is just a second real UI entry point into that same,
   // already-verified-live endpoint.
   document.getElementById("my-info-send-code-btn").addEventListener("click", async () => {
+    // phone (current, PRIMARY identity) is distinct from newPhone (the
+    // value being requested) -- see fetchMyInfo's own comment.
     const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
     const newPhone = document.getElementById("my-info-new-phone").value.trim();
     const status = document.getElementById("my-info-phone-status");
-    if (!email || !newPhone) return;
+    if ((!phone && !email) || !newPhone) return;
     status.textContent = "Sending...";
     try {
       const res = await fetch(`${ADMIN_API_URL}/request-phone-change`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newPhone }),
+        body: JSON.stringify({ phone, email, newPhone }),
       });
       const data = await res.json();
       status.textContent = res.ok ? data.message : (data.message || "Something went wrong -- please try again.");
@@ -1852,7 +1869,11 @@ function initMyInfoUI() {
   });
 
   document.getElementById("my-info-send-email-code-btn").addEventListener("click", async () => {
+    // phone added 2026-09-14, preferred for finding the requester's row
+    // (see fetchMyInfo's own comment) -- email itself stays required, this
+    // flow inherently needs a real current-email value to move away from.
     const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
     const newEmail = document.getElementById("my-info-new-email").value.trim();
     const status = document.getElementById("my-info-email-status");
     if (!email || !newEmail) return;
@@ -1861,7 +1882,7 @@ function initMyInfoUI() {
       const res = await fetch(`${ADMIN_API_URL}/request-email-change`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newEmail }),
+        body: JSON.stringify({ phone, email, newEmail }),
       });
       const data = await res.json();
       status.textContent = res.ok ? data.message : (data.message || "Something went wrong -- please try again.");
@@ -1874,14 +1895,18 @@ function initMyInfoUI() {
   // from Aaron's original "My Info" scope ask. Same immediate-upload-on-
   // select pattern as the co-buyer ID fields below.
   document.getElementById("my-info-id-photo").addEventListener("change", async (evt) => {
+    // phone added 2026-09-14, now the PRIMARY identity -- see
+    // fetchMyInfo's own comment.
     const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+    const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
     const file = evt.target.files && evt.target.files[0];
     const status = document.getElementById("my-info-id-upload-status");
-    if (!email || !file) return;
+    if ((!phone && !email) || !file) return;
     status.textContent = "Uploading...";
     try {
       const form = new FormData();
-      form.append("email", email);
+      form.append("phone", phone || "");
+      form.append("email", email || "");
       form.append("idPhoto", file);
       const res = await fetch(`${ADMIN_API_URL}/upload-my-id`, { method: "POST", body: form });
       const data = await res.json();
@@ -1901,18 +1926,22 @@ function initMyInfoUI() {
   // listener code twice, since the two blocks are otherwise identical.
   [1, 2].forEach((slot) => {
     document.getElementById(`my-info-cobuyer${slot}-save-btn`).addEventListener("click", async () => {
+      // phone (the PRIMARY visitor's own identity) is distinct from
+      // coBuyerPhone below (the co-buyer's own phone being saved) -- see
+      // fetchMyInfo's own comment.
       const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+      const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
       const name = document.getElementById(`my-info-cobuyer${slot}-name`).value.trim();
       const coBuyerEmail = document.getElementById(`my-info-cobuyer${slot}-email`).value.trim();
       const coBuyerPhone = document.getElementById(`my-info-cobuyer${slot}-phone`).value.trim();
       const status = document.getElementById(`my-info-cobuyer${slot}-status`);
-      if (!email || !name) return;
+      if ((!phone && !email) || !name) return;
       status.textContent = "Saving...";
       try {
         const res = await fetch(`${ADMIN_API_URL}/update-co-buyer`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, slot, name, coBuyerEmail, coBuyerPhone }),
+          body: JSON.stringify({ phone, email, slot, name, coBuyerEmail, coBuyerPhone }),
         });
         status.textContent = res.ok ? "Saved!" : "Something went wrong -- please try again.";
       } catch (e) {
@@ -1925,14 +1954,18 @@ function initMyInfoUI() {
     // co-buyer's ID here has no surrounding form to submit alongside, so
     // there's nothing to wait for.
     document.getElementById(`my-info-cobuyer${slot}-id-photo`).addEventListener("change", async (evt) => {
+      // phone added 2026-09-14, now the PRIMARY identity -- see
+      // fetchMyInfo's own comment.
       const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+      const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
       const file = evt.target.files && evt.target.files[0];
       const status = document.getElementById(`my-info-cobuyer${slot}-id-status`);
-      if (!email || !file) return;
+      if ((!phone && !email) || !file) return;
       status.textContent = "Uploading...";
       try {
         const form = new FormData();
-        form.append("email", email);
+        form.append("phone", phone || "");
+        form.append("email", email || "");
         form.append("slot", String(slot));
         form.append("idPhoto", file);
         const res = await fetch(`${ADMIN_API_URL}/upload-co-buyer-id`, { method: "POST", body: form });
@@ -1958,7 +1991,9 @@ function initMyInfoUI() {
 // bytes to the <img> as a local blob: URL instead of pointing it at the
 // endpoint directly. Revokes the previous blob: URL first (if any) so
 // repeated tab refreshes don't leak memory.
-async function loadIdPhotoThumbnail(imgEl, email, coBuyerSlot) {
+// phone added 2026-09-14, now the PRIMARY identity -- see fetchMyInfo's
+// own comment.
+async function loadIdPhotoThumbnail(imgEl, phone, email, coBuyerSlot) {
   const prevUrl = imgEl.dataset.blobUrl;
   if (prevUrl) URL.revokeObjectURL(prevUrl);
   imgEl.removeAttribute("src");
@@ -1967,7 +2002,7 @@ async function loadIdPhotoThumbnail(imgEl, email, coBuyerSlot) {
     const res = await fetch(`${ADMIN_API_URL}/id-photo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(coBuyerSlot ? { email, coBuyerSlot } : { email }),
+      body: JSON.stringify(coBuyerSlot ? { phone, email, coBuyerSlot } : { phone, email }),
     });
     if (!res.ok) return; // no ID on file / server hiccup -- leave the <img> blank rather than break the tab
     const blob = await res.blob();
@@ -1980,10 +2015,14 @@ async function loadIdPhotoThumbnail(imgEl, email, coBuyerSlot) {
 }
 
 async function refreshMyInfoTab() {
+  // phone added 2026-09-14, now the PRIMARY identity -- see fetchMyInfo's
+  // own comment. "Gated at all" now checks either, since both are always
+  // set together at gate time in practice.
   const email = localStorage.getItem(GATE_EMAIL_STORAGE_KEY);
+  const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY);
   const notGated = document.getElementById("my-info-not-gated");
   const content = document.getElementById("my-info-content");
-  if (!email) {
+  if (!phone && !email) {
     notGated.classList.remove("hidden");
     content.classList.add("hidden");
     return;
@@ -1991,7 +2030,7 @@ async function refreshMyInfoTab() {
   notGated.classList.add("hidden");
   content.classList.remove("hidden");
 
-  const data = await fetchMyInfo(email);
+  const data = await fetchMyInfo(phone, email);
   if (data && data.staleIdentity) return handleStaleIdentity();
   if (!data) return; // network hiccup -- leave fields as they were rather than blank them out
 
@@ -2016,7 +2055,7 @@ async function refreshMyInfoTab() {
   if (data.idOnFile) {
     hasId.classList.remove("hidden");
     missingId.classList.add("hidden");
-    loadIdPhotoThumbnail(document.getElementById("my-info-id-thumbnail"), email, null);
+    loadIdPhotoThumbnail(document.getElementById("my-info-id-thumbnail"), phone, email, null);
   } else {
     hasId.classList.add("hidden");
     missingId.classList.remove("hidden");
@@ -2051,7 +2090,7 @@ async function refreshMyInfoTab() {
     const coHasId = document.getElementById(`my-info-cobuyer${slot}-id-has-file`);
     if (co && co.idOnFile) {
       coHasId.classList.remove("hidden");
-      loadIdPhotoThumbnail(document.getElementById(`my-info-cobuyer${slot}-id-thumbnail`), email, String(slot));
+      loadIdPhotoThumbnail(document.getElementById(`my-info-cobuyer${slot}-id-thumbnail`), phone, email, String(slot));
     } else {
       coHasId.classList.add("hidden");
     }
@@ -2319,7 +2358,10 @@ function initLoginGate() {
 const SYNC_VISITOR_ENDPOINT = `${ADMIN_API_URL}/sync-visitor`;
 
 function currentFilterSyncPayload() {
+  // phone added 2026-09-14, now the PRIMARY identity -- see fetchMyInfo's
+  // own comment.
   return {
+    phone: localStorage.getItem(GATE_PHONE_STORAGE_KEY),
     email: localStorage.getItem(GATE_EMAIL_STORAGE_KEY),
     filters: {
       sort: filterState.sort,
@@ -2339,7 +2381,7 @@ function currentFilterSyncPayload() {
 
 function syncVisitorNow() {
   const payload = currentFilterSyncPayload();
-  if (!payload.email) return; // never passed the gate in this browser -- nothing to attribute this to
+  if (!payload.phone && !payload.email) return; // never passed the gate in this browser -- nothing to attribute this to
   // Best-effort, fire-and-forget -- a missed sync just means slightly
   // stale filter columns until the next one, never a broken page. Never
   // surfaced to the visitor either way.
@@ -2351,7 +2393,10 @@ function syncVisitorNow() {
 }
 
 function initVisitorSync() {
-  if (!localStorage.getItem(GATE_EMAIL_STORAGE_KEY)) return;
+  // phone added 2026-09-14, now the PRIMARY identity -- see fetchMyInfo's
+  // own comment. Checking either here since both are always set together
+  // at gate time in practice.
+  if (!localStorage.getItem(GATE_PHONE_STORAGE_KEY) && !localStorage.getItem(GATE_EMAIL_STORAGE_KEY)) return;
 
   // Once on load -- covers "just opened the app," updating Last Login even
   // if they don't touch a single filter this visit.
