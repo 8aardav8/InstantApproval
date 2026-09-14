@@ -2750,6 +2750,74 @@ async function handleInternalRawContact(request, env) {
 // names being added to the sheet with the quo phone numbers?" rather than
 // guess -- counts phone-having rows by whether they have a Quo Link, and of
 // those, whether Quo Name actually got filled in.
+// Diagnostic, added 2026-09-14 -- finds rows whose Phone (D) normalizes
+// (via toE164) to the same value as another row, even when the RAW text
+// differs (formatting, stray characters) -- a plain substring search
+// (find-logins-row) can miss these, same class of gap as the "3143229 139"
+// stray-space phone found earlier. Real trigger: "Jasmine ESTLTB" showing
+// as two separate buyer cards with the same phone link but different
+// stage/last-activity.
+// Diagnostic, added 2026-09-14 alongside handleInternalFindDuplicatePhones
+// -- raw text search across the separate "BUYERS" lead tab (the other
+// source handleBuyers merges in, admin-buyers-worker.js's own
+// loadBuyersTabLeads) for a substring, same shape as find-logins-row but
+// for that tab instead of App: Logins.
+async function handleInternalSearchBuyersTab(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  const url = new URL(request.url);
+  const query = (url.searchParams.get("q") || "").trim().toLowerCase();
+  if (!query) return jsonResponse({ error: "missing q" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`BUYERS!A1:O118`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`buyers-tab read failed: ${await res.text()}`);
+    const rows = (await res.json()).values || [];
+    const headerRowIdx = rows.findIndex((r) => r.includes("Phone Number"));
+    const matches = [];
+    for (let i = 0; i < rows.length; i++) {
+      if (i === headerRowIdx) continue;
+      const r = rows[i];
+      if (r.some((cell) => (cell || "").toString().toLowerCase().includes(query))) {
+        matches.push({ row: i + 1, values: r });
+      }
+    }
+    return jsonResponse({ headerRow: headerRowIdx + 1, matches });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleInternalFindDuplicatePhones(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
+    const rows = (await res.json()).values || [];
+    const byNormalized = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const rawPhone = (r[3] || "").trim();
+      if (!rawPhone) continue;
+      const normalized = toE164(rawPhone);
+      if (!normalized) continue;
+      const entry = { row: i + 1, rawPhone, name: (r[4] || "").trim(), quoName: (r[35] || "").trim() };
+      if (!byNormalized.has(normalized)) byNormalized.set(normalized, []);
+      byNormalized.get(normalized).push(entry);
+    }
+    const duplicates = [...byNormalized.entries()].filter(([, rows]) => rows.length > 1).map(([phone, rows]) => ({ phone, rows }));
+    return jsonResponse({ duplicateCount: duplicates.length, duplicates });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalQuoNameStats(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
@@ -4747,6 +4815,12 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/sync-buyer-to-sheet" && request.method === "POST") {
     return handleInternalSyncBuyerToSheet(request, env);
+  }
+  if (url.pathname === "/internal/find-duplicate-phones" && request.method === "GET") {
+    return handleInternalFindDuplicatePhones(request, env);
+  }
+  if (url.pathname === "/internal/search-buyers-tab" && request.method === "GET") {
+    return handleInternalSearchBuyersTab(request, env);
   }
   if (url.pathname === "/internal/quo-name-stats" && request.method === "GET") {
     return handleInternalQuoNameStats(request, env);
