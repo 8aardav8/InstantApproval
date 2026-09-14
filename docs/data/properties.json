@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T15:44:54.907260+00:00",
+  "generatedAt": "2026-09-14T15:45:45.598078+00:00",
   "listings": [
     {
       "id": "1484-e-clay-street-decatur-il-62521",
@@ -56,7 +56,7 @@
       "id": "210-n-17th-stl-mo-63103",
       "address": "210 N 17th STL MO 63103",
       "onMarketDate": "9/10",
-      "lastUpdate": "9/10",
+      "lastUpdate": "9/11",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$875",
@@ -64,7 +64,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6306584,
       "lng": -90.20424229999999
@@ -3201,7 +3201,7 @@
       "id": "3251-meadow-lane-dr-jackson-ms-39212",
       "address": "3251 Meadow Lane Dr, Jackson, MS 39212",
       "onMarketDate": "6/3/2026",
-      "lastUpdate": "8/31/2026",
+      "lastUpdate": "9/11/2026",
       "area": "MS",
       "down": "$2,500",
       "monthly": "$895",
@@ -3209,7 +3209,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.2557297,
       "lng": -90.2353547
