@@ -1175,6 +1175,18 @@ async function handleMyInfo(request, env) {
 // lookup key or an identity-verification channel anywhere), so it writes
 // directly -- no confirm-flow needed, matching the same reasoning already
 // applied when this was scoped with Aaron.
+// Telegram ping added 2026-09-13, per Aaron's direct request -- unlike
+// Change Phone Number/Change Email (both disabled inputs gated behind a
+// texted/emailed confirmation code before anything writes), this Save Name
+// button overwrites the login name INSTANTLY with zero verification. Not
+// changed to require a code (a name is low-stakes compared to phone/email,
+// which are also identity-matching keys elsewhere in this file) -- just
+// made visible, so a change at least surfaces old/new rather than silently
+// overwriting with no trace. Deliberately does NOT touch the Quo contact's
+// own name (see quoUpsertContact/handleAdminUpdateContactName for that,
+// separate opt-in flow on the admin Buyer page) -- this is the LOGIN name
+// only (Sheet column E), same field the gate itself protects via
+// existingName || name in writeLoginsRow.
 async function handleUpdateName(request, env) {
   let body;
   try {
@@ -1193,12 +1205,32 @@ async function handleUpdateName(request, env) {
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
     const range = encodeURIComponent(`${LOGINS_TAB}!E${row}:E${row}`);
+    const oldRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!oldRes.ok) throw new Error(`name read failed: ${await oldRes.text()}`);
+    const oldData = await oldRes.json();
+    const oldName = ((oldData.values || [[]])[0] || [])[0] || "";
+
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({ range: `${LOGINS_TAB}!E${row}:E${row}`, values: [[name]] }),
     });
     if (!res.ok) throw new Error(`name update failed: ${await res.text()}`);
+
+    // Awaited, not fire-and-forget -- see the real bug this avoids
+    // documented on the phone/email-change Telegram notifies further down
+    // this file (an unawaited promise can be killed the moment the
+    // response returns in Workers).
+    if (env.TELEGRAM_BOT_TOKEN && oldName !== name) {
+      const text = `Login name CHANGED (My Info) — ${email}.\nOld: ${oldName || "(blank)"}\nNew: ${name}`;
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
+      }).catch(() => {});
+    }
 
     return jsonResponse({ ok: true });
   } catch (e) {
