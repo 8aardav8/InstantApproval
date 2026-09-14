@@ -3765,6 +3765,38 @@ async function setBuyerStage(phone, stage, onDone) {
   }
 }
 
+// Manually corrects the OCR'd ID Name -- added 2026-09-14 per Aaron's
+// direct request ("I would be able to click to edit this name if it
+// doesn't look right"). Unlike sentiment/stage/hidden/dnc, idName is NOT
+// hoisted onto the top-level buyer object server-side (see
+// admin-buyers-worker.js's own "exposed at the TOP level" comment -- only
+// those four are) -- it stays nested under loginsMatch, same as it's read
+// in renderBuyerDetail, so the optimistic patch below targets
+// buyer.loginsMatch.idName specifically (creating a bare loginsMatch object
+// if this buyer never had one, e.g. a Quo-only contact with no App:Logins
+// activity yet -- same "don't silently no-op" reasoning as the server's
+// own syncBuyerToSheet auto-creating the row).
+async function setIdName(phone, idName, onDone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-id-name`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, idName }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
+    const buyer = findBuyer(phone);
+    if (buyer) {
+      if (!buyer.loginsMatch) buyer.loginsMatch = {};
+      buyer.loginsMatch.idName = idName;
+    }
+    if (onDone) onDone(); else renderBuyersList();
+  } catch (err) {
+    alert(`Couldn't save: ${err}`);
+  }
+}
+
 // Sets (or clears) a buyer's hidden state -- added 2026-09-15 per Aaron's
 // direct request. Same pattern as setBuyerSentiment/setBuyerStage above:
 // optimistic BUYERS_CACHE update, then re-render (or the caller's own
@@ -4138,6 +4170,33 @@ function showBuyerDetail(phone, opts = {}) {
   document.getElementById("buyers-list-view").classList.add("hidden");
   document.getElementById("buyers-detail-view").classList.remove("hidden");
   renderBuyerDetail(buyer);
+  refreshQuoNameInBackground(phone);
+}
+
+// Fire-and-forget: checks the buyer's REAL current Quo contact name and
+// self-heals the Sheet's cached copy (and this page's heading) if it's
+// gone stale -- added 2026-09-14 per Aaron's direct request. Non-blocking
+// (the page has already rendered with whatever name was cached) and
+// silent on failure (a network hiccup here shouldn't surface an alert for
+// something the buyer isn't even looking at yet). Only re-renders if the
+// name actually changed AND the buyer is still the one on screen (the
+// phone check guards against a slow response landing after Prev/Next
+// already moved on).
+async function refreshQuoNameInBackground(phone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/refresh-quo-name?phone=${encodeURIComponent(phone)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok || !data.changed) return;
+    const buyer = findBuyer(phone);
+    if (!buyer) return;
+    buyer.quoName = data.quoName;
+    if (CURRENT_BUYER_DETAIL_PHONE === phone) renderBuyerDetail(buyer);
+  } catch (err) {
+    // Silent -- see comment above.
+  }
 }
 
 // Moves to the next/previous buyer, added 2026-09-12 per Aaron's direct
@@ -4428,7 +4487,6 @@ function renderBuyerDetail(buyer) {
     : `<span class="login-status-icon login-status-no" title="Never logged in">❌</span>`;
 
   const facts = [
-    ["ID Name (OCR)", (lm && lm.idName) || ""],
     ["Phone", buyer.phone],
     ["Email", (lm && lm.email) || ""],
     ["First login", (lm && lm.firstLogin) ? formatDateTimeWithYearAndSince(lm.firstLogin) : ""],
@@ -4467,7 +4525,15 @@ function renderBuyerDetail(buyer) {
   // so it always shows (even with no name on file) and can carry the
   // ever-logged-in checkmark/X next to it -- added 2026-09-14.
   const loginNameHtml = `<div class="detail-field"><span class="label">Login Name (IAH)</span><span class="value">${escapeHtml((lm && lm.name) || "(none)")} ${loginStatusIconHtml}</span></div>`;
-  const factsHtml = loginNameHtml + facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
+  // ID Name (OCR) also rendered separately now, click-to-edit -- added
+  // 2026-09-14 per Aaron's direct request ("I would be able to click to
+  // edit this name if it doesn't look right"), same interaction pattern as
+  // the Quo name heading (buyer-name-editable) just below. Always shown
+  // (even blank) so there's a consistent place to add/correct it even
+  // before an ID's been linked -- same reasoning as Login Name above.
+  const idNameValue = (lm && lm.idName) || "";
+  const idNameHtml = `<div class="detail-field"><span class="label">ID Name (OCR)</span><span class="value buyer-idname-editable" data-phone="${escapeAttr(buyer.phone)}" data-id-name="${escapeAttr(idNameValue)}" tabindex="0" title="Click to edit">${idNameValue ? escapeHtml(idNameValue) : "(none)"}</span></div>`;
+  const factsHtml = loginNameHtml + idNameHtml + facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
 
   // Lead info from the Filling Sheet's separate "BUYERS" tab (rating,
   // preferences, company/landlord, which Quo number they came in on) --
@@ -4843,6 +4909,39 @@ function renderBuyerDetail(buyer) {
     };
     nameHeading.addEventListener("click", startEditingName);
     nameHeading.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startEditingName(); } });
+  }
+
+  // Click-to-edit ID Name (OCR) -- same interaction pattern as the Quo name
+  // heading just above, added 2026-09-14 per Aaron's direct request.
+  const idNameField = container.querySelector(".buyer-idname-editable");
+  if (idNameField) {
+    const startEditingIdName = () => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "buyer-idname-edit-input";
+      input.value = idNameField.dataset.idName;
+      idNameField.replaceWith(input);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = async (save) => {
+        if (done) return;
+        done = true;
+        const newName = input.value.trim();
+        if (save && newName !== idNameField.dataset.idName) {
+          await setIdName(idNameField.dataset.phone, newName, () => renderBuyerDetail(findBuyer(idNameField.dataset.phone)));
+        } else {
+          renderBuyerDetail(findBuyer(idNameField.dataset.phone));
+        }
+      };
+      input.addEventListener("blur", () => finish(true));
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); finish(true); }
+        if (e.key === "Escape") { e.preventDefault(); finish(false); }
+      });
+    };
+    idNameField.addEventListener("click", startEditingIdName);
+    idNameField.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startEditingIdName(); } });
   }
 
   // Click-to-edit areas -- click the fact row, its checkbox panel opens

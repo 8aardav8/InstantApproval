@@ -960,9 +960,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   100% { transform: translateX(0); opacity: 1; }
 }
 /* Click-to-edit name, added 2026-09-12 per Aaron's direct request (replaces
-   the old standalone Edit section's Name field). */
-.buyer-name-editable { cursor: pointer; border-bottom: 1px dashed transparent; }
-.buyer-name-editable:hover, .buyer-name-editable:focus-visible { border-bottom-color: var(--blue); outline: none; }
+   the old standalone Edit section's Name field). Underline made permanent
+   (not just on :hover) 2026-09-14 per Aaron's direct request -- he'd lost
+   track of this already being clickable ("I believe we used to have this
+   functionality"), so the affordance needs to be visible at rest, not just
+   discovered by hovering. Darkens to solid blue on hover/focus, same as
+   before, just starting from a visible dashed underline instead of none. */
+.buyer-name-editable { cursor: pointer; display: inline-block; border-bottom: 1px dashed #9ca3af; }
+.buyer-name-editable:hover, .buyer-name-editable:focus-visible { border-bottom-color: var(--blue); border-bottom-style: solid; outline: none; }
 .buyer-name-edit-input {
   display: block; font-size: 22px; font-weight: 700; color: var(--navy); font-family: inherit;
   border: 1px solid var(--blue); border-radius: 8px; padding: 4px 8px; margin: 0 0 10px; width: 100%; max-width: 320px;
@@ -973,6 +978,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-areas-editable { cursor: pointer; }
 .buyer-areas-editable .value { border-bottom: 1px dashed #d1d5db; }
 .buyer-areas-edit-panel { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+/* Click-to-edit ID Name (OCR), added 2026-09-14 per Aaron's direct request
+   -- same always-visible dashed-underline affordance as the areas fact. */
+.buyer-idname-editable { cursor: pointer; border-bottom: 1px dashed #9ca3af; }
+.buyer-idname-editable:hover, .buyer-idname-editable:focus-visible { border-bottom-color: var(--blue); outline: none; }
+.buyer-idname-edit-input {
+  font-size: 13px; font-family: inherit; border: 1px solid var(--blue); border-radius: 6px; padding: 2px 6px;
+}
 
 /* Click-to-view/upload ID, added 2026-09-12 per Aaron's direct request
    (replaces the old plain link-out and the standalone upload button). */

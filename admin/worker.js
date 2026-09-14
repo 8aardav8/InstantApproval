@@ -2178,6 +2178,44 @@ async function handleAdminSetStage(request, env) {
   }
 }
 
+// Manually corrects the OCR'd ID Name (AG) -- added 2026-09-14 per Aaron's
+// direct request ("I would be able to click to edit this name if it
+// doesn't look right"). Previously only ever written by the OCR pipeline
+// itself (writeIdName, called from linkIdToBuyer) -- this is the first
+// admin-facing way to override a bad OCR read by hand. Same shape as
+// Sentiment/Stage above; no allowlist of valid values since a name is
+// free text.
+async function handleAdminSetIdName(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const idName = (body.idName || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+
+  try {
+    // See handleAdminSetAreas' own comment for why this runs first.
+    await syncBuyerToSheet(env, toE164(phone));
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await writeIdName(accessToken, row, idName);
+    return jsonResponse({ ok: true, idName });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // One-time bulk backfill, added 2026-09-16 per Aaron's direct request
 // ("make the first contact stage selected on every contact that
 // currently has no stage selected") -- sets Stage to STAGE_VALUES[0]
@@ -4395,6 +4433,30 @@ function bytesToBase64(bytes) {
   return btoa(bin);
 }
 
+// Duplicated from admin-buyers-worker.js's own CANONICAL_AREAS/
+// parseAreasFromName (added 2026-09-14) -- these are two separately
+// deployed Cloudflare Workers with no shared module, same reason every
+// other cross-Worker helper in this file (toE164, etc.) is its own copy
+// rather than an import. Keep this list in sync with the other Worker's
+// CANONICAL_AREAS by hand if either ever changes; used only to derive a
+// fallback Manual Area Override value from a TB-tagged Quo name inside
+// syncBuyerToSheet below, not for anything display-facing here.
+const CANONICAL_AREAS_FOR_SYNC = [
+  { label: 'IL - East St Louis', pattern: /ESTL|EAST\s*ST\.?\s*LOUIS|EAST\s*SAINT\s*LOUIS/i },
+  { label: 'MO - St. Louis', pattern: /\bSTL(TB)?\b|ST\.?\s*LOUIS/i },
+  { label: 'AR - Little Rock', pattern: /\bLR(TB)?\b|LITTLE\s*ROCK/i },
+  { label: 'AR - West Memphis', pattern: /\bWM(TB)?\b|WEST\s*MEMPHIS/i },
+  { label: 'IL - Springfield', pattern: /SPRINGFIELD/i },
+];
+function deriveAreasFromQuoName(name) {
+  if (!/TB/i.test(name || '')) return []; // no TB tag at all -- not yet classified
+  const hits = [];
+  for (const { label, pattern } of CANONICAL_AREAS_FOR_SYNC) {
+    if (pattern.test(name)) hits.push(label);
+  }
+  return hits;
+}
+
 // Writes Quo-sourced identity onto this buyer's own App: Logins row: Quo
 // Name (AJ) and Quo Link (N) if either is still blank -- non-destructive,
 // same "fill a gap, never clobber" stance as writeLoginsRow's phone/name --
@@ -4416,6 +4478,21 @@ function bytesToBase64(bytes) {
 // have silently blanked every one of their areas the moment that Quo-side
 // parsing stopped running. Backfills AD from the caller's already-known
 // areas, same non-destructive "only fill a gap" stance as Quo Name/Link.
+// When the caller doesn't pass one explicitly (undefined, most callers),
+// falls back 2026-09-14 to deriving it from the Quo name's own TB-tag
+// (deriveAreasFromQuoName below) -- the SAME gap this comment already
+// described came back for real: Porscha Humphreys' row was auto-created
+// by the real-time webhook path below with quoName "Porscha Humphreys
+// WMTB" but no area, because admin-buyers-worker.js's live buyers-list
+// render (handleBuyers) was rewritten 2026-09-13/14 to read
+// manualAreaOverride straight off the Sheet and no longer calls
+// parseAreasFromName against a live Quo name at all -- so a TB-tagged
+// name with nothing in AD now shows "Not yet classified" forever, not
+// just until the next crawl. This makes AD get filled from the name tag
+// the moment ANY syncBuyerToSheet call touches this row, the same
+// "fill a gap, never clobber" stance, so the display path doesn't need to
+// re-parse the name every time. An explicit areasIfBlank (from the
+// checked-checkboxes UI, handleAdminSetAreas) always wins over this.
 // touchActivity (default true), added 2026-09-14 -- real bug found and
 // fixed the same night: this used to stamp AK (Last Activity) to "now"
 // on EVERY call unconditionally, including the one-time bulk backfill
@@ -4428,6 +4505,15 @@ function bytesToBase64(bytes) {
 // inbound message) is the only caller that should ever touch this column
 // -- that's genuine "something just happened." The manual/backfill
 // trigger now passes touchActivity: false.
+//
+// Stage (AF) also gets filled to STAGE_VALUES[0] ("First Contact") here
+// now, same non-destructive fill-a-gap stance -- added 2026-09-14 per
+// Aaron's direct request ("have the stage automatically start off at
+// first contact"). Previously only ever set by an explicit admin action
+// or the one-off backfillBlankStages tool (no automatic trigger, its own
+// admin-UI button was removed the same night it was added) -- a
+// freshly-created row could sit with a genuinely blank Stage
+// indefinitely otherwise, same shape of bug as the areas gap above.
 async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = true) {
   const [contact, accessToken] = await Promise.all([
     quoFindContactByPhone(env, e164Phone),
@@ -4437,6 +4523,7 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = tr
   const quoName = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
   const quoLink = contact ? `https://my.quo.com/contacts/${contact.id}` : "";
   const nowIso = new Date().toISOString();
+  const derivedAreas = areasIfBlank !== undefined ? areasIfBlank : (quoName ? deriveAreasFromQuoName(quoName).join(", ") : "");
 
   let row = await findLoginsRowByPhone(accessToken, e164Phone);
   if (!row) {
@@ -4445,24 +4532,28 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = tr
     if (!row) return; // shouldn't happen -- just appended it moments ago
   }
 
-  // One read (N, AJ, AD together, via batchGet) to decide what's actually
-  // still blank, then one write (batchUpdate) for whatever needs it.
+  // One read (N, AJ, AD, AF together, via batchGet) to decide what's
+  // actually still blank, then one write (batchUpdate) for whatever needs
+  // it.
   const getUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet`);
   getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!N${row}:N${row}`);
   getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AJ${row}:AJ${row}`);
   getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AD${row}:AD${row}`);
+  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AF${row}:AF${row}`);
   const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!getRes.ok) throw new Error(`quo-name/link/area read failed: ${await getRes.text()}`);
+  if (!getRes.ok) throw new Error(`quo-name/link/area/stage read failed: ${await getRes.text()}`);
   const getData = await getRes.json();
   const existingQuoLink = (((getData.valueRanges || [])[0] || {}).values || [[]])[0]?.[0] || "";
   const existingQuoName = (((getData.valueRanges || [])[1] || {}).values || [[]])[0]?.[0] || "";
   const existingAreas = (((getData.valueRanges || [])[2] || {}).values || [[]])[0]?.[0] || "";
+  const existingStage = (((getData.valueRanges || [])[3] || {}).values || [[]])[0]?.[0] || "";
 
   const data = [];
   if (touchActivity) data.push({ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[nowIso]] });
   if (!existingQuoLink && quoLink) data.push({ range: `${LOGINS_TAB}!N${row}:N${row}`, values: [[quoLink]] });
   if (!existingQuoName && quoName) data.push({ range: `${LOGINS_TAB}!AJ${row}:AJ${row}`, values: [[quoName]] });
-  if (!existingAreas && areasIfBlank) data.push({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[areasIfBlank]] });
+  if (!existingAreas && derivedAreas) data.push({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[derivedAreas]] });
+  if (!existingStage) data.push({ range: `${LOGINS_TAB}!AF${row}:AF${row}`, values: [[STAGE_VALUES[0]]] });
 
   if (data.length === 0) return; // nothing changed -- e.g. a backfill re-run (touchActivity: false) that found no new gaps to fill
 
@@ -4472,6 +4563,58 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = tr
     body: JSON.stringify({ valueInputOption: "RAW", data }),
   });
   if (!putRes.ok) throw new Error(`quo-name/link/activity/area write failed: ${await putRes.text()}`);
+}
+
+// Deliberate CLOBBER, unlike syncBuyerToSheet's own "fill a gap, never
+// clobber" AJ write -- added 2026-09-14 per Aaron's direct request: the
+// Quo Name shown on a buyer's page "would be updated automatically... if
+// the contact name were edited in Quo" directly (not through this admin
+// page at all). syncBuyerToSheet's AJ write only ever fills a BLANK cell,
+// so a rename made straight in Quo's own app would sit stale here
+// forever otherwise -- nothing else ever re-checks it. Called client-side
+// once, in the background, right after a buyer detail page opens (one
+// live Quo lookup for the ONE buyer actually being looked at -- cheap;
+// this is deliberately NOT run for the whole list, which is exactly the
+// per-buyer live-Quo-crawl cost the 2026-09-13/14 rewrite moved off of).
+async function handleAdminRefreshQuoName(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  const url = new URL(request.url);
+  const phone = (url.searchParams.get("phone") || "").trim();
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  const e164Phone = toE164(phone);
+
+  try {
+    const [contact, accessToken] = await Promise.all([
+      quoFindContactByPhone(env, e164Phone),
+      getSheetsAccessToken(env),
+    ]);
+    const d = (contact && contact.defaultFields) || {};
+    const liveQuoName = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
+    if (!liveQuoName) return jsonResponse({ ok: true, quoName: null, changed: false }); // no Quo contact, or a nameless one -- nothing to correct
+
+    const row = await findLoginsRowByPhone(accessToken, e164Phone);
+    if (!row) return jsonResponse({ ok: true, quoName: liveQuoName, changed: false }); // no Sheet row yet -- syncBuyerToSheet's own fill-path will create one and pick this up
+
+    const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!AJ${row}:AJ${row}`)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!getRes.ok) throw new Error(`quo-name read failed: ${await getRes.text()}`);
+    const existing = ((await getRes.json()).values || [[]])[0]?.[0] || "";
+    if (existing === liveQuoName) return jsonResponse({ ok: true, quoName: liveQuoName, changed: false });
+
+    const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!AJ${row}:AJ${row}`)}?valueInputOption=RAW`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: `${LOGINS_TAB}!AJ${row}:AJ${row}`, values: [[liveQuoName]] }),
+    });
+    if (!putRes.ok) throw new Error(`quo-name refresh write failed: ${await putRes.text()}`);
+    return jsonResponse({ ok: true, quoName: liveQuoName, changed: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
 }
 
 // Step 2: Quo calls this when a message.received event fires on the Filling
@@ -4775,6 +4918,12 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-stage" && request.method === "POST") {
     return handleAdminSetStage(request, env);
+  }
+  if (url.pathname === "/admin/set-id-name" && request.method === "POST") {
+    return handleAdminSetIdName(request, env);
+  }
+  if (url.pathname === "/admin/refresh-quo-name" && request.method === "GET") {
+    return handleAdminRefreshQuoName(request, env);
   }
   if (url.pathname === "/admin/backfill-stage" && request.method === "POST") {
     return handleAdminBackfillStage(request, env);
