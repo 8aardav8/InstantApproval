@@ -588,71 +588,6 @@ async function writeDnc(accessToken, row, dnc) {
   if (!res.ok) throw new Error(`dnc write failed: ${await res.text()}`);
 }
 
-// Patches ONE field on ONE buyer directly in the live buyers_cache KV
-// (shared with iah-buyers -- same BUYERS_KV namespace), added 2026-09-15
-// to fix a real bug Aaron found: "I hid a contact but it did not stay
-// hidden after refresh." Root cause confirmed by direct diagnosis: the
-// Sheet write itself was always durable and correct (Hidden really was
-// TRUE), but iah-buyers only rewrites buyers_cache once an entire
-// multi-tick full sync pass finishes walking every contacts+conversations
-// page (can legitimately take 15-30+ minutes) -- so a refresh soon after
-// hiding someone read the STILL-STALE cache from before that hide, which
-// looked exactly like "it didn't stick." This closes that gap for
-// same-session-and-later reads: after a Sheet write succeeds, also patch
-// the already-cached copy of that one buyer in place, so the very next
-// /buyers read (including a fresh page load) reflects it immediately,
-// without waiting for iah-buyers' own next full pass. Best-effort and
-// silent on any failure (missing cache, buyer not yet in it, etc.) --
-// the Sheet write already succeeded and remains the real source of
-// truth; iah-buyers' own background sync will reconcile everything
-// properly regardless, this is purely a latency fix, not a correctness
-// dependency.
-async function patchBuyersCacheField(env, phone, field, value) {
-  try {
-    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
-    if (!cachedRaw) return;
-    const cacheData = JSON.parse(cachedRaw);
-    const normalizedPhone = toE164(phone);
-    const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
-    if (!buyer) return;
-    buyer[field] = value;
-    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
-  } catch (e) {
-    // Best-effort -- swallow. See this function's own comment above.
-  }
-}
-
-// Real bug found and fixed 2026-09-13: neither handleConfirmIdMatch nor
-// handleInternalAutoLinkId ever patched the cache after a successful link
-// -- unlike handleAdminBackfillStage, which has always called
-// patchBuyersCacheField for its own field. The site reads ID-on-file
-// status from the NESTED b.loginsMatch.idLink (see buyerMatchesFilters/
-// the buyer-detail render in app.js), not a top-level field, so
-// patchBuyersCacheField itself can't be reused as-is for this -- it only
-// ever sets a top-level key. Real-world impact: a buyer's ID could sit
-// correctly linked in the Sheet for hours showing "No ID on file" on the
-// site, entirely dependent on iah-buyers' own background full-sync cycle
-// (which itself was found stuck/stale for 2.5+ hours the same day this
-// was diagnosed -- separate problem, not fixed here, flagged to Aaron).
-// Same best-effort/non-critical-path reasoning as patchBuyersCacheField:
-// this is purely a latency fix, the Sheet write above is the real source
-// of truth either way.
-async function patchLoginsMatchField(env, phone, field, value) {
-  try {
-    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
-    if (!cachedRaw) return;
-    const cacheData = JSON.parse(cachedRaw);
-    const normalizedPhone = toE164(phone);
-    const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
-    if (!buyer) return;
-    if (!buyer.loginsMatch) buyer.loginsMatch = {};
-    buyer.loginsMatch[field] = value;
-    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
-  } catch (e) {
-    // Best-effort -- swallow, same reasoning as patchBuyersCacheField.
-  }
-}
-
 // ---------- Quo (OpenPhone) contact upsert -- ported from tools/quo.mjs ----------
 // Same auth/base URL, same "PATCH replaces defaultFields wholesale, always
 // fetch-then-merge" gotcha, same firstName-required-on-create gotcha, same
@@ -2053,7 +1988,7 @@ async function handleAdminSetAreas(request, env) {
     // the Sheet had all three correctly. Calling ensureBuyerInCache first
     // guarantees a cache entry exists (creating a minimal one via a real
     // Quo lookup if needed) before any patch call below ever runs.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     const areasCsv = areas.join(", ");
     const row = await findLoginsRowByPhone(accessToken, phone);
@@ -2070,28 +2005,6 @@ async function handleAdminSetAreas(request, env) {
     // -- a Quo hiccup (rate limit, no contact yet) should never turn an
     // already-successful Sheet write into a failed response.
     try { await writeContactAreas(env, phone, areas); } catch (e) {}
-    // Real-time cache patch, added 2026-09-13 -- this endpoint never had
-    // one (unlike Set Stage/Sentiment/Hidden/DNC), which mattered a lot
-    // more once the full crawl's own interval was relaxed the same day.
-    // FULL REPLACE now (not additive-only, as this comment originally
-    // said) -- now that the checked boxes are also the definitive source
-    // written to Quo's role field above, whatever's currently checked IS
-    // the buyer's true complete area set, so there's no more "removal
-    // needs the next crawl" caveat to carry.
-    try {
-      const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
-      if (cachedRaw) {
-        const cacheData = JSON.parse(cachedRaw);
-        const normalizedPhone = toE164(phone);
-        const buyer = (cacheData.buyers || []).find((b) => b.phone === normalizedPhone);
-        if (buyer) {
-          buyer.areas = areas;
-          await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
-        }
-      }
-    } catch (e) {
-      // Best-effort, same reasoning as patchBuyersCacheField.
-    }
     return jsonResponse({ ok: true, areas });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2128,7 +2041,7 @@ async function handleAdminAddAppointment(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2215,7 +2128,7 @@ async function handleAdminSetSentiment(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2224,11 +2137,6 @@ async function handleAdminSetSentiment(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeSentiment(accessToken, row, sentiment);
-    // Immediate cache patch, added 2026-09-15 -- same fix/reasoning as
-    // handleAdminSetHidden's patchBuyersCacheField call (see its own
-    // comment): this is the exact same staleness Aaron hit earlier with
-    // Alexis's sentiment "not saving on reload."
-    await patchBuyersCacheField(env, phone, "sentiment", sentiment);
     return jsonResponse({ ok: true, sentiment });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2255,7 +2163,7 @@ async function handleAdminSetStage(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2264,9 +2172,6 @@ async function handleAdminSetStage(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeStage(accessToken, row, stage);
-    // Immediate cache patch, added 2026-09-15 -- see patchBuyersCacheField's
-    // own comment (handleAdminSetHidden) for the full explanation.
-    await patchBuyersCacheField(env, phone, "stage", stage);
     return jsonResponse({ ok: true, stage });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2285,13 +2190,12 @@ async function handleAdminSetStage(request, env) {
 // API calls total, regardless of row count) rather than one HTTP
 // request per row -- ~150 individual PUTs in one Worker invocation risks
 // the free plan's subrequest cap for no benefit.
-async function handleAdminBackfillStage(request, env) {
-  const authHeader = request.headers.get("Authorization") || "";
-  const idToken = authHeader.replace(/^Bearer\s+/i, "");
-  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
-  const verified = await verifyIdToken(idToken);
-  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
-
+// Extracted into its own function 2026-09-14 so the same logic can be
+// triggered two ways: the OAuth-gated admin route below (its own UI button
+// was removed 2026-09-15, see that commit), and a secret-gated /internal
+// wrapper for the same kind of one-off manual trigger every other tonight
+// backfill uses.
+async function backfillBlankStages(env) {
   try {
     const accessToken = await getSheetsAccessToken(env);
     const phoneRange = encodeURIComponent(`${LOGINS_TAB}!D:D`);
@@ -2322,11 +2226,40 @@ async function handleAdminBackfillStage(request, env) {
         body: JSON.stringify({ valueInputOption: "RAW", data: updates }),
       });
       if (!putRes.ok) throw new Error(`backfill-stage write failed: ${await putRes.text()}`);
-      for (const phone of affectedPhones) {
-        await patchBuyersCacheField(env, phone, "stage", firstStage);
-      }
     }
-    return jsonResponse({ ok: true, updated: updates.length, stage: firstStage });
+    return { updated: updates.length, stage: firstStage };
+  } catch (e) {
+    // Rethrown, not swallowed -- both callers below wrap this in their own
+    // try/catch and turn it into the appropriate error response for their
+    // own auth style (OAuth vs. shared-secret).
+    throw e;
+  }
+}
+
+async function handleAdminBackfillStage(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  try {
+    const result = await backfillBlankStages(env);
+    return jsonResponse({ ok: true, ...result });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Secret-gated wrapper, added 2026-09-14 per Aaron's direct request ("set
+// all blank stages to first contact") -- the admin-UI button for this was
+// removed the same night as a dead-toolbar cleanup; this lets the same
+// logic still be triggered directly, same tier as every other one-off
+// /internal backfill tool tonight.
+async function handleInternalBackfillStage(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  try {
+    const result = await backfillBlankStages(env);
+    return jsonResponse({ ok: true, ...result });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2353,7 +2286,7 @@ async function handleAdminSetHidden(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2362,7 +2295,6 @@ async function handleAdminSetHidden(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeHidden(accessToken, row, hidden);
-    await patchBuyersCacheField(env, phone, "hidden", hidden);
     return jsonResponse({ ok: true, hidden });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2391,7 +2323,7 @@ async function handleAdminSetDnc(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2400,7 +2332,6 @@ async function handleAdminSetDnc(request, env) {
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
     await writeDnc(accessToken, row, dnc);
-    await patchBuyersCacheField(env, phone, "dnc", dnc);
     return jsonResponse({ ok: true, dnc });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2448,7 +2379,7 @@ async function handleAdminSetCoBuyer(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await ensureBuyerInCache(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone));
     const accessToken = await getSheetsAccessToken(env);
     // Find-or-create, same convention as writeSentiment/writeStage/
     // writeHidden's own handlers -- a BUYERS-tab-only lead has no App:
@@ -2465,15 +2396,25 @@ async function handleAdminSetCoBuyer(request, env) {
       return jsonResponse({ ok: true, cleared: true });
     }
 
-    const cached = await env.BUYERS_KV.get("buyers_cache");
-    if (!cached) return jsonResponse({ error: "buyers cache not ready yet" }, 503);
+    // Sheet-direct lookup, added 2026-09-14 -- this used to read the
+    // co-buyer's identity out of buyers_cache; now that the buyers list
+    // itself reads live from the Sheet (not that KV cache) this needs to
+    // match, or it'd be looking at an increasingly stale, unwritten copy.
     const normalizedCoPhone = toE164(coBuyerPhone);
-    const coBuyer = (JSON.parse(cached).buyers || []).find((b) => b.phone === normalizedCoPhone);
-    if (!coBuyer) return jsonResponse({ error: "co-buyer not found in the current buyer list" }, 404);
-
-    const coName = coBuyer.quoName || (coBuyer.leadInfo && coBuyer.leadInfo.contactName) || "";
-    const coEmail = (coBuyer.loginsMatch && coBuyer.loginsMatch.email) || "";
-    const coIdLink = (coBuyer.loginsMatch && coBuyer.loginsMatch.idLink) || "";
+    const coRow = await findLoginsRowByPhone(accessToken, normalizedCoPhone);
+    if (!coRow) return jsonResponse({ error: "co-buyer not found in the current buyer list" }, 404);
+    const coGetUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet`);
+    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!B${coRow}:B${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!E${coRow}:E${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!F${coRow}:F${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AJ${coRow}:AJ${coRow}`);
+    const coGetRes = await fetch(coGetUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!coGetRes.ok) throw new Error(`co-buyer identity read failed: ${await coGetRes.text()}`);
+    const coGetData = await coGetRes.json();
+    const val = (i) => (((coGetData.valueRanges || [])[i] || {}).values || [[]])[0]?.[0] || "";
+    const coEmail = val(0);
+    const coIdLink = val(2);
+    const coName = val(1) || val(3); // login Name (E), falling back to Quo Name (AJ)
     const cellValue = buildCoBuyerCell(coName, coEmail, normalizedCoPhone, coIdLink);
     await writeCoBuyerCell(accessToken, row, slot, cellValue);
     return jsonResponse({ ok: true, coBuyer: { name: coName, email: coEmail, phone: normalizedCoPhone, idLink: coIdLink } });
@@ -2543,27 +2484,6 @@ function checkInternalToolsSecret(request, env) {
   return url.searchParams.get("key") === env.INTERNAL_TOOLS_SECRET && !!env.INTERNAL_TOOLS_SECRET;
 }
 
-// Manual one-off cache correction, added 2026-09-13 during the same
-// incident that found patchLoginsMatchField missing from the two ID-link
-// write paths (see that function's own comment). Narrow and secret-gated
-// same as every other /internal endpoint -- writes exactly one nested
-// field on one buyer's cache entry, nothing else. Useful any time a field
-// is known-correct in the Sheet but the cache hasn't caught up yet
-// (background full-sync stuck/slow, or fixing a buyer from before this
-// day's cache-patch fix existed) without needing a risky full KV overwrite
-// by hand.
-async function handleInternalPatchCache(request, env) {
-  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
-  let body;
-  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
-  const phone = (body.phone || "").trim();
-  const field = (body.field || "").trim();
-  const value = body.value;
-  if (!phone || !field) return jsonResponse({ error: "missing phone or field" }, 400);
-  await patchLoginsMatchField(env, phone, field, value);
-  return jsonResponse({ ok: true });
-}
-
 // Full manual resync for ONE buyer -- added 2026-09-13 during the same
 // incident as ensureBuyerInCache/patchLoginsMatchField, for a case those
 // two didn't fully cover: Aaron's real request was general ("I need to be
@@ -2605,7 +2525,11 @@ async function handleInternalSyncBuyerToSheet(request, env) {
   const areas = Array.isArray(body.areas) ? body.areas : null;
   if (!phone) return jsonResponse({ error: "missing phone" }, 400);
   try {
-    await syncBuyerToSheet(env, toE164(phone), areas && areas.length ? areas.join(", ") : undefined);
+    // touchActivity: false -- this is a manual/backfill trigger, not real
+    // activity. See syncBuyerToSheet's own comment on the real bug this
+    // fixes (a bulk backfill run was stamping Last Activity to "now" for
+    // hundreds of buyers with no real activity at all).
+    await syncBuyerToSheet(env, toE164(phone), areas && areas.length ? areas.join(", ") : undefined, false);
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2627,6 +2551,12 @@ async function handleInternalBackfillRole(request, env) {
   }
 }
 
+// Rewritten 2026-09-14 to drop the buyers_cache dependency entirely --
+// this used to repair a stuck cache entry, which can't happen anymore
+// since nothing reads that cache. Kept (not deleted) as a genuinely useful
+// diagnostic: syncs Quo Name/Link onto the Sheet for one phone, then
+// returns the row's full current state in one call -- used repeatedly
+// tonight to verify a buyer end-to-end after a fix.
 async function handleInternalResyncBuyer(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   let body;
@@ -2636,52 +2566,36 @@ async function handleInternalResyncBuyer(request, env) {
   const e164Phone = toE164(phone);
 
   try {
-    await ensureBuyerInCache(env, e164Phone);
+    await syncBuyerToSheet(env, e164Phone);
     const accessToken = await getSheetsAccessToken(env);
     const row = await findLoginsRowByPhone(accessToken, e164Phone);
-    let rowData = null;
-    if (row) {
-      const range = encodeURIComponent(`'${LOGINS_TAB}'!A1:AI1`);
-      const headerRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const headerData = await headerRes.json();
-      const headers = (headerData.values && headerData.values[0]) || [];
-      const idx = (name) => headers.indexOf(name);
-      const rowRange = encodeURIComponent(`'${LOGINS_TAB}'!A${row}:AI${row}`);
-      const rowRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rowRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const rowJson = await rowRes.json();
-      const values = (rowJson.values && rowJson.values[0]) || [];
-      const get = (name) => { const i = idx(name); return i >= 0 ? (values[i] || "") : ""; };
-      rowData = {
-        row,
-        name: get("Name"),
-        email: get("Email"),
-        idLink: get("ID Link"),
-        manualAreaOverride: get("Manual Area Override"),
-        sentiment: get("Sentiment"),
-        stage: get("Stage"),
-        idName: get("ID Name (OCR)"),
-        hidden: get("Hidden") === "TRUE",
-        dnc: get("DNC") === "TRUE",
-      };
-    }
+    if (!row) return jsonResponse({ error: "no Sheet row for this phone even after syncBuyerToSheet -- real bug, not a timing issue" }, 500);
 
-    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
-    const cacheData = cachedRaw ? JSON.parse(cachedRaw) : { buyers: [] };
-    const buyer = (cacheData.buyers || []).find((b) => b.phone === e164Phone);
-    if (!buyer) return jsonResponse({ error: "buyer still not in cache after ensureBuyerInCache -- real bug, not a timing issue" }, 500);
-
-    if (rowData) {
-      buyer.loginsMatch = { ...(buyer.loginsMatch || {}), ...rowData };
-      buyer.stage = rowData.stage;
-      buyer.hidden = rowData.hidden;
-      buyer.dnc = rowData.dnc;
-      if (rowData.manualAreaOverride) {
-        const merged = new Set(buyer.areas || []);
-        for (const a of rowData.manualAreaOverride.split(",").map((s) => s.trim()).filter(Boolean)) merged.add(a);
-        buyer.areas = [...merged];
-      }
-    }
-    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
+    const range = encodeURIComponent(`'${LOGINS_TAB}'!A1:AK1`);
+    const headerRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const headerData = await headerRes.json();
+    const headers = (headerData.values && headerData.values[0]) || [];
+    const idx = (name) => headers.indexOf(name);
+    const rowRange = encodeURIComponent(`'${LOGINS_TAB}'!A${row}:AK${row}`);
+    const rowRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rowRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const rowJson = await rowRes.json();
+    const values = (rowJson.values && rowJson.values[0]) || [];
+    const get = (name) => { const i = idx(name); return i >= 0 ? (values[i] || "") : ""; };
+    const buyer = {
+      row, phone: e164Phone,
+      name: get("Name"),
+      email: get("Email"),
+      idLink: get("ID Link"),
+      quoLink: get("Quo Link"),
+      quoName: get("Quo Name"),
+      lastActivity: get("Last Activity (Quo)"),
+      manualAreaOverride: get("Manual Area Override"),
+      sentiment: get("Sentiment"),
+      stage: get("Stage"),
+      idName: get("ID Name (OCR)"),
+      hidden: get("Hidden") === "TRUE",
+      dnc: get("DNC") === "TRUE",
+    };
     return jsonResponse({ ok: true, buyer });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -2848,6 +2762,62 @@ function stripAreaTagsFromName(name) {
 // read, one batchUpdate, no Quo API calls at all, so no rate-limit
 // throttling needed (unlike tonight's earlier per-buyer Quo backfills).
 // Dry-run by default; apply=true to actually write.
+// One-time repair, added 2026-09-14, for the real damage
+// touchActivity: false (syncBuyerToSheet's own comment) fixes going
+// forward: the bulk Quo Name/Link backfill ran across all 741 buyers
+// TWICE that evening, stamping Last Activity (AK) to "now" on every one
+// regardless of whether they'd had any real activity at all -- Aaron
+// caught it live ("Column AK says 14 September for like almost all of the
+// contacts"). Restores AK from a caller-supplied {phone, lastActivityAt}
+// list -- the real, pre-backfill values, recovered from a buyers_cache
+// snapshot taken before any of tonight's backfill runs. Bulk, one Sheet
+// read (phone column) + one batchUpdate, matched by phone.
+async function handleInternalRestoreActivity(request, env) {
+  if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const entries = Array.isArray(body.entries) ? body.entries : [];
+  if (!entries.length) return jsonResponse({ error: "missing entries" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!D:D`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`phone column read failed: ${await res.text()}`);
+    const phoneCol = (await res.json()).values || [];
+    const rowByPhone = new Map();
+    for (let i = 1; i < phoneCol.length; i++) {
+      const p = toE164((phoneCol[i][0] || "").trim());
+      if (p) rowByPhone.set(p, i + 1);
+    }
+
+    const data = [];
+    let restored = 0;
+    const notFound = [];
+    for (const entry of entries) {
+      const p = toE164(entry.phone || "");
+      const row = rowByPhone.get(p);
+      if (!row) { notFound.push(entry.phone); continue; }
+      // Empty string clears the cell -- used for the handful with no
+      // recoverable real value, rather than leaving today's fabricated one.
+      data.push({ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[entry.lastActivityAt || ""]] });
+      restored++;
+    }
+    if (data.length > 0) {
+      const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ valueInputOption: "RAW", data }),
+      });
+      if (!putRes.ok) throw new Error(`activity restore write failed: ${await putRes.text()}`);
+    }
+    return jsonResponse({ restored, notFound: notFound.length, notFoundPhones: notFound });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalBackfillNamesFromQuo(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   const url = new URL(request.url);
@@ -3028,15 +2998,33 @@ async function handleInternalFindQuoContact(request, env) {
   }
 }
 
+// Rewritten 2026-09-14 to read live from the Sheet instead of buyers_cache
+// -- id-photo-watch.ts calls this for its OCR-matching candidate list
+// (buyers still needing an ID), so it's a genuine dependency, not just a
+// redundant cache write like most of tonight's cleanup. Scoped to App:
+// Logins only now (Name/Quo Name/ID Link columns) -- a BUYERS-tab-only
+// lead with no App: Logins row at all is a much smaller population than
+// it used to be, since tonight's Sheet backfill created a row for every
+// known phone; a real but small gap, not silently pretended away.
 async function handleInternalContacts(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
-    const cached = await env.BUYERS_KV.get("buyers_cache");
-    if (!cached) return jsonResponse({ error: "buyers cache not ready yet" }, 503);
-    const data = JSON.parse(cached);
-    const contacts = (data.buyers || [])
-      .filter((b) => b.quoName || (b.leadInfo && b.leadInfo.contactName))
-      .map((b) => ({ phone: b.phone, name: b.quoName || b.leadInfo.contactName, hasId: !!(b.loginsMatch && b.loginsMatch.idLink) }));
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
+    const rows = (await res.json()).values || [];
+    const contacts = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const phone = (r[3] || "").trim();
+      const name = (r[4] || "").trim() || (r[35] || "").trim(); // login Name, falling back to Quo Name
+      const idLink = (r[5] || "").trim();
+      if (!phone || !name) continue;
+      contacts.push({ phone, name, hasId: !!idLink });
+    }
     return jsonResponse({ contacts });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -3219,7 +3207,7 @@ async function handleInternalFindLoginsRow(request, env) {
 // assumption is ever wrong. idName (the OCR'd name off the ID itself) is
 // optional -- only the auto-link caller ever has one.
 async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename }) {
-  await ensureBuyerInCache(env, toE164(buyerPhone));
+  await syncBuyerToSheet(env, toE164(buyerPhone));
   const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
 
   const originalFilename = dropboxPath.split("/").pop() || "";
@@ -3251,8 +3239,6 @@ async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, 
       if (newRow) await writeIdName(accessToken, newRow, idName);
     }
   }
-  await patchLoginsMatchField(env, buyerPhone, "idLink", idLink);
-  if (idName) await patchLoginsMatchField(env, buyerPhone, "idName", idName);
 
   return { finalPath, idLink };
 }
@@ -4292,95 +4278,6 @@ function bytesToBase64(bytes) {
   return btoa(bin);
 }
 
-// Real-time buyer-list entry, added 2026-09-13 per Aaron's direct request
-// ("I need contacts to appear there immediately after a conversation").
-// The periodic full sync (runSyncTick in iah-buyers/admin-buyers-worker.js)
-// walks every Quo contact + every conversation on the Filling number from
-// scratch each cycle -- at real volume (2800+ contacts) a single cycle was
-// found taking well over an hour, so waiting on it is never "immediate"
-// for someone who just texted in. This reuses the webhook below, which
-// ALREADY receives every inbound message on the Filling number in real
-// time (built 2026-09-02 for phone/email-change confirmation) -- rather
-// than build a new webhook subscription, this just also makes sure
-// buyers_cache has an entry for whoever just texted, without waiting for
-// the next full sync to eventually walk far enough to find them.
-// Deliberately best-effort/minimal: only phone/name/Quo id are set here
-// (no areas/leadInfo/loginsMatch) -- the next full sync still runs and
-// properly enriches this entry same as any other; this just stops it
-// from being invisible in the meantime. Only covers INBOUND messages on
-// the Filling number, matching this webhook's own existing scope --
-// Aaron-initiated conversations and calls aren't covered by this webhook
-// today (would need its own new Quo subscription, a separate ask).
-async function ensureBuyerInCache(env, e164Phone) {
-  try {
-    const cachedRaw = await env.BUYERS_KV.get("buyers_cache");
-    if (!cachedRaw) return; // cache not ready yet -- the next full sync covers it
-    const cacheData = JSON.parse(cachedRaw);
-    const buyers = cacheData.buyers || [];
-    const existing = buyers.find((b) => b.phone === e164Phone);
-    // Real bug found and fixed 2026-09-13 (the Mouton incident): this used
-    // to skip the Quo lookup entirely the instant ANY entry existed for
-    // this phone -- including an incomplete stub whose OWN Quo lookup had
-    // come back empty that one time (a transient hiccup, a race with her
-    // Quo contact not existing yet at that exact moment, whatever). That
-    // permanently froze her quoContactId/quoName at null forever: every
-    // later write (stage, area, ID) correctly updated the Sheet, but her
-    // name never had a second chance to resolve, since this guard never
-    // tried again. Confirmed live: an independent quoFindContactByPhone
-    // call for her exact phone found her real contact fine on the very
-    // next attempt -- nothing was wrong with her Quo contact, just with
-    // never retrying. Now only short-circuits once the existing entry is
-    // actually enriched (has a quoContactId); an incomplete stub gets a
-    // real retry every time this runs, and only writes to KV when
-    // something actually changed (new stub, or a stub just got resolved).
-    if (existing && existing.quoContactId) return;
-
-    const contact = await quoFindContactByPhone(env, e164Phone);
-    if (!contact && existing) return; // still unresolved, stub already present -- nothing changed, don't burn a KV write
-
-    const d = (contact && contact.defaultFields) || {};
-    const name = [d.firstName, d.lastName].filter(Boolean).join(" ").trim() || null;
-    if (existing) {
-      existing.quoContactId = contact.id;
-      existing.quoName = name;
-      existing.quoUrl = `https://my.quo.com/contacts/${contact.id}`;
-    } else {
-      buyers.push({
-        phone: e164Phone,
-        quoContactId: contact ? contact.id : null,
-        quoName: name,
-        quoUrl: contact ? `https://my.quo.com/contacts/${contact.id}` : null,
-        areas: [], // left for the next full sync to classify -- see comment above
-        lastActivityAt: new Date().toISOString(),
-        loginsMatch: null,
-        leadInfo: null,
-      });
-    }
-    cacheData.buyers = buyers;
-    await env.BUYERS_KV.put("buyers_cache", JSON.stringify(cacheData));
-  } catch (e) {
-    // Best-effort -- the next full sync is the real safety net; a failure
-    // here should never break this webhook's own ack to Quo (see below).
-  }
-
-  // Parallel write onto the Sheet itself, added 2026-09-13 -- step one of
-  // moving the buyers page OFF buyers_cache entirely and onto a direct
-  // Sheet read, same as properties.json already does for listings (Aaron's
-  // direct request, same incident: "preload all names and numbers from
-  // conversations... onto the sheet... use a direct link to the sheet at
-  // all times"). Deliberately runs ALONGSIDE the KV-cache logic above, not
-  // instead of it, for now -- the admin Buyers page still reads
-  // buyers_cache until the new Sheet-direct read endpoint replaces it;
-  // ripping the KV path out before that exists would go dark immediately.
-  // Once that switch lands and is verified, the block above (and every
-  // other ensureBuyerInCache/patch* KV-cache machinery) comes out.
-  try {
-    await syncBuyerToSheet(env, e164Phone);
-  } catch (e) {
-    // Best-effort, same reasoning as above.
-  }
-}
-
 // Writes Quo-sourced identity onto this buyer's own App: Logins row: Quo
 // Name (AJ) and Quo Link (N) if either is still blank -- non-destructive,
 // same "fill a gap, never clobber" stance as writeLoginsRow's phone/name --
@@ -4402,7 +4299,19 @@ async function ensureBuyerInCache(env, e164Phone) {
 // have silently blanked every one of their areas the moment that Quo-side
 // parsing stopped running. Backfills AD from the caller's already-known
 // areas, same non-destructive "only fill a gap" stance as Quo Name/Link.
-async function syncBuyerToSheet(env, e164Phone, areasIfBlank) {
+// touchActivity (default true), added 2026-09-14 -- real bug found and
+// fixed the same night: this used to stamp AK (Last Activity) to "now"
+// on EVERY call unconditionally, including the one-time bulk backfill
+// script (handleInternalSyncBuyerToSheet) that ran across all 741 known
+// buyers TWICE that same evening for a completely unrelated reason
+// (populating Quo Name/Link/Areas) -- confirmed live: Aaron noticed
+// almost every row showing today's date in Last Activity, which was
+// never real activity, just the backfill's own run time overwriting it.
+// The REAL-TIME webhook path (ensureBuyerInCache, called on an actual
+// inbound message) is the only caller that should ever touch this column
+// -- that's genuine "something just happened." The manual/backfill
+// trigger now passes touchActivity: false.
+async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = true) {
   const [contact, accessToken] = await Promise.all([
     quoFindContactByPhone(env, e164Phone),
     getSheetsAccessToken(env),
@@ -4432,10 +4341,13 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank) {
   const existingQuoName = (((getData.valueRanges || [])[1] || {}).values || [[]])[0]?.[0] || "";
   const existingAreas = (((getData.valueRanges || [])[2] || {}).values || [[]])[0]?.[0] || "";
 
-  const data = [{ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[nowIso]] }];
+  const data = [];
+  if (touchActivity) data.push({ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[nowIso]] });
   if (!existingQuoLink && quoLink) data.push({ range: `${LOGINS_TAB}!N${row}:N${row}`, values: [[quoLink]] });
   if (!existingQuoName && quoName) data.push({ range: `${LOGINS_TAB}!AJ${row}:AJ${row}`, values: [[quoName]] });
   if (!existingAreas && areasIfBlank) data.push({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[areasIfBlank]] });
+
+  if (data.length === 0) return; // nothing changed -- e.g. a backfill re-run (touchActivity: false) that found no new gaps to fill
 
   const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
     method: "POST",
@@ -4488,7 +4400,7 @@ async function handleQuoMessageWebhook(request, env) {
   // lives here. ctx.waitUntil isn't available in this handler's own scope
   // (it's called from the main fetch() below, not given ctx directly), so
   // this is awaited inline; best-effort/swallows its own errors either way.
-  if (fromE164) await ensureBuyerInCache(env, fromE164);
+  if (fromE164) await syncBuyerToSheet(env, fromE164);
 
   if (!fromE164 || !/^(yes|y|confirm|ok)\b/i.test(text)) {
     return jsonResponse({ ok: true }); // not an affirmative reply, nothing to do
@@ -4750,6 +4662,9 @@ async function route(request, env) {
   if (url.pathname === "/admin/backfill-stage" && request.method === "POST") {
     return handleAdminBackfillStage(request, env);
   }
+  if (url.pathname === "/internal/backfill-stage" && request.method === "POST") {
+    return handleInternalBackfillStage(request, env);
+  }
   if (url.pathname === "/admin/set-hidden" && request.method === "POST") {
     return handleAdminSetHidden(request, env);
   }
@@ -4760,9 +4675,6 @@ async function route(request, env) {
     return handleAdminSetCoBuyer(request, env);
   }
 
-  if (url.pathname === "/internal/patch-cache" && request.method === "POST") {
-    return handleInternalPatchCache(request, env);
-  }
   if (url.pathname === "/internal/resync-buyer" && request.method === "POST") {
     return handleInternalResyncBuyer(request, env);
   }
@@ -4783,6 +4695,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/internal/quo-name-stats" && request.method === "GET") {
     return handleInternalQuoNameStats(request, env);
+  }
+  if (url.pathname === "/internal/restore-activity" && request.method === "POST") {
+    return handleInternalRestoreActivity(request, env);
   }
   if (url.pathname === "/internal/backfill-names-from-quo" && request.method === "GET") {
     return handleInternalBackfillNamesFromQuo(request, env);
