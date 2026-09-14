@@ -1,11 +1,62 @@
 {
-  "generatedAt": "2026-09-14T19:10:59.774851+00:00",
+  "generatedAt": "2026-09-14T22:21:56.456601+00:00",
   "listings": [
+    {
+      "id": "1310-e-poplar-st-west-frankfort-il-62896",
+      "address": "1310 E Poplar St, West Frankfort, IL 62896",
+      "onMarketDate": "9/14",
+      "lastUpdate": "9/14",
+      "area": "IL - Rural",
+      "down": "$2,500",
+      "monthly": "$1,100",
+      "picsLink": "https://drive.google.com/drive/folders/1hqj3D139FmZZZ0RA8B950WMkcRJxG06d",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1350",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.8987302,
+      "lng": -88.9115844
+    },
+    {
+      "id": "826-north-82nd-street-east-saint-louis-il-62203",
+      "address": "826 North 82nd Street East Saint Louis IL 62203",
+      "onMarketDate": "9/13",
+      "lastUpdate": "9/13",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$900",
+      "picsLink": "https://photos.app.goo.gl/fc36yxx19cWvURQt9",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5958933,
+      "lng": -90.06424489999999
+    },
+    {
+      "id": "920-huron-st-flint-mi-48507",
+      "address": "920 Huron St. Flint MI 48507",
+      "onMarketDate": "9/13",
+      "lastUpdate": "9/13",
+      "area": "MI",
+      "down": "$3,000",
+      "monthly": "$1,085",
+      "picsLink": "https://drive.google.com/drive/folders/1V5Kica-kCFy4MSyMSUc4DP-dXo7R1mRB?usp=sharing",
+      "beds": "2",
+      "baths": "2",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.98451,
+      "lng": -83.6912835
+    },
     {
       "id": "1484-e-clay-street-decatur-il-62521",
       "address": "1484 E Clay Street Decatur IL 62521",
       "onMarketDate": "9/10",
-      "lastUpdate": "9/10",
+      "lastUpdate": "9/12",
       "area": "IL - Decatur",
       "down": "$4,000",
       "monthly": "$1,200",
@@ -13,7 +64,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8401922,
       "lng": -88.93648069999999
@@ -141,11 +192,11 @@
       "id": "136-illinois-st-east-alton-il-62024",
       "address": "136 Illinois St East Alton IL 62024",
       "onMarketDate": "9/7",
-      "lastUpdate": "9/7",
+      "lastUpdate": "9/11",
       "area": "IL - East St Louis",
       "down": "$2,500",
       "monthly": "$1,150",
-      "picsLink": "https://drive.google.com/drive/folders/1-MQ9buqivpSsz2s-4Say3ERfDBtdKtfR?usp=sharing",
+      "picsLink": "https://photos.app.goo.gl/hMRXwq5Ft25Xcpkz6",
       "beds": "2",
       "baths": "1",
       "sqft": "",
@@ -498,7 +549,7 @@
       "id": "336-goulding-st-east-alton-il-62024",
       "address": "336 Goulding St, East Alton, IL 62024",
       "onMarketDate": "8/28",
-      "lastUpdate": "8/31",
+      "lastUpdate": "9/11",
       "area": "IL - Rural",
       "down": "$1,000",
       "monthly": "$879",
@@ -506,7 +557,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 38.874997,
       "lng": -90.11072879999999
@@ -2079,7 +2130,7 @@
       "id": "1311-n-51st-st-east-st-louis-il-62204",
       "address": "1311 N. 51st St., East St. Louis, IL 62204",
       "onMarketDate": "7/28/2026",
-      "lastUpdate": "9/2/2026",
+      "lastUpdate": "9/11/2026",
       "area": "IL - East St Louis",
       "down": "$400",
       "monthly": "$375",
@@ -2087,7 +2138,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "700",
-      "status": "Pending",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6253761,
       "lng": -90.09656509999999
@@ -4187,7 +4238,7 @@
       "id": "205-east-st-louis-street-west-frankfort-il-62-896",
       "address": "205 East St. Louis Street West Frankfort IL 62,896",
       "onMarketDate": "7/8",
-      "lastUpdate": "7/8",
+      "lastUpdate": "9/13",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$955",
@@ -5122,11 +5173,11 @@
       "id": "3120-lower-wetumpka-road-montgomery-al-36110",
       "address": "3120 Lower Wetumpka Road Montgomery AL 36110",
       "onMarketDate": "6/24",
-      "lastUpdate": "8/21/2026",
+      "lastUpdate": "9/11/2026",
       "area": "AL",
       "down": "$4,000",
       "monthly": "$889",
-      "picsLink": "https://drive.google.com/drive/folders/1uJD0VeC48v1Xumh2PdrAwTt5bNF2dhSy?usp=drive_link",
+      "picsLink": "https://drive.google.com/drive/folders/1rKLwqKuJfraZsqrvGvDYqtgnw8yzUFuC?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "8210",
@@ -6363,7 +6414,7 @@
       "id": "1259-e-whitmer-st-decatur-il-62526",
       "address": "1259 E Whitmer St Decatur IL 62526",
       "onMarketDate": "6/14",
-      "lastUpdate": "8/12/2026",
+      "lastUpdate": "9/14/2026",
       "area": "IL - Decatur",
       "down": "$1,000",
       "monthly": "$775",
@@ -6371,7 +6422,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "890",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8350488,
       "lng": -88.9391436
@@ -8980,16 +9031,16 @@
     {
       "id": "4627-korte-ave-saint-louis-mo-63115",
       "address": "4627 Korte Ave., Saint Louis MO 63115",
-      "onMarketDate": "5/5/2026",
-      "lastUpdate": "5/5/2026",
+      "onMarketDate": "9/11/2026",
+      "lastUpdate": "9/11/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$900",
-      "picsLink": "https://share.icloud.com/photos/0d48U-M_Q04AkhyNFMDSo25Ag",
+      "picsLink": "https://share.icloud.com/photos/091llC3RPzbQcFpISigqCx_2Q",
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6804962,
       "lng": -90.2346242
@@ -11718,7 +11769,7 @@
       "id": "1135-saint-rose-ln-cahokia-il-62206",
       "address": "1135 Saint Rose Ln, Cahokia, IL 62206",
       "onMarketDate": "2/12/2026",
-      "lastUpdate": "9/5/2026",
+      "lastUpdate": "9/13/2026",
       "area": "IL - East St Louis",
       "down": "$1,700",
       "monthly": "$550",
@@ -11726,7 +11777,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "864",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.5553426,
       "lng": -90.1990838
@@ -12616,23 +12667,6 @@
       "lng": -89.5592013
     },
     {
-      "id": "225-n-63rd-st-east-st-louis-il-62203-8",
-      "address": "225 N 63rd St, East St Louis, IL 62203",
-      "onMarketDate": "3/8/2026",
-      "lastUpdate": "9/4/2026",
-      "area": "IL - East St Louis",
-      "down": "$1,500",
-      "monthly": "$1,175",
-      "picsLink": "https://share.icloud.com/photos/0593BawdB_xK9Cfly9oO8_x7Q",
-      "beds": "3",
-      "baths": "2",
-      "sqft": "",
-      "status": "Pending",
-      "livability": 2,
-      "lat": 38.598555,
-      "lng": -90.0897786
-    },
-    {
       "id": "511-west-17th-st-lorain-oh-44052",
       "address": "511 West 17th St, Lorain OH 44052",
       "onMarketDate": "3/6/2026",
@@ -13313,7 +13347,7 @@
       "lng": -89.3535527
     },
     {
-      "id": "1112-e-garfield-ave-decatur-il-62526-9",
+      "id": "1112-e-garfield-ave-decatur-il-62526-8",
       "address": "1112 E Garfield Ave, Decatur, IL 62526",
       "onMarketDate": "10/29/2025",
       "lastUpdate": "3/5/2026",
@@ -14367,7 +14401,7 @@
       "lng": -83.55790379999999
     },
     {
-      "id": "1524-n-summit-ave-decatur-il-62526-10",
+      "id": "1524-n-summit-ave-decatur-il-62526-9",
       "address": "1524 N Summit Ave, Decatur, IL 62526",
       "onMarketDate": "2/19/2026",
       "lastUpdate": "8/28/2026",
@@ -19569,7 +19603,7 @@
       "lng": -90.23168539999999
     },
     {
-      "id": "1110-bailey-ln-benton-il-62812-11",
+      "id": "1110-bailey-ln-benton-il-62812-10",
       "address": "1110 Bailey Ln, Benton, IL 62812",
       "onMarketDate": "5/7/2025",
       "lastUpdate": "11/10/2025",
@@ -19909,7 +19943,7 @@
       "lng": -90.262946
     },
     {
-      "id": "428-w-washington-st-macomb-il-61455-12",
+      "id": "428-w-washington-st-macomb-il-61455-11",
       "address": "428 W Washington St, Macomb, IL 61455",
       "onMarketDate": "9/3/2025",
       "lastUpdate": "11/1/2025",
@@ -20351,7 +20385,7 @@
       "lng": -90.2479005
     },
     {
-      "id": "5639-wilborn-dr-saint-louis-mo-63136-13",
+      "id": "5639-wilborn-dr-saint-louis-mo-63136-12",
       "address": "5639 Wilborn Dr, Saint Louis, MO 63136",
       "onMarketDate": "9/17/2025",
       "lastUpdate": "10/20/2025",
@@ -20946,7 +20980,7 @@
       "lng": -90.11135039999999
     },
     {
-      "id": "2421-w-garden-st-peoria-il-61605-14",
+      "id": "2421-w-garden-st-peoria-il-61605-13",
       "address": "2421 W Garden St, Peoria, IL 61605",
       "onMarketDate": "7/16/2025",
       "lastUpdate": "9/29/2025",
@@ -22003,7 +22037,7 @@
       "id": "1319-w-aiken-peoria-il-61605",
       "address": "1319 W Aiken, Peoria IL 61605",
       "onMarketDate": "8/25/2025",
-      "lastUpdate": "9/8/2026",
+      "lastUpdate": "9/13/2026",
       "area": "IL - Peoria",
       "down": "$1,500",
       "monthly": "$800",
@@ -22011,7 +22045,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "768",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.6888155,
       "lng": -89.61445040000001
@@ -24023,7 +24057,7 @@
       "lng": -89.6148923
     },
     {
-      "id": "1235-e-walnut-st-decatur-il-62526-15",
+      "id": "1235-e-walnut-st-decatur-il-62526-14",
       "address": "1235 E Walnut St, Decatur, IL 62526",
       "onMarketDate": "7/11/2025",
       "lastUpdate": "",
@@ -26831,15 +26865,15 @@
       "id": "517-vine-st-peoria-il-61603",
       "address": "517 Vine St, Peoria, IL 61603",
       "onMarketDate": "8/5/2026",
-      "lastUpdate": "8/12/2026",
+      "lastUpdate": "9/13/2026",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$600",
-      "picsLink": "https://drive.google.com/drive/folders/1YfnJawxd2IqeoZbmQWkZx9YMUvbcvjv6?usp=sharing",
+      "picsLink": "517 Vine st - photos",
       "beds": "2",
       "baths": "1.5",
       "sqft": "1337",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.7154853,
       "lng": -89.562693
@@ -27372,7 +27406,7 @@
       "lng": -90.26489509999999
     },
     {
-      "id": "1105-shawnee-st-mount-vernon-il-62864-16",
+      "id": "1105-shawnee-st-mount-vernon-il-62864-15",
       "address": "1105 Shawnee St, Mount Vernon, IL 62864",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -27387,6 +27421,23 @@
       "livability": 5,
       "lat": 38.30708509999999,
       "lng": -88.8948398
+    },
+    {
+      "id": "1027-garth-ave-saint-louis-mo-63147",
+      "address": "1027 Garth Ave, Saint Louis, MO 63147",
+      "onMarketDate": "9/14/2026",
+      "lastUpdate": "9/14/2026",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$900",
+      "picsLink": "https://drive.google.com/drive/folders/1El5YHraIZmACXY_J-oDx4Sxyw65x3PnO",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "",
+      "status": "Available",
+      "livability": 4,
+      "lat": 38.7126123,
+      "lng": -90.23376859999999
     },
     {
       "id": "6336-evergreen-blvd-saint-louis-mo-63134",
@@ -27493,16 +27544,16 @@
     {
       "id": "617-w-1st-st-sparta-il-62286",
       "address": "617 W 1st St, Sparta, IL 62286",
-      "onMarketDate": "",
-      "lastUpdate": "",
+      "onMarketDate": "9/11/2026",
+      "lastUpdate": "9/11/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
-      "monthly": "$925",
-      "picsLink": "https://drive.google.com/drive/folders/11aRVc35OdFeBBZEOG2vnEwbtL0QuE5_-",
+      "monthly": "$900",
+      "picsLink": "https://drive.google.com/drive/mobile/folders/1NqE7SxBFBaNN7VCxoEtnAtmwxMGMLE5r",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
-      "status": "Sold",
+      "sqft": "750",
+      "status": "Available",
       "livability": 3,
       "lat": 38.1209773,
       "lng": -89.7120851
@@ -27950,7 +28001,7 @@
       "lng": -90.13800909999999
     },
     {
-      "id": "6725-schofield-pl-saint-louis-mo-63133-17",
+      "id": "6725-schofield-pl-saint-louis-mo-63133-16",
       "address": "6725 Schofield Pl, Saint Louis, MO 63133",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -28018,7 +28069,7 @@
       "lng": -90.2302121
     },
     {
-      "id": "2964-iowa-st-granite-city-il-62040-18",
+      "id": "2964-iowa-st-granite-city-il-62040-17",
       "address": "2964 Iowa St, Granite City, IL 62040",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -28987,7 +29038,7 @@
       "lng": -90.15514209999999
     },
     {
-      "id": "5445-robin-ave-saint-louis-mo-63120-19",
+      "id": "5445-robin-ave-saint-louis-mo-63120-18",
       "address": "5445 Robin Ave, Saint Louis, MO, 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -29259,7 +29310,7 @@
       "lng": -90.0194786
     },
     {
-      "id": "14-s-beard-st-danville-il-61832-20",
+      "id": "14-s-beard-st-danville-il-61832-19",
       "address": "14 S Beard St, Danville, IL 61832",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30466,7 +30517,7 @@
       "lng": -76.33330959999999
     },
     {
-      "id": "1127-31st-st-newport-news-va-23607-21",
+      "id": "1127-31st-st-newport-news-va-23607-20",
       "address": "1127 31st St, Newport News, VA 23607",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30602,7 +30653,7 @@
       "lng": -76.3411186
     },
     {
-      "id": "5338-claxton-ave-saint-louis-mo-63120-22",
+      "id": "5338-claxton-ave-saint-louis-mo-63120-21",
       "address": "5338 Claxton Ave, Saint Louis, MO 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30653,7 +30704,7 @@
       "lng": -76.56196550000001
     },
     {
-      "id": "108-n-10th-st-suffolk-va-23434-23",
+      "id": "108-n-10th-st-suffolk-va-23434-22",
       "address": "108 N 10th St, Suffolk, VA 23434",
       "onMarketDate": "",
       "lastUpdate": "",
