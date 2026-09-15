@@ -785,19 +785,33 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-row {
   display: flex; flex-direction: column; gap: 10px; position: relative;
   width: 100%; text-align: left; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-  padding: 16px 18px; margin-bottom: 8px; cursor: pointer; font: inherit;
+  padding: 16px 40px 16px 18px; margin-bottom: 8px; cursor: pointer; font: inherit;
 }
 .buyer-row:hover { border-color: var(--blue); }
 .buyer-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-/* Card options (⋮) button + its popup menu, added 2026-09-14 -- replaces
-   the old swipe-left-to-hide gesture (see initBuyerRowMenuDelegation in
-   app.js for why). Small, absolutely positioned in the card's own top-right
-   corner so it costs no layout space, per Aaron's explicit preference for
-   a three-dot popup over a labeled button. */
+/* Narrow right-side icon column, added 2026-09-14 per Aaron's direct
+   request ("create a narrow column on the very right of every buyer
+   card. 4 rows. Three dot, login, id, calendar icons from top to
+   bottom") -- spans the card's full height, absolutely positioned along
+   the right edge (the rest of the card's own padding-right above makes
+   room for it), same column on both Compact and Detailed cards. The four
+   rows space out evenly regardless of the card's actual height. */
+.buyer-row-icon-col {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 34px; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-evenly;
+  padding: 6px 0; border-left: 1px solid #f3f4f6;
+}
+.buyer-row-icon-col-item { font-size: 15px; line-height: 1; }
+
+/* Card options (⋮) button + its popup menu -- the button now lives INSIDE
+   .buyer-row-icon-col above (its own top row) instead of being
+   independently absolutely-positioned in the card's top-right corner. */
+.buyer-row-icon-col .buyer-row-menu-btn {
+  position: static; width: 24px; height: 24px;
+}
 .buyer-row-menu-btn {
-  position: absolute; top: 6px; right: 6px; z-index: 2;
-  width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent;
+  border-radius: 50%; border: none; background: transparent;
   color: var(--gray-text, #6b7280); font-size: 18px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
@@ -907,7 +921,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    underneath (see .buyer-row-compact > .buyer-row-progress above).
    Overrides .buyer-row's own padding/gap (built for the taller detailed
    card) down to something that still reads as compact. */
-.buyer-row-compact { padding: 10px 14px; gap: 4px; }
+.buyer-row-compact { padding: 10px 40px 10px 14px; gap: 4px; }
 .buyer-row-compact-line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .buyer-row-compact-icons { display: flex; gap: 4px; margin-left: auto; }
 .buyer-row-compact-line2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: #9ca3af; }

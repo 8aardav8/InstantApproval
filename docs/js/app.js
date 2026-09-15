@@ -3564,31 +3564,42 @@ function renderBuyersList() {
       const mostRecent = contactCandidates[0];
       lastContactHtml = `<span class="buyer-row-compact-contact" title="Most recent of login/text/call">Last contact: ${mostRecent.label} ${formatBuyerDate(mostRecent.iso)}</span>`;
     }
-    // At-a-glance badges, added 2026-09-11 per Aaron's direct request --
-    // ID on file, and how many showings are actually booked (today or
-    // later; a past-dated appointment doesn't count as "booked" here, see
-    // the detail view's Scheduled/Past split for the full history).
+    // At-a-glance signals -- ID on file, has logged in, and how many
+    // showings are actually booked (today or later; a past-dated
+    // appointment doesn't count as "booked" here, see the detail view's
+    // Scheduled/Past split for the full history).
     const today = localTodayISO();
     const upcomingCount = (b.loginsMatch && b.loginsMatch.appointments ? b.loginsMatch.appointments : []).filter((a) => a.date >= today).length;
     const hasId = !!(b.loginsMatch && b.loginsMatch.idLink);
     const hasLoggedIn = !!(b.loginsMatch && b.loginsMatch.firstLogin);
-    // The ID badge is dropped from the DETAILED card specifically, added
-    // 2026-09-13 per Aaron's direct request -- the detailed card already
-    // shows the actual ID thumbnail (idThumbHtml below), so a redundant
-    // "🪪 ID" badge on top of it added nothing. The COMPACT card below has
-    // no thumbnail at all, so it keeps the badge -- that's its only way to
-    // show "ID received" at a glance.
-    // DNC badge, added 2026-09-16 -- shown on both card types (unlike
-    // Hidden, which hides the card from the default list entirely rather
-    // than badging it, DNC still needs to appear at a glance since a DNC
-    // buyer's card stays visible in the normal list).
+    // DNC badge -- the only one of the old inline badges left; ID/login/
+    // showing moved into the narrow right-side icon column below (see
+    // buyerRowIconColumnHtml), added 2026-09-14 per Aaron's direct
+    // request. Shown on both card types (unlike Hidden, which hides the
+    // card from the default list entirely rather than badging it, DNC
+    // still needs to appear at a glance since a DNC buyer's card stays
+    // visible in the normal list).
     const dncBadgeHtml = b.dnc ? `<span class="buyer-badge dnc-badge" title="Do Not Contact/Call -- excluded from automated texts">🚫 DNC</span>` : "";
-    const badgesHtml = `
-      <span class="buyer-row-badges">
-        ${dncBadgeHtml}
-        ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
-        ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅ Logged in</span>` : ""}
-      </span>
+    const badgesHtml = dncBadgeHtml ? `<span class="buyer-row-badges">${dncBadgeHtml}</span>` : "";
+    // Narrow right-side icon column, added 2026-09-14 per Aaron's direct
+    // request ("create a narrow column on the very right of every buyer
+    // card. 4 rows. Three dot, login, id, calendar icons from top to
+    // bottom") -- shared between both card types, spans the card's full
+    // height. The ⋮ menu button moves IN here (was its own independently
+    // absolutely-positioned top-right button before) as the top row;
+    // login/ID/calendar are simple status icons, not full at-a-glance
+    // badges like the old .buyer-row-badges/.buyer-row-compact-icons --
+    // no numeric count on the calendar icon, no "off" state rendered
+    // dimmed-but-present (a genuinely absent signal just shows the
+    // negative icon, same convention the appointment cards already use
+    // for ID-on-file/warning).
+    const iconColHtml = `
+      <div class="buyer-row-icon-col">
+        <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
+        <span class="buyer-row-icon-col-item" title="${hasLoggedIn ? "Has logged in" : "Never logged in"}">${hasLoggedIn ? "✅" : "❌"}</span>
+        <span class="buyer-row-icon-col-item" title="${hasId ? "ID on file" : "No ID on file"}">${hasId ? "🪪" : "⚠️"}</span>
+        <span class="buyer-row-icon-col-item" title="${upcomingCount > 0 ? `${upcomingCount} showing(s) booked` : "No showings booked"}">📅</span>
+      </div>
     `;
     // Card thumbnail, added 2026-09-12 per Aaron's direct request -- same
     // admin-id-photo blob-fetch as the detail view's full-size photo (a raw
@@ -3677,22 +3688,15 @@ function renderBuyersList() {
       // progress bar at the bottom.
       const areaText = b.areas && b.areas.length > 0 ? b.areas.join(", ") : "";
       const compactEmail = b.loginsMatch ? b.loginsMatch.email : "";
-      // Appointment icon, added 2026-09-15 per Aaron's direct follow-up
-      // ("Compact, you should also show the icon for scheduled
-      // appointments on the card") -- same upcomingCount already used for
-      // the detailed card's own showing-badge above, same "only when it
-      // actually applies" rule as the ID/login icons here.
-      const compactIconsHtml = (hasId || hasLoggedIn || upcomingCount > 0 || b.dnc) ? `
-        <span class="buyer-row-compact-icons">
-          ${b.dnc ? `<span class="buyer-badge dnc-badge" title="Do Not Contact/Call -- excluded from automated texts">🚫 DNC</span>` : ""}
-          ${hasId ? `<span class="buyer-badge id-badge" title="ID on file">🪪</span>` : ""}
-          ${hasLoggedIn ? `<span class="buyer-badge login-badge" title="Has logged in">✅</span>` : ""}
-          ${upcomingCount > 0 ? `<span class="buyer-badge showing-badge" title="${upcomingCount} showing(s) booked">📅 ${upcomingCount}</span>` : ""}
-        </span>
-      ` : "";
+      // DNC-only now -- ID/login/showing icons moved into the shared
+      // right-side icon column (iconColHtml above), 2026-09-14 per
+      // Aaron's direct request.
+      const compactIconsHtml = b.dnc
+        ? `<span class="buyer-row-compact-icons"><span class="buyer-badge dnc-badge" title="Do Not Contact/Call -- excluded from automated texts">🚫 DNC</span></span>`
+        : "";
       rows.push(`
         <div class="buyer-row buyer-row-compact" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
-          <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
+          ${iconColHtml}
           <div class="buyer-row-compact-line1">
             <span class="buyer-row-name">${labelHtml}</span>
             ${compactIconsHtml}
@@ -3710,7 +3714,7 @@ function renderBuyersList() {
     } else {
       rows.push(`
         <div class="buyer-row" data-phone="${escapeHtml(b.phone)}" role="button" tabindex="0"${rowStyle}>
-          <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
+          ${iconColHtml}
           <div class="buyer-row-top">
             <div class="buyer-row-top-half buyer-row-top-thumb-half">
               ${idThumbHtml || `<div class="buyer-row-thumb buyer-row-no-thumb"></div>`}
@@ -4138,24 +4142,20 @@ function formatApptDate(dateStr) {
 // stored status; a real bug caught here before shipping: an earlier draft
 // added "No-show" as its own literal option value, which the server would
 // have rejected outright with "invalid status").
-// Split in two 2026-09-14 per Aaron's direct request: the Outcome
-// dropdown stays OUT of the card-options (⋮) menu on the Detailed layout
-// (rendered inline on the card instead, via this function), while the
-// menu itself carries just three plain words -- Completed/Reschedule/
-// Cancel -- see apptRowMenuContentHtml + openApptRowMenu below, no longer
-// this function's concern. Previously one combined function
-// (appointmentManageControlsHtml) rendering the dropdown AND
-// Reschedule/Cancel/Reactivate together, always paired.
+// Moved INSIDE the card-options (⋮) menu 2026-09-14 per Aaron's direct
+// follow-up ("Move the outcomes dropdown inside the three dot menus") --
+// previously rendered inline on the card face instead. Wired directly in
+// openApptRowMenu now (which already has `a` in scope), so this function
+// is HTML-only -- no data-* attributes needed on the <select> anymore.
 function apptOutcomeSelectHtml(a) {
   if (!(a.phone && a.row && a.slot)) return "";
   const today = localTodayISO();
   const isPast = a.date < today;
   const emptyOptionLabel = isPast ? "No-show" : "Scheduled";
-  const dataAttrs = `data-phone="${escapeAttr(a.phone)}" data-slot="${a.slot}" data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}"`;
   return `
     <div class="appt-outcome-row">
       <label>Outcome
-        <select class="appt-outcome-select" ${dataAttrs}>
+        <select class="appt-outcome-select">
           <option value=""${!a.status ? " selected" : ""}>${emptyOptionLabel}</option>
           <option value="Completed"${a.status === "Completed" ? " selected" : ""}>Completed</option>
           <option value="Canceled"${a.status === "Canceled" ? " selected" : ""}>Canceled</option>
@@ -4163,19 +4163,6 @@ function apptOutcomeSelectHtml(a) {
       </label>
     </div>
   `;
-}
-// Wires the standalone Outcome dropdown wherever it's rendered inline
-// (currently just the Detailed appt card) -- separate from the menu's own
-// wiring in openApptRowMenu below, since this one lives directly on the
-// card, not inside the shared popup.
-function wireApptOutcomeSelect(container, onDone) {
-  container.querySelectorAll(".appt-outcome-select").forEach((sel) => {
-    sel.addEventListener("click", (e) => e.stopPropagation());
-    sel.addEventListener("change", (e) => {
-      e.stopPropagation();
-      updateAppointment(sel.dataset.phone, Number(sel.dataset.slot), sel.dataset.address, sel.dataset.date, sel.value, onDone);
-    });
-  });
 }
 
 function findBuyer(phone) {
@@ -6268,48 +6255,50 @@ function getApptRowMenuPopup() {
 function closeApptRowMenu() {
   if (apptRowMenuPopupEl) apptRowMenuPopupEl.classList.add("hidden");
 }
-// The three words -- "Completed" (the full mark-as-shown action: Shown
-// Properties ledger + status, same as the old "Mark as shown" control
-// used to do, not just the dropdown's own bare status flip -- omitted
-// once already Completed/Canceled), "Reschedule" (swaps the popup's own
-// content to the date-picker in place, see below), "Cancel"/"Reactivate"
-// (direct one-tap action, same confirm() on Cancel as before).
-function apptRowMenuWordsHtml(a) {
-  const isCanceled = a.status === "Canceled";
-  const canComplete = a.status !== "Completed" && a.status !== "Canceled";
-  return `
-    ${canComplete ? `<button type="button" class="appt-row-menu-option appt-menu-completed-btn">Completed</button>` : ""}
-    <button type="button" class="appt-row-menu-option appt-menu-reschedule-btn">Reschedule</button>
-    ${isCanceled
-      ? `<button type="button" class="appt-row-menu-option appt-menu-reactivate-btn">Reactivate</button>`
-      : `<button type="button" class="appt-row-menu-option appt-menu-cancel-btn">Cancel</button>`}
-  `;
-}
+// Outcome dropdown moved IN HERE 2026-09-14 per Aaron's direct follow-up
+// ("Move the outcomes dropdown inside the three dot menus") -- previously
+// rendered inline on the card face (apptOutcomeSelectHtml is reused as-is,
+// just relocated), with a plain "Completed"/"Reschedule"/"Cancel"/
+// "Reactivate" word-button menu alongside it. The word buttons are gone
+// now that the dropdown itself covers all three outcome states in one
+// control; Reschedule (a date change, not an outcome value) stays its own
+// button, swapping the popup's own content to a date-picker in place.
+// Selecting "Completed" still runs the FULL mark-as-shown action (Shown
+// Properties ledger + status, via markApptShownAndCompleted) rather than
+// the dropdown's own bare status flip, same as the old "Completed" button
+// did -- and selecting "Canceled" still confirms first, same as the old
+// "Cancel" button did (reverting the select back to its prior value if
+// declined).
 function openApptRowMenu(btn, a) {
   const popup = getApptRowMenuPopup();
   const hasControls = !!(a.phone && a.row && a.slot);
-  popup.innerHTML = hasControls ? apptRowMenuWordsHtml(a) : `<div class="appt-row-menu-empty">Nothing to do here yet.</div>`;
+  popup.innerHTML = hasControls
+    ? `${apptOutcomeSelectHtml(a)}<button type="button" class="appt-row-menu-option appt-menu-reschedule-btn">Reschedule</button>`
+    : `<div class="appt-row-menu-empty">Nothing to do here yet.</div>`;
   const rect = btn.getBoundingClientRect();
   popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
   popup.style.left = `${Math.max(8, rect.right + window.scrollX - 240)}px`;
   popup.classList.remove("hidden");
   if (!hasControls) return;
-  const completedBtn = popup.querySelector(".appt-menu-completed-btn");
-  if (completedBtn) completedBtn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    await markApptShownAndCompleted({ row: a.row, slot: a.slot, address: a.address, date: a.date, phone: a.phone }, refreshAfterApptAction);
-  });
-  const cancelBtn = popup.querySelector(".appt-menu-cancel-btn");
-  if (cancelBtn) cancelBtn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    if (!confirm(`Cancel the appointment at ${a.address}? No text will be sent the morning of.`)) return;
-    await updateAppointment(a.phone, a.slot, a.address, a.date, "Canceled", refreshAfterApptAction);
-  });
-  const reactivateBtn = popup.querySelector(".appt-menu-reactivate-btn");
-  if (reactivateBtn) reactivateBtn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    await updateAppointment(a.phone, a.slot, a.address, a.date, "", refreshAfterApptAction);
-  });
+  const outcomeSelect = popup.querySelector(".appt-outcome-select");
+  if (outcomeSelect) {
+    outcomeSelect.addEventListener("click", (e) => e.stopPropagation());
+    outcomeSelect.addEventListener("change", async (e) => {
+      e.stopPropagation();
+      const newValue = outcomeSelect.value;
+      if (newValue === "Canceled") {
+        if (!confirm(`Cancel the appointment at ${a.address}? No text will be sent the morning of.`)) {
+          outcomeSelect.value = a.status || "";
+          return;
+        }
+      }
+      if (newValue === "Completed") {
+        await markApptShownAndCompleted({ row: a.row, slot: a.slot, address: a.address, date: a.date, phone: a.phone }, refreshAfterApptAction);
+      } else {
+        await updateAppointment(a.phone, a.slot, a.address, a.date, newValue, refreshAfterApptAction);
+      }
+    });
+  }
   const rescheduleBtn = popup.querySelector(".appt-menu-reschedule-btn");
   if (rescheduleBtn) rescheduleBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -6435,14 +6424,16 @@ function renderApptGroupsHtml(groups) {
 // - Name line dropped from the card face entirely -- it already shows
 //   once per buyer in the group heading above (renderApptGroupsHtml).
 // - Availability check/X badge added (was Detailed-only before).
-// - Phone number moved UP next to the date (was its own line at the
-//   bottom); the Outcome dropdown now sits where the phone number used
-//   to be (the last line) instead.
+// - Phone number moved UP next to the date.
 // - Lockbox code moved to the same top line, right of the phone number.
 // - Address links through to the property page (matches the OLD Detailed
 //   card's own address-link behavior, wired the same way in
 //   renderAppointmentsOverview's loop).
 // - ID photo removed here (see renderApptGroupsHtml above).
+// The Outcome dropdown itself moved OUT of the card face and INTO the
+// card-options (⋮) menu 2026-09-14 per Aaron's later direct follow-up
+// ("Move the outcomes dropdown inside the three dot menus") -- see
+// openApptRowMenu below.
 function renderApptCardCompact(a) {
   const clickable = !!a.phone;
   const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
@@ -6461,7 +6452,6 @@ function renderApptCardCompact(a) {
         ${lockboxHtml}
       </div>
       <div class="appt-card-address appt-card-compact-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
-      ${apptOutcomeSelectHtml(a)}
     </div>
   `;
 }
@@ -6616,9 +6606,6 @@ function renderAppointmentsOverview() {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); showDetail(el.dataset.listingId); }
       });
     });
-    // Inline Outcome dropdown, added 2026-09-14 (now on the appt card's
-    // own last line -- see renderApptCardCompact).
-    wireApptOutcomeSelect(c, refreshAfterApptAction);
     // Buyer-group ID photo/warning icon -> buyer page, added 2026-09-14
     // per Aaron's direct follow-up ("link it to the buyer page") -- same
     // click-through goToBuyerFromAppointment every other click-through on
