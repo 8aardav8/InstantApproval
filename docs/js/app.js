@@ -6397,6 +6397,38 @@ function renderApptCard(a) {
   return APPOINTMENTS_CARD_MODE === "compact" ? renderApptCardCompact(a) : renderApptCardDetailed(a);
 }
 
+// Groups a section's appointment entries by buyer, added 2026-09-14 per
+// Aaron's direct request ("appointments grouped by Buyer. The buyer name
+// can be justified center above whatever appointments they have"). Keyed
+// by phone (the same reliable per-buyer identity apptRowMenuBtnHtml/
+// goToBuyerFromAppointment already use) -- an appointment with no phone on
+// file gets its own singleton group (address+date as a fallback key) so
+// two different phoneless visitors never get merged into one heading.
+// Insertion order is preserved within a group; callers sort the GROUPS
+// themselves afterward (today/upcoming/past each want a different order).
+function groupApptEntriesByBuyer(entries) {
+  const groups = new Map();
+  for (const a of entries) {
+    const key = a.phone || `__nophone__:${a.address}:${a.date}`;
+    let group = groups.get(key);
+    if (!group) {
+      const name = a.quoName || a.name || a.idName || (a.phone ? a.phone : "Unknown visitor");
+      group = { key, name, phone: a.phone || "", entries: [] };
+      groups.set(key, group);
+    }
+    group.entries.push(a);
+  }
+  return [...groups.values()];
+}
+function renderApptGroupsHtml(groups) {
+  return groups.map((g) => `
+    <div class="appt-buyer-group">
+      <h4 class="appt-buyer-group-name">${escapeHtml(g.name)}</h4>
+      ${g.entries.map((a) => renderApptCard(a)).join("")}
+    </div>
+  `).join("");
+}
+
 // Compact appointment card, REBUILT 2026-09-14 per Aaron's direct
 // follow-up request ("For the compact view, we could put no ID picture,
 // but rather just ID icon if the ID is on file and a warning icon if no
@@ -6551,6 +6583,23 @@ function renderAppointmentsOverview() {
   upcoming.sort((a, b) => a.date.localeCompare(b.date));
   past.sort((a, b) => b.date.localeCompare(a.date)); // most-recently-past first
 
+  // Grouped by buyer, added 2026-09-14 per Aaron's direct request -- see
+  // groupApptEntriesByBuyer's own comment. Entries within each group keep
+  // the per-section sort just applied above; the GROUPS themselves then
+  // get their own section-appropriate order: alphabetical by name for
+  // Today (mirrors the old flat alphabetical-by-address order), soonest
+  // upcoming date first for Upcoming, most-recently-past first for Past --
+  // each using the min/max date across that buyer's own entries in this
+  // section.
+  const minDate = (g) => g.entries.reduce((m, a) => (a.date < m ? a.date : m), g.entries[0].date);
+  const maxDate = (g) => g.entries.reduce((m, a) => (a.date > m ? a.date : m), g.entries[0].date);
+  const todayGroups = groupApptEntriesByBuyer(todayList)
+    .sort((x, y) => x.name.localeCompare(y.name));
+  const upcomingGroups = groupApptEntriesByBuyer(upcoming)
+    .sort((x, y) => minDate(x).localeCompare(minDate(y)));
+  const pastGroups = groupApptEntriesByBuyer(past)
+    .sort((x, y) => maxDate(y).localeCompare(maxDate(x))); // most-recently-past first
+
   // Headings ALWAYS show now, with a plain "none" line when a section is
   // empty -- changed 2026-09-14 per Aaron's direct report ("the sections
   // for past appointments and today's appointments have disappeared").
@@ -6568,16 +6617,16 @@ function renderAppointmentsOverview() {
   const allEmpty = todayList.length === 0 && upcoming.length === 0 && past.length === 0;
   if (todayHeading) todayHeading.classList.remove("hidden");
   todayContainer.innerHTML = todayList.length
-    ? todayList.map((a) => renderApptCard(a)).join("")
+    ? renderApptGroupsHtml(todayGroups)
     : (searchActive ? "" : "<p>None today.</p>");
   if (upcomingHeading) upcomingHeading.classList.remove("hidden");
   container.innerHTML = upcoming.length
-    ? upcoming.map((a) => renderApptCard(a)).join("")
+    ? renderApptGroupsHtml(upcomingGroups)
     : (searchActive ? "" : "<p>No upcoming appointments.</p>");
   if (pastContainer) {
     pastHeading.classList.remove("hidden");
     pastContainer.innerHTML = past.length
-      ? past.map((a) => renderApptCard(a)).join("")
+      ? renderApptGroupsHtml(pastGroups)
       : (searchActive ? "" : "<p>No past appointments.</p>");
   }
   if (searchActive && allEmpty) {

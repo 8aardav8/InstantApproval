@@ -1353,3 +1353,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-card-compact-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
 .appt-card-compact-address { font-weight: 700; color: var(--navy); font-size: 13px; margin-top: 2px; }
 .appt-card-compact-line2 { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
+
+/* Appointments grouped by buyer, added 2026-09-14 per Aaron's direct
+   request ("appointments grouped by Buyer. The buyer name can be
+   justified center above whatever appointments they have"). One group
+   per buyer within each of the Today/Upcoming/Past sections; the name
+   heading is deliberately plain (not a .buyer-section h3) since it isn't
+   its own section, just a label sitting above that buyer's own card(s). */
+.appt-buyer-group { margin-bottom: 18px; }
+.appt-buyer-group-name {
+  text-align: center; font-size: 14px; font-weight: 800; color: var(--navy);
+  margin: 0 0 8px;
+}
