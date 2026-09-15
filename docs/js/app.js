@@ -4565,32 +4565,23 @@ function renderBuyerDetail(buyer) {
   const idNameHtml = `<div class="detail-field"><span class="label">ID Name (OCR)</span><span class="value buyer-idname-editable" data-phone="${escapeAttr(buyer.phone)}" data-id-name="${escapeAttr(idNameValue)}" tabindex="0" title="Click to edit">${idNameValue ? escapeHtml(idNameValue) : "(none)"}</span></div>`;
   const factsHtml = loginNameHtml + idNameHtml + facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
 
-  // Lead info from the Filling Sheet's separate "BUYERS" tab (rating,
-  // preferences, company/landlord, which Quo number they came in on) --
-  // added 2026-09-11 per Aaron's direct request. A distinct data source
-  // from loginsMatch above (that's the site's own App: Logins), so its
-  // own section rather than folded into factsHtml.
-  const li = buyer.leadInfo;
-  const leadFacts = li ? [
-    ["Contact Name", li.contactName],
-    ["Company", li.companyName],
-    ["Landlord", li.landlord ? "Yes" : ""],
-    ["Rating", li.rating],
-    ["Location", [li.city, li.state].filter(Boolean).join(", ")],
-    ["Min Beds", li.minBeds],
-    ["Min Baths", li.minBaths],
-    ["Max Monthly", li.maxMonthly],
-    ["Other Preferences", li.otherPreferences],
-    ["First Contact Address", li.firstContactAddress],
-    ["Date Added", li.dateAdded],
-  ].filter(([, v]) => v) : [];
-  const leadInfoHtml = leadFacts.length ? `
-    <div class="buyer-section">
-      <h3>Lead Info</h3>
-      ${leadFacts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${escapeHtml(String(v))}</span></div>`).join("")}
-      ${li.openphoneLink ? quoAppLinkHtml(buyer.phone) : ""}
-    </div>
-  ` : "";
+  // Lead Info section REMOVED 2026-09-15 per Aaron's direct request ("get
+  // rid of the lead info section on the buyer page for leads that came
+  // from the buyer tab of the filling sheet") -- this pulled live from
+  // the Filling Sheet's separate BUYERS tab (rating, preferences, company/
+  // landlord, first-contact address, date added), added 2026-09-11.
+  // Every buyer who ever had this section populated is, by construction,
+  // exactly a "buyer.leadInfo" match -- i.e. a BUYERS-tab-sourced lead --
+  // so there's no narrower subset to preserve here; the whole section is
+  // gone. Its two most useful facts already have a permanent home now:
+  // First Contact Address -> App: Logins' own Viewed Properties column
+  // (backfilled directly, not read from here), Date Added -> App:
+  // Logins' new First Contact Date column (AL, backfilled from either
+  // this same BUYERS-tab field or, preferably, a buyer's own real Quo
+  // conversation history where one exists -- see SESSION_LOG.md). The
+  // buyer.leadInfo object itself (and its contactName fallback used
+  // elsewhere for buyers with no Quo name) is UNCHANGED -- only this
+  // rendered section is gone.
 
   // Viewed Properties -- REMOVED from display 2026-09-14 per Aaron's
   // direct request, after confirming what it actually was: a passive log
@@ -4979,7 +4970,6 @@ function renderBuyerDetail(buyer) {
     ${possibleIdHtml}
     ${areasBlockHtml}
     ${factsHtml}
-    ${leadInfoHtml}
     ${favScheduledHtml}
     ${pastHtml}
     ${shownHtml}
