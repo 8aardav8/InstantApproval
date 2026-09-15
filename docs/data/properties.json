@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T18:53:45.149693+00:00",
+  "generatedAt": "2026-09-15T18:54:15.350435+00:00",
   "listings": [
     {
       "id": "1310-e-poplar-st-west-frankfort-il-62896",
@@ -2954,7 +2954,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "704",
-      "status": "Pending",
+      "status": "Available",
       "livability": 5,
       "lat": 38.6100493,
       "lng": -90.13705519999999
