@@ -4099,6 +4099,18 @@ function daysBetweenDateStrings(fromStr, toStr) {
   const b = new Date(toStr + "T00:00:00Z");
   return Math.round((b - a) / 86400000);
 }
+// Spelled-out relative-day phrase, added 2026-09-14 per Aaron's direct
+// request for the Buyer page's own Favorited & Scheduled list ("today or
+// in one day or in two days right after the date") -- deliberately
+// spelled out ("in 1 day"/"in 2 days"), not the abbreviated "in 1d"/"2d
+// ago" shorthand formatApptDate's own "days" toggle mode uses elsewhere;
+// shown ALONGSIDE the real date there, not as a replacement for it.
+function relativeDayLabel(dateStr) {
+  const days = daysBetweenDateStrings(localTodayISO(), dateStr);
+  if (days === 0) return "today";
+  if (days > 0) return days === 1 ? "in 1 day" : `in ${days} days`;
+  return days === -1 ? "1 day ago" : `${-days} days ago`;
+}
 function formatApptDate(dateStr) {
   if (BUYERS_DATE_MODE !== "days") return formatShortDate(dateStr);
   const days = daysBetweenDateStrings(localTodayISO(), dateStr);
@@ -4132,13 +4144,20 @@ function formatApptDate(dateStr) {
 // stored status; a real bug caught here before shipping: an earlier draft
 // added "No-show" as its own literal option value, which the server would
 // have rejected outright with "invalid status").
-function appointmentManageControlsHtml(a) {
+// Split in two 2026-09-14 per Aaron's direct request: the Outcome
+// dropdown stays OUT of the card-options (⋮) menu on the Detailed layout
+// (rendered inline on the card instead, via this function), while the
+// menu itself carries just three plain words -- Completed/Reschedule/
+// Cancel -- see apptRowMenuContentHtml + openApptRowMenu below, no longer
+// this function's concern. Previously one combined function
+// (appointmentManageControlsHtml) rendering the dropdown AND
+// Reschedule/Cancel/Reactivate together, always paired.
+function apptOutcomeSelectHtml(a) {
   if (!(a.phone && a.row && a.slot)) return "";
   const today = localTodayISO();
   const isPast = a.date < today;
   const emptyOptionLabel = isPast ? "No-show" : "Scheduled";
   const dataAttrs = `data-phone="${escapeAttr(a.phone)}" data-slot="${a.slot}" data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}"`;
-  const isCanceled = a.status === "Canceled";
   return `
     <div class="appt-outcome-row">
       <label>Outcome
@@ -4149,61 +4168,13 @@ function appointmentManageControlsHtml(a) {
         </select>
       </label>
     </div>
-    <div class="appt-manage-row">
-      <button type="button" class="btn-outline appt-reschedule-btn" ${dataAttrs}>Reschedule</button>
-      ${isCanceled
-        ? `<span class="appt-status-label appt-status-canceled">Canceled</span><button type="button" class="btn-outline appt-reactivate-btn" ${dataAttrs}>Reactivate</button>`
-        : `<button type="button" class="btn-outline appt-cancel-btn" ${dataAttrs}>Cancel</button>`}
-    </div>
-    <div class="appt-reschedule-panel hidden">
-      <select class="appt-reschedule-date-select">
-        <option value="" disabled selected>Choose a new date</option>
-        ${buildDateOptions().map(({ value, label }) => `<option value="${value}">${escapeHtml(label)}</option>`).join("")}
-      </select>
-      <button type="button" class="btn-primary appt-reschedule-save-btn" ${dataAttrs}>Save</button>
-    </div>
   `;
 }
-
-// Wires the controls appointmentManageControlsHtml renders, inside
-// `container` -- called from BOTH renderAppointmentsOverview and
-// renderBuyerDetail after their own innerHTML is set, since the same
-// markup/classes appear in both places. `onDone` is each caller's own
-// "refresh myself" callback (renderAppointmentsOverview or
-// renderBuyerDetail(findBuyer(phone))).
-function wireAppointmentManageControls(container, onDone) {
-  container.querySelectorAll(".appt-reschedule-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const panel = btn.closest(".appt-manage-row").nextElementSibling;
-      panel.classList.toggle("hidden");
-    });
-  });
-  container.querySelectorAll(".appt-reschedule-panel").forEach((panel) => {
-    panel.addEventListener("click", (e) => e.stopPropagation());
-  });
-  container.querySelectorAll(".appt-reschedule-save-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const panel = btn.closest(".appt-reschedule-panel");
-      const newDate = panel.querySelector(".appt-reschedule-date-select").value;
-      if (!newDate) { alert("Choose a date first."); return; }
-      updateAppointment(btn.dataset.phone, Number(btn.dataset.slot), btn.dataset.address, newDate, "", onDone);
-    });
-  });
-  container.querySelectorAll(".appt-cancel-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (!confirm(`Cancel the appointment at ${btn.dataset.address}? No text will be sent the morning of.`)) return;
-      updateAppointment(btn.dataset.phone, Number(btn.dataset.slot), btn.dataset.address, btn.dataset.date, "Canceled", onDone);
-    });
-  });
-  container.querySelectorAll(".appt-reactivate-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      updateAppointment(btn.dataset.phone, Number(btn.dataset.slot), btn.dataset.address, btn.dataset.date, "", onDone);
-    });
-  });
+// Wires the standalone Outcome dropdown wherever it's rendered inline
+// (currently just the Detailed appt card) -- separate from the menu's own
+// wiring in openApptRowMenu below, since this one lives directly on the
+// card, not inside the shared popup.
+function wireApptOutcomeSelect(container, onDone) {
   container.querySelectorAll(".appt-outcome-select").forEach((sel) => {
     sel.addEventListener("click", (e) => e.stopPropagation());
     sel.addEventListener("change", (e) => {
@@ -4720,7 +4691,7 @@ function renderBuyerDetail(buyer) {
   // appt-card) -- .buyer-list-item .appt-row-menu-btn in style.css
   // overrides that to sit inline at the end of this flat row instead;
   // same class, same delegation, same popup either way.
-  const apptItem = (a, showAvailability, linkToAppointment) => `<div class="buyer-list-item buyer-list-item-row${linkToAppointment ? " buyer-appt-item-clickable" : ""}"${linkToAppointment ? ` data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" role="button" tabindex="0"` : ""}><span>📅 ${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}</span>${apptRowMenuBtnHtml({ ...a, phone: buyer.phone }, true)}</div>`;
+  const apptItem = (a, showAvailability, linkToAppointment) => `<div class="buyer-list-item buyer-list-item-row${linkToAppointment ? " buyer-appt-item-clickable" : ""}"${linkToAppointment ? ` data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" role="button" tabindex="0"` : ""}><span>📅 ${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}</span>${apptRowMenuBtnHtml({ ...a, phone: buyer.phone })}</div>`;
   // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
   // an appointment for a buyer for a property from their Buyer page
   // myself"). Same autocomplete pattern as Shown Properties above, but
@@ -4768,11 +4739,25 @@ function renderBuyerDetail(buyer) {
     entry.appt = a;
     favScheduledMap.set(a.address, entry);
   }
-  const favScheduledItems = [...favScheduledMap.values()];
+  // Sorted so a scheduled viewing coming up soonest is always first --
+  // added 2026-09-14 per Aaron's direct request ("order them in the list
+  // by whichever one's coming up next"). Anything with no appt (favorited
+  // only) sorts after every scheduled one, alphabetically by address --
+  // he only asked about ordering the scheduled ones, so there's no real
+  // "right" order for the rest, alphabetical is just a stable default.
+  const favScheduledItems = [...favScheduledMap.values()].sort((x, y) => {
+    if (x.appt && y.appt) return x.appt.date.localeCompare(y.appt.date);
+    if (x.appt && !y.appt) return -1;
+    if (!x.appt && y.appt) return 1;
+    return x.address.localeCompare(y.address);
+  });
   const favScheduledItemHtml = (item) => {
     const line1 = `${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${escapeHtml(item.address)}`;
+    // Relative-day label right after the date, added 2026-09-14 per
+    // Aaron's direct request ("today or in one day or in two days right
+    // after the date") -- see relativeDayLabel's own comment.
     const line2 = item.appt
-      ? `<div class="buyer-list-item-line2">📅 ${escapeHtml(item.appt.date)}${apptRowMenuBtnHtml({ ...item.appt, phone: buyer.phone }, true)}</div>`
+      ? `<div class="buyer-list-item-line2">📅 ${escapeHtml(item.appt.date)} (${relativeDayLabel(item.appt.date)})${apptRowMenuBtnHtml({ ...item.appt, phone: buyer.phone })}</div>`
       : "";
     const clickable = item.appt ? ` data-address="${escapeAttr(item.address)}" data-date="${escapeAttr(item.appt.date)}" role="button" tabindex="0"` : "";
     return `<div class="buyer-list-item buyer-property-item${item.appt ? " buyer-appt-item-clickable" : ""}"${clickable}>
@@ -6254,17 +6239,15 @@ function updateHiddenToggleLabel(btn) {
 // no new endpoint), which is also what moves the card down into Past
 // below on the next render, no separate "done" flag needed anywhere.
 // Card-options (⋮) popup menu on an appt-card -- added 2026-09-14 per
-// Aaron's direct request ("the reschedule cancel and Mark completed will
-// all be inside a three dot menu"). Same shared-singleton-popup pattern
-// as the Buyers list's own buyer-row-menu-popup (see
-// initBuyerRowMenuDelegation's own comment for the full "why a shared
-// popup, why capture phase" reasoning -- identical here). Content is
-// "Mark as shown" (only when this card offered it before, via
-// showMarkShown, and only while the appointment isn't already Completed/
-// Canceled) followed by the EXACT existing appointmentManageControlsHtml
-// output (Outcome select + Reschedule/Cancel/Reactivate) -- same markup
-// and wiring as before, just relocated into a popup instead of always
-// visible on the card.
+// Aaron's direct request, refined the same day to a plain three-word menu
+// ("the three dot menu will have three words: completed, reschedule,
+// cancel -- no need to put actual buttons inside the three dot menu")
+// with the Outcome dropdown deliberately kept OUT of it, rendered inline
+// on the card instead where that's offered (currently just the Detailed
+// layout -- see apptOutcomeSelectHtml above). Same shared-singleton-
+// popup, capture-phase-click pattern as the Buyers list's own
+// buyer-row-menu-popup (see initBuyerRowMenuDelegation's own comment for
+// the full "why" -- identical here).
 let apptRowMenuPopupEl = null;
 function getApptRowMenuPopup() {
   if (apptRowMenuPopupEl) return apptRowMenuPopupEl;
@@ -6277,23 +6260,68 @@ function getApptRowMenuPopup() {
 function closeApptRowMenu() {
   if (apptRowMenuPopupEl) apptRowMenuPopupEl.classList.add("hidden");
 }
-function openApptRowMenu(btn, a, showMarkShown) {
+// The three words -- "Completed" (the full mark-as-shown action: Shown
+// Properties ledger + status, same as the old "Mark as shown" control
+// used to do, not just the dropdown's own bare status flip -- omitted
+// once already Completed/Canceled), "Reschedule" (swaps the popup's own
+// content to the date-picker in place, see below), "Cancel"/"Reactivate"
+// (direct one-tap action, same confirm() on Cancel as before).
+function apptRowMenuWordsHtml(a) {
+  const isCanceled = a.status === "Canceled";
+  const canComplete = a.status !== "Completed" && a.status !== "Canceled";
+  return `
+    ${canComplete ? `<button type="button" class="appt-row-menu-option appt-menu-completed-btn">Completed</button>` : ""}
+    <button type="button" class="appt-row-menu-option appt-menu-reschedule-btn">Reschedule</button>
+    ${isCanceled
+      ? `<button type="button" class="appt-row-menu-option appt-menu-reactivate-btn">Reactivate</button>`
+      : `<button type="button" class="appt-row-menu-option appt-menu-cancel-btn">Cancel</button>`}
+  `;
+}
+function openApptRowMenu(btn, a) {
   const popup = getApptRowMenuPopup();
-  const canMarkShown = showMarkShown && a.row && a.status !== "Completed" && a.status !== "Canceled";
-  const markShownHtml = canMarkShown ? `<button type="button" class="appt-row-menu-option appt-menu-mark-shown-btn">Mark as shown</button>` : "";
-  const controlsHtml = appointmentManageControlsHtml(a);
-  popup.innerHTML = markShownHtml + controlsHtml;
-  if (!markShownHtml && !controlsHtml) { popup.innerHTML = `<div class="appt-row-menu-empty">Nothing to do here yet.</div>`; }
+  const hasControls = !!(a.phone && a.row && a.slot);
+  popup.innerHTML = hasControls ? apptRowMenuWordsHtml(a) : `<div class="appt-row-menu-empty">Nothing to do here yet.</div>`;
   const rect = btn.getBoundingClientRect();
   popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
   popup.style.left = `${Math.max(8, rect.right + window.scrollX - 240)}px`;
   popup.classList.remove("hidden");
-  const markBtn = popup.querySelector(".appt-menu-mark-shown-btn");
-  if (markBtn) markBtn.addEventListener("click", async (e) => {
+  if (!hasControls) return;
+  const completedBtn = popup.querySelector(".appt-menu-completed-btn");
+  if (completedBtn) completedBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
     await markApptShownAndCompleted({ row: a.row, slot: a.slot, address: a.address, date: a.date, phone: a.phone }, refreshAfterApptAction);
   });
-  wireAppointmentManageControls(popup, refreshAfterApptAction);
+  const cancelBtn = popup.querySelector(".appt-menu-cancel-btn");
+  if (cancelBtn) cancelBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!confirm(`Cancel the appointment at ${a.address}? No text will be sent the morning of.`)) return;
+    await updateAppointment(a.phone, a.slot, a.address, a.date, "Canceled", refreshAfterApptAction);
+  });
+  const reactivateBtn = popup.querySelector(".appt-menu-reactivate-btn");
+  if (reactivateBtn) reactivateBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await updateAppointment(a.phone, a.slot, a.address, a.date, "", refreshAfterApptAction);
+  });
+  const rescheduleBtn = popup.querySelector(".appt-menu-reschedule-btn");
+  if (rescheduleBtn) rescheduleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    // Swaps the popup's own content in place -- a real date-select needs
+    // more than a plain word, but this still isn't a "button on the
+    // card," it's the same popup just showing a different single step.
+    popup.innerHTML = `
+      <select class="appt-reschedule-date-select">
+        <option value="" disabled selected>Choose a new date</option>
+        ${buildDateOptions().map(({ value, label }) => `<option value="${value}">${escapeHtml(label)}</option>`).join("")}
+      </select>
+      <button type="button" class="btn-primary appt-reschedule-save-btn">Save</button>
+    `;
+    popup.querySelector(".appt-reschedule-save-btn").addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      const newDate = popup.querySelector(".appt-reschedule-date-select").value;
+      if (!newDate) { alert("Choose a date first."); return; }
+      await updateAppointment(a.phone, a.slot, a.address, newDate, "", refreshAfterApptAction);
+    });
+  });
 }
 function initApptRowMenuDelegation() {
   // Capture phase on document -- same real gotcha as
@@ -6318,7 +6346,7 @@ function initApptRowMenuDelegation() {
       status: btn.dataset.apptStatus || "",
       address: btn.dataset.apptAddress || "",
     };
-    openApptRowMenu(btn, a, btn.dataset.showMarkShown === "1");
+    openApptRowMenu(btn, a);
   }, true);
   // Close on any click outside the popup/button, and on Escape.
   document.addEventListener("click", (e) => {
@@ -6327,100 +6355,61 @@ function initApptRowMenuDelegation() {
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeApptRowMenu(); });
 }
-function apptRowMenuBtnHtml(a, showMarkShown) {
+function apptRowMenuBtnHtml(a) {
   const hasControls = !!(a.phone && a.row && a.slot);
   if (!hasControls) return "";
-  return `<button type="button" class="appt-row-menu-btn" data-appt-phone="${escapeAttr(a.phone)}" data-appt-row="${a.row}" data-appt-slot="${a.slot}" data-appt-date="${escapeAttr(a.date)}" data-appt-status="${escapeAttr(a.status || "")}" data-appt-address="${escapeAttr(a.address)}" data-show-mark-shown="${showMarkShown ? "1" : "0"}" aria-label="Card options" title="Card options">&#8942;</button>`;
+  // data-appt-key, added 2026-09-14 -- identifies which button's menu is
+  // currently open, so a second click on the SAME button toggles it closed
+  // instead of just closing-then-reopening it (initApptRowMenuDelegation
+  // compares this against the popup's own remembered forKey).
+  const key = `${a.phone}|${a.row}|${a.slot}|${a.date}`;
+  return `<button type="button" class="appt-row-menu-btn" data-appt-key="${escapeAttr(key)}" data-appt-phone="${escapeAttr(a.phone)}" data-appt-row="${a.row}" data-appt-slot="${a.slot}" data-appt-date="${escapeAttr(a.date)}" data-appt-status="${escapeAttr(a.status || "")}" data-appt-address="${escapeAttr(a.address)}" aria-label="Card options" title="Card options">&#8942;</button>`;
 }
 
-function renderApptCard(a, showMarkShown) {
-  return APPOINTMENTS_CARD_MODE === "compact" ? renderApptCardCompact(a, showMarkShown) : renderApptCardDetailed(a, showMarkShown);
+function renderApptCard(a) {
+  return APPOINTMENTS_CARD_MODE === "compact" ? renderApptCardCompact(a) : renderApptCardDetailed(a);
 }
 
-function renderApptCardCompact(a, showMarkShown) {
+// Compact appointment card, REBUILT 2026-09-14 per Aaron's direct
+// follow-up request ("For the compact view, we could put no ID picture,
+// but rather just ID icon if the ID is on file and a warning icon if no
+// [ID] is on file. Other than that, it would just have the date, the name
+// and the telephone number of the person doing the viewing") -- a
+// genuinely minimal one-line-ish card, deliberately dropping the photo,
+// lockbox, availability badge, and the Quo/Login/ID name breakdown that
+// the old compact card (now Detailed, see below) carried. Address isn't
+// in his literal list but is kept anyway -- with entries not grouped by
+// property, it's the only thing identifying WHICH showing this is, so
+// dropping it would make the card impractical rather than just compact.
+function renderApptCardCompact(a) {
   const clickable = !!a.phone;
-  // Address -> that property's own detail page, added 2026-09-13 per
-  // Aaron's direct request ("the address on the card to link to the page
-  // for that property") -- distinct from the card's own click-through to
-  // the BUYER's page (still on by default via .appt-card-clickable above,
-  // which is what makes the ID picture link to the buyer -- clicking the
-  // photo just bubbles up to this same handler, no separate wiring
-  // needed for that half of the request). The address itself gets its
-  // own click handler below (wired in renderAppointmentsOverview) that
-  // stops propagation so it goes to the property instead of the buyer.
-  const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
-  // Quo name vs. login name vs. ID name, added 2026-09-13 (Quo/Login),
-  // extended 2026-09-14 (ID name + the login check/X) per Aaron's direct
-  // request ("bring these names to show onto each appointments card as
-  // well") -- same three-name-field set the buyer detail page shows. These
-  // can all genuinely differ (a buyer might sign up on the site under one
-  // name, have a different name saved in Quo, and a third name print on
-  // their actual ID): a.name is the App: Logins "Name" field -- shown as
-  // "Login" -- a.quoName is the Quo contact's own name, a.idName is the
-  // OCR'd name off their linked ID (both set in renderAppointmentsOverview
-  // below, from the same BUYERS_CACHE lookup the card's own buyer-page
-  // link uses). Each renders only if there is one; the ✅/❌ next to Login
-  // is the same ever-logged-in signal (hasEverLoggedIn, from firstLogin)
-  // the buyer detail page shows next to its own Login Name field.
-  const namesHtml = (a.quoName || a.name || a.idName)
-    ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)} ${a.hasEverLoggedIn ? "✅" : "❌"}</div>` : ""}${a.idName ? `<div class="appt-card-idname">ID: ${escapeHtml(a.idName)}</div>` : ""}`
-    : (a.email ? copyableTextHtml(a.email) : a.phone ? phoneQuoLinkHtml(a.phone) : "Unknown visitor");
-  // Big availability badge, added 2026-09-15 per Aaron's direct request
-  // ("on the appointments page, there should also be a big green
-  // checkmark or red X on all the appointments based on the properties
-  // availability... updated in real time") -- reuses matchingListing
-  // (already looked up above for the address-link) rather than a second
-  // ALL_LISTINGS scan. Corner-badge styling (see .appt-card-availability-
-  // badge in style.css) is deliberately larger/more prominent than
-  // listingAvailabilityBadgeHtml's small inline version used elsewhere.
-  const availabilityBadgeHtml = matchingListing
-    ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
-    : "";
-  // Lockbox code, added 2026-09-14 per Aaron's direct request ("I would
-  // also like the current lockbox code displayed on the appointment
-  // cards") -- ADMIN_LOCKBOX_BY_ADDRESS comes from the PROPERTIES tab's
-  // "Lock box " column via handleAdminActivity (admin-gated, deliberately
-  // NOT part of the public properties.json -- see that endpoint's own
-  // comment). Free text in the Sheet, not always just a bare digit code --
-  // some rows carry a location note alongside or instead of one -- so this
-  // is shown as-is rather than trying to extract just digits. Do NOT quote
-  // real Sheet values in this comment or anywhere else in a committed
-  // file: this repo is public, and generate_properties.py's own
-  // verify_no_sensitive_data.py check (deliberately) fails the publish
-  // pipeline if any real Lock box value it read from the Sheet turns up
-  // verbatim in a static template file -- caught exactly this mistake live
-  // 2026-09-14, see SESSION_LOG.md for the incident.
-  const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || "";
-  const lockboxHtml = lockboxCode ? `<div class="appt-card-lockbox">🔑 ${escapeHtml(lockboxCode)}</div>` : "";
-  // data-address/data-date, added 2026-09-16 -- lets
-  // goToAppointmentFromBuyer (below) find THIS specific card again after
-  // switching to the Appointments tab, distinct from data-phone which
-  // only narrows it down to "this buyer" (who can have more than one
-  // showing booked).
+  const idIcon = a.idLink
+    ? `<span class="appt-card-compact-id-icon" title="ID on file">🪪</span>`
+    : `<span class="appt-card-compact-id-icon appt-card-compact-id-warning" title="No ID on file">⚠️</span>`;
+  const bestName = a.quoName || a.name || a.idName || "";
   return `
-    <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
-      ${availabilityBadgeHtml}
-      ${apptRowMenuBtnHtml(a, showMarkShown)}
-      ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
-      <div class="appt-card-info">
-        <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
-        <div class="appt-card-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
-        ${lockboxHtml}
-        <div class="appt-card-visitor">${namesHtml}</div>
-        ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
-      </div>
+    <div class="appt-card appt-card-compact${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
+      ${apptRowMenuBtnHtml(a)}
+      <div class="appt-card-compact-line1">${idIcon}<span class="appt-card-compact-date">${escapeHtml(formatApptDate(a.date))}</span></div>
+      <div class="appt-card-compact-address">${escapeHtml(a.address)}</div>
+      ${bestName ? `<div class="appt-card-compact-line2">${escapeHtml(bestName)}</div>` : ""}
+      ${a.phone ? `<div class="appt-card-compact-line2">${phoneQuoLinkHtml(a.phone)}</div>` : ""}
     </div>
   `;
 }
 
-// Detailed appointment card, added 2026-09-14 per Aaron's direct request
-// -- ID photo along the FULL TOP of the card (not beside the info, unlike
-// the compact layout above), the rest of the info split into two columns
-// below it, and the same card-options (⋮) menu for Reschedule/Cancel/
-// Mark-as-shown/Outcome. "Similar to the cards we've got now" per his own
-// wording -- same fields as the compact card, just reorganized, nothing
-// new added.
-function renderApptCardDetailed(a, showMarkShown) {
+// Detailed appointment card, REBUILT 2026-09-14 per Aaron's direct
+// follow-up request -- this is now what the OLD compact card used to be,
+// reorganized per his own spec: "the property address at the top, taking
+// the full width of the card, below that would be the ID and the rest of
+// the info each taking up half of the width of the card." The Outcome
+// dropdown renders INLINE here (apptOutcomeSelectHtml/wireApptOutcomeSelect,
+// wired in renderAppointmentsOverview below) rather than inside the
+// card-options menu -- "I don't want the drop-down in there... I would
+// still like the drop-down to be out." The menu itself (apptRowMenuBtnHtml/
+// apptRowMenuWordsHtml/openApptRowMenu) carries just the three plain words
+// Completed/Reschedule/Cancel, shared as-is with the Compact card above.
+function renderApptCardDetailed(a) {
   const clickable = !!a.phone;
   const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
   const namesHtml = (a.quoName || a.name || a.idName)
@@ -6429,22 +6418,23 @@ function renderApptCardDetailed(a, showMarkShown) {
   const availabilityBadgeHtml = matchingListing
     ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
     : "";
-  const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || ""; // do NOT quote a real value from this anywhere in this file -- see the compact card's own comment on verify_no_sensitive_data.py
+  const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || ""; // do NOT quote a real value from this anywhere in this file -- see verify_no_sensitive_data.py's own note in SESSION_LOG.md
   const lockboxHtml = lockboxCode ? `<div class="appt-card-lockbox">🔑 ${escapeHtml(lockboxCode)}</div>` : "";
   return `
     <div class="appt-card appt-card-detailed${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
       ${availabilityBadgeHtml}
-      ${apptRowMenuBtnHtml(a, showMarkShown)}
-      ${a.idLink ? `<img class="appt-card-photo-top admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-photo-top appt-card-no-id">No ID</div>`}
+      ${apptRowMenuBtnHtml(a)}
+      <div class="appt-card-address appt-card-detailed-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
       <div class="appt-card-detailed-cols">
-        <div class="appt-card-detailed-col">
-          <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
-          <div class="appt-card-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
-          ${lockboxHtml}
+        <div class="appt-card-detailed-col appt-card-detailed-photo-col">
+          ${a.idLink ? `<img class="appt-card-detailed-photo admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-detailed-photo appt-card-no-id">No ID</div>`}
         </div>
         <div class="appt-card-detailed-col">
+          <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
+          ${lockboxHtml}
           <div class="appt-card-visitor">${namesHtml}</div>
           ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
+          ${apptOutcomeSelectHtml(a)}
         </div>
       </div>
     </div>
@@ -6551,16 +6541,16 @@ function renderAppointmentsOverview() {
   const allEmpty = todayList.length === 0 && upcoming.length === 0 && past.length === 0;
   if (todayHeading) todayHeading.classList.remove("hidden");
   todayContainer.innerHTML = todayList.length
-    ? todayList.map((a) => renderApptCard(a, true)).join("")
+    ? todayList.map((a) => renderApptCard(a)).join("")
     : (searchActive ? "" : "<p>None today.</p>");
   if (upcomingHeading) upcomingHeading.classList.remove("hidden");
   container.innerHTML = upcoming.length
-    ? upcoming.map((a) => renderApptCard(a, true)).join("")
+    ? upcoming.map((a) => renderApptCard(a)).join("")
     : (searchActive ? "" : "<p>No upcoming appointments.</p>");
   if (pastContainer) {
     pastHeading.classList.remove("hidden");
     pastContainer.innerHTML = past.length
-      ? past.map((a) => renderApptCard(a, false)).join("")
+      ? past.map((a) => renderApptCard(a)).join("")
       : (searchActive ? "" : "<p>No past appointments.</p>");
   }
   if (searchActive && allEmpty) {
@@ -6586,6 +6576,10 @@ function renderAppointmentsOverview() {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); showDetail(el.dataset.listingId); }
       });
     });
+    // Inline Outcome dropdown, added 2026-09-14 -- only the Detailed card
+    // renders one (see renderApptCardDetailed), so this is a no-op on
+    // whatever container is currently showing Compact cards instead.
+    wireApptOutcomeSelect(c, refreshAfterApptAction);
   }
 }
 
