@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T18:58:52.545100+00:00",
+  "generatedAt": "2026-09-15T19:00:08.214108+00:00",
   "listings": [
     {
       "id": "15871-fairmount-drive-detroit-mi-48205",
@@ -27613,7 +27613,7 @@
       "id": "6725-schofield-pl-saint-louis-mo-63133",
       "address": "6725 Schofield Pl, Saint Louis, MO 63133",
       "onMarketDate": "8/19/2026",
-      "lastUpdate": "9/9/2026",
+      "lastUpdate": "9/14/2026",
       "area": "MO - St. Louis",
       "down": "$3,500",
       "monthly": "$925",
@@ -27621,7 +27621,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6734544,
       "lng": -90.30699899999999
