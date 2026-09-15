@@ -1258,10 +1258,6 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-card-clickable { cursor: pointer; }
 .appt-card-clickable:hover { border-color: var(--blue); }
 .appt-card-clickable:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.appt-card-no-id {
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: var(--gray-text, #6b7280);
-}
 .appt-card-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
 .appt-card-address { font-weight: 700; color: var(--navy); margin-top: 2px; }
 /* Address -> property page, added 2026-09-13 per Aaron's direct request --
@@ -1326,30 +1322,19 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-row-menu-popup .appt-manage-row,
 .appt-row-menu-popup .appt-reschedule-panel { padding: 4px 8px; }
 
-/* Detailed appointment card, REBUILT 2026-09-14 per Aaron's direct
-   follow-up request -- address across the full width at the top, then
-   the ID photo and the rest of the info split into two HALF-width
-   columns below it (previously the photo spanned the full top as its
-   own band; now it sits inside the left column only). */
+/* Detailed appointment card. Originally a photo-left/info-right split;
+   the photo moved to the buyer-group heading (see .appt-buyer-group-photo
+   below) 2026-09-14 per Aaron's direct follow-up, so this is now a plain
+   single stacked column -- just address up top, full width. */
 .appt-card-detailed { flex-direction: column; align-items: stretch; }
 .appt-card-detailed-address { font-size: 15px; margin: 2px 26px 10px; }
-.appt-card-detailed-cols { display: flex; gap: 16px; flex-wrap: wrap; }
-.appt-card-detailed-col { flex: 1 1 45%; min-width: 140px; }
-.appt-card-detailed-photo-col { display: flex; }
-.appt-card-detailed-photo {
-  width: 100%; border-radius: 8px; object-fit: cover;
-  border: 1px solid #e5e7eb; background: #f3f4f6; min-height: 110px;
-}
-.appt-card-detailed .appt-card-no-id { border-radius: 8px; width: 100%; min-height: 110px; }
 
-/* Compact appointment card, REBUILT 2026-09-14 per Aaron's direct
-   follow-up request -- no photo, just a small ID-on-file/no-ID icon, plus
-   date, address, name, and phone as plain stacked lines. Deliberately much
-   smaller footprint than .appt-card-detailed above. */
+/* Compact appointment card -- just date, address, name, and phone as
+   plain stacked lines (no ID icon of its own, since 2026-09-14 -- see
+   .appt-buyer-group-id-warning below). Deliberately much smaller
+   footprint than .appt-card-detailed above. */
 .appt-card-compact { flex-direction: column; align-items: stretch; padding: 10px 14px 10px 34px; }
 .appt-card-compact-line1 { display: flex; align-items: center; gap: 6px; }
-.appt-card-compact-id-icon { font-size: 15px; line-height: 1; }
-.appt-card-compact-id-warning { filter: saturate(1.3); }
 .appt-card-compact-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
 .appt-card-compact-address { font-weight: 700; color: var(--navy); font-size: 13px; margin-top: 2px; }
 .appt-card-compact-line2 { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
@@ -1359,9 +1344,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    justified center above whatever appointments they have"). One group
    per buyer within each of the Today/Upcoming/Past sections; the name
    heading is deliberately plain (not a .buyer-section h3) since it isn't
-   its own section, just a label sitting above that buyer's own card(s). */
+   its own section, just a label sitting above that buyer's own card(s).
+   The ID photo/warning icon (below) moved here from the individual cards
+   the same day, per Aaron's follow-up -- shown once per buyer instead of
+   repeated on every card. */
 .appt-buyer-group { margin-bottom: 18px; }
 .appt-buyer-group-name {
   text-align: center; font-size: 14px; font-weight: 800; color: var(--navy);
   margin: 0 0 8px;
 }
+.appt-buyer-group-id { display: flex; justify-content: center; margin-bottom: 10px; }
+.appt-buyer-group-photo {
+  width: 140px; max-width: 60%; border-radius: 8px; object-fit: cover;
+  border: 1px solid #e5e7eb; background: #f3f4f6; min-height: 90px;
+}
+.appt-buyer-group-id-warning { font-size: 28px; line-height: 1; }

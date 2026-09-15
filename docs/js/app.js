@@ -6413,43 +6413,54 @@ function groupApptEntriesByBuyer(entries) {
     let group = groups.get(key);
     if (!group) {
       const name = a.quoName || a.name || a.idName || (a.phone ? a.phone : "Unknown visitor");
-      group = { key, name, phone: a.phone || "", entries: [] };
+      group = { key, name, phone: a.phone || "", idLink: a.idLink || "", entries: [] };
       groups.set(key, group);
+    } else if (!group.idLink && a.idLink) {
+      group.idLink = a.idLink; // in case one appointment's own idLink lookup missed but another's didn't
     }
     group.entries.push(a);
   }
   return [...groups.values()];
 }
+// ID photo (or warning icon) moved here, 2026-09-14, per Aaron's direct
+// follow-up request -- it now shows ONCE per buyer, centered below their
+// name, rather than repeated on every one of their individual cards (see
+// renderApptCardCompact/renderApptCardDetailed's own comments on what was
+// removed from each). .admin-id-photo is wired up generically for the
+// whole container in renderAppointmentsOverview's own loop already, so no
+// extra fetch wiring is needed here.
 function renderApptGroupsHtml(groups) {
-  return groups.map((g) => `
+  return groups.map((g) => {
+    const idHtml = g.idLink
+      ? `<img class="appt-buyer-group-photo admin-id-photo" data-dropbox-link="${escapeAttr(g.idLink)}" alt="ID on file">`
+      : `<span class="appt-buyer-group-id-warning" title="No ID on file">⚠️</span>`;
+    return `
     <div class="appt-buyer-group">
       <h4 class="appt-buyer-group-name">${escapeHtml(g.name)}</h4>
+      <div class="appt-buyer-group-id">${idHtml}</div>
       ${g.entries.map((a) => renderApptCard(a)).join("")}
     </div>
-  `).join("");
+  `;
+  }).join("");
 }
 
-// Compact appointment card, REBUILT 2026-09-14 per Aaron's direct
-// follow-up request ("For the compact view, we could put no ID picture,
-// but rather just ID icon if the ID is on file and a warning icon if no
-// [ID] is on file. Other than that, it would just have the date, the name
-// and the telephone number of the person doing the viewing") -- a
-// genuinely minimal one-line-ish card, deliberately dropping the photo,
-// lockbox, availability badge, and the Quo/Login/ID name breakdown that
-// the old compact card (now Detailed, see below) carried. Address isn't
-// in his literal list but is kept anyway -- with entries not grouped by
-// property, it's the only thing identifying WHICH showing this is, so
-// dropping it would make the card impractical rather than just compact.
+// Compact appointment card. Originally REBUILT 2026-09-14 with a small
+// ID-on-file/warning icon per card; that icon was REMOVED the same day
+// per Aaron's direct follow-up ("not necessary to put the ID icon on the
+// compact cards... If they don't have ID on file you can put the warning
+// icon below their name instead") -- the ID photo/warning now lives once
+// per buyer, in the group heading (see renderApptGroupsHtml), not
+// repeated on every individual card. What's left here: date, address,
+// name, phone -- address isn't in his literal list but is kept anyway,
+// since with entries not grouped by property it's the only thing
+// identifying WHICH showing this is.
 function renderApptCardCompact(a) {
   const clickable = !!a.phone;
-  const idIcon = a.idLink
-    ? `<span class="appt-card-compact-id-icon" title="ID on file">🪪</span>`
-    : `<span class="appt-card-compact-id-icon appt-card-compact-id-warning" title="No ID on file">⚠️</span>`;
   const bestName = a.quoName || a.name || a.idName || "";
   return `
     <div class="appt-card appt-card-compact${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
       ${apptRowMenuBtnHtml(a)}
-      <div class="appt-card-compact-line1">${idIcon}<span class="appt-card-compact-date">${escapeHtml(formatApptDate(a.date))}</span></div>
+      <div class="appt-card-compact-line1"><span class="appt-card-compact-date">${escapeHtml(formatApptDate(a.date))}</span></div>
       <div class="appt-card-compact-address">${escapeHtml(a.address)}</div>
       ${bestName ? `<div class="appt-card-compact-line2">${escapeHtml(bestName)}</div>` : ""}
       ${a.phone ? `<div class="appt-card-compact-line2">${phoneQuoLinkHtml(a.phone)}</div>` : ""}
@@ -6457,17 +6468,20 @@ function renderApptCardCompact(a) {
   `;
 }
 
-// Detailed appointment card, REBUILT 2026-09-14 per Aaron's direct
-// follow-up request -- this is now what the OLD compact card used to be,
-// reorganized per his own spec: "the property address at the top, taking
-// the full width of the card, below that would be the ID and the rest of
-// the info each taking up half of the width of the card." The Outcome
-// dropdown renders INLINE here (apptOutcomeSelectHtml/wireApptOutcomeSelect,
-// wired in renderAppointmentsOverview below) rather than inside the
-// card-options menu -- "I don't want the drop-down in there... I would
-// still like the drop-down to be out." The menu itself (apptRowMenuBtnHtml/
-// apptRowMenuWordsHtml/openApptRowMenu) carries just the three plain words
-// Completed/Reschedule/Cancel, shared as-is with the Compact card above.
+// Detailed appointment card. Originally REBUILT 2026-09-14 with the ID
+// photo in its own left column beside the rest of the info; the photo
+// was REMOVED from the card entirely the same day per Aaron's direct
+// follow-up ("show a picture of their ID right below their name...
+// don't put the ID on the actual cards") -- it now lives once per buyer,
+// in the group heading (see renderApptGroupsHtml), not repeated on every
+// individual card. With no photo to split against, the remaining info is
+// a single stacked column rather than the old two-column layout. The
+// Outcome dropdown still renders INLINE here (apptOutcomeSelectHtml/
+// wireApptOutcomeSelect, wired in renderAppointmentsOverview below)
+// rather than inside the card-options menu -- "I don't want the
+// drop-down in there." The menu itself (apptRowMenuBtnHtml/
+// apptRowMenuWordsHtml/openApptRowMenu) carries just the three plain
+// words Completed/Reschedule/Cancel, shared as-is with the Compact card.
 function renderApptCardDetailed(a) {
   const clickable = !!a.phone;
   const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
@@ -6484,18 +6498,11 @@ function renderApptCardDetailed(a) {
       ${availabilityBadgeHtml}
       ${apptRowMenuBtnHtml(a)}
       <div class="appt-card-address appt-card-detailed-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
-      <div class="appt-card-detailed-cols">
-        <div class="appt-card-detailed-col appt-card-detailed-photo-col">
-          ${a.idLink ? `<img class="appt-card-detailed-photo admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-detailed-photo appt-card-no-id">No ID</div>`}
-        </div>
-        <div class="appt-card-detailed-col">
-          <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
-          ${lockboxHtml}
-          <div class="appt-card-visitor">${namesHtml}</div>
-          ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
-          ${apptOutcomeSelectHtml(a)}
-        </div>
-      </div>
+      <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
+      ${lockboxHtml}
+      <div class="appt-card-visitor">${namesHtml}</div>
+      ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
+      ${apptOutcomeSelectHtml(a)}
     </div>
   `;
 }
