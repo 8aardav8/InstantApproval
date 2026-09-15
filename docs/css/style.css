@@ -1271,3 +1271,48 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .template-save-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .template-save-status { font-size: 12px; color: var(--gray-text, #6b7280); }
 .template-last-updated { font-size: 11px; color: var(--gray-text, #6b7280); margin-top: 8px; }
+
+/* Appointment-card options (⋮) button + popup menu, added 2026-09-14 per
+   Aaron's direct request ("the reschedule cancel and Mark completed will
+   all be inside a three dot menu"). Top-LEFT corner (not top-right, unlike
+   the Buyers list's own card menu) so it doesn't collide with the
+   availability badge already sitting at top-right on every appt-card. */
+.appt-row-menu-btn {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,0.85);
+  color: var(--gray-text, #6b7280); font-size: 18px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.appt-row-menu-btn:hover { background: #f3f4f6; color: var(--navy); }
+.appt-row-menu-popup {
+  position: absolute; z-index: 50; background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 240px; max-width: 300px; overflow: hidden; padding: 8px;
+}
+.appt-row-menu-option {
+  display: block; width: 100%; text-align: left; padding: 10px 14px; border: none; background: none;
+  font-size: 13px; color: var(--navy); cursor: pointer; border-radius: 6px;
+}
+.appt-row-menu-option:hover { background: #eef2ff; }
+.appt-row-menu-empty { padding: 10px 14px; font-size: 13px; color: var(--gray-text, #6b7280); }
+/* The reused Outcome/Reschedule/Cancel controls (.appt-outcome-row,
+   .appt-manage-row, .appt-reschedule-panel -- see their own rules above)
+   now render INSIDE this popup instead of always-visible on the card;
+   they need no changes of their own, just a touch of breathing room. */
+.appt-row-menu-popup .appt-outcome-row,
+.appt-row-menu-popup .appt-manage-row,
+.appt-row-menu-popup .appt-reschedule-panel { padding: 4px 8px; }
+
+/* Detailed appointment card, added 2026-09-14 per Aaron's direct request
+   -- photo along the full top, info split into two columns below it
+   (distinct from the compact card's row layout, .appt-card above). */
+.appt-card-detailed { flex-direction: column; align-items: stretch; }
+.appt-card-photo-top {
+  /* Negative margin bleeds the photo out to the card's own edges,
+     compensating for the card's own 12px/14px padding, so the photo
+     genuinely spans the full top rather than sitting inset. */
+  height: 160px; border-radius: 8px 8px 0 0; object-fit: cover;
+  border: 1px solid #e5e7eb; background: #f3f4f6; margin: -12px -14px 10px; width: calc(100% + 28px);
+}
+.appt-card-detailed .appt-card-no-id { border-radius: 8px 8px 0 0; height: 100px; margin: -12px -14px 10px; width: calc(100% + 28px); }
+.appt-card-detailed-cols { display: flex; gap: 16px; flex-wrap: wrap; }
+.appt-card-detailed-col { flex: 1 1 45%; min-width: 160px; }

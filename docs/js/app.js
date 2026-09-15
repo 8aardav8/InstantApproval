@@ -4065,6 +4065,18 @@ let BUYERS_CARD_MODE = (() => {
   try { return localStorage.getItem(BUYERS_CARD_MODE_STORAGE_KEY) || "detailed"; } catch (e) { return "detailed"; }
 })();
 
+// Same toggle, extended 2026-09-14 per Aaron's direct request to the
+// Appointments tab's own cards -- a SEPARATE state var, not shared with
+// BUYERS_CARD_MODE, since the two tabs' card layouts are independent and
+// nothing suggests they should move together. "Detailed" default for the
+// same reason as Buyers' own default -- the fuller layout is the
+// pre-existing one, nothing changes for anyone who hasn't touched the
+// toggle yet.
+const APPOINTMENTS_CARD_MODE_STORAGE_KEY = "iah_appointments_card_mode";
+let APPOINTMENTS_CARD_MODE = (() => {
+  try { return localStorage.getItem(APPOINTMENTS_CARD_MODE_STORAGE_KEY) || "detailed"; } catch (e) { return "detailed"; }
+})();
+
 // Same BUYERS_DATE_MODE toggle, extended 2026-09-12 per Aaron's direct
 // request to the Appointments tab's own date -- that one can be a FUTURE
 // date (an upcoming showing) as often as a past one, which formatDaysSince
@@ -5999,6 +6011,7 @@ function initBuyersTab() {
   initCopyableTextDelegation();
   initPhoneQuoLinkDelegation();
   initBuyerRowMenuDelegation();
+  initApptRowMenuDelegation();
   initBuyerDetailSearch();
   // Sort choice + direction persisted on every change, added 2026-09-15
   // per Aaron's direct request ("remember the filter and sort preferences
@@ -6123,6 +6136,15 @@ function initBuyersTab() {
     renderBuyersList();
   });
 
+  // Same toggle, Appointments tab's own cards -- added 2026-09-14.
+  const apptCardModeBtn = document.getElementById("appointments-card-mode-toggle");
+  if (apptCardModeBtn) apptCardModeBtn.addEventListener("click", () => {
+    APPOINTMENTS_CARD_MODE = APPOINTMENTS_CARD_MODE === "compact" ? "detailed" : "compact";
+    try { localStorage.setItem(APPOINTMENTS_CARD_MODE_STORAGE_KEY, APPOINTMENTS_CARD_MODE); } catch (e) {}
+    updateApptCardModeToggleLabel(apptCardModeBtn);
+    renderAppointmentsOverview();
+  });
+
   // "Show hidden" quick toggle, added 2026-09-15 -- the ONLY control for
   // BUYERS_FILTER.hidden now (the filter-panel dropdown was removed the
   // same day per Aaron's direct follow-up: "I can just toggle by
@@ -6156,6 +6178,10 @@ function updateCardModeToggleLabel(btn) {
   btn.textContent = BUYERS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
 }
 
+function updateApptCardModeToggleLabel(btn) {
+  btn.textContent = APPOINTMENTS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
+}
+
 // "Show hidden" toggle label, added 2026-09-15 -- the ONLY control for
 // BUYERS_FILTER.hidden (a filter-panel dropdown for the same state was
 // tried the same day and removed per Aaron's direct follow-up).
@@ -6179,7 +6205,92 @@ function updateHiddenToggleLabel(btn) {
 // write the buyer-detail page's own "Mark shown" button already makes --
 // no new endpoint), which is also what moves the card down into Past
 // below on the next render, no separate "done" flag needed anywhere.
+// Card-options (⋮) popup menu on an appt-card -- added 2026-09-14 per
+// Aaron's direct request ("the reschedule cancel and Mark completed will
+// all be inside a three dot menu"). Same shared-singleton-popup pattern
+// as the Buyers list's own buyer-row-menu-popup (see
+// initBuyerRowMenuDelegation's own comment for the full "why a shared
+// popup, why capture phase" reasoning -- identical here). Content is
+// "Mark as shown" (only when this card offered it before, via
+// showMarkShown, and only while the appointment isn't already Completed/
+// Canceled) followed by the EXACT existing appointmentManageControlsHtml
+// output (Outcome select + Reschedule/Cancel/Reactivate) -- same markup
+// and wiring as before, just relocated into a popup instead of always
+// visible on the card.
+let apptRowMenuPopupEl = null;
+function getApptRowMenuPopup() {
+  if (apptRowMenuPopupEl) return apptRowMenuPopupEl;
+  const el = document.createElement("div");
+  el.className = "appt-row-menu-popup hidden";
+  document.body.appendChild(el);
+  apptRowMenuPopupEl = el;
+  return el;
+}
+function closeApptRowMenu() {
+  if (apptRowMenuPopupEl) apptRowMenuPopupEl.classList.add("hidden");
+}
+function openApptRowMenu(btn, a, showMarkShown) {
+  const popup = getApptRowMenuPopup();
+  const canMarkShown = showMarkShown && a.row && a.status !== "Completed" && a.status !== "Canceled";
+  const markShownHtml = canMarkShown ? `<button type="button" class="appt-row-menu-option appt-menu-mark-shown-btn">Mark as shown</button>` : "";
+  const controlsHtml = appointmentManageControlsHtml(a);
+  popup.innerHTML = markShownHtml + controlsHtml;
+  if (!markShownHtml && !controlsHtml) { popup.innerHTML = `<div class="appt-row-menu-empty">Nothing to do here yet.</div>`; }
+  const rect = btn.getBoundingClientRect();
+  popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  popup.style.left = `${Math.max(8, rect.right + window.scrollX - 240)}px`;
+  popup.classList.remove("hidden");
+  const markBtn = popup.querySelector(".appt-menu-mark-shown-btn");
+  if (markBtn) markBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    closeApptRowMenu();
+    await markApptShownAndCompleted({ row: a.row, slot: a.slot, address: a.address, date: a.date, phone: a.phone });
+  });
+  wireAppointmentManageControls(popup, async () => { closeApptRowMenu(); await refreshAppointmentsAndRerender(); });
+}
+function initApptRowMenuDelegation() {
+  // Capture phase on document -- same real gotcha as
+  // initBuyerRowMenuDelegation: the card's own click-to-open-buyer
+  // listener is attached directly to the card and fires during the
+  // bubble phase before an ancestor's own bubble-phase listener ever
+  // would, so stopPropagation() there is too late.
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".appt-row-menu-btn");
+    if (!btn) return;
+    e.stopPropagation();
+    const popup = getApptRowMenuPopup();
+    const alreadyOpenForThis = !popup.classList.contains("hidden") && popup.dataset.forKey === btn.dataset.apptKey;
+    closeApptRowMenu();
+    if (alreadyOpenForThis) return;
+    popup.dataset.forKey = btn.dataset.apptKey;
+    const a = {
+      phone: btn.dataset.apptPhone || "",
+      row: btn.dataset.apptRow ? Number(btn.dataset.apptRow) : null,
+      slot: btn.dataset.apptSlot ? Number(btn.dataset.apptSlot) : null,
+      date: btn.dataset.apptDate || "",
+      status: btn.dataset.apptStatus || "",
+      address: btn.dataset.apptAddress || "",
+    };
+    openApptRowMenu(btn, a, btn.dataset.showMarkShown === "1");
+  }, true);
+  // Close on any click outside the popup/button, and on Escape.
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".appt-row-menu-popup") || e.target.closest(".appt-row-menu-btn")) return;
+    closeApptRowMenu();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeApptRowMenu(); });
+}
+function apptRowMenuBtnHtml(a, showMarkShown) {
+  const hasControls = !!(a.phone && a.row && a.slot);
+  if (!hasControls) return "";
+  return `<button type="button" class="appt-row-menu-btn" data-appt-phone="${escapeAttr(a.phone)}" data-appt-row="${a.row}" data-appt-slot="${a.slot}" data-appt-date="${escapeAttr(a.date)}" data-appt-status="${escapeAttr(a.status || "")}" data-appt-address="${escapeAttr(a.address)}" data-show-mark-shown="${showMarkShown ? "1" : "0"}" aria-label="Card options" title="Card options">&#8942;</button>`;
+}
+
 function renderApptCard(a, showMarkShown) {
+  return APPOINTMENTS_CARD_MODE === "compact" ? renderApptCardCompact(a, showMarkShown) : renderApptCardDetailed(a, showMarkShown);
+}
+
+function renderApptCardCompact(a, showMarkShown) {
   const clickable = !!a.phone;
   // Address -> that property's own detail page, added 2026-09-13 per
   // Aaron's direct request ("the address on the card to link to the page
@@ -6242,6 +6353,7 @@ function renderApptCard(a, showMarkShown) {
   return `
     <div class="appt-card${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
       ${availabilityBadgeHtml}
+      ${apptRowMenuBtnHtml(a, showMarkShown)}
       ${a.idLink ? `<img class="appt-card-thumb admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-thumb appt-card-no-id">No ID</div>`}
       <div class="appt-card-info">
         <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
@@ -6249,12 +6361,44 @@ function renderApptCard(a, showMarkShown) {
         ${lockboxHtml}
         <div class="appt-card-visitor">${namesHtml}</div>
         ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
-        ${showMarkShown && a.row ? `
-          <label class="appt-mark-shown-label">
-            <input type="checkbox" class="appt-mark-shown-checkbox" data-row="${a.row}" data-slot="${a.slot || ""}" data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" data-phone="${escapeAttr(a.phone)}">
-            Mark as shown
-          </label>` : ""}
-        ${appointmentManageControlsHtml(a)}
+      </div>
+    </div>
+  `;
+}
+
+// Detailed appointment card, added 2026-09-14 per Aaron's direct request
+// -- ID photo along the FULL TOP of the card (not beside the info, unlike
+// the compact layout above), the rest of the info split into two columns
+// below it, and the same card-options (⋮) menu for Reschedule/Cancel/
+// Mark-as-shown/Outcome. "Similar to the cards we've got now" per his own
+// wording -- same fields as the compact card, just reorganized, nothing
+// new added.
+function renderApptCardDetailed(a, showMarkShown) {
+  const clickable = !!a.phone;
+  const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
+  const namesHtml = (a.quoName || a.name || a.idName)
+    ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)} ${a.hasEverLoggedIn ? "✅" : "❌"}</div>` : ""}${a.idName ? `<div class="appt-card-idname">ID: ${escapeHtml(a.idName)}</div>` : ""}`
+    : (a.email ? copyableTextHtml(a.email) : a.phone ? phoneQuoLinkHtml(a.phone) : "Unknown visitor");
+  const availabilityBadgeHtml = matchingListing
+    ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
+    : "";
+  const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || ""; // do NOT quote a real value from this anywhere in this file -- see the compact card's own comment on verify_no_sensitive_data.py
+  const lockboxHtml = lockboxCode ? `<div class="appt-card-lockbox">🔑 ${escapeHtml(lockboxCode)}</div>` : "";
+  return `
+    <div class="appt-card appt-card-detailed${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
+      ${availabilityBadgeHtml}
+      ${apptRowMenuBtnHtml(a, showMarkShown)}
+      ${a.idLink ? `<img class="appt-card-photo-top admin-id-photo" data-dropbox-link="${escapeAttr(a.idLink)}" alt="ID on file">` : `<div class="appt-card-photo-top appt-card-no-id">No ID</div>`}
+      <div class="appt-card-detailed-cols">
+        <div class="appt-card-detailed-col">
+          <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
+          <div class="appt-card-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
+          ${lockboxHtml}
+        </div>
+        <div class="appt-card-detailed-col">
+          <div class="appt-card-visitor">${namesHtml}</div>
+          ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
+        </div>
       </div>
     </div>
   `;
@@ -6281,6 +6425,8 @@ function renderAppointmentsOverview() {
   if (!container) return;
   const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
   if (apptDateModeBtn) updateDateModeToggleLabel(apptDateModeBtn);
+  const apptCardModeBtn = document.getElementById("appointments-card-mode-toggle");
+  if (apptCardModeBtn) updateApptCardModeToggleLabel(apptCardModeBtn);
   const today = localTodayISO(); // already defined in app.js
   const q = (APPOINTMENTS_SEARCH || "").trim().toLowerCase();
 
@@ -6341,17 +6487,36 @@ function renderAppointmentsOverview() {
   upcoming.sort((a, b) => a.date.localeCompare(b.date));
   past.sort((a, b) => b.date.localeCompare(a.date)); // most-recently-past first
 
-  if (todayHeading) todayHeading.classList.toggle("hidden", todayList.length === 0);
-  todayContainer.innerHTML = todayList.map((a) => renderApptCard(a, true)).join("");
-  if (upcomingHeading) upcomingHeading.classList.toggle("hidden", upcoming.length === 0);
+  // Headings ALWAYS show now, with a plain "none" line when a section is
+  // empty -- changed 2026-09-14 per Aaron's direct report ("the sections
+  // for past appointments and today's appointments have disappeared").
+  // Root cause turned out not to be a bug: right then there genuinely
+  // were zero today-dated and zero past-dated appointments anywhere
+  // (confirmed live) -- the old hide-when-empty behavior (inherited from
+  // Past Appointments' own original convention) was doing exactly what
+  // it was built to do, but a vanishing section reads as broken even when
+  // it's accurate. All three sections now behave the same way, not just
+  // Today/Past, for consistency. Search still gets its own single
+  // "no appointments match" message across all three when a search is
+  // active and every section is empty, rather than three separate empty
+  // per-section lines that would all say the same thing.
+  const searchActive = !!q;
+  const allEmpty = todayList.length === 0 && upcoming.length === 0 && past.length === 0;
+  if (todayHeading) todayHeading.classList.remove("hidden");
+  todayContainer.innerHTML = todayList.length
+    ? todayList.map((a) => renderApptCard(a, true)).join("")
+    : (searchActive ? "" : "<p>None today.</p>");
+  if (upcomingHeading) upcomingHeading.classList.remove("hidden");
   container.innerHTML = upcoming.length
     ? upcoming.map((a) => renderApptCard(a, true)).join("")
-    : (q ? "" : "<p>No upcoming appointments.</p>"); // a genuinely empty state only makes sense with no search active
+    : (searchActive ? "" : "<p>No upcoming appointments.</p>");
   if (pastContainer) {
-    pastHeading.classList.toggle("hidden", past.length === 0);
-    pastContainer.innerHTML = past.map((a) => renderApptCard(a, false)).join("");
+    pastHeading.classList.remove("hidden");
+    pastContainer.innerHTML = past.length
+      ? past.map((a) => renderApptCard(a, false)).join("")
+      : (searchActive ? "" : "<p>No past appointments.</p>");
   }
-  if (q && todayList.length === 0 && upcoming.length === 0 && past.length === 0) {
+  if (searchActive && allEmpty) {
     container.innerHTML = `<p>No appointments match "${escapeHtml(APPOINTMENTS_SEARCH)}".</p>`;
   }
 
@@ -6361,55 +6526,42 @@ function renderAppointmentsOverview() {
     // appears -- a raw Dropbox share link can't go straight into <img src>.
     c.querySelectorAll(".admin-id-photo").forEach((img) => loadAdminIdPhoto(img, img.dataset.dropboxLink));
     c.querySelectorAll(".appt-card-clickable").forEach((el) => {
-      // stopPropagation on the checkbox's own label below keeps a
-      // "Mark as shown" tap from ALSO navigating to the buyer's page.
       el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
       el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goToBuyerFromAppointment(el.dataset.phone); } });
-    });
-    c.querySelectorAll(".appt-mark-shown-label").forEach((label) => {
-      label.addEventListener("click", (e) => e.stopPropagation());
     });
     // Address -> that property's own page, added 2026-09-13 per Aaron's
     // direct request. stopPropagation keeps this from ALSO bubbling up to
     // the card's own click handler above (which would otherwise navigate
-    // to the buyer's page right after/instead) -- same guard pattern the
-    // mark-shown label already uses just above.
+    // to the buyer's page right after/instead).
     c.querySelectorAll(".appt-card-address-link").forEach((el) => {
       el.addEventListener("click", (e) => { e.stopPropagation(); showDetail(el.dataset.listingId); });
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); showDetail(el.dataset.listingId); }
       });
     });
-    c.querySelectorAll(".appt-mark-shown-checkbox").forEach((cb) => {
-      cb.addEventListener("change", async () => {
-        if (!cb.checked) return; // one-way -- unchecking doesn't un-mark, same as the buyer-page Remove button being the only way back
-        // Real bug fix, 2026-09-14 -- Aaron reported clicking this checkbox
-        // not advancing Stage even though the appointment status write
-        // itself succeeded. Root cause: markShown and updateAppointment
-        // used to fire CONCURRENTLY, each with its own onDone -- both
-        // eventually touch BUYERS_CACHE (markShown via its own
-        // loadBuyers(), updateAppointment's Completed branch via
-        // findBuyer()+setBuyerStage()), with no ordering guarantee between
-        // them. A loadBuyers() call landing between updateAppointment's
-        // findBuyer() read and its setBuyerStage() write could silently
-        // replace BUYERS_CACHE with an array holding a DIFFERENT buyer
-        // object than the one setBuyerStage's success handler mutates,
-        // orphaning that optimistic update -- and worse, two independent
-        // onDone refreshes racing could leave the final render showing
-        // whichever happened to resolve last. Fixed by running both writes
-        // sequentially (awaited, no onDone of their own) and refreshing
-        // exactly once at the end, after both have genuinely finished.
-        await markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, () => {});
-        // Also sets this SPECIFIC appointment's own status to Completed
-        // (not just the general Shown Properties ledger) -- added
-        // 2026-09-15, so it reads consistently with the new Reschedule/
-        // Cancel/Outcome controls below once it lands in Past.
-        if (cb.dataset.slot) await updateAppointment(cb.dataset.phone, Number(cb.dataset.slot), cb.dataset.address, cb.dataset.date, "Completed", () => {});
-        await refreshAppointmentsAndRerender();
-      });
-    });
-    wireAppointmentManageControls(c, refreshAppointmentsAndRerender);
   }
+}
+
+// Shared by both the old inline checkbox (retired 2026-09-14, see the
+// card-menu comment below) and the new "Mark as shown" menu item --
+// pulled into its own function so the popup menu can call it directly
+// without needing a live checkbox element to read dataset attrs off of.
+async function markApptShownAndCompleted({ row, slot, address, date, phone }) {
+  // Real bug fix, 2026-09-14 -- Aaron reported clicking this not advancing
+  // Stage even though the appointment status write itself succeeded. Root
+  // cause: markShown and updateAppointment used to fire CONCURRENTLY, each
+  // with its own onDone -- both eventually touch BUYERS_CACHE (markShown
+  // via its own loadBuyers(), updateAppointment's Completed branch via
+  // findBuyer()+setBuyerStage()), with no ordering guarantee between them.
+  // Fixed by running both writes sequentially (awaited, no onDone of their
+  // own) and refreshing exactly once at the end, after both have
+  // genuinely finished.
+  await markShown(row, address, "add", phone, () => {});
+  // Also sets this SPECIFIC appointment's own status to Completed (not
+  // just the general Shown Properties ledger) -- added 2026-09-15, so it
+  // reads consistently with the Reschedule/Cancel/Outcome controls.
+  if (slot) await updateAppointment(phone, slot, address, date, "Completed", () => {});
+  await refreshAppointmentsAndRerender();
 }
 
 // Real bug fix, 2026-09-14 -- Aaron reported that checking "Mark as shown"

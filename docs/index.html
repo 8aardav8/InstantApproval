@@ -1127,6 +1127,11 @@
          direct request, since appointment dates had no toggle at all
          before. -->
     <button id="appointments-date-mode-toggle" class="btn-outline" type="button">Show days since</button>
+    <!-- Compact/Detailed card toggle, added 2026-09-14 per Aaron's direct
+         request -- see updateApptCardModeToggleLabel()/
+         APPOINTMENTS_CARD_MODE in app.js. Same pattern as the Buyers tab's
+         own toggle. -->
+    <button id="appointments-card-mode-toggle" class="btn-outline" type="button">Compact view</button>
 
     <!-- Today's Appointments, added 2026-09-14 per Aaron's direct request
          ("three sections at the top: today's appointments, upcoming
@@ -1134,16 +1139,16 @@
          a single "Upcoming" list that silently included today. Hidden when
          empty (search filtered to nothing, or genuinely no showings today),
          same convention Past already used. -->
-    <h3 class="appointments-today-heading hidden" id="appointments-today-heading">Today's Appointments</h3>
+    <h3 class="appointments-today-heading" id="appointments-today-heading">Today's Appointments</h3>
     <div id="appointments-today-list"></div>
 
-    <h3 class="appointments-upcoming-heading hidden" id="appointments-upcoming-heading">Upcoming Appointments</h3>
+    <h3 class="appointments-upcoming-heading" id="appointments-upcoming-heading">Upcoming Appointments</h3>
     <div id="appointments-list"></div>
     <!-- Past Appointments, added 2026-09-12 per Aaron's direct request --
          populated by renderAppointmentsOverview() in app.js. Below the
          upcoming list, so scrolling down reaches it -- an appointment
          marked "shown" from the Upcoming list above moves down here. -->
-    <h3 class="appointments-past-heading hidden" id="appointments-past-heading">Past Appointments</h3>
+    <h3 class="appointments-past-heading" id="appointments-past-heading">Past Appointments</h3>
     <div id="appointments-past-list"></div>
   </section>
 
