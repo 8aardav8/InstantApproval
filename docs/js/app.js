@@ -6380,18 +6380,31 @@ function renderAppointmentsOverview() {
       });
     });
     c.querySelectorAll(".appt-mark-shown-checkbox").forEach((cb) => {
-      cb.addEventListener("change", () => {
+      cb.addEventListener("change", async () => {
         if (!cb.checked) return; // one-way -- unchecking doesn't un-mark, same as the buyer-page Remove button being the only way back
-        markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, refreshAppointmentsAndRerender);
+        // Real bug fix, 2026-09-14 -- Aaron reported clicking this checkbox
+        // not advancing Stage even though the appointment status write
+        // itself succeeded. Root cause: markShown and updateAppointment
+        // used to fire CONCURRENTLY, each with its own onDone -- both
+        // eventually touch BUYERS_CACHE (markShown via its own
+        // loadBuyers(), updateAppointment's Completed branch via
+        // findBuyer()+setBuyerStage()), with no ordering guarantee between
+        // them. A loadBuyers() call landing between updateAppointment's
+        // findBuyer() read and its setBuyerStage() write could silently
+        // replace BUYERS_CACHE with an array holding a DIFFERENT buyer
+        // object than the one setBuyerStage's success handler mutates,
+        // orphaning that optimistic update -- and worse, two independent
+        // onDone refreshes racing could leave the final render showing
+        // whichever happened to resolve last. Fixed by running both writes
+        // sequentially (awaited, no onDone of their own) and refreshing
+        // exactly once at the end, after both have genuinely finished.
+        await markShown(Number(cb.dataset.row), cb.dataset.address, "add", cb.dataset.phone, () => {});
         // Also sets this SPECIFIC appointment's own status to Completed
         // (not just the general Shown Properties ledger) -- added
         // 2026-09-15, so it reads consistently with the new Reschedule/
-        // Cancel/Outcome controls below once it lands in Past. onDone
-        // added 2026-09-14 -- see refreshAppointmentsAndRerender's own
-        // comment for why this write needs one too, same as markShown just
-        // above (previously omitted entirely, so THIS write's own result
-        // never triggered any re-render on its own).
-        if (cb.dataset.slot) updateAppointment(cb.dataset.phone, Number(cb.dataset.slot), cb.dataset.address, cb.dataset.date, "Completed", refreshAppointmentsAndRerender);
+        // Cancel/Outcome controls below once it lands in Past.
+        if (cb.dataset.slot) await updateAppointment(cb.dataset.phone, Number(cb.dataset.slot), cb.dataset.address, cb.dataset.date, "Completed", () => {});
+        await refreshAppointmentsAndRerender();
       });
     });
     wireAppointmentManageControls(c, refreshAppointmentsAndRerender);
