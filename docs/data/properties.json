@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T19:00:08.214108+00:00",
+  "generatedAt": "2026-09-15T19:02:44.991607+00:00",
   "listings": [
     {
       "id": "15871-fairmount-drive-detroit-mi-48205",
@@ -884,6 +884,23 @@
       "livability": 3,
       "lat": 38.6203961,
       "lng": -90.12868089999999
+    },
+    {
+      "id": "225-n-63rd-st-east-st-louis-il-62203",
+      "address": "225 N 63rd St East St Louis IL 62203",
+      "onMarketDate": "9/11",
+      "lastUpdate": "9/14",
+      "area": "IL - East St Louis",
+      "down": "$2,995",
+      "monthly": "$995",
+      "picsLink": "https://drive.google.com/drive/folders/1NaJ8N3fy6ku_wUS0UWdlvtG59ooK1w3M",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1338",
+      "status": "Available",
+      "livability": 2,
+      "lat": 38.598555,
+      "lng": -90.0897786
     },
     {
       "id": "2810-norwood-ave-saint-louis-mo-63115",
@@ -6363,7 +6380,7 @@
       "id": "3875-slayton-ave-jackson-ms-39-213",
       "address": "3875 Slayton Ave Jackson MS 39,213",
       "onMarketDate": "6/15",
-      "lastUpdate": "8/28/2026",
+      "lastUpdate": "9/15/2026",
       "area": "MS",
       "down": "$1,800",
       "monthly": "$690",
@@ -6371,7 +6388,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "935",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.3475324,
       "lng": -90.2150841
