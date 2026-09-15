@@ -1744,7 +1744,7 @@ function initGetStartedForm() {
 const TAB_LABELS = {
   properties: "HOMES", steps: "HOW IT WORKS", approved: "APPROVED!",
   "get-started": "MY SHOWINGS", favorites: "MY FAVORITES", "my-info": "MY INFO",
-  buyers: "BUYERS", appointments: "APPOINTMENTS",
+  buyers: "BUYERS", appointments: "APPOINTMENTS", templates: "TEXT TEMPLATES",
 };
 
 function activateTab(tabName) {
@@ -1781,6 +1781,7 @@ function activateTab(tabName) {
   if (tabName === "appointments") {
     pending = Promise.all([refreshAdminActivity(), loadBuyers()]).then(renderAppointmentsOverview);
   }
+  if (tabName === "templates") loadTextTemplates();
   closeDrawer();
   return pending;
 }
@@ -2466,7 +2467,7 @@ function updateAdminButtonState() {
   logoutBtn.classList.toggle("hidden", !signedIn);
   // Buyers/Appointments tabs, added 2026-09-11 -- admin-only, same signedIn check.
   // "-bottom" ids added 2026-09-13 (footer copies, see index.html).
-  for (const id of ["nav-buyers-top", "nav-buyers-drawer", "nav-buyers-bottom", "nav-appointments-top", "nav-appointments-drawer", "nav-appointments-bottom"]) {
+  for (const id of ["nav-buyers-top", "nav-buyers-drawer", "nav-buyers-bottom", "nav-appointments-top", "nav-appointments-drawer", "nav-appointments-bottom", "nav-templates-top", "nav-templates-drawer", "nav-templates-bottom"]) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("hidden", !signedIn);
   }
@@ -6468,4 +6469,71 @@ function scrollToApptCard(a) {
   // position within the same list.
   card.classList.add("appt-card-highlight-flash");
   setTimeout(() => card.classList.remove("appt-card-highlight-flash"), 1600);
+}
+
+// ---------- Text Templates tab, added 2026-09-14 ----------
+// Per Aaron's direct request: view/edit the wording of the automated text
+// messages appointment-notifier-worker.js sends, with merge fields, no
+// code deploy needed. Backed by the "Text Templates" Sheet tab (same
+// Filling Sheet) via /admin/text-templates (GET) and /admin/set-text-
+// template (POST) -- see admin/worker.js's own comment on that tab for
+// the full picture. That Worker reads the same Sheet fresh every run, so
+// a save here is live the next time it ticks (every 5 minutes at most).
+async function loadTextTemplates() {
+  const list = document.getElementById("templates-list");
+  const statusEl = document.getElementById("templates-status");
+  if (!list) return;
+  list.innerHTML = "<p>Loading…</p>";
+  statusEl.textContent = "";
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/text-templates`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok || data.error) { list.innerHTML = `<p>Couldn't load: ${(data && data.error) || res.status}</p>`; return; }
+    renderTextTemplates(data.templates || []);
+  } catch (err) {
+    list.innerHTML = `<p>Couldn't load: ${err}</p>`;
+  }
+}
+
+function renderTextTemplates(templates) {
+  const list = document.getElementById("templates-list");
+  if (templates.length === 0) { list.innerHTML = "<p>No templates found.</p>"; return; }
+  list.innerHTML = templates.map((t) => `
+    <div class="template-card" data-key="${escapeAttr(t.key)}">
+      <h3 class="template-label">${escapeHtml(t.label || t.key)}</h3>
+      <textarea class="template-textarea" rows="5">${escapeHtml(t.text)}</textarea>
+      ${t.mergeFields ? `<div class="template-merge-fields">Merge fields: <code>${escapeHtml(t.mergeFields)}</code></div>` : ""}
+      <div class="template-save-row">
+        <button type="button" class="btn-primary template-save-btn" data-key="${escapeAttr(t.key)}">Save</button>
+        <span class="template-save-status"></span>
+      </div>
+      ${t.lastUpdated ? `<div class="template-last-updated">Last updated: ${escapeHtml(formatDateTimeWithYearAndSince(t.lastUpdated))}</div>` : ""}
+    </div>
+  `).join("");
+  list.querySelectorAll(".template-save-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".template-card");
+      const textarea = card.querySelector(".template-textarea");
+      saveTextTemplate(btn.dataset.key, textarea.value, card.querySelector(".template-save-status"));
+    });
+  });
+}
+
+async function saveTextTemplate(key, text, statusEl) {
+  statusEl.textContent = "Saving…";
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-text-template`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ key, text }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't save: ${(data && data.error) || res.status}`; return; }
+    statusEl.textContent = "Saved.";
+    setTimeout(() => { if (statusEl.isConnected) statusEl.textContent = ""; }, 2500);
+  } catch (err) {
+    statusEl.textContent = `Couldn't save: ${err}`;
+  }
 }

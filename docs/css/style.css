@@ -1254,3 +1254,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-card-loginname { color: var(--gray-text, #6b7280); }
 .appt-card-idname { color: var(--gray-text, #6b7280); font-size: 12px; }
 .appt-card-contact { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
+
+/* Text Templates tab, added 2026-09-14 per Aaron's direct request. */
+.templates-intro { font-size: 13px; color: var(--gray-text, #6b7280); margin: 10px 0 16px; }
+.templates-status { font-size: 13px; color: var(--gray-text, #6b7280); min-height: 16px; }
+.template-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;
+}
+.template-label { font-size: 15px; font-weight: 800; color: var(--navy); margin: 0 0 8px; }
+.template-textarea {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 13px; padding: 10px; border-radius: 8px;
+  border: 1px solid #d1d5db; resize: vertical; line-height: 1.5;
+}
+.template-merge-fields { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 8px; }
+.template-merge-fields code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+.template-save-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.template-save-status { font-size: 12px; color: var(--gray-text, #6b7280); }
+.template-last-updated { font-size: 11px; color: var(--gray-text, #6b7280); margin-top: 8px; }

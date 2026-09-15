@@ -2261,6 +2261,104 @@ async function handleAdminSetIdName(request, env) {
   }
 }
 
+// ---------- Text Templates admin page, added 2026-09-14 ----------
+// Per Aaron's direct request: a new admin tab where he can view/edit the
+// wording of the automated text messages appointment-notifier-worker.js
+// sends (the day-of reminder and the favorited/scheduled property
+// status-change notice), with merge fields, WITHOUT needing a code
+// change/redeploy every time he wants different wording. Both templates
+// used to be hardcoded JS template-literal functions in that Worker
+// (statusChangeText/dayOfReminderText) -- this Sheet tab (`Text
+// Templates`, same Filling Sheet every other admin feature already
+// reads/writes) is now the actual source of truth; that Worker reads it
+// fresh every tick and does its own {{field}} substitution (see its own
+// comment for the merge step). Columns: Key (stable id, not editable
+// here), Label, Template Text (the editable field), Available Merge
+// Fields (documentation only, not enforced), Last Updated.
+const TEXT_TEMPLATES_TAB = "Text Templates";
+
+async function handleAdminGetTextTemplates(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const range = encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!A:E`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`text-templates read failed: ${await res.text()}`);
+    const data = await res.json();
+    const rows = (data.values || []).slice(1); // skip header row
+    const templates = rows
+      .filter((row) => (row[0] || "").trim())
+      .map((row) => ({
+        key: (row[0] || "").trim(),
+        label: (row[1] || "").trim(),
+        text: row[2] || "",
+        mergeFields: (row[3] || "").trim(),
+        lastUpdated: (row[4] || "").trim(),
+      }));
+    return jsonResponse({ templates });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+async function handleAdminSetTextTemplate(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const key = (body.key || "").trim();
+  const text = body.text || "";
+  if (!key) return jsonResponse({ error: "missing key" }, 400);
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const keyRange = encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!A:A`);
+    const keyRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${keyRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!keyRes.ok) throw new Error(`text-templates key read failed: ${await keyRes.text()}`);
+    const keyCol = (await keyRes.json()).values || [];
+    let row = null;
+    for (let i = 1; i < keyCol.length; i++) {
+      if ((keyCol[i][0] || "").trim() === key) { row = i + 1; break; }
+    }
+    if (!row) return jsonResponse({ error: "unknown template key" }, 404);
+
+    // Two single-column writes, deliberately NOT one C:E range PUT --
+    // a 3-column values array would need SOMETHING in the middle slot
+    // (D, Available Merge Fields) even though this endpoint never
+    // touches it, and Sheets' values.update writes a literal blank for
+    // any array slot that isn't a real value (including `undefined`,
+    // which JSON.stringify turns into `null`) -- would have silently
+    // wiped that documentation column on every save.
+    const nowIso = new Date().toISOString();
+    const [textRes, updatedRes] = await Promise.all([
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!C${row}:C${row}`)}?valueInputOption=RAW`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `'${TEXT_TEMPLATES_TAB}'!C${row}:C${row}`, values: [[text]] }),
+      }),
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!E${row}:E${row}`)}?valueInputOption=RAW`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `'${TEXT_TEMPLATES_TAB}'!E${row}:E${row}`, values: [[nowIso]] }),
+      }),
+    ]);
+    if (!textRes.ok) throw new Error(`text-templates write failed: ${await textRes.text()}`);
+    if (!updatedRes.ok) throw new Error(`text-templates timestamp write failed: ${await updatedRes.text()}`);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // One-time bulk backfill, added 2026-09-16 per Aaron's direct request
 // ("make the first contact stage selected on every contact that
 // currently has no stage selected") -- sets Stage to STAGE_VALUES[0]
@@ -5124,6 +5222,12 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/refresh-quo-name" && request.method === "GET") {
     return handleAdminRefreshQuoName(request, env);
+  }
+  if (url.pathname === "/admin/text-templates" && request.method === "GET") {
+    return handleAdminGetTextTemplates(request, env);
+  }
+  if (url.pathname === "/admin/set-text-template" && request.method === "POST") {
+    return handleAdminSetTextTemplate(request, env);
   }
   if (url.pathname === "/admin/backfill-stage" && request.method === "POST") {
     return handleAdminBackfillStage(request, env);
