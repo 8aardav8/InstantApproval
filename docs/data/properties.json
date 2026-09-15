@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-15T18:56:42.551002+00:00",
+  "generatedAt": "2026-09-15T18:57:24.293572+00:00",
   "listings": [
+    {
+      "id": "15871-fairmount-drive-detroit-mi-48205",
+      "address": "15871 Fairmount Drive Detroit MI 48205",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/nopphhm8bmsl2ygizchru/AFa_8fWJd65OUAeM6ojcha4?rlkey=fz4mgx7pcyqpo0hema5iux8lp&st=ykfi8tvt&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.4449482,
+      "lng": -82.9570222
+    },
     {
       "id": "1310-e-poplar-st-west-frankfort-il-62896",
       "address": "1310 E Poplar St, West Frankfort, IL 62896",
