@@ -1239,16 +1239,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-outcome-row label { font-size: 12px; color: var(--gray-text, #6b7280); display: flex; align-items: center; gap: 6px; }
 .appt-outcome-row select { padding: 4px 6px; border-radius: 6px; border: 1px solid #e5e7eb; }
 .appt-card {
-  /* Base card shell shared by both Compact and Detailed -- each sets its
-     own flex-direction (see .appt-card-detailed/.appt-card-compact below,
-     REBUILT 2026-09-14 into their current layouts). */
+  /* Base card shell -- Compact (see .appt-card-compact below) is the only
+     appointment-card layout now; Detailed and its toggle were REMOVED
+     2026-09-14 per Aaron's direct request. */
   display: flex; align-items: stretch; gap: 12px; position: relative;
   background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
 }
-/* Big availability badge, added 2026-09-15 per Aaron's direct request --
-   a corner ribbon, deliberately larger than listingAvailabilityBadgeHtml's
-   small inline version used on the buyer detail page's own Favorited/
-   Scheduled Showings lists. */
+/* Big availability badge -- a corner ribbon, deliberately larger than
+   listingAvailabilityBadgeHtml's small inline version used on the buyer
+   detail page's own Favorited/Scheduled Showings lists. */
 .appt-card-availability-badge {
   position: absolute; top: -8px; right: -8px; font-size: 22px; line-height: 1;
   background: #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.25); padding: 3px;
@@ -1258,7 +1257,6 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-card-clickable { cursor: pointer; }
 .appt-card-clickable:hover { border-color: var(--blue); }
 .appt-card-clickable:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.appt-card-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
 .appt-card-address { font-weight: 700; color: var(--navy); margin-top: 2px; }
 /* Address -> property page, added 2026-09-13 per Aaron's direct request --
    distinct from the rest of the card, which still links to the buyer's
@@ -1267,13 +1265,6 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-card-address-link { cursor: pointer; width: fit-content; }
 .appt-card-address-link:hover { text-decoration: underline; }
 .appt-card-address-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.appt-card-visitor { font-size: 13px; margin-top: 4px; }
-/* Quo name vs. login name, added 2026-09-13 per Aaron's direct request --
-   see renderApptCard's own comment in app.js for why these can differ. */
-.appt-card-quoname { color: var(--navy); }
-.appt-card-loginname { color: var(--gray-text, #6b7280); }
-.appt-card-idname { color: var(--gray-text, #6b7280); font-size: 12px; }
-.appt-card-contact { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
 
 /* Text Templates tab, added 2026-09-14 per Aaron's direct request. */
 .templates-intro { font-size: 13px; color: var(--gray-text, #6b7280); margin: 10px 0 16px; }
@@ -1322,22 +1313,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .appt-row-menu-popup .appt-manage-row,
 .appt-row-menu-popup .appt-reschedule-panel { padding: 4px 8px; }
 
-/* Detailed appointment card. Originally a photo-left/info-right split;
-   the photo moved to the buyer-group heading (see .appt-buyer-group-photo
-   below) 2026-09-14 per Aaron's direct follow-up, so this is now a plain
-   single stacked column -- just address up top, full width. */
-.appt-card-detailed { flex-direction: column; align-items: stretch; }
-.appt-card-detailed-address { font-size: 15px; margin: 2px 26px 10px; }
-
-/* Compact appointment card -- just date, address, name, and phone as
-   plain stacked lines (no ID icon of its own, since 2026-09-14 -- see
-   .appt-buyer-group-id-warning below). Deliberately much smaller
-   footprint than .appt-card-detailed above. */
-.appt-card-compact { flex-direction: column; align-items: stretch; padding: 10px 14px 10px 34px; }
-.appt-card-compact-line1 { display: flex; align-items: center; gap: 6px; }
+/* Appointment card -- the only layout now (Detailed + its toggle were
+   REMOVED 2026-09-14 per Aaron's direct request, "Remove detail view and
+   the selector button"). No name line (shown once per buyer in the group
+   heading below instead) and no ID icon of its own (see
+   .appt-buyer-group-id-warning below) -- just a top line of date/phone/
+   lockbox, the address (linking through to the property page), and the
+   Outcome dropdown sitting where the phone number used to be. */
+.appt-card-compact { flex-direction: column; align-items: stretch; padding: 10px 14px; }
+.appt-card-compact-line1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 26px; }
 .appt-card-compact-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
-.appt-card-compact-address { font-weight: 700; color: var(--navy); font-size: 13px; margin-top: 2px; }
-.appt-card-compact-line2 { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
+.appt-card-compact-address { font-weight: 700; color: var(--navy); font-size: 13px; margin-top: 4px; }
+.appt-card-compact-lockbox { font-size: 12px; color: var(--gray-text, #6b7280); }
 
 /* Appointments grouped by buyer, added 2026-09-14 per Aaron's direct
    request ("appointments grouped by Buyer. The buyer name can be
@@ -1345,17 +1332,19 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    per buyer within each of the Today/Upcoming/Past sections; the name
    heading is deliberately plain (not a .buyer-section h3) since it isn't
    its own section, just a label sitting above that buyer's own card(s).
-   The ID photo/warning icon (below) moved here from the individual cards
-   the same day, per Aaron's follow-up -- shown once per buyer instead of
-   repeated on every card. */
+   The ID photo/warning icon (below) shows once per buyer here instead of
+   repeated on every card -- enlarged and made clickable through to the
+   buyer's own page 2026-09-14 per Aaron's follow-up. */
 .appt-buyer-group { margin-bottom: 18px; }
 .appt-buyer-group-name {
   text-align: center; font-size: 14px; font-weight: 800; color: var(--navy);
   margin: 0 0 8px;
 }
 .appt-buyer-group-id { display: flex; justify-content: center; margin-bottom: 10px; }
+.appt-buyer-group-id-clickable { cursor: pointer; }
+.appt-buyer-group-id-clickable:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
 .appt-buyer-group-photo {
-  width: 140px; max-width: 60%; border-radius: 8px; object-fit: cover;
-  border: 1px solid #e5e7eb; background: #f3f4f6; min-height: 90px;
+  width: 220px; max-width: 80%; border-radius: 8px; object-fit: cover;
+  border: 1px solid #e5e7eb; background: #f3f4f6; min-height: 130px;
 }
-.appt-buyer-group-id-warning { font-size: 28px; line-height: 1; }
+.appt-buyer-group-id-warning { font-size: 36px; line-height: 1; }

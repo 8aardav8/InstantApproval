@@ -4065,17 +4065,11 @@ let BUYERS_CARD_MODE = (() => {
   try { return localStorage.getItem(BUYERS_CARD_MODE_STORAGE_KEY) || "detailed"; } catch (e) { return "detailed"; }
 })();
 
-// Same toggle, extended 2026-09-14 per Aaron's direct request to the
-// Appointments tab's own cards -- a SEPARATE state var, not shared with
-// BUYERS_CARD_MODE, since the two tabs' card layouts are independent and
-// nothing suggests they should move together. "Detailed" default for the
-// same reason as Buyers' own default -- the fuller layout is the
-// pre-existing one, nothing changes for anyone who hasn't touched the
-// toggle yet.
-const APPOINTMENTS_CARD_MODE_STORAGE_KEY = "iah_appointments_card_mode";
-let APPOINTMENTS_CARD_MODE = (() => {
-  try { return localStorage.getItem(APPOINTMENTS_CARD_MODE_STORAGE_KEY) || "detailed"; } catch (e) { return "detailed"; }
-})();
+// Compact/Detailed toggle for the Appointments tab's own cards (added
+// 2026-09-14, extended from the Buyers tab's own toggle above) REMOVED
+// the same day per Aaron's direct follow-up ("Remove detail view and the
+// selector button") -- Compact is now the only appointment-card layout,
+// no state var needed.
 
 // Same BUYERS_DATE_MODE toggle, extended 2026-09-12 per Aaron's direct
 // request to the Appointments tab's own date -- that one can be a FUTURE
@@ -6196,15 +6190,6 @@ function initBuyersTab() {
     renderBuyersList();
   });
 
-  // Same toggle, Appointments tab's own cards -- added 2026-09-14.
-  const apptCardModeBtn = document.getElementById("appointments-card-mode-toggle");
-  if (apptCardModeBtn) apptCardModeBtn.addEventListener("click", () => {
-    APPOINTMENTS_CARD_MODE = APPOINTMENTS_CARD_MODE === "compact" ? "detailed" : "compact";
-    try { localStorage.setItem(APPOINTMENTS_CARD_MODE_STORAGE_KEY, APPOINTMENTS_CARD_MODE); } catch (e) {}
-    updateApptCardModeToggleLabel(apptCardModeBtn);
-    renderAppointmentsOverview();
-  });
-
   // "Show hidden" quick toggle, added 2026-09-15 -- the ONLY control for
   // BUYERS_FILTER.hidden now (the filter-panel dropdown was removed the
   // same day per Aaron's direct follow-up: "I can just toggle by
@@ -6236,10 +6221,6 @@ function updateDateModeToggleLabel(btn) {
 
 function updateCardModeToggleLabel(btn) {
   btn.textContent = BUYERS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
-}
-
-function updateApptCardModeToggleLabel(btn) {
-  btn.textContent = APPOINTMENTS_CARD_MODE === "compact" ? "Detailed view" : "Compact view";
 }
 
 // "Show hidden" toggle label, added 2026-09-15 -- the ONLY control for
@@ -6393,10 +6374,6 @@ function apptRowMenuBtnHtml(a) {
   return `<button type="button" class="appt-row-menu-btn" data-appt-key="${escapeAttr(key)}" data-appt-phone="${escapeAttr(a.phone)}" data-appt-row="${a.row}" data-appt-slot="${a.slot}" data-appt-date="${escapeAttr(a.date)}" data-appt-status="${escapeAttr(a.status || "")}" data-appt-address="${escapeAttr(a.address)}" aria-label="Card options" title="Card options">&#8942;</button>`;
 }
 
-function renderApptCard(a) {
-  return APPOINTMENTS_CARD_MODE === "compact" ? renderApptCardCompact(a) : renderApptCardDetailed(a);
-}
-
 // Groups a section's appointment entries by buyer, added 2026-09-14 per
 // Aaron's direct request ("appointments grouped by Buyer. The buyer name
 // can be justified center above whatever appointments they have"). Keyed
@@ -6406,13 +6383,16 @@ function renderApptCard(a) {
 // two different phoneless visitors never get merged into one heading.
 // Insertion order is preserved within a group; callers sort the GROUPS
 // themselves afterward (today/upcoming/past each want a different order).
+// Name preference switched to Login-name-first 2026-09-14 per Aaron's
+// direct follow-up ("Use the login name, not the quo name above the id
+// picture") -- was quoName-first.
 function groupApptEntriesByBuyer(entries) {
   const groups = new Map();
   for (const a of entries) {
     const key = a.phone || `__nophone__:${a.address}:${a.date}`;
     let group = groups.get(key);
     if (!group) {
-      const name = a.quoName || a.name || a.idName || (a.phone ? a.phone : "Unknown visitor");
+      const name = a.name || a.quoName || a.idName || (a.phone ? a.phone : "Unknown visitor");
       group = { key, name, phone: a.phone || "", idLink: a.idLink || "", entries: [] };
       groups.set(key, group);
     } else if (!group.idLink && a.idLink) {
@@ -6425,83 +6405,62 @@ function groupApptEntriesByBuyer(entries) {
 // ID photo (or warning icon) moved here, 2026-09-14, per Aaron's direct
 // follow-up request -- it now shows ONCE per buyer, centered below their
 // name, rather than repeated on every one of their individual cards (see
-// renderApptCardCompact/renderApptCardDetailed's own comments on what was
-// removed from each). .admin-id-photo is wired up generically for the
-// whole container in renderAppointmentsOverview's own loop already, so no
-// extra fetch wiring is needed here.
+// renderApptCardCompact's own comment on what was removed from it).
+// .admin-id-photo is wired up generically for the whole container in
+// renderAppointmentsOverview's own loop already, so no extra fetch wiring
+// is needed here. Clickable through to the buyer's own page, added the
+// same day per Aaron's follow-up ("link it to the buyer page") -- wired
+// via .appt-buyer-group-id-clickable in renderAppointmentsOverview's own
+// loop, same goToBuyerFromAppointment every other click-through here uses.
 function renderApptGroupsHtml(groups) {
   return groups.map((g) => {
     const idHtml = g.idLink
       ? `<img class="appt-buyer-group-photo admin-id-photo" data-dropbox-link="${escapeAttr(g.idLink)}" alt="ID on file">`
       : `<span class="appt-buyer-group-id-warning" title="No ID on file">⚠️</span>`;
+    const idClickable = !!g.phone;
     return `
     <div class="appt-buyer-group">
       <h4 class="appt-buyer-group-name">${escapeHtml(g.name)}</h4>
-      <div class="appt-buyer-group-id">${idHtml}</div>
-      ${g.entries.map((a) => renderApptCard(a)).join("")}
+      <div class="appt-buyer-group-id${idClickable ? " appt-buyer-group-id-clickable" : ""}"${idClickable ? ` data-phone="${escapeAttr(g.phone)}" role="button" tabindex="0"` : ""}>${idHtml}</div>
+      ${g.entries.map((a) => renderApptCardCompact(a)).join("")}
     </div>
   `;
   }).join("");
 }
 
-// Compact appointment card. Originally REBUILT 2026-09-14 with a small
-// ID-on-file/warning icon per card; that icon was REMOVED the same day
-// per Aaron's direct follow-up ("not necessary to put the ID icon on the
-// compact cards... If they don't have ID on file you can put the warning
-// icon below their name instead") -- the ID photo/warning now lives once
-// per buyer, in the group heading (see renderApptGroupsHtml), not
-// repeated on every individual card. What's left here: date, address,
-// name, phone -- address isn't in his literal list but is kept anyway,
-// since with entries not grouped by property it's the only thing
-// identifying WHICH showing this is.
+// Appointment card. This used to be one of two layouts (Compact/Detailed,
+// with a toggle button) -- Detailed was REMOVED 2026-09-14 per Aaron's
+// direct follow-up ("Remove detail view and the selector button"), so
+// this is now the only layout, REBUILT the same day per his own spec:
+// - Name line dropped from the card face entirely -- it already shows
+//   once per buyer in the group heading above (renderApptGroupsHtml).
+// - Availability check/X badge added (was Detailed-only before).
+// - Phone number moved UP next to the date (was its own line at the
+//   bottom); the Outcome dropdown now sits where the phone number used
+//   to be (the last line) instead.
+// - Lockbox code moved to the same top line, right of the phone number.
+// - Address links through to the property page (matches the OLD Detailed
+//   card's own address-link behavior, wired the same way in
+//   renderAppointmentsOverview's loop).
+// - ID photo removed here (see renderApptGroupsHtml above).
 function renderApptCardCompact(a) {
   const clickable = !!a.phone;
-  const bestName = a.quoName || a.name || a.idName || "";
-  return `
-    <div class="appt-card appt-card-compact${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
-      ${apptRowMenuBtnHtml(a)}
-      <div class="appt-card-compact-line1"><span class="appt-card-compact-date">${escapeHtml(formatApptDate(a.date))}</span></div>
-      <div class="appt-card-compact-address">${escapeHtml(a.address)}</div>
-      ${bestName ? `<div class="appt-card-compact-line2">${escapeHtml(bestName)}</div>` : ""}
-      ${a.phone ? `<div class="appt-card-compact-line2">${phoneQuoLinkHtml(a.phone)}</div>` : ""}
-    </div>
-  `;
-}
-
-// Detailed appointment card. Originally REBUILT 2026-09-14 with the ID
-// photo in its own left column beside the rest of the info; the photo
-// was REMOVED from the card entirely the same day per Aaron's direct
-// follow-up ("show a picture of their ID right below their name...
-// don't put the ID on the actual cards") -- it now lives once per buyer,
-// in the group heading (see renderApptGroupsHtml), not repeated on every
-// individual card. With no photo to split against, the remaining info is
-// a single stacked column rather than the old two-column layout. The
-// Outcome dropdown still renders INLINE here (apptOutcomeSelectHtml/
-// wireApptOutcomeSelect, wired in renderAppointmentsOverview below)
-// rather than inside the card-options menu -- "I don't want the
-// drop-down in there." The menu itself (apptRowMenuBtnHtml/
-// apptRowMenuWordsHtml/openApptRowMenu) carries just the three plain
-// words Completed/Reschedule/Cancel, shared as-is with the Compact card.
-function renderApptCardDetailed(a) {
-  const clickable = !!a.phone;
   const matchingListing = ALL_LISTINGS.find((l) => l.address === a.address);
-  const namesHtml = (a.quoName || a.name || a.idName)
-    ? `${a.quoName ? `<div class="appt-card-quoname">Quo: ${escapeHtml(a.quoName)}</div>` : ""}${a.name ? `<div class="appt-card-loginname">Login: ${escapeHtml(a.name)} ${a.hasEverLoggedIn ? "✅" : "❌"}</div>` : ""}${a.idName ? `<div class="appt-card-idname">ID: ${escapeHtml(a.idName)}</div>` : ""}`
-    : (a.email ? copyableTextHtml(a.email) : a.phone ? phoneQuoLinkHtml(a.phone) : "Unknown visitor");
   const availabilityBadgeHtml = matchingListing
     ? `<span class="appt-card-availability-badge ${matchingListing.status === "Available" ? "availability-yes" : "availability-no"}" title="${matchingListing.status === "Available" ? "Still available" : `No longer available (${escapeAttr(matchingListing.status || "unavailable")})`}">${matchingListing.status === "Available" ? "✅" : "❌"}</span>`
     : "";
   const lockboxCode = ADMIN_LOCKBOX_BY_ADDRESS[a.address] || ""; // do NOT quote a real value from this anywhere in this file -- see verify_no_sensitive_data.py's own note in SESSION_LOG.md
-  const lockboxHtml = lockboxCode ? `<div class="appt-card-lockbox">🔑 ${escapeHtml(lockboxCode)}</div>` : "";
+  const lockboxHtml = lockboxCode ? `<span class="appt-card-compact-lockbox">🔑 ${escapeHtml(lockboxCode)}</span>` : "";
   return `
-    <div class="appt-card appt-card-detailed${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
+    <div class="appt-card appt-card-compact${clickable ? " appt-card-clickable" : ""}"${clickable ? ` data-phone="${escapeAttr(a.phone)}" role="button" tabindex="0"` : ""} data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}">
       ${availabilityBadgeHtml}
       ${apptRowMenuBtnHtml(a)}
-      <div class="appt-card-address appt-card-detailed-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
-      <div class="appt-card-date">${escapeHtml(formatApptDate(a.date))}</div>
-      ${lockboxHtml}
-      <div class="appt-card-visitor">${namesHtml}</div>
-      ${a.phone ? `<div class="appt-card-contact">${phoneQuoLinkHtml(a.phone)}${a.email ? " · " + copyableTextHtml(a.email) : ""}</div>` : ""}
+      <div class="appt-card-compact-line1">
+        <span class="appt-card-compact-date">${escapeHtml(formatApptDate(a.date))}</span>
+        ${a.phone ? phoneQuoLinkHtml(a.phone) : ""}
+        ${lockboxHtml}
+      </div>
+      <div class="appt-card-address appt-card-compact-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>
       ${apptOutcomeSelectHtml(a)}
     </div>
   `;
@@ -6528,8 +6487,6 @@ function renderAppointmentsOverview() {
   if (!container) return;
   const apptDateModeBtn = document.getElementById("appointments-date-mode-toggle");
   if (apptDateModeBtn) updateDateModeToggleLabel(apptDateModeBtn);
-  const apptCardModeBtn = document.getElementById("appointments-card-mode-toggle");
-  if (apptCardModeBtn) updateApptCardModeToggleLabel(apptCardModeBtn);
   const today = localTodayISO(); // already defined in app.js
   const q = (APPOINTMENTS_SEARCH || "").trim().toLowerCase();
 
@@ -6659,10 +6616,17 @@ function renderAppointmentsOverview() {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); showDetail(el.dataset.listingId); }
       });
     });
-    // Inline Outcome dropdown, added 2026-09-14 -- only the Detailed card
-    // renders one (see renderApptCardDetailed), so this is a no-op on
-    // whatever container is currently showing Compact cards instead.
+    // Inline Outcome dropdown, added 2026-09-14 (now on the appt card's
+    // own last line -- see renderApptCardCompact).
     wireApptOutcomeSelect(c, refreshAfterApptAction);
+    // Buyer-group ID photo/warning icon -> buyer page, added 2026-09-14
+    // per Aaron's direct follow-up ("link it to the buyer page") -- same
+    // click-through goToBuyerFromAppointment every other click-through on
+    // this page already uses.
+    c.querySelectorAll(".appt-buyer-group-id-clickable").forEach((el) => {
+      el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goToBuyerFromAppointment(el.dataset.phone); } });
+    });
   }
 }
 
