@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T18:35:59.341352+00:00",
+  "generatedAt": "2026-09-15T18:52:52.999867+00:00",
   "listings": [
     {
       "id": "1310-e-poplar-st-west-frankfort-il-62896",
@@ -3507,7 +3507,7 @@
       "id": "706-cedar-st-quincy-il-62301",
       "address": "706 Cedar St, Quincy, IL 62301",
       "onMarketDate": "12/1/2025",
-      "lastUpdate": "9/10/2026",
+      "lastUpdate": "9/14/2026",
       "area": "IL - Rural",
       "down": "$1,000",
       "monthly": "$430",
@@ -3515,7 +3515,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 39.94544670000001,
       "lng": -91.4043315
