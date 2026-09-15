@@ -1105,6 +1105,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-list-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .buyer-list-item .appt-row-menu-btn { position: static; flex: 0 0 auto; background: transparent; }
 .buyer-list-item .appt-row-menu-btn:hover { background: #e5e7eb; }
+/* Two-line-per-property format for the Favorited & Scheduled list, added
+   2026-09-14 per Aaron's direct request ("each property to take up two
+   lines... heart/check-or-X/address on the first, calendar+viewing
+   details on the second, only when there's a viewing scheduled"). Line 2
+   only renders at all when a viewing exists (see favScheduledItemHtml in
+   app.js), so a favorited-only property is naturally just one line. */
+.buyer-list-item-line1 { display: flex; align-items: center; gap: 6px; }
+.buyer-list-item-line2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #e5e7eb; font-size: 12px; color: var(--gray-text, #6b7280); }
 .buyer-list-item { padding: 8px 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
 /* Scheduled Showing -> its own Appointments-tab card, added 2026-09-16.
    Past Showings stay plain .buyer-list-item, no hover/cursor. */

@@ -4749,23 +4749,37 @@ function renderBuyerDetail(buyer) {
   ` : "";
 
   // Favorited + Scheduled combined into ONE list, added 2026-09-14 per
-  // Aaron's direct request ("combine that into one list with a heart icon
-  // next to favored and a calendar icon next to scheduled properties...
-  // taking up less space"). Deduped by address -- a property that's both
-  // favorited AND scheduled shows once, as scheduled (📅), same
-  // "scheduled wins over favorited" precedent already established server-
-  // side for the exact same pairing (admin-buyers-worker.js's own
-  // relationship-building comment: "'scheduled' already present for this
-  // pair wins -- don't downgrade to 'favorited'"). Past Showings stays
-  // its OWN separate list below, not folded in here -- a completed
+  // Aaron's direct request, refined the same day to a real two-line-per-
+  // property format ("each property to take up two lines. On the first
+  // line would be a heart if favorited and the green checkmark or the red
+  // X depending on availability and then the address... if there is a
+  // viewing scheduled, on the second line would be a calendar icon and
+  // details about the viewing"). Unlike the first pass, a property that's
+  // BOTH favorited and scheduled now shows BOTH facts on its own single
+  // entry (heart on line 1, calendar line 2) rather than one fact winning
+  // over the other -- keyed by address, `favorited` and `appt` tracked
+  // independently per property rather than a single type. Past Showings
+  // stays its OWN separate list below, not folded in here -- a completed
   // viewing is a different fact than "still interested/booked."
   const favScheduledMap = new Map();
-  if (lm && lm.favorites) for (const address of lm.favorites) favScheduledMap.set(address, { type: "favorited", address });
-  for (const a of scheduledAppts) favScheduledMap.set(a.address, { type: "scheduled", address: a.address, appt: a }); // scheduled overwrites a favorited entry for the same address
+  if (lm && lm.favorites) for (const address of lm.favorites) favScheduledMap.set(address, { address, favorited: true, appt: null });
+  for (const a of scheduledAppts) {
+    const entry = favScheduledMap.get(a.address) || { address: a.address, favorited: false, appt: null };
+    entry.appt = a;
+    favScheduledMap.set(a.address, entry);
+  }
   const favScheduledItems = [...favScheduledMap.values()];
-  const favScheduledItemHtml = (item) => item.type === "scheduled"
-    ? apptItem(item.appt, true, true)
-    : `<div class="buyer-list-item buyer-list-item-row">❤️ ${escapeHtml(item.address)} ${listingAvailabilityBadgeHtml(item.address)}</div>`;
+  const favScheduledItemHtml = (item) => {
+    const line1 = `${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${escapeHtml(item.address)}`;
+    const line2 = item.appt
+      ? `<div class="buyer-list-item-line2">📅 ${escapeHtml(item.appt.date)}${apptRowMenuBtnHtml({ ...item.appt, phone: buyer.phone }, true)}</div>`
+      : "";
+    const clickable = item.appt ? ` data-address="${escapeAttr(item.address)}" data-date="${escapeAttr(item.appt.date)}" role="button" tabindex="0"` : "";
+    return `<div class="buyer-list-item buyer-property-item${item.appt ? " buyer-appt-item-clickable" : ""}"${clickable}>
+      <div class="buyer-list-item-line1">${line1}</div>
+      ${line2}
+    </div>`;
+  };
   const favScheduledHtml = favScheduledItems.length
     ? `<div class="buyer-section"><h3>Favorited &amp; Scheduled (${favScheduledItems.length})</h3>${favScheduledItems.map(favScheduledItemHtml).join("")}</div>`
     : "";
