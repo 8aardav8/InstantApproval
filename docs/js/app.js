@@ -6457,7 +6457,7 @@ function renderApptCardCompact(a) {
       ${apptRowMenuBtnHtml(a)}
       <div class="appt-card-compact-line1">
         <span class="appt-card-compact-date">${escapeHtml(formatApptDate(a.date))}</span>
-        ${a.phone ? phoneQuoLinkHtml(a.phone) : ""}
+        ${a.phone ? `<span class="appt-card-compact-phone">${phoneQuoLinkHtml(a.phone)}</span>` : ""}
         ${lockboxHtml}
       </div>
       <div class="appt-card-address appt-card-compact-address${matchingListing ? " appt-card-address-link" : ""}"${matchingListing ? ` data-listing-id="${escapeAttr(matchingListing.id)}" role="link" tabindex="0" title="Open this property"` : ""}>${escapeHtml(a.address)}</div>

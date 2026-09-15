@@ -1225,19 +1225,15 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Lockbox code, added 2026-09-14 per Aaron's direct request. */
 .appt-card-lockbox { font-size: 13px; font-weight: 700; color: var(--navy); margin-top: 2px; }
 .appt-mark-shown-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--blue); margin-top: 6px; cursor: pointer; }
-/* Reschedule/Cancel/Reactivate/Outcome controls, added 2026-09-15 per
-   Aaron's direct request -- shared between the Appointments-tab cards
-   and the buyer detail page's own Scheduled/Past Showings list. */
-.appt-manage-row, .appt-outcome-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-.appt-manage-row button, .appt-outcome-row select { font-size: 12px; }
-.appt-manage-row button { padding: 4px 10px; }
-.appt-status-label { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
-.appt-status-canceled { background: #fee2e2; color: #991b1b; }
-.appt-reschedule-panel { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.appt-reschedule-panel select { font-size: 12px; padding: 4px 6px; border-radius: 6px; border: 1px solid #e5e7eb; }
-.appt-reschedule-panel button { font-size: 12px; padding: 4px 10px; }
+/* Outcome dropdown -- the only one of the old Reschedule/Cancel/
+   Reactivate/Outcome controls still rendered this way (the rest moved
+   into the card-options menu as plain words, see apptRowMenuWordsHtml).
+   Centered and shortened 2026-09-14 per Aaron's direct follow-up
+   ("Justify the outcome drop-down center of the card and make it a
+   little bit shorter so it takes up less vertical space"). */
+.appt-outcome-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 2px; flex-wrap: wrap; }
 .appt-outcome-row label { font-size: 12px; color: var(--gray-text, #6b7280); display: flex; align-items: center; gap: 6px; }
-.appt-outcome-row select { padding: 4px 6px; border-radius: 6px; border: 1px solid #e5e7eb; }
+.appt-outcome-row select { font-size: 12px; padding: 2px 6px; border-radius: 6px; border: 1px solid #e5e7eb; }
 .appt-card {
   /* Base card shell -- Compact (see .appt-card-compact below) is the only
      appointment-card layout now; Detailed and its toggle were REMOVED
@@ -1305,13 +1301,6 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 }
 .appt-row-menu-option:hover { background: #eef2ff; }
 .appt-row-menu-empty { padding: 10px 14px; font-size: 13px; color: var(--gray-text, #6b7280); }
-/* The reused Outcome/Reschedule/Cancel controls (.appt-outcome-row,
-   .appt-manage-row, .appt-reschedule-panel -- see their own rules above)
-   now render INSIDE this popup instead of always-visible on the card;
-   they need no changes of their own, just a touch of breathing room. */
-.appt-row-menu-popup .appt-outcome-row,
-.appt-row-menu-popup .appt-manage-row,
-.appt-row-menu-popup .appt-reschedule-panel { padding: 4px 8px; }
 
 /* Appointment card -- the only layout now (Detailed + its toggle were
    REMOVED 2026-09-14 per Aaron's direct request, "Remove detail view and
@@ -1320,11 +1309,20 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    .appt-buyer-group-id-warning below) -- just a top line of date/phone/
    lockbox, the address (linking through to the property page), and the
    Outcome dropdown sitting where the phone number used to be. */
-.appt-card-compact { flex-direction: column; align-items: stretch; padding: 10px 14px; }
-.appt-card-compact-line1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 26px; }
-.appt-card-compact-date { font-size: 12px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
-.appt-card-compact-address { font-weight: 700; color: var(--navy); font-size: 13px; margin-top: 4px; }
-.appt-card-compact-lockbox { font-size: 12px; color: var(--gray-text, #6b7280); }
+/* Made more vertically compact 2026-09-14 per Aaron's direct follow-up
+   ("I would like the cards to be more compact vertically") -- smaller
+   padding, tighter line spacing throughout. */
+.appt-card-compact { flex-direction: column; align-items: stretch; padding: 6px 14px; }
+/* Date/phone/lockbox spread to fill the full width between the
+   availability icon and the ⋮ menu (space-between, not clustered at the
+   left) per Aaron's direct follow-up. Phone made SMALLER, date and
+   lockbox made LARGER, same follow-up ("Make the phone number smaller on
+   the face of the card make the date and lockbox code larger"). */
+.appt-card-compact-line1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 0 26px; }
+.appt-card-compact-date { font-size: 14px; font-weight: 800; color: var(--blue); text-transform: uppercase; }
+.appt-card-compact-phone { font-size: 11px; }
+.appt-card-compact-address { font-weight: 700; color: var(--navy); font-size: 13px; margin-top: 2px; }
+.appt-card-compact-lockbox { font-size: 14px; font-weight: 700; color: var(--gray-text, #6b7280); }
 
 /* Appointments grouped by buyer, added 2026-09-14 per Aaron's direct
    request ("appointments grouped by Buyer. The buyer name can be
