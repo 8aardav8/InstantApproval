@@ -4639,12 +4639,39 @@ function renderBuyerDetail(buyer) {
   SHOWN_AVAILABLE_ADDRESSES = (ALL_LISTINGS || [])
     .filter((l) => !alreadyShown.has(l.address))
     .map((l) => l.address);
-  const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => `
+  // Date(s) shown, added 2026-09-14 per Aaron's direct request ("I would
+  // like to have the dates that it was shown displayed on the Buyer page
+  // right underneath the address") -- lm.shown itself is just a flat list
+  // of addresses with no date of its own (it's added to either by the
+  // manual "Mark shown" control right below, or automatically when an
+  // appointment gets marked Completed -- see markApptShownAndCompleted's
+  // own comment), so the date comes from cross-referencing this buyer's
+  // OWN appointments for that same address with status Completed. An
+  // address can have more than one completed showing (re-shown later), so
+  // every matching date is shown, most recent first; an address added via
+  // the manual control with no matching appointment just shows no date.
+  const shownDatesByAddress = new Map();
+  for (const a of (lm && lm.appointments ? lm.appointments : [])) {
+    if (a.status !== "Completed") continue;
+    if (!shownDatesByAddress.has(a.address)) shownDatesByAddress.set(a.address, []);
+    shownDatesByAddress.get(a.address).push(a.date);
+  }
+  for (const dates of shownDatesByAddress.values()) dates.sort((x, y) => y.localeCompare(x));
+  const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => {
+    const dates = shownDatesByAddress.get(address) || [];
+    const datesHtml = dates.length
+      ? `<div class="shown-property-dates">${dates.map((d) => escapeHtml(formatApptDate(d))).join(", ")}</div>`
+      : "";
+    return `
     <div class="buyer-list-item shown-property-item">
-      <span>${escapeHtml(address)}</span>
+      <div>
+        <span>${escapeHtml(address)}</span>
+        ${datesHtml}
+      </div>
       ${lm && lm.row ? `<button type="button" class="shown-remove-btn" data-row="${lm.row}" data-address="${escapeAttr(address)}">Remove</button>` : ""}
     </div>
-  `).join("");
+  `;
+  }).join("");
   const shownAddHtml = lm && lm.row ? `
     <div class="shown-add-row">
       <div class="autocomplete-wrap">

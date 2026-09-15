@@ -1129,6 +1129,10 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Shown Properties (editable) + its add row, added 2026-09-11 */
 .shown-property-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .shown-remove-btn { flex: 0 0 auto; background: none; border: none; color: #b91c1c; font-size: 12px; cursor: pointer; padding: 2px 6px; }
+/* Date(s) shown, added 2026-09-14 per Aaron's direct request -- right
+   underneath the address, same small gray-text treatment as the rest of
+   this file's secondary detail lines. */
+.shown-property-dates { font-size: 12px; color: var(--gray-text, #6b7280); margin-top: 2px; }
 .shown-add-row { display: flex; gap: 8px; margin-top: 6px; }
 .shown-add-row .autocomplete-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
 .shown-add-row input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; box-sizing: border-box; }
