@@ -4904,11 +4904,25 @@ async function handleQuoMessageWebhook(request, env) {
 // Field-name assumption, flagged rather than silently trusted: the
 // message.received shape (payload.type, data.object.from/text) is confirmed
 // from a real captured payload (see handleQuoMessageWebhook's own comment).
-// call.completed's shape is inferred from the REST /v1/calls response shape
-// (status/direction/participants), NOT yet confirmed from a real delivered
-// webhook -- verify with Quo's "send a test event to a webhook" endpoint
-// right after this deploys, and correct the field paths below if the real
-// payload differs.
+// call.completed's shape was inferred (not confirmed) from the REST
+// /v1/calls response shape for a long time -- explains a real, silent gap
+// found 2026-09-14: despite this webhook running since 2026-09-05, the
+// "Pending Follow-ups" tab had logged zero Missed Call rows ever, only
+// Unreplied Texts, strongly suggesting the direction/status/participants
+// field guesses were simply wrong the whole time. Confirmed live
+// 2026-09-14 (a temporary /internal/raw-calls diagnostic, since removed,
+// fetched a real /calls record) that direction/status/participants/
+// createdAt/phoneNumberId are all real, correctly-named fields on that
+// REST shape -- participants is a 2-element array of E.164 numbers with
+// no separate "the other party" field. This confirms the REST shape, not
+// necessarily that the WEBHOOK payload's data.object matches it
+// field-for-field (message.received's data.object did turn out to match
+// its own REST equivalent, which is the basis for assuming so here too,
+// but a genuinely wrong Missed Call classification going forward would be
+// the sign this assumption still needs correcting for the webhook
+// specifically). The new real-time lastCallAt write just below this
+// comment block only needs participants + createdAt, both used
+// successfully there since this fix.
 async function handleQuoTriageWebhook(request, env) {
   const rawBody = await request.text();
 
@@ -4963,6 +4977,46 @@ async function handleQuoTriageWebhook(request, env) {
     const body = (resource.text || resource.content || resource.body || "").trim().slice(0, 500);
     row = ["Unreplied Text", from, body, "", "Open", resource.phoneNumberId || ""];
   } else if (payload.type === "call.completed") {
+    // Real-time "last called" update, added 2026-09-14 per Aaron's direct
+    // request ("more real-time updates for calls, just like I do with
+    // texts"). This is a FAST PATH alongside the existing slow polling
+    // walk (runCallsSyncTick, admin-buyers-worker.js, ~5h per full cycle
+    // across ~700+ buyers) -- that walk stays as a catch-all backstop
+    // (still useful if this webhook ever misses one), not replaced.
+    // Writes straight into the SAME calls_cache KV entry the slow walk
+    // already produces, same shape ({ [phone]: { lastCallAt } }), so
+    // handleBuyers (the OTHER Worker, admin-buyers-worker.js) picks this
+    // up on its very next request with zero changes needed there.
+    // Confirmed live 2026-09-14 via a real captured /calls record (a
+    // temporary /internal/raw-calls diagnostic, since removed) that
+    // resource.participants is a 2-element array of E.164 numbers -- no
+    // cleaner "the other party" field exists on a call resource -- and
+    // resource.createdAt is the call's own start time. Writes lastCallAt
+    // for BOTH participants rather than trying to guess which one is
+    // "ours": a harmless unused cache entry for one of Aaron's own
+    // business numbers (which has no matching buyer row to ever surface
+    // it) costs nothing, and this avoids needing a maintained list of
+    // every business number this webhook's whole phone-number-ID set
+    // covers. Best-effort -- a KV hiccup here must never block the
+    // missed-call digest logic below.
+    if (Array.isArray(resource.participants) && resource.createdAt) {
+      try {
+        const callsRaw = await env.BUYERS_KV.get("calls_cache");
+        const callsByPhone = callsRaw ? JSON.parse(callsRaw) : {};
+        for (const p of resource.participants) {
+          const phone = toE164((p || "").trim());
+          if (!phone) continue;
+          const existing = callsByPhone[phone];
+          if (!existing || new Date(resource.createdAt) > new Date(existing.lastCallAt)) {
+            callsByPhone[phone] = { lastCallAt: resource.createdAt };
+          }
+        }
+        await env.BUYERS_KV.put("calls_cache", JSON.stringify(callsByPhone));
+      } catch (e) {
+        // Best-effort -- see comment above.
+      }
+    }
+
     const direction = resource.direction;
     const status = resource.status;
     if (direction === "incoming" && status && status !== "completed") {
