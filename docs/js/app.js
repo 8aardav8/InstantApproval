@@ -2974,6 +2974,28 @@ const BUYER_STAGES = [
   "Multiple Showings", "Deposit Received", "Full Down Received", "Buyer", "Multiple Buyer",
 ];
 
+// Auto-advances a buyer's Stage whenever a showing's Outcome becomes
+// "Completed" -- added 2026-09-14 per Aaron's direct request ("advance
+// that person's stage either to first viewing completed or multiple
+// viewings, depending on which stage they were at before"). Anything
+// earlier than "First Showing Done" (including no stage set at all)
+// advances to First Showing Done; already AT First Showing Done advances
+// to Multiple Showings. Deliberately a one-way ratchet, never a
+// downgrade -- confirmed with Aaron directly: "if they already had the
+// multiple showings stage or higher, nothing would be changed." Returns
+// null (no write) for that case, and for a stage BUYER_STAGES doesn't
+// recognize at all (defensive -- treated as "leave it alone" rather than
+// guessed at).
+function stageAfterShowingCompleted(currentStage) {
+  const idx = currentStage ? BUYER_STAGES.indexOf(currentStage) : -1;
+  const firstShowingIdx = BUYER_STAGES.indexOf("First Showing Done");
+  const multipleShowingsIdx = BUYER_STAGES.indexOf("Multiple Showings");
+  if (idx === -1 && currentStage) return null; // an unrecognized stage string -- don't guess
+  if (idx < firstShowingIdx) return "First Showing Done";
+  if (idx === firstShowingIdx) return "Multiple Showings";
+  return null; // already at or past Multiple Showings
+}
+
 // One color per stage, same order as BUYER_STAGES -- a warm-to-cool
 // gradient (orange -> yellow -> green -> purple), added 2026-09-12 per
 // Aaron's direct request. Used for both the progress bar's own fill (each
@@ -3895,6 +3917,21 @@ async function updateAppointment(phone, slot, address, date, status, onDone) {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) { alert(`Couldn't save: ${(data && data.error) || res.status}`); return; }
+    // Auto-advance Stage on a Completed outcome, added 2026-09-14 -- see
+    // stageAfterShowingCompleted's own comment. Deliberately centralized
+    // HERE rather than at each individual caller (the Mark-as-shown
+    // checkbox AND the Outcome dropdown both end up calling this same
+    // function with status: "Completed") -- one place covers both
+    // present callers and any future one, rather than needing this same
+    // three-line check duplicated at every call site. No onDone passed
+    // to setBuyerStage -- this write's own success/failure shouldn't
+    // block or double-render on top of THIS call's own onDone below;
+    // best-effort with its own alert on failure is enough.
+    if (status === "Completed") {
+      const buyer = findBuyer(phone);
+      const nextStage = stageAfterShowingCompleted(buyer ? buyer.stage : "");
+      if (nextStage) await setBuyerStage(phone, nextStage, () => {});
+    }
     if (onDone) onDone();
   } catch (err) {
     alert(`Couldn't save: ${err}`);
