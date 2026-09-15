@@ -3598,13 +3598,16 @@ function renderBuyersList() {
     // absent, per his own follow-up ("If they've never signed in or
     // don't have id, please do not put any icon, just leave the space
     // empty") -- a real behavior change from the version this replaced,
-    // which showed a ❌/⚠️ there instead of leaving it blank.
+    // which showed a ❌/⚠️ there instead of leaving it blank. Calendar
+    // icon dropped to the same rule 2026-09-14 per his further follow-up
+    // ("Calendar should only show if the buyer has a booked appointment")
+    // -- previously always shown regardless of upcomingCount.
     const iconColHtml = `
       <div class="buyer-row-icon-col">
         <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
         <span class="buyer-row-icon-col-item"${hasLoggedIn ? ` title="Has logged in"` : ""}>${hasLoggedIn ? "✅" : ""}</span>
         <span class="buyer-row-icon-col-item"${hasId ? ` title="ID on file"` : ""}>${hasId ? "🪪" : ""}</span>
-        <span class="buyer-row-icon-col-item" title="${upcomingCount > 0 ? `${upcomingCount} showing(s) booked` : "No showings booked"}">📅</span>
+        <span class="buyer-row-icon-col-item"${upcomingCount > 0 ? ` title="${upcomingCount} showing(s) booked"` : ""}>${upcomingCount > 0 ? "📅" : ""}</span>
       </div>
     `;
     // Card thumbnail, added 2026-09-12 per Aaron's direct request -- same
