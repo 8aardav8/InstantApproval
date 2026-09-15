@@ -1046,8 +1046,25 @@ async function handleAdminActivity(request, env) {
       const name = (row[3] || "").trim();
       const idLink = (row[4] || "").trim(); // added 2026-09-12, for the Appointments-tab card thumbnail
       for (let slot = 0; slot < 10; slot++) {
-        const raw = (row[13 + slot] || "").trim();
-        if (!raw) continue;
+        // Real bug fix, 2026-09-14 -- Aaron reported today-dated
+        // appointments showing "NaNd ago" and landing under the wrong
+        // section, plus a real "Couldn't save: date must be YYYY-MM-DD"
+        // error when trying to mark one shown. Root cause: this used to
+        // trim() the WHOLE cell before splitting on " | " -- for a cell
+        // with no status yet (buildAppointmentCell's default), the raw
+        // value ends "...<date> | " (trailing space after the final
+        // pipe); trimming the whole string first strips exactly that
+        // trailing space, so the last " | " separator (which needs a
+        // space on BOTH sides) no longer matches, and the stray "|"
+        // gets absorbed into the date field instead of becoming its own
+        // (empty) status segment -- producing a corrupted date like
+        // "2026-09-14 |" that every date comparison/formatting function
+        // downstream then chokes on. parseAppointmentCell already trims
+        // each SPLIT PART individually, so no outer trim is needed here
+        // at all -- checking `raw.trim()` for blankness (not `raw`
+        // itself) still correctly skips a genuinely empty slot.
+        const raw = row[13 + slot] || "";
+        if (!raw.trim()) continue;
         // parseAppointmentCell (defined below, near
         // readAppointmentRawCells) now also returns a third field,
         // status, added 2026-09-15 per Aaron's direct request ("click to
@@ -4000,7 +4017,14 @@ async function readAppointmentRawCells(accessToken, row) {
   const data = await res.json();
   const cells = (data.values && data.values[0]) || [];
   const out = [];
-  for (let i = 0; i < APPOINTMENT_SLOT_COUNT; i++) out.push((cells[i] || "").trim());
+  // Deliberately NOT trimmed here -- see the matching fix/comment in
+  // handleAdminActivity (job 6, above) for why trimming a whole
+  // "<address> | <date> | <status>" cell before it reaches
+  // parseAppointmentCell corrupts the date whenever status is blank
+  // (the common case). parseAppointmentCell trims each split part on
+  // its own; an empty cell here is still just "" either way, so no
+  // caller needs to change how it checks for a blank slot.
+  for (let i = 0; i < APPOINTMENT_SLOT_COUNT; i++) out.push(cells[i] || "");
   return out;
 }
 
@@ -4155,7 +4179,12 @@ async function handleCancelAppointment(request, env) {
     });
     if (!getRes.ok) throw new Error(`cancel read failed: ${await getRes.text()}`);
     const getData = await getRes.json();
-    const raw = ((getData.values && getData.values[0] && getData.values[0][0]) || "").trim();
+    // Deliberately NOT trimmed here -- same real bug/fix as
+    // handleAdminActivity/readAppointmentRawCells above: trimming the
+    // whole cell before parseAppointmentCell splits it corrupts the
+    // date whenever status is blank. An empty cell is still "" either
+    // way, so the `!existing` check just below is unaffected.
+    const raw = (getData.values && getData.values[0] && getData.values[0][0]) || "";
     const existing = parseAppointmentCell(raw, slot);
     if (!existing) return jsonResponse({ error: "that slot is empty -- nothing to cancel" }, 404);
     const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
@@ -4197,7 +4226,12 @@ async function handleUpdateAppointmentDate(request, env) {
     const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!getRes.ok) throw new Error(`slot read failed: ${await getRes.text()}`);
     const getData = await getRes.json();
-    const raw = ((getData.values && getData.values[0] && getData.values[0][0]) || "").trim();
+    // Deliberately NOT trimmed here -- same real bug/fix as
+    // handleAdminActivity/readAppointmentRawCells above: trimming the
+    // whole cell before parseAppointmentCell splits it corrupts the
+    // date whenever status is blank. An empty cell is still "" either
+    // way, so the `!existing` check just below is unaffected.
+    const raw = (getData.values && getData.values[0] && getData.values[0][0]) || "";
     const existing = parseAppointmentCell(raw, slot);
     if (!existing) return jsonResponse({ error: "that slot is empty -- nothing to reschedule" }, 404);
     const putUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
