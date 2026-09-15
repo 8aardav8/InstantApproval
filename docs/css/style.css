@@ -795,14 +795,21 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    card. 4 rows. Three dot, login, id, calendar icons from top to
    bottom") -- spans the card's full height, absolutely positioned along
    the right edge (the rest of the card's own padding-right above makes
-   room for it), same column on both Compact and Detailed cards. The four
-   rows space out evenly regardless of the card's actual height. */
+   room for it), same column on both Compact and Detailed cards.
+   space-between (not space-evenly), per Aaron's direct follow-up ("the
+   three dot menu is always at the top right, and if there is a calendar,
+   it's always the bottom right") -- flushes the first slot (⋮) to the
+   very top and the last slot (calendar) to the very bottom, with the two
+   middle slots spaced between them; all four slots always render as real
+   elements (see iconColHtml in app.js) even when a middle one has no
+   icon to show, so the ⋮/calendar positions never shift based on whether
+   login/ID have anything to display. */
 .buyer-row-icon-col {
   position: absolute; top: 0; right: 0; bottom: 0; width: 34px; z-index: 2;
-  display: flex; flex-direction: column; align-items: center; justify-content: space-evenly;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
   padding: 6px 0; border-left: 1px solid #f3f4f6;
 }
-.buyer-row-icon-col-item { font-size: 15px; line-height: 1; }
+.buyer-row-icon-col-item { font-size: 15px; line-height: 1; min-height: 1em; }
 
 /* Card options (⋮) button + its popup menu -- the button now lives INSIDE
    .buyer-row-icon-col above (its own top row) instead of being

@@ -3586,18 +3586,24 @@ function renderBuyersList() {
     // card. 4 rows. Three dot, login, id, calendar icons from top to
     // bottom") -- shared between both card types, spans the card's full
     // height. The ⋮ menu button moves IN here (was its own independently
-    // absolutely-positioned top-right button before) as the top row;
-    // login/ID/calendar are simple status icons, not full at-a-glance
-    // badges like the old .buyer-row-badges/.buyer-row-compact-icons --
-    // no numeric count on the calendar icon, no "off" state rendered
-    // dimmed-but-present (a genuinely absent signal just shows the
-    // negative icon, same convention the appointment cards already use
-    // for ID-on-file/warning).
+    // absolutely-positioned top-right button before) as the top row.
+    // Fixed 4-slot layout, per Aaron's direct follow-up ("Space out the
+    // icon so the three dot menu is always at the top right, and if
+    // there is a calendar, it's always the bottom right") -- ALL FOUR
+    // slots always render as real DOM elements (space-between in the
+    // CSS), even when a slot has nothing to show, so the ⋮ button and
+    // calendar icon stay pinned to the column's own top/bottom regardless
+    // of whether the two middle slots are empty. Login/ID slots render
+    // NO icon at all (not a negative/warning icon) when the signal is
+    // absent, per his own follow-up ("If they've never signed in or
+    // don't have id, please do not put any icon, just leave the space
+    // empty") -- a real behavior change from the version this replaced,
+    // which showed a ❌/⚠️ there instead of leaving it blank.
     const iconColHtml = `
       <div class="buyer-row-icon-col">
         <button type="button" class="buyer-row-menu-btn" data-phone="${escapeAttr(b.phone)}" aria-label="Card options" title="Card options">&#8942;</button>
-        <span class="buyer-row-icon-col-item" title="${hasLoggedIn ? "Has logged in" : "Never logged in"}">${hasLoggedIn ? "✅" : "❌"}</span>
-        <span class="buyer-row-icon-col-item" title="${hasId ? "ID on file" : "No ID on file"}">${hasId ? "🪪" : "⚠️"}</span>
+        <span class="buyer-row-icon-col-item"${hasLoggedIn ? ` title="Has logged in"` : ""}>${hasLoggedIn ? "✅" : ""}</span>
+        <span class="buyer-row-icon-col-item"${hasId ? ` title="ID on file"` : ""}>${hasId ? "🪪" : ""}</span>
         <span class="buyer-row-icon-col-item" title="${upcomingCount > 0 ? `${upcomingCount} showing(s) booked` : "No showings booked"}">📅</span>
       </div>
     `;
