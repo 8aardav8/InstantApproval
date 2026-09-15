@@ -4631,17 +4631,16 @@ function renderBuyerDetail(buyer) {
     </div>
   ` : "";
 
-  const favoritesHtml = lm && lm.favorites && lm.favorites.length
-    ? `<div class="buyer-section"><h3>Favorited Properties (${lm.favorites.length})</h3>${lm.favorites.map((f) => `<div class="buyer-list-item">${escapeHtml(f)} ${listingAvailabilityBadgeHtml(f)}</div>`).join("")}</div>`
-    : "";
-
-  // Viewed Properties -- passive, every detail page this buyer opened on
-  // the site (see recordViewed() in showDetail()). Read-only here, same
-  // as Favorites/Appointments -- this is the buyer's own browsing
-  // activity, not something Aaron edits.
-  const viewedHtml = lm && lm.viewed && lm.viewed.length
-    ? `<div class="buyer-section"><h3>Viewed Properties (${lm.viewed.length})</h3>${lm.viewed.map((v) => `<div class="buyer-list-item">${escapeHtml(v)}</div>`).join("")}</div>`
-    : "";
+  // Viewed Properties -- REMOVED from display 2026-09-14 per Aaron's
+  // direct request, after confirming what it actually was: a passive log
+  // of every listing detail page this buyer clicked into on the site (see
+  // recordViewed() in showDetail()), not an in-person showing -- distinct
+  // from Shown/Scheduled/Past below. His own framing ("I'm not sure if
+  // that's really useful anymore") plus the assessment that it rarely
+  // gets acted on and just adds scroll length. recordViewed() itself is
+  // UNCHANGED -- still recording lm.viewed every time -- this only stops
+  // rendering it here, so bringing it back is a one-line revert if ever
+  // wanted, no data ever stops being collected.
 
   // Shown Properties -- Aaron's own admin-side record of what he's
   // personally shown/let this buyer into, added 2026-09-11 per his direct
@@ -4713,7 +4712,15 @@ function renderBuyerDetail(buyer) {
   // stopPropagation on every one of their own click targets (see
   // wireAppointmentManageControls), so nesting this new click handler
   // around them is safe -- clicking Reschedule etc. won't ALSO navigate.
-  const apptItem = (a, showAvailability, linkToAppointment) => `<div class="buyer-list-item${linkToAppointment ? " buyer-appt-item-clickable" : ""}"${linkToAppointment ? ` data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" role="button" tabindex="0"` : ""}>${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}${appointmentManageControlsHtml({ ...a, phone: buyer.phone })}</div>`;
+  // Switched from always-visible appointmentManageControlsHtml to the
+  // same card-options (⋮) menu the Appointments tab's own cards use --
+  // added 2026-09-14 per Aaron's direct request to compact this whole
+  // section ("taking up less space on that page"). apptRowMenuBtnHtml
+  // itself is unchanged (position:absolute by default, for a real
+  // appt-card) -- .buyer-list-item .appt-row-menu-btn in style.css
+  // overrides that to sit inline at the end of this flat row instead;
+  // same class, same delegation, same popup either way.
+  const apptItem = (a, showAvailability, linkToAppointment) => `<div class="buyer-list-item buyer-list-item-row${linkToAppointment ? " buyer-appt-item-clickable" : ""}"${linkToAppointment ? ` data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" role="button" tabindex="0"` : ""}><span>📅 ${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}</span>${apptRowMenuBtnHtml({ ...a, phone: buyer.phone }, true)}</div>`;
   // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
   // an appointment for a buyer for a property from their Buyer page
   // myself"). Same autocomplete pattern as Shown Properties above, but
@@ -4741,9 +4748,28 @@ function renderBuyerDetail(buyer) {
     </div>
   ` : "";
 
-  const scheduledHtml = scheduledAppts.length
-    ? `<div class="buyer-section"><h3>Scheduled Showings (${scheduledAppts.length})</h3>${scheduledAppts.map((a) => apptItem(a, true, true)).join("")}</div>`
+  // Favorited + Scheduled combined into ONE list, added 2026-09-14 per
+  // Aaron's direct request ("combine that into one list with a heart icon
+  // next to favored and a calendar icon next to scheduled properties...
+  // taking up less space"). Deduped by address -- a property that's both
+  // favorited AND scheduled shows once, as scheduled (📅), same
+  // "scheduled wins over favorited" precedent already established server-
+  // side for the exact same pairing (admin-buyers-worker.js's own
+  // relationship-building comment: "'scheduled' already present for this
+  // pair wins -- don't downgrade to 'favorited'"). Past Showings stays
+  // its OWN separate list below, not folded in here -- a completed
+  // viewing is a different fact than "still interested/booked."
+  const favScheduledMap = new Map();
+  if (lm && lm.favorites) for (const address of lm.favorites) favScheduledMap.set(address, { type: "favorited", address });
+  for (const a of scheduledAppts) favScheduledMap.set(a.address, { type: "scheduled", address: a.address, appt: a }); // scheduled overwrites a favorited entry for the same address
+  const favScheduledItems = [...favScheduledMap.values()];
+  const favScheduledItemHtml = (item) => item.type === "scheduled"
+    ? apptItem(item.appt, true, true)
+    : `<div class="buyer-list-item buyer-list-item-row">❤️ ${escapeHtml(item.address)} ${listingAvailabilityBadgeHtml(item.address)}</div>`;
+  const favScheduledHtml = favScheduledItems.length
+    ? `<div class="buyer-section"><h3>Favorited &amp; Scheduled (${favScheduledItems.length})</h3>${favScheduledItems.map(favScheduledItemHtml).join("")}</div>`
     : "";
+
   const pastHtml = pastAppts.length
     ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map((a) => apptItem(a, false, false)).join("")}</div>`
     : "";
@@ -4761,9 +4787,19 @@ function renderBuyerDetail(buyer) {
   // Aaron's same-day follow-up ("When I click on each existing co-buyer
   // in a Buyer page it'll go straight to that buyer's page").
   const coBuyerSlots = (lm && lm.coBuyers && lm.coBuyers.length === 2) ? lm.coBuyers : [{ slot: 1, empty: true }, { slot: 2, empty: true }];
+  // Wrapped in a native <details>/<summary> accordion, added 2026-09-14
+  // per Aaron's direct request ("the co-buyers would be inside an
+  // accordion to take up less space") -- collapsed by default, no JS
+  // needed to toggle it (native element), and doesn't interfere with the
+  // per-slot search/change/remove interactions inside, which only ever
+  // depend on their OWN local visibility state, not this outer one.
+  // populatedCoBuyerCount shown in the summary so it's visible at a
+  // glance even collapsed (e.g. "Co-Buyers (1)"), same "count in the
+  // heading" convention every other section on this page already uses.
+  const populatedCoBuyerCount = coBuyerSlots.filter((c) => !c.empty).length;
   const coBuyersHtml = `
-    <div class="buyer-section buyer-cobuyers-section">
-      <h3>Co-Buyers</h3>
+    <details class="buyer-section buyer-cobuyers-section">
+      <summary>Co-Buyers${populatedCoBuyerCount ? ` (${populatedCoBuyerCount})` : ""}</summary>
       ${coBuyerSlots.map((c) => {
         if (c.empty) {
           return `
@@ -4792,7 +4828,7 @@ function renderBuyerDetail(buyer) {
             </div>
           </div>`;
       }).join("")}
-    </div>
+    </details>
   `;
 
   const filtersHtml = lm && lm.filters && (lm.filters.maxDown || lm.filters.maxMonthly || lm.filters.minBeds || lm.filters.areas)
@@ -4928,12 +4964,10 @@ function renderBuyerDetail(buyer) {
     ${areasBlockHtml}
     ${factsHtml}
     ${leadInfoHtml}
-    ${favoritesHtml}
-    ${viewedHtml}
+    ${favScheduledHtml}
+    ${pastHtml}
     ${shownHtml}
     ${scheduleApptHtml}
-    ${scheduledHtml}
-    ${pastHtml}
     ${coBuyersHtml}
     ${filtersHtml}
   `;
@@ -5048,14 +5082,14 @@ function renderBuyerDetail(buyer) {
   const nextBtn = container.querySelector("#buyer-nav-next");
   if (nextBtn) nextBtn.addEventListener("click", () => showAdjacentBuyer(1));
 
-  // Reschedule/Cancel/Outcome controls on Scheduled/Past Showings, added
-  // 2026-09-15 per Aaron's direct request -- same shared helper/wiring
-  // the Appointments-tab cards use. onDone refetches BUYERS_CACHE first
-  // (loadBuyers()) -- added 2026-09-14, same real bug/fix as
-  // refreshAppointmentsAndRerender on the Appointments tab: a write here
-  // succeeded server-side but the page kept showing pre-write data, since
-  // a bare re-render just redraws whatever's already cached client-side.
-  wireAppointmentManageControls(container, async () => { await loadBuyers(); renderBuyerDetail(findBuyer(buyer.phone)); });
+  // Reschedule/Cancel/Outcome controls on Favorited & Scheduled/Past
+  // Showings no longer render inline in `container` at all (moved into
+  // the shared card-options popup, 2026-09-14 -- see apptRowMenuBtnHtml/
+  // openApptRowMenu) -- refreshAfterApptAction (defined alongside those)
+  // is context-aware and re-renders THIS page correctly when the popup's
+  // action is triggered from here, so no separate wiring call is needed
+  // on `container` itself anymore; a stale wireAppointmentManageControls
+  // call here would just be a no-op (nothing left inline to find).
 
   // Scheduled Showing -> its own card on the Appointments tab, added
   // 2026-09-16 per Aaron's direct request. Manage-controls clicks inside
@@ -6243,10 +6277,9 @@ function openApptRowMenu(btn, a, showMarkShown) {
   const markBtn = popup.querySelector(".appt-menu-mark-shown-btn");
   if (markBtn) markBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
-    closeApptRowMenu();
-    await markApptShownAndCompleted({ row: a.row, slot: a.slot, address: a.address, date: a.date, phone: a.phone });
+    await markApptShownAndCompleted({ row: a.row, slot: a.slot, address: a.address, date: a.date, phone: a.phone }, refreshAfterApptAction);
   });
-  wireAppointmentManageControls(popup, async () => { closeApptRowMenu(); await refreshAppointmentsAndRerender(); });
+  wireAppointmentManageControls(popup, refreshAfterApptAction);
 }
 function initApptRowMenuDelegation() {
   // Capture phase on document -- same real gotcha as
@@ -6542,11 +6575,35 @@ function renderAppointmentsOverview() {
   }
 }
 
+// Card-options menu popup is shared across two different pages (the
+// Appointments tab's own cards, and the Buyer detail page's Favorited &
+// Scheduled/Past lists, both added/moved here 2026-09-14) -- this picks
+// the right refresh+re-render for whichever one is ACTUALLY visible right
+// now, so an action taken from the buyer page doesn't leave that page
+// showing stale data while refreshing a hidden Appointments tab instead
+// (or vice versa). Buyer detail view visibility is the deciding check
+// since it's the more specific/nested context.
+async function refreshAfterApptAction() {
+  closeApptRowMenu();
+  const buyersDetailView = document.getElementById("buyers-detail-view");
+  if (CURRENT_BUYER_DETAIL_PHONE && buyersDetailView && !buyersDetailView.classList.contains("hidden")) {
+    await loadBuyers();
+    const buyer = findBuyer(CURRENT_BUYER_DETAIL_PHONE);
+    if (buyer) renderBuyerDetail(buyer);
+  } else {
+    await refreshAppointmentsAndRerender();
+  }
+}
+
 // Shared by both the old inline checkbox (retired 2026-09-14, see the
 // card-menu comment below) and the new "Mark as shown" menu item --
 // pulled into its own function so the popup menu can call it directly
 // without needing a live checkbox element to read dataset attrs off of.
-async function markApptShownAndCompleted({ row, slot, address, date, phone }) {
+// onDone left to the caller (added 2026-09-14, alongside
+// refreshAfterApptAction above) rather than hardcoded here, since this is
+// now called from two different page contexts that need different
+// refreshes.
+async function markApptShownAndCompleted({ row, slot, address, date, phone }, onDone) {
   // Real bug fix, 2026-09-14 -- Aaron reported clicking this not advancing
   // Stage even though the appointment status write itself succeeded. Root
   // cause: markShown and updateAppointment used to fire CONCURRENTLY, each
@@ -6561,7 +6618,7 @@ async function markApptShownAndCompleted({ row, slot, address, date, phone }) {
   // just the general Shown Properties ledger) -- added 2026-09-15, so it
   // reads consistently with the Reschedule/Cancel/Outcome controls.
   if (slot) await updateAppointment(phone, slot, address, date, "Completed", () => {});
-  await refreshAppointmentsAndRerender();
+  if (onDone) await onDone();
 }
 
 // Real bug fix, 2026-09-14 -- Aaron reported that checking "Mark as shown"

@@ -1089,6 +1089,22 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 .buyer-section { margin-top: 20px; }
 .buyer-section h3 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--navy); margin: 0 0 8px; }
+/* Co-Buyers accordion, added 2026-09-14 per Aaron's direct request --
+   native <details>/<summary>, matches the same heading look as every
+   other .buyer-section's <h3> above (font-size/weight/case/color) so it
+   reads as the same kind of section header, just clickable/collapsible. */
+.buyer-cobuyers-section summary {
+  font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--navy); cursor: pointer; list-style: revert;
+}
+.buyer-cobuyers-section[open] summary { margin-bottom: 8px; }
+/* Row layout for the compacted Favorited/Scheduled/Past list items, added
+   2026-09-14 -- icon+text on the left, the card-options (⋮) menu button
+   (see .appt-row-menu-btn's own override just below) sitting inline at
+   the end on the right. */
+.buyer-list-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.buyer-list-item .appt-row-menu-btn { position: static; flex: 0 0 auto; background: transparent; }
+.buyer-list-item .appt-row-menu-btn:hover { background: #e5e7eb; }
 .buyer-list-item { padding: 8px 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
 /* Scheduled Showing -> its own Appointments-tab card, added 2026-09-16.
    Past Showings stay plain .buyer-list-item, no hover/cursor. */
