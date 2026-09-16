@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T19:04:20.596058+00:00",
+  "generatedAt": "2026-09-16T19:04:50.171631+00:00",
   "listings": [
     {
       "id": "2055-n-church-st-decatur-il-62526",
@@ -7,12 +7,12 @@
       "onMarketDate": "9/16",
       "lastUpdate": "9/16",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$2,000",
+      "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/15F85OBQtOZ_6RS1n6jH5jCaaru7jUphp?usp=drive_link",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "726",
       "status": "Available",
       "livability": 0,
       "lat": 39.8630818,
