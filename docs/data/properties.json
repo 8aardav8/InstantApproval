@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T18:59:07.342965+00:00",
+  "generatedAt": "2026-09-16T18:59:33.050025+00:00",
   "listings": [
     {
       "id": "1435-north-woodford-street-decatur-il-62-526",
@@ -7,12 +7,12 @@
       "onMarketDate": "9/15",
       "lastUpdate": "9/15",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$2,000",
+      "monthly": "$700",
       "picsLink": ": https://drive.google.com/drive/folders/1XyqlTbBPT5IzeMPNFwcw-NR5WGtW_FuJ?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "884",
       "status": "Available",
       "livability": 0,
       "lat": 39.8569816,
