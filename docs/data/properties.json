@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T17:14:52.279554+00:00",
+  "generatedAt": "2026-09-16T17:20:28.527478+00:00",
   "listings": [
     {
       "id": "15871-fairmount-drive-detroit-mi-48205",
@@ -510,23 +510,6 @@
       "livability": 0,
       "lat": 39.8559323,
       "lng": -88.9654707
-    },
-    {
-      "id": "1510-23rd-st-granite-city-il-62040",
-      "address": "1510 23rd St Granite City IL 62040",
-      "onMarketDate": "8/29",
-      "lastUpdate": "8/29",
-      "area": "IL - East St Louis",
-      "down": "$3,000",
-      "monthly": "$1,250",
-      "picsLink": "https://photos.app.goo.gl/wRcKt4sEFZeBWRWe7",
-      "beds": "3",
-      "baths": "1",
-      "sqft": "",
-      "status": "Available",
-      "livability": 3,
-      "lat": 38.7045757,
-      "lng": -90.14095909999999
     },
     {
       "id": "2410-n-ellis-st-peoria-il-61604",
