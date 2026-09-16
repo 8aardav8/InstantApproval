@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T18:00:06.084269+00:00",
+  "generatedAt": "2026-09-16T18:00:38.823507+00:00",
   "listings": [
     {
       "id": "807-w-illinois-st-oblong-il-62449",
@@ -396,7 +396,7 @@
       "id": "1223-s-harrison-st-saginaw-mi-48-602",
       "address": "1223 S. Harrison St. Saginaw MI 48,602",
       "onMarketDate": "9/3",
-      "lastUpdate": "9/3",
+      "lastUpdate": "9/15",
       "area": "MI",
       "down": "$2,500",
       "monthly": "$1,070",
@@ -404,7 +404,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1326",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 43.41129979999999,
       "lng": -83.97566719999999
