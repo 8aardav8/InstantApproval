@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-16T17:57:03.620332+00:00",
+  "generatedAt": "2026-09-16T17:57:19.641888+00:00",
   "listings": [
+    {
+      "id": "4103-beachwood-ave-st-louis-mo-63121",
+      "address": "4103 Beachwood Ave St. Louis MO 63121",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.69667889999999,
+      "lng": -90.27616599999999
+    },
     {
       "id": "2317-n-fulton-ave-evansville-in-47710",
       "address": "2317 N Fulton Ave, Evansville, IN 47710",
