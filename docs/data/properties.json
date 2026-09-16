@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T18:55:54.990121+00:00",
+  "generatedAt": "2026-09-16T18:57:02.735705+00:00",
   "listings": [
     {
       "id": "807-w-illinois-st-oblong-il-62449",
@@ -5840,7 +5840,7 @@
       "area": "IL - Decatur",
       "down": "$2,200",
       "monthly": "$850",
-      "picsLink": "https://drive.google.com/drive/folders/1o3GCw_SRyggVIpZRelsQPh2hfDAMx8-p?usp=drive_link",
+      "picsLink": "https://drive.google.com/drive/folders/1o3GCw_SRyggVIpZRelsQPh2hfDAMx8-p?usp=drive_",
       "beds": "3",
       "baths": "1",
       "sqft": "871",
@@ -13103,7 +13103,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "804",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.855794,
       "lng": -88.9487888
