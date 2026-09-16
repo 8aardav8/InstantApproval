@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-16T17:50:08.134454+00:00",
+  "generatedAt": "2026-09-16T17:50:39.787356+00:00",
   "listings": [
+    {
+      "id": "2317-n-fulton-ave-evansville-in-47710",
+      "address": "2317 N Fulton Ave, Evansville, IN 47710",
+      "onMarketDate": "9/15",
+      "lastUpdate": "9/15",
+      "area": "IN",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=8e2630e2de6dea65d128745e1392876f",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.9993395,
+      "lng": -87.5805249
+    },
     {
       "id": "2128-fordney-st-saginaw-mi-48-601",
       "address": "2128 Fordney St, Saginaw MI 48,601",
