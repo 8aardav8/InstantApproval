@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T15:06:03.000678+00:00",
+  "generatedAt": "2026-09-16T17:14:09.069219+00:00",
   "listings": [
     {
       "id": "15871-fairmount-drive-detroit-mi-48205",
@@ -634,7 +634,7 @@
       "id": "5364-bermuda-dr-st-louis-mo-63121",
       "address": "5364 Bermuda Dr, St. Louis, MO 63121",
       "onMarketDate": "8/26",
-      "lastUpdate": "8/31",
+      "lastUpdate": "9/15",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$695",
@@ -642,7 +642,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.71895740000001,
       "lng": -90.29509569999999
