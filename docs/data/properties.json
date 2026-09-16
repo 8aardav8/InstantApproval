@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T17:50:39.787356+00:00",
+  "generatedAt": "2026-09-16T17:51:14.099976+00:00",
   "listings": [
     {
       "id": "2317-n-fulton-ave-evansville-in-47710",
@@ -7,11 +7,11 @@
       "onMarketDate": "9/15",
       "lastUpdate": "9/15",
       "area": "IN",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$899",
       "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=8e2630e2de6dea65d128745e1392876f",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
