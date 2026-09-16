@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-16T19:03:50.661409+00:00",
+  "generatedAt": "2026-09-16T19:04:20.596058+00:00",
   "listings": [
+    {
+      "id": "2055-n-church-st-decatur-il-62526",
+      "address": "2055 N Church St Decatur IL 62526",
+      "onMarketDate": "9/16",
+      "lastUpdate": "9/16",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/15F85OBQtOZ_6RS1n6jH5jCaaru7jUphp?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8630818,
+      "lng": -88.9579861
+    },
     {
       "id": "1435-north-woodford-street-decatur-il-62-526",
       "address": "1435 North Woodford Street Decatur, IL 62,526",
