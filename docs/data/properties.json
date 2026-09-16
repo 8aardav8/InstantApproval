@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-16T18:58:18.362231+00:00",
+  "generatedAt": "2026-09-16T18:59:07.342965+00:00",
   "listings": [
+    {
+      "id": "1435-north-woodford-street-decatur-il-62-526",
+      "address": "1435 North Woodford Street Decatur, IL 62,526",
+      "onMarketDate": "9/15",
+      "lastUpdate": "9/15",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": ": https://drive.google.com/drive/folders/1XyqlTbBPT5IzeMPNFwcw-NR5WGtW_FuJ?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8569816,
+      "lng": -88.9364157
+    },
     {
       "id": "807-w-illinois-st-oblong-il-62449",
       "address": "807 W Illinois St, Oblong IL 62449",
