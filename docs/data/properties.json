@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T17:57:49.979500+00:00",
+  "generatedAt": "2026-09-16T17:58:08.210626+00:00",
   "listings": [
     {
       "id": "4103-beachwood-ave-st-louis-mo-63121",
@@ -10,8 +10,8 @@
       "down": "$2,000",
       "monthly": "$833",
       "picsLink": "https://drive.google.com/drive/folders/162nKUJu0FfSNSyvu65heV93P8Xafp1gK?usp=sharing,https://drive.google.com/drive/folders/1-L0HbvBwb7euvDEX6bTX4y5fUgkE4nmm?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
