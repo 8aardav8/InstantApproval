@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-09-16T17:28:39.858684+00:00",
+  "generatedAt": "2026-09-16T17:29:00.878520+00:00",
   "listings": [
     {
       "id": "2128-fordney-st-saginaw-mi-48-601",
       "address": "2128 Fordney St, Saginaw MI 48,601",
-      "onMarketDate": "",
-      "lastUpdate": "",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "onMarketDate": "9/15",
+      "lastUpdate": "9/15",
+      "area": "MI",
+      "down": "$5,000",
+      "monthly": "$1,299",
       "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=738c0a0cff96aba973c9603f448f9ac9",
       "beds": "",
       "baths": "",
