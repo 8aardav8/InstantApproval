@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T17:29:00.878520+00:00",
+  "generatedAt": "2026-09-16T17:33:49.504733+00:00",
   "listings": [
     {
       "id": "2128-fordney-st-saginaw-mi-48-601",
@@ -10,8 +10,8 @@
       "down": "$5,000",
       "monthly": "$1,299",
       "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=738c0a0cff96aba973c9603f448f9ac9",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
