@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-16T17:28:22.135480+00:00",
+  "generatedAt": "2026-09-16T17:28:39.858684+00:00",
   "listings": [
+    {
+      "id": "2128-fordney-st-saginaw-mi-48-601",
+      "address": "2128 Fordney St, Saginaw MI 48,601",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=738c0a0cff96aba973c9603f448f9ac9",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.4068607,
+      "lng": -83.9612247
+    },
     {
       "id": "15871-fairmount-drive-detroit-mi-48205",
       "address": "15871 Fairmount Drive Detroit MI 48205",
