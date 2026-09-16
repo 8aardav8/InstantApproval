@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T17:14:09.069219+00:00",
+  "generatedAt": "2026-09-16T17:14:52.279554+00:00",
   "listings": [
     {
       "id": "15871-fairmount-drive-detroit-mi-48205",
@@ -532,7 +532,7 @@
       "id": "2410-n-ellis-st-peoria-il-61604",
       "address": "2410 N Ellis St, Peoria, IL 61604",
       "onMarketDate": "8/29",
-      "lastUpdate": "9/10",
+      "lastUpdate": "9/15",
       "area": "IL - Peoria",
       "down": "$2,500",
       "monthly": "$890",
@@ -10613,7 +10613,7 @@
       "id": "5124-northland-ave-st-louis-mo-63113",
       "address": "5124 Northland Ave, St. Louis, MO 63113",
       "onMarketDate": "3/19/2026",
-      "lastUpdate": "9/8/2026",
+      "lastUpdate": "9/15/2026",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$975",
@@ -10621,7 +10621,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "2500",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6700794,
       "lng": -90.2604142
