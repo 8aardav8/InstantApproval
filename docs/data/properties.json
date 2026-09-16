@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-16T17:58:49.730098+00:00",
+  "generatedAt": "2026-09-16T17:59:28.649270+00:00",
   "listings": [
+    {
+      "id": "807-w-illinois-st-oblong-il-62449",
+      "address": "807 W Illinois St, Oblong IL 62449",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://dashboard.resimpli.com/public/files?type=folder&itemId=d3082bfbba33de525493d886564e23db",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.0029093,
+      "lng": -87.917425
+    },
     {
       "id": "4103-beachwood-ave-st-louis-mo-63121",
       "address": "4103 Beachwood Ave St. Louis MO 63121",
