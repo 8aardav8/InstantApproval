@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T19:18:27.391750+00:00",
+  "generatedAt": "2026-09-17T19:20:12.867283+00:00",
   "listings": [
     {
       "id": "1204-n-jordan-st-decatur-il-62521",
@@ -10,8 +10,8 @@
       "down": "$2,500",
       "monthly": "$895",
       "picsLink": "https://drive.google.com/drive/folders/1E9gTCvtvgnKQl5_8ZmQWCMfTnVIcPT9W?usp=share_link",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
