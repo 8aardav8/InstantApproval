@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T19:10:55.133420+00:00",
+  "generatedAt": "2026-09-17T19:11:47.475784+00:00",
   "listings": [
     {
       "id": "1127-n-45th-st-east-st-louis-il-62204",
@@ -10,8 +10,8 @@
       "down": "$2,500",
       "monthly": "$950",
       "picsLink": "https://drive.google.com/drive/folders/1TnMt_NP9u5JNwIwCmCfDkZzzt-W2WyNJ?usp=share_link",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
