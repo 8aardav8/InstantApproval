@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T18:45:07.250181+00:00",
+  "generatedAt": "2026-09-17T18:45:59.852511+00:00",
   "listings": [
     {
       "id": "2055-n-church-st-decatur-il-62526",
@@ -27579,7 +27579,7 @@
       "id": "512-fairholm-ave-peoria-il-61603",
       "address": "512 Fairholm Ave, Peoria, IL 61603",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/11/2026",
+      "lastUpdate": "9/16/2026",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$795",
@@ -27587,7 +27587,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1400",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.71652599999999,
       "lng": -89.56179639999999
