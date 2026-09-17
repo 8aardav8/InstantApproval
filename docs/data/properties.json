@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T19:00:32.137788+00:00",
+  "generatedAt": "2026-09-17T19:00:51.685862+00:00",
   "listings": [
     {
       "id": "5275-alcott-ave-st-louis-mo-63120",
@@ -10,8 +10,8 @@
       "down": "$1,500",
       "monthly": "$775",
       "picsLink": "",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
