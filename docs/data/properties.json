@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:22:07.180198+00:00",
+  "generatedAt": "2026-09-17T17:06:00.370389+00:00",
   "listings": [
     {
       "id": "2055-n-church-st-decatur-il-62526",
@@ -342,6 +342,23 @@
       "lng": -89.6259517
     },
     {
+      "id": "973-parkwood-court-montgomery-al-36109",
+      "address": "973 Parkwood Court Montgomery AL 36109",
+      "onMarketDate": "9/7",
+      "lastUpdate": "9/10",
+      "area": "AL",
+      "down": "$7,000",
+      "monthly": "$1,101",
+      "picsLink": "https://1drv.ms/f/c/70878C0518BFE0B6/IgC24L8YBYyHIIBwno4BAAAAAfP2LzMZQhAlrbowIIDevDs?e=MWrRGB",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1827",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 32.400707,
+      "lng": -86.26511339999999
+    },
+    {
       "id": "503-e-poplar-st-west-frankfort-il-62896",
       "address": "503 E Poplar St West Frankfort IL 62896",
       "onMarketDate": "9/6",
@@ -612,6 +629,23 @@
       "livability": 0,
       "lat": 39.8559323,
       "lng": -88.9654707
+    },
+    {
+      "id": "1510-23rd-st-granite-city-il-62040",
+      "address": "1510 23rd St Granite City IL 62040",
+      "onMarketDate": "8/29",
+      "lastUpdate": "9/15",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$1,250",
+      "picsLink": "https://photos.app.goo.gl/wRcKt4sEFZeBWRWe7",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.7045757,
+      "lng": -90.14095909999999
     },
     {
       "id": "2410-n-ellis-st-peoria-il-61604",
@@ -982,7 +1016,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1338",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 2,
       "lat": 38.598555,
       "lng": -90.0897786
@@ -1821,6 +1855,57 @@
       "lng": -88.946153
     },
     {
+      "id": "1337-walton-ave-st-louis-mo-63113",
+      "address": "1337 Walton Ave St. Louis MO 63113",
+      "onMarketDate": "3/8/2026",
+      "lastUpdate": "7/23/2026",
+      "area": "MO - St. Louis",
+      "down": "$2,500",
+      "monthly": "$695",
+      "picsLink": "https://www.dropbox.com/scl/fo/vtbgr2d18uecgydgefjbc/AMxZePhzg2KQaidpZepwrzE?rlkey=oj1uyg4m8njvux9aj9ktog0qe&st=8d71378y&dl=0",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1493",
+      "status": "Off Market",
+      "livability": 2,
+      "lat": 38.659794,
+      "lng": -90.25636709999999
+    },
+    {
+      "id": "5417-ruskin-ave-st-louis-mo-63115",
+      "address": "5417 Ruskin Ave St. Louis MO 63115",
+      "onMarketDate": "3/8/2026",
+      "lastUpdate": "7/23/2026",
+      "area": "MO - St. Louis",
+      "down": "$2,500",
+      "monthly": "$695",
+      "picsLink": "https://www.dropbox.com/scl/fo/4dpwv20ntr67w3ct8ye7f/AAHcZiSGiNptqkQjLXeoFAw?rlkey=an3ex9y6njwjh8ph5v3a6bpuk&st=68birh3l&dl=0",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "921",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.6924474,
+      "lng": -90.24021359999999
+    },
+    {
+      "id": "1380-moore-st-akron-oh-44301",
+      "address": "1380 Moore St. Akron OH 44301",
+      "onMarketDate": "7/22",
+      "lastUpdate": "8/19",
+      "area": "OH",
+      "down": "$5,000",
+      "monthly": "$1,350",
+      "picsLink": "https://www.dropbox.com/scl/fo/uxbgyxvspyli0rj2wm0lw/ALIYTI1uIIyTlSxqc_WN0Jg?rlkey=kywqf72cq7knc3yykpuqhdcyg&st=m7rdiqga&dl=0",
+      "beds": "4",
+      "baths": "1",
+      "sqft": "1545",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 41.049297,
+      "lng": -81.5230547
+    },
+    {
       "id": "227-midlothian-rd-st-louis-mo-63137",
       "address": "227 Midlothian Rd St Louis MO 63137",
       "onMarketDate": "7/22",
@@ -1955,6 +2040,23 @@
       "livability": 0,
       "lat": 39.8483533,
       "lng": -88.9769319
+    },
+    {
+      "id": "2710-w-antoinette-st-peoria-il-61605",
+      "address": "2710 W Antoinette St, Peoria, IL 61605",
+      "onMarketDate": "6/13/2026",
+      "lastUpdate": "7/22/2026",
+      "area": "IL - Peoria",
+      "down": "$750",
+      "monthly": "$225",
+      "picsLink": "https://drive.google.com/drive/folders/1IFtFLblGMCzDzgcfl2R4JxE4i2vfwJ51?usp=sharing",
+      "beds": "1",
+      "baths": "1",
+      "sqft": "664",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 40.6776167,
+      "lng": -89.6359396
     },
     {
       "id": "1329-e-riverside-ave-decatur-il-62521",
@@ -2858,6 +2960,23 @@
       "lng": -85.3893295
     },
     {
+      "id": "3819-kossuth-ave-saint-louis-mo-63107",
+      "address": "3819 Kossuth Ave, Saint Louis, MO 63107",
+      "onMarketDate": "4/9/2026",
+      "lastUpdate": "7/17/2026",
+      "area": "MO - St. Louis",
+      "down": "$1,500",
+      "monthly": "$650",
+      "picsLink": "https://share.icloud.com/photos/0f83hVQeW2p20rrrXWTbQJ5NA",
+      "beds": "1",
+      "baths": "1.5",
+      "sqft": "816",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.6670462,
+      "lng": -90.21891939999999
+    },
+    {
       "id": "780-w-cushing-st-decatur-il-62526",
       "address": "780 W Cushing St, Decatur, IL 62526",
       "onMarketDate": "2/3/2026",
@@ -3351,6 +3470,23 @@
       "lng": -90.23033219999999
     },
     {
+      "id": "11-b-lane-herrin-il-62948",
+      "address": "11 B Lane Herrin IL 62948",
+      "onMarketDate": "6/14",
+      "lastUpdate": "8/17/2026",
+      "area": "IL - Rural",
+      "down": "$2,500",
+      "monthly": "$950",
+      "picsLink": "iCloud Photos - Apple iCloud",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "961",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 37.7930566,
+      "lng": -89.0305554
+    },
+    {
       "id": "3251-meadow-lane-dr-jackson-ms-39212",
       "address": "3251 Meadow Lane Dr, Jackson, MS 39212",
       "onMarketDate": "6/3/2026",
@@ -3417,6 +3553,23 @@
       "livability": 0,
       "lat": 32.2456717,
       "lng": -90.2159484
+    },
+    {
+      "id": "3729-avondale-avenue-st-louis-mo-63121",
+      "address": "3729 Avondale Avenue St. Louis MO 63121",
+      "onMarketDate": "7/13",
+      "lastUpdate": "8/5",
+      "area": "MO - St. Louis",
+      "down": "$2,500",
+      "monthly": "$950",
+      "picsLink": "https://www.dropbox.com/scl/fo/mdjx21cu5z9qbvze6wje6/ANcB2c2eD-JUbRxWTMmUQVU?rlkey=hsvp2endd1n5d55idaxc6ivau&st=cha3yuao&dl=0",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1168",
+      "status": "Off Market",
+      "livability": 2,
+      "lat": 38.6969766,
+      "lng": -90.2834692
     },
     {
       "id": "2017-mccasland-ave-madison-il-62-060",
@@ -4167,7 +4320,7 @@
       "lng": -90.2514242
     },
     {
-      "id": "11-b-lane-herrin-il-62948",
+      "id": "11-b-lane-herrin-il-62948-4",
       "address": "11 B Lane Herrin IL 62948",
       "onMarketDate": "7/9",
       "lastUpdate": "7/9",
@@ -4250,6 +4403,23 @@
       "livability": 3,
       "lat": 38.69870969999999,
       "lng": -90.2855235
+    },
+    {
+      "id": "1035-elmurst-avenue-decatur-il-62526",
+      "address": "1035 Elmurst Avenue Decatur IL 62526",
+      "onMarketDate": "5/23",
+      "lastUpdate": "8/17/2026",
+      "area": "IL - Decatur",
+      "down": "$2,250",
+      "monthly": "$785",
+      "picsLink": "https://share.icloud.com/photos/088G3U70bsPAPsn0Oy3ccsreg",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "616",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8630729,
+      "lng": -88.9437688
     },
     {
       "id": "3024-glenwood-ave-alton-il-62002",
@@ -4354,6 +4524,23 @@
       "lng": -88.92614569999999
     },
     {
+      "id": "2831-abner-place-saint-louis-mo-63-120",
+      "address": "2831 Abner Place Saint Louis MO 63,120",
+      "onMarketDate": "7/8",
+      "lastUpdate": "8/1",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$800",
+      "picsLink": "https://drive.google.com/drive/folders/1XGsnwM1e8cJOcwMCFKkKOn9hAnYr9CZu?usp=sharing",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "968",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.6742394,
+      "lng": -90.26447309999999
+    },
+    {
       "id": "722-saint-paul-dr-sauget-va-62206",
       "address": "722 Saint Paul Dr Sauget VA 62206",
       "onMarketDate": "7/1",
@@ -4403,6 +4590,23 @@
       "livability": 0,
       "lat": 39.8479765,
       "lng": -88.97648889999999
+    },
+    {
+      "id": "59-jarvis-pl-east-saint-louis-il-62207",
+      "address": "59 Jarvis Pl. East Saint louis IL 62207",
+      "onMarketDate": "5/11/2026",
+      "lastUpdate": "9/4/2026",
+      "area": "IL - East St Louis",
+      "down": "$2,500",
+      "monthly": "$795",
+      "picsLink": "https://photos.app.goo.gl/Z4Z1Q3hT13W4FVHz5",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "780",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.5828558,
+      "lng": -90.1149453
     },
     {
       "id": "1729-n-woodford-st-decatur-il-62526",
@@ -4522,6 +4726,23 @@
       "livability": 0,
       "lat": 39.8339685,
       "lng": -88.9688864
+    },
+    {
+      "id": "2448-east-wood-street-decatur-il-62521",
+      "address": "2448 East Wood Street Decatur IL 62521",
+      "onMarketDate": "5/13/2026",
+      "lastUpdate": "7/7/2026",
+      "area": "IL - Decatur",
+      "down": "$2,500",
+      "monthly": "$900",
+      "picsLink": "https://drive.google.com/drive/folders/1DTo8sRsk5uI7k_6l6oL8ESoBwHspSETh?usp=sharing",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "800",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8420564,
+      "lng": -88.9188387
     },
     {
       "id": "227-w-grand-street-highland-park-mi-48203",
@@ -4896,6 +5117,23 @@
       "livability": 0,
       "lat": 40.7158209,
       "lng": -89.5611942
+    },
+    {
+      "id": "2617-hord-ave-saint-louis-mo-63136",
+      "address": "2617 Hord Ave, Saint Louis, MO 63136",
+      "onMarketDate": "5/29/2026",
+      "lastUpdate": "7/25/2026",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$775",
+      "picsLink": "https://photos.app.goo.gl/FtCDN7kFMHLta3jp6",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "800",
+      "status": "Off Market",
+      "livability": 5,
+      "lat": 38.7286886,
+      "lng": -90.2666568
     },
     {
       "id": "3112-w-latrobe-st-peoria-il-61-605",
@@ -6972,7 +7210,7 @@
       "lng": -83.69472
     },
     {
-      "id": "521-n-davis-street-carbondale-il-62-901-4",
+      "id": "521-n-davis-street-carbondale-il-62-901-5",
       "address": "521 N. Davis Street Carbondale IL 62,901",
       "onMarketDate": "6/3",
       "lastUpdate": "6/8/2026",
@@ -7140,6 +7378,23 @@
       "livability": 0,
       "lat": 39.8330306,
       "lng": -88.94588809999999
+    },
+    {
+      "id": "1751-e-johns-st-decatur-il-62521",
+      "address": "1751 E Johns St Decatur IL 62521",
+      "onMarketDate": "6/3/2026",
+      "lastUpdate": "6/4/2026",
+      "area": "IL - Decatur",
+      "down": "$2,000",
+      "monthly": "$750",
+      "picsLink": "https://drive.google.com/drive/folders/18fQa1vEZtv5mtHT8cnQdnimF0nyjU-B3?usp=share_link",
+      "beds": "1",
+      "baths": "1",
+      "sqft": "550",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8384024,
+      "lng": -88.93275950000002
     },
     {
       "id": "3-rotary-street-montgomery-al-36-110",
@@ -8400,6 +8655,23 @@
       "lng": -88.9624019
     },
     {
+      "id": "1611-mousette-lane-cahokia-il-62206",
+      "address": "1611 Mousette Lane Cahokia, IL 62206.",
+      "onMarketDate": "11/29/2024",
+      "lastUpdate": "5/21/2026",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$895",
+      "picsLink": "https://drive.google.com/drive/folders/1Xgi5TmN90IOR9mls7lfxV0PYk7tMZT6C?usp=sharing",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1060",
+      "status": "Off Market",
+      "livability": 4,
+      "lat": 38.5677352,
+      "lng": -90.1265193
+    },
+    {
       "id": "1831-s-livingston-st-peoria-il-61605",
       "address": "1831 S Livingston St. Peoria IL 61605",
       "onMarketDate": "5/119",
@@ -8553,6 +8825,23 @@
       "lng": -83.7112137
     },
     {
+      "id": "2433-pennsylvania-ave-flint-mi-48506",
+      "address": "2433 Pennsylvania Ave Flint MI 48506",
+      "onMarketDate": "5/5/2026",
+      "lastUpdate": "7/27/2026",
+      "area": "MI",
+      "down": "$2,500",
+      "monthly": "$825",
+      "picsLink": "https://drive.google.com/drive/folders/1BavsM_l8swCu4MgyUbWs5kSx4iEmp1Uf",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "960",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 43.02975929999999,
+      "lng": -83.6581561
+    },
+    {
       "id": "222-manning-ave-saint-louis-mo-63135",
       "address": "222 Manning Ave, Saint Louis, MO 63135",
       "onMarketDate": "5/2/2026",
@@ -8704,6 +8993,23 @@
       "livability": 0,
       "lat": 38.8932689,
       "lng": -90.162711
+    },
+    {
+      "id": "951-high-st-duquesne-pa-15110",
+      "address": "951 High St, Duquesne, PA 15110",
+      "onMarketDate": "4/22/2026",
+      "lastUpdate": "8/24/2026",
+      "area": "",
+      "down": "$4,000",
+      "monthly": "$1,075",
+      "picsLink": "https://drive.google.com/drive/folders/1_X2laBaYqGlf1qXppmFAm9-5dA2dBma_",
+      "beds": "3",
+      "baths": "1.5",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 40.3635829,
+      "lng": -79.8469748
     },
     {
       "id": "1315-poindexter-st-chesapeake-va-23324",
@@ -9726,7 +10032,7 @@
       "lng": -89.6443785
     },
     {
-      "id": "514-brookside-ave-alton-il-62002-5",
+      "id": "514-brookside-ave-alton-il-62002-6",
       "address": "514 Brookside Ave, Alton, IL 62002",
       "onMarketDate": "",
       "lastUpdate": "4/29/2026",
@@ -10387,6 +10693,23 @@
       "livability": 3,
       "lat": 38.5673186,
       "lng": -90.1976492
+    },
+    {
+      "id": "1305-e-whitmer-st-decatur-il-62521",
+      "address": "1305 E Whitmer St Decatur IL 62521",
+      "onMarketDate": "2/27/2026",
+      "lastUpdate": "8/28/2026",
+      "area": "IL - Decatur",
+      "down": "$1,800",
+      "monthly": "$800",
+      "picsLink": "https://drive.google.com/drive/folders/18zzn1maoy-F8RqQjdSzCl23VoKQ5kmep",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1560",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8350634,
+      "lng": -88.9388685
     },
     {
       "id": "3115-n-sarah-st-st-louis-mo-63115",
@@ -11477,7 +11800,7 @@
       "lng": -90.1234523
     },
     {
-      "id": "800-s-greenlawn-ave-peoria-il-61605-6",
+      "id": "800-s-greenlawn-ave-peoria-il-61605-7",
       "address": "800 S Greenlawn Ave Peoria IL 61605",
       "onMarketDate": "3/31/2026",
       "lastUpdate": "3/31/2026",
@@ -12395,6 +12718,23 @@
       "lng": -88.965603
     },
     {
+      "id": "1531-s-lydia-ave-peoria-il-61605",
+      "address": "1531 S Lydia Ave, Peoria, IL 61605",
+      "onMarketDate": "7/17/2025",
+      "lastUpdate": "9/5/2026",
+      "area": "IL - Peoria",
+      "down": "$1,500",
+      "monthly": "$650",
+      "picsLink": "https://photos.app.goo.gl/vWkpQzVsjM6Cy5r27",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1012",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 40.6708976,
+      "lng": -89.6271041
+    },
+    {
       "id": "1534-n-55th-st-east-saint-louis-il-62204",
       "address": "1534 N 55th St East Saint Louis, IL  62204",
       "onMarketDate": "9/11/2026",
@@ -12514,7 +12854,7 @@
       "lng": -88.9286434
     },
     {
-      "id": "7150-garesche-ave-jennings-mo-63136-7",
+      "id": "7150-garesche-ave-jennings-mo-63136-8",
       "address": "7150 Garesche Ave, Jennings, MO 63136",
       "onMarketDate": "10/2/2025",
       "lastUpdate": "3/14/2026",
@@ -13279,6 +13619,23 @@
       "lng": -90.1658118
     },
     {
+      "id": "1408-camp-jackson-rd-cahokia-il-62206",
+      "address": "1408 Camp Jackson Rd, Cahokia, IL 62206",
+      "onMarketDate": "1/28/2026",
+      "lastUpdate": "3/7/2026",
+      "area": "IL - East St Louis",
+      "down": "$1,500",
+      "monthly": "$725",
+      "picsLink": "https://drive.google.com/drive/folders/1nthf7FV0QAu3Sn0NIKnhIeMchjqsowyl",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.5565488,
+      "lng": -90.16959969999999
+    },
+    {
       "id": "410-w-taylor-st-flint-mi-48505",
       "address": "410 W Taylor St. Flint MI 48505",
       "onMarketDate": "1/23/2026",
@@ -13449,7 +13806,7 @@
       "lng": -89.3535527
     },
     {
-      "id": "1112-e-garfield-ave-decatur-il-62526-8",
+      "id": "1112-e-garfield-ave-decatur-il-62526-9",
       "address": "1112 E Garfield Ave, Decatur, IL 62526",
       "onMarketDate": "10/29/2025",
       "lastUpdate": "3/5/2026",
@@ -13532,6 +13889,23 @@
       "livability": 3,
       "lat": 38.573635,
       "lng": -90.1750146
+    },
+    {
+      "id": "8371-eton-pl-saint-louis-mo-63136",
+      "address": "8371 Eton Pl, Saint Louis, MO 63136",
+      "onMarketDate": "2/3/2026",
+      "lastUpdate": "3/4/2026",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$795",
+      "picsLink": "https://drive.google.com/drive/folders/1wkV4FM4KRns9uhH0r-ViZvdFX_6RtfHO?usp=sharing",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.7217777,
+      "lng": -90.2642635
     },
     {
       "id": "343-pine-st-galesburg-il-61401",
@@ -14503,7 +14877,7 @@
       "lng": -83.55790379999999
     },
     {
-      "id": "1524-n-summit-ave-decatur-il-62526-9",
+      "id": "1524-n-summit-ave-decatur-il-62526-10",
       "address": "1524 N Summit Ave, Decatur, IL 62526",
       "onMarketDate": "2/19/2026",
       "lastUpdate": "8/28/2026",
@@ -15251,6 +15625,23 @@
       "lng": -90.2727422
     },
     {
+      "id": "1026-w-decatur-st-decatur-il-62522",
+      "address": "1026 W Decatur St, Decatur, IL 62522",
+      "onMarketDate": "11/20/2025",
+      "lastUpdate": "2/16/2026",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "$950",
+      "picsLink": "",
+      "beds": "5",
+      "baths": "2",
+      "sqft": "2907",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8382496,
+      "lng": -88.97027910000001
+    },
+    {
       "id": "2824-s-boots-st-marion-in-46953",
       "address": "2824 S Boots St Marion, IN 46953",
       "onMarketDate": "10/22/2025",
@@ -15419,6 +15810,23 @@
       "livability": 2,
       "lat": 38.76223940000001,
       "lng": -90.2658748
+    },
+    {
+      "id": "515-e-willard-st-muncie-in-47302",
+      "address": "515 E Willard St. Muncie IN 47302",
+      "onMarketDate": "1/8/2025",
+      "lastUpdate": "2/13/2026",
+      "area": "IN",
+      "down": "$3,500",
+      "monthly": "$995",
+      "picsLink": "https://www.dropbox.com/scl/fo/y8kz8dckc2hymr5c9mbr6/AGeIH4EXd05xbGTgpI1UzME?rlkey=l58smjaf5m4zzs165z69v3zqc&st=hsgvzxnr&dl=0",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1056",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 40.1854357,
+      "lng": -85.38093660000001
     },
     {
       "id": "2489-renois-ln-cahokia-il-62206",
@@ -15793,6 +16201,23 @@
       "livability": 0,
       "lat": 39.8373339,
       "lng": -88.9360517
+    },
+    {
+      "id": "10811-mcduff-dr-st-louis-mo-63137",
+      "address": "10811 McDuff Dr. St Louis MO 63137",
+      "onMarketDate": "12/26/2025",
+      "lastUpdate": "2/5/2026",
+      "area": "MO - St. Louis",
+      "down": "$3,000",
+      "monthly": "$995",
+      "picsLink": "https://www.wefinancehouses.net/?p=5869&listing_id=3125420&listing_type=",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1300",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.7625331,
+      "lng": -90.1903954
     },
     {
       "id": "2004-e-wood-st-decatur-il-62521",
@@ -17733,6 +18158,23 @@
       "lng": -90.1541632
     },
     {
+      "id": "123-s-saratoga-st-peoria-il-61605",
+      "address": "123 S Saratoga St, Peoria, IL 61605",
+      "onMarketDate": "9/11/2025",
+      "lastUpdate": "1/3/2026",
+      "area": "IL - Peoria",
+      "down": "$3,000",
+      "monthly": "$875",
+      "picsLink": "https://photos.app.goo.gl/Ed4EZDewvK3145Gz6",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "826",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 40.6876498,
+      "lng": -89.60958219999999
+    },
+    {
       "id": "252-dundee-cir-saint-louis-mo-63137",
       "address": "252 Dundee Cir, Saint Louis, MO 63137",
       "onMarketDate": "",
@@ -17748,6 +18190,23 @@
       "livability": 2,
       "lat": 38.763691,
       "lng": -90.1921701
+    },
+    {
+      "id": "2123-rosebud-hillsdale-mo-63121",
+      "address": "2123 Rosebud, Hillsdale, MO 63121",
+      "onMarketDate": "9/25/2025",
+      "lastUpdate": "1/2/2026",
+      "area": "MO - St. Louis",
+      "down": "$2,500",
+      "monthly": "$750",
+      "picsLink": "https://drive.google.com/drive/folders/1UKprkbTIqep3dkB96RvBiM38uBNc6uZf",
+      "beds": "1",
+      "baths": "1.5",
+      "sqft": "704",
+      "status": "Off Market",
+      "livability": 2,
+      "lat": 38.6878146,
+      "lng": -90.2902709
     },
     {
       "id": "1013-w-decatur-st-decatur-il-62522",
@@ -19195,6 +19654,23 @@
       "lng": -83.5638594
     },
     {
+      "id": "116-lazarcheff-dr-cahokia-il-62206",
+      "address": "116 Lazarcheff Dr, Cahokia, IL 62206",
+      "onMarketDate": "10/17/2025",
+      "lastUpdate": "11/18/2025",
+      "area": "IL - East St Louis",
+      "down": "$1,000",
+      "monthly": "$595",
+      "picsLink": "https://share.icloud.com/photos/0d95uo7knZ6lBqe8F6Xdzvi_g",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "988",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 38.5520669,
+      "lng": -90.1684487
+    },
+    {
       "id": "6705-saint-louis-ave-saint-louis-mo-63121",
       "address": "6705 Saint Louis Ave, Saint Louis MO 63121",
       "onMarketDate": "9/24/2025",
@@ -19431,6 +19907,23 @@
       "livability": 0,
       "lat": 39.854116,
       "lng": -88.9681042
+    },
+    {
+      "id": "460-boyd-st-decatur-il-62522",
+      "address": "460 Boyd St, Decatur, IL 62522",
+      "onMarketDate": "",
+      "lastUpdate": "11/13/2025",
+      "area": "IL - Decatur",
+      "down": "$1,000",
+      "monthly": "$675",
+      "picsLink": "",
+      "beds": "2",
+      "baths": "1.5",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.837228,
+      "lng": -88.9677608
     },
     {
       "id": "1307-quash-st-hampton-va-23669",
@@ -19705,7 +20198,7 @@
       "lng": -90.23168539999999
     },
     {
-      "id": "1110-bailey-ln-benton-il-62812-10",
+      "id": "1110-bailey-ln-benton-il-62812-11",
       "address": "1110 Bailey Ln, Benton, IL 62812",
       "onMarketDate": "5/7/2025",
       "lastUpdate": "11/10/2025",
@@ -19994,6 +20487,23 @@
       "lng": -88.9242781
     },
     {
+      "id": "132-blair-ave-newport-news-va-23607",
+      "address": "132 Blair Ave, Newport News, VA 23607",
+      "onMarketDate": "8/7/2025",
+      "lastUpdate": "11/3/2025",
+      "area": "Virginia",
+      "down": "$5,000",
+      "monthly": "$1,295",
+      "picsLink": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 36.984438,
+      "lng": -76.39518009999999
+    },
+    {
       "id": "4253-holly-ave-saint-louis-mo-63115",
       "address": "4253 Holly Ave, Saint Louis, MO 63115",
       "onMarketDate": "6/22/2025",
@@ -20045,7 +20555,7 @@
       "lng": -90.262946
     },
     {
-      "id": "428-w-washington-st-macomb-il-61455-11",
+      "id": "428-w-washington-st-macomb-il-61455-12",
       "address": "428 W Washington St, Macomb, IL 61455",
       "onMarketDate": "9/3/2025",
       "lastUpdate": "11/1/2025",
@@ -20128,6 +20638,23 @@
       "livability": 2,
       "lat": 38.6677689,
       "lng": -90.24145089999999
+    },
+    {
+      "id": "460-s-boyd-st-decatur-il-62522",
+      "address": "460 S Boyd St, Decatur, IL 62522",
+      "onMarketDate": "6/12/2025",
+      "lastUpdate": "10/30/2025",
+      "area": "IL - Decatur",
+      "down": "$1,500",
+      "monthly": "$700",
+      "picsLink": "https://photos.app.goo.gl/Vybxa1uAMKm2orZz9",
+      "beds": "2",
+      "baths": "1.5",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8339685,
+      "lng": -88.9688864
     },
     {
       "id": "766-s-2nd-ave-canton-il-61520",
@@ -20487,7 +21014,7 @@
       "lng": -90.2479005
     },
     {
-      "id": "5639-wilborn-dr-saint-louis-mo-63136-12",
+      "id": "5639-wilborn-dr-saint-louis-mo-63136-13",
       "address": "5639 Wilborn Dr, Saint Louis, MO 63136",
       "onMarketDate": "9/17/2025",
       "lastUpdate": "10/20/2025",
@@ -20774,6 +21301,23 @@
       "livability": 0,
       "lat": 40.722702,
       "lng": -89.56006789999999
+    },
+    {
+      "id": "1817-w-garden-st-peoria-il-61605",
+      "address": "1817 W Garden St, Peoria, IL 61605",
+      "onMarketDate": "10/17/2024",
+      "lastUpdate": "10/13/2025",
+      "area": "IL - Peoria",
+      "down": "$1,000",
+      "monthly": "$600",
+      "picsLink": "https://photos.app.goo.gl/mhk54ZsYL8HccRWt8",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 40.6760774,
+      "lng": -89.62179590000001
     },
     {
       "id": "207-e-oak-st-carbondale-il-62901",
@@ -21082,7 +21626,7 @@
       "lng": -90.11135039999999
     },
     {
-      "id": "2421-w-garden-st-peoria-il-61605-13",
+      "id": "2421-w-garden-st-peoria-il-61605-14",
       "address": "2421 W Garden St, Peoria, IL 61605",
       "onMarketDate": "7/16/2025",
       "lastUpdate": "9/29/2025",
@@ -21488,6 +22032,23 @@
       "livability": 0,
       "lat": 40.6888596,
       "lng": -89.6272157
+    },
+    {
+      "id": "6337-chatham-ave-st-louis-mo-63133",
+      "address": "6337 Chatham Ave, St. Louis, MO 63133",
+      "onMarketDate": "8/12/2025",
+      "lastUpdate": "9/19/2025",
+      "area": "MO - St. Louis",
+      "down": "$3,000",
+      "monthly": "$1,200",
+      "picsLink": "https://drive.google.com/drive/folders/1b5XfTa1RGLLWMV-hW76V5WBAICg3Lc1f",
+      "beds": "4",
+      "baths": "1.5",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.6740874,
+      "lng": -90.29475029999999
     },
     {
       "id": "541-n-27th-st-e-st-louis-il-62205",
@@ -22083,6 +22644,23 @@
       "livability": 0,
       "lat": 43.027786,
       "lng": -83.6660278
+    },
+    {
+      "id": "638-terrace-dr-east-saint-louis-il-62203",
+      "address": "638 Terrace Dr, East Saint Louis, IL 62203",
+      "onMarketDate": "5/15/2025",
+      "lastUpdate": "9/5/2025",
+      "area": "IL - East St Louis",
+      "down": "$1,000",
+      "monthly": "$525",
+      "picsLink": "https://drive.google.com/drive/folders/1iXBEaxnsbzRQpZA6gBXa-5BDXKUFhRO_",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.6022294,
+      "lng": -90.0801066
     },
     {
       "id": "215-cottage-ave-galesburg-il-61401",
@@ -24159,7 +24737,7 @@
       "lng": -89.6148923
     },
     {
-      "id": "1235-e-walnut-st-decatur-il-62526-14",
+      "id": "1235-e-walnut-st-decatur-il-62526-15",
       "address": "1235 E Walnut St, Decatur, IL 62526",
       "onMarketDate": "7/11/2025",
       "lastUpdate": "",
@@ -24448,6 +25026,23 @@
       "lng": -83.53775259999999
     },
     {
+      "id": "360-s-16th-st-decatur-il-62526",
+      "address": "360 S 16th St, Decatur, IL 62526",
+      "onMarketDate": "4/25/2025",
+      "lastUpdate": "",
+      "area": "IL - Decatur",
+      "down": "$2,500",
+      "monthly": "$645",
+      "picsLink": "https://drive.google.com/drive/folders/1KpHgHMf8zvoI0coWtDflbNGaEfJMOZWw?usp=drive_link",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8389964,
+      "lng": -88.9355061
+    },
+    {
       "id": "1105-shawnee-st-mount-vernon-il-62864",
       "address": "1105 Shawnee St, Mount Vernon, IL 62864",
       "onMarketDate": "4/15/2025",
@@ -24533,6 +25128,23 @@
       "lng": -90.2319567
     },
     {
+      "id": "842-e-johns-ave-decatur-il-62521",
+      "address": "842 E Johns Ave, Decatur, IL 62521",
+      "onMarketDate": "1/18/2025",
+      "lastUpdate": "",
+      "area": "IL - Decatur",
+      "down": "$2,500",
+      "monthly": "$850",
+      "picsLink": "https://photos.app.goo.gl/vztftmoyyrjyh6ha8",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 39.8382495,
+      "lng": -88.9453198
+    },
+    {
       "id": "402-e-thrush-ave-peoria-il-61603",
       "address": "402 E Thrush Ave, Peoria, IL 61603",
       "onMarketDate": "1/2/2025",
@@ -24550,6 +25162,193 @@
       "lng": -89.5896444
     },
     {
+      "id": "1574-n-warren-st-decatur-il-62526",
+      "address": "1574 N. Warren St. Decatur, IL 62526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "IL - Decatur",
+      "down": "$2,500",
+      "monthly": "$795",
+      "picsLink": "https://drive.google.com/drive/folders/1f3Tsr0BRVL1gl9OtpZ_9PVgLINLss8yI",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.8580294,
+      "lng": -88.9521087
+    },
+    {
+      "id": "1130-n-monroe-st-decatur-il-62522",
+      "address": "1130 N Monroe St, Decatur, IL 62522",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "IL - Decatur",
+      "down": "$1,000",
+      "monthly": "$595",
+      "picsLink": "https://drive.google.com/drive/folders/1oM26bDQ2FLeaIq5Op7jcvsvqNEtcCV9-",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 39.85281690000001,
+      "lng": -88.96344789999999
+    },
+    {
+      "id": "8-saint-gregory-dr-cahokia-il-62206",
+      "address": "8 Saint Gregory Dr, Cahokia, IL 62206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$925",
+      "picsLink": "https://share.icloud.com/photos/092woJhZyhy1HI2Mk4KEVNSfw",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.55358880000001,
+      "lng": -90.2000371
+    },
+    {
+      "id": "6-delores-dr-cahokia-il-62206",
+      "address": "6 Delores Dr, Cahokia, IL 62206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "IL - East St Louis",
+      "down": "$1,250",
+      "monthly": "$650",
+      "picsLink": "https://drive.google.com/drive/folders/1XouX0jRcplYnXKgtqJTodNJ4uHQQ_QSL",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 3,
+      "lat": 38.550903,
+      "lng": -90.13402359999999
+    },
+    {
+      "id": "1924-s-stanley-st-peoria-il-61605",
+      "address": "1924 S Stanley St, Peoria, IL 61605",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "IL - Peoria",
+      "down": "$3,000",
+      "monthly": "$950",
+      "picsLink": "https://photos.app.goo.gl/cBGN6tFKKWknhpzV8",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 40.6660454,
+      "lng": -89.6309253
+    },
+    {
+      "id": "1840-clanton-street-shreveport-la-71108",
+      "address": "1840 Clanton Street, Shreveport, LA 71108",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "LA",
+      "down": "$2,500",
+      "monthly": "$800",
+      "picsLink": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 32.4585628,
+      "lng": -93.76862799999999
+    },
+    {
+      "id": "3928-oakwood-ave-saint-louis-mo-63121",
+      "address": "3928 Oakwood Ave, Saint Louis, MO 63121",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "MO - St. Louis",
+      "down": "$35,000",
+      "monthly": "$1,150",
+      "picsLink": "https://photos.app.goo.gl/GBTorFhuHRMzip3p6",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 2,
+      "lat": 38.6961085,
+      "lng": -90.2773228
+    },
+    {
+      "id": "4403-cottage-ave-saint-louis-mo-63113",
+      "address": "4403 Cottage Ave, Saint Louis, MO 63113",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "MO - St. Louis",
+      "down": "$3,000",
+      "monthly": "$950",
+      "picsLink": "https://drive.google.com/drive/folders/13wInIrwNPHUNb2dA34isQcuC3bDu4Ot0",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 5,
+      "lat": 38.6618061,
+      "lng": -90.24244379999999
+    },
+    {
+      "id": "1422-e-reservoir-st-springfield-il-62702",
+      "address": "1422 E Reservoir St, Springfield, IL 62702",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "MO - St. Louis",
+      "down": "$3,000",
+      "monthly": "$875",
+      "picsLink": "https://drive.google.com/drive/folders/11vQvwx3gXf1y4MsaJBoFd9Hu3hzoEHSG",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 2,
+      "lat": 39.8151938,
+      "lng": -89.6357524
+    },
+    {
+      "id": "1008-n-jackson-st-danville-il-61832",
+      "address": "1008 N Jackson St Danville IL 61832",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "MO - St. Louis",
+      "down": "$2,500",
+      "monthly": "$900",
+      "picsLink": "https://p.reiblackbook.com/3023668?utmc_id=2801253",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 4,
+      "lat": 40.1417593,
+      "lng": -87.62795080000001
+    },
+    {
+      "id": "3034-glenwood-ave-alton-il-62002",
+      "address": "3034 Glenwood Ave, Alton, IL 62002",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$700",
+      "picsLink": "https://drive.google.com/drive/folders/1oy0dh5bii-G07RSYYpIe_6GCV7tP2m6q",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 2,
+      "lat": 38.8956398,
+      "lng": -90.1404282
+    },
+    {
       "id": "2949-warren-ave-r-granite-city-il-62040",
       "address": "2949 Warren Ave #R, Granite City, IL 62040",
       "onMarketDate": "",
@@ -24565,6 +25364,40 @@
       "livability": 3,
       "lat": 38.7150243,
       "lng": -90.1184261
+    },
+    {
+      "id": "610-fayette-st-martinsville-va-24112",
+      "address": "610 Fayette St, Martinsville, VA 24112",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "Virginia",
+      "down": "$6,000",
+      "monthly": "$1,495",
+      "picsLink": "https://drive.google.com/drive/folders/1hLpv4l7fzo7yk_1qha0x-hAvnMN0Fz5_?usp=drive_link",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 36.6914051,
+      "lng": -79.8842471
+    },
+    {
+      "id": "1609-roanoke-ave-newport-news-va-23607",
+      "address": "1609 Roanoke Ave, Newport News, VA 23607",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "Virginia",
+      "down": "$5,000",
+      "monthly": "$1,300",
+      "picsLink": "https://photos.app.goo.gl/9NezUgxFz7hsMddj7",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "",
+      "status": "Off Market",
+      "livability": 0,
+      "lat": 36.9800791,
+      "lng": -76.4056114
     },
     {
       "id": "305-w-26th-ave-pine-bluff-ar-71601",
@@ -27508,7 +28341,7 @@
       "lng": -90.26489509999999
     },
     {
-      "id": "1105-shawnee-st-mount-vernon-il-62864-15",
+      "id": "1105-shawnee-st-mount-vernon-il-62864-16",
       "address": "1105 Shawnee St, Mount Vernon, IL 62864",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -28103,7 +28936,7 @@
       "lng": -90.13800909999999
     },
     {
-      "id": "6725-schofield-pl-saint-louis-mo-63133-16",
+      "id": "6725-schofield-pl-saint-louis-mo-63133-17",
       "address": "6725 Schofield Pl, Saint Louis, MO 63133",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -28171,7 +29004,7 @@
       "lng": -90.2302121
     },
     {
-      "id": "2964-iowa-st-granite-city-il-62040-17",
+      "id": "2964-iowa-st-granite-city-il-62040-18",
       "address": "2964 Iowa St, Granite City, IL 62040",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -29140,7 +29973,7 @@
       "lng": -90.15514209999999
     },
     {
-      "id": "5445-robin-ave-saint-louis-mo-63120-18",
+      "id": "5445-robin-ave-saint-louis-mo-63120-19",
       "address": "5445 Robin Ave, Saint Louis, MO, 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -29412,7 +30245,7 @@
       "lng": -90.0194786
     },
     {
-      "id": "14-s-beard-st-danville-il-61832-19",
+      "id": "14-s-beard-st-danville-il-61832-20",
       "address": "14 S Beard St, Danville, IL 61832",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30619,7 +31452,7 @@
       "lng": -76.33330959999999
     },
     {
-      "id": "1127-31st-st-newport-news-va-23607-20",
+      "id": "1127-31st-st-newport-news-va-23607-21",
       "address": "1127 31st St, Newport News, VA 23607",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30755,7 +31588,7 @@
       "lng": -76.3411186
     },
     {
-      "id": "5338-claxton-ave-saint-louis-mo-63120-21",
+      "id": "5338-claxton-ave-saint-louis-mo-63120-22",
       "address": "5338 Claxton Ave, Saint Louis, MO 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30806,7 +31639,7 @@
       "lng": -76.56196550000001
     },
     {
-      "id": "108-n-10th-st-suffolk-va-23434-22",
+      "id": "108-n-10th-st-suffolk-va-23434-23",
       "address": "108 N 10th St, Suffolk, VA 23434",
       "onMarketDate": "",
       "lastUpdate": "",
