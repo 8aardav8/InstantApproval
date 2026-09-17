@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T18:57:22.810032+00:00",
+  "generatedAt": "2026-09-17T18:58:08.039556+00:00",
   "listings": [
     {
       "id": "2055-n-church-st-decatur-il-62526",
@@ -6686,7 +6686,7 @@
       "id": "132-n-23rd-place-dectaur-il-62521",
       "address": "132 N 23rd Place Dectaur IL 62521",
       "onMarketDate": "6/15",
-      "lastUpdate": "8/1/2026",
+      "lastUpdate": "9/16/2026",
       "area": "IL - Decatur",
       "down": "$1,200",
       "monthly": "$825",
@@ -6694,7 +6694,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "704",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 0,
       "lat": 39.8432472,
       "lng": -88.9222774
@@ -31038,7 +31038,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 32.3513189,
       "lng": -90.1992732
