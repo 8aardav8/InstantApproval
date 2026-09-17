@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-17T19:20:12.867283+00:00",
+  "generatedAt": "2026-09-17T19:21:04.506639+00:00",
   "listings": [
+    {
+      "id": "4021-green-lea-place-saint-louis-mo-63107",
+      "address": "4021 Green Lea Place Saint Louis MO 63107",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/pw4ye13qe6kmcdkrd7enq/AJNnfxFQYPz5dFlTbOv1Cy8?rlkey=5o55deri7qkinypkixckddups&st=dbjn1zep&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.67147380000001,
+      "lng": -90.2207885
+    },
     {
       "id": "1204-n-jordan-st-decatur-il-62521",
       "address": "1204 N Jordan St Decatur IL 62521",
