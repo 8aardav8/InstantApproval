@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-17T19:10:23.949315+00:00",
+  "generatedAt": "2026-09-17T19:10:55.133420+00:00",
   "listings": [
+    {
+      "id": "1127-n-45th-st-east-st-louis-il-62204",
+      "address": "1127 N 45th St East St Louis IL 62204",
+      "onMarketDate": "9/16",
+      "lastUpdate": "9/16",
+      "area": "IL - East St Louis",
+      "down": "$2,500",
+      "monthly": "$950",
+      "picsLink": "https://drive.google.com/drive/folders/1TnMt_NP9u5JNwIwCmCfDkZzzt-W2WyNJ?usp=share_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6224918,
+      "lng": -90.10251470000001
+    },
     {
       "id": "5275-alcott-ave-st-louis-mo-63120",
       "address": "5275 Alcott Ave, St. Louis, MO 63120",
