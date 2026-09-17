@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-17T19:17:16.050696+00:00",
+  "generatedAt": "2026-09-17T19:17:56.931066+00:00",
   "listings": [
+    {
+      "id": "1204-n-jordan-st-decatur-il-62521",
+      "address": "1204 N Jordan St Decatur IL 62521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1E9gTCvtvgnKQl5_8ZmQWCMfTnVIcPT9W?usp=share_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.85438509999999,
+      "lng": -88.9347502
+    },
     {
       "id": "1127-n-45th-st-east-st-louis-il-62204",
       "address": "1127 N 45th St East St Louis IL 62204",
