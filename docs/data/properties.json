@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T18:58:37.062596+00:00",
+  "generatedAt": "2026-09-17T18:59:12.159217+00:00",
   "listings": [
     {
       "id": "2055-n-church-st-decatur-il-62526",
@@ -1416,7 +1416,7 @@
       "id": "1060-water-st-sauget-il-62206",
       "address": "1060 Water St, Sauget, IL 62206",
       "onMarketDate": "7/30",
-      "lastUpdate": "9/10",
+      "lastUpdate": "9/16",
       "area": "IL - East St Louis",
       "down": "$1,300",
       "monthly": "$695",
@@ -31035,8 +31035,8 @@
       "down": "$3,000",
       "monthly": "$1,095",
       "picsLink": "https://app.companycam.com/timeline/icL35euPuJJfKZjg",
-      "beds": "3",
-      "baths": "1",
+      "beds": "4",
+      "baths": "2",
       "sqft": "",
       "status": "Available",
       "livability": 0,
