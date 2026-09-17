@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-17T19:00:13.739940+00:00",
+  "generatedAt": "2026-09-17T19:00:32.137788+00:00",
   "listings": [
+    {
+      "id": "5275-alcott-ave-st-louis-mo-63120",
+      "address": "5275 Alcott Ave, St. Louis, MO 63120",
+      "onMarketDate": "9/16",
+      "lastUpdate": "9/16",
+      "area": "MO - St. Louis",
+      "down": "$1,500",
+      "monthly": "$775",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6955368,
+      "lng": -90.24643870000001
+    },
     {
       "id": "2055-n-church-st-decatur-il-62526",
       "address": "2055 N Church St Decatur IL 62526",
