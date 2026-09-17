@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T19:06:09.858222+00:00",
+  "generatedAt": "2026-09-17T19:08:54.908354+00:00",
   "listings": [
     {
       "id": "5275-alcott-ave-st-louis-mo-63120",
@@ -787,10 +787,10 @@
       "id": "802-n-71st-st-east-st-louis-il-62203",
       "address": "802 N 71st St East St Louis IL 62203",
       "onMarketDate": "8/25",
-      "lastUpdate": "8/25",
+      "lastUpdate": "9/16",
       "area": "IL - East St Louis",
-      "down": "$3,000",
-      "monthly": "$925",
+      "down": "$2,500",
+      "monthly": "$850",
       "picsLink": "https://drive.google.com/drive/folders/1CaqzPsThBeijJrCn9On1ToqM3MVZFWj1?usp=sharing",
       "beds": "2",
       "baths": "1",
