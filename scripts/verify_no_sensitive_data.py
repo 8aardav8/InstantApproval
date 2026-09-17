@@ -82,9 +82,18 @@ KNOWN_SAFE_VALUES = {"Aaron David", "coming"}
 # miscategorized column. Aaron chose to launch with these 2 included as-is
 # and fix the Sheet later; the site will pick up the correction automatically
 # whenever that happens. Remove this exception once the source rows are fixed.
+#
+# 2026-09-17, same exact pattern, a new row: "3729 Avondale Avenue, St.
+# Louis MO 63121" -- confirmed directly against the live Sheet before
+# adding this (Seller name and link == Pics 1, byte for byte, same Dropbox
+# folder link). Aaron's explicit call this time: don't touch the PROPERTIES
+# tab at all right now (mid-build on a separate project that also reads/
+# writes that tab), so this is a script-only exception, not a Sheet fix --
+# remove once the source row is corrected, same as the two above.
 KNOWN_EXCEPTIONS = {
     ("1218-pinehurst-ave-flint-mi-48507", "Seller name and link"),
     ("2021-edwardsville-rd-madison-il-62060", "Seller name and link"),
+    ("3729-avondale-avenue-st-louis-mo-63121", "Seller name and link"),
 }
 
 
