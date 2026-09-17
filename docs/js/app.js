@@ -600,16 +600,57 @@ function photoNotWorkingLink(listing) {
   const body = `Hi. The photos don't seem to be working for this property at ${listing.address}. Please update, or send me a link when you can. Thanks.`;
   return smsLink(AARON_PHONE, body);
 }
-function shareLink(listing) {
-  const body =
+function buildShareText(listing) {
+  return (
     `${listing.status}: ${listing.address}\n` +
     `${listing.beds} bed / ${listing.baths} bath.\n` +
     `For sale as is. ${listing.down} down, ${listing.monthly} a month.\n` +
     `Owner financed, no credit check.\n` +
     `${listing.picsLink}\n\n` +
     `https://InstantApprovalHomes.com\n\n` +
-    `Contact Aaron \n${AARON_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3")}`;
-  return smsLink("", body); // no destination pre-filled -- visitor picks who to share with
+    `Contact Aaron \n${AARON_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3")}`
+  );
+}
+
+// Real fix, 2026-09-17, per Aaron's direct request: the Share button used
+// to be a plain `<a href="sms:&body=...">`, which jumped straight into the
+// Messages app as the ONLY option every time. Now it opens the real OS
+// share sheet (navigator.share) -- Messages is just one of several apps
+// the visitor sees there, same as sharing from any other app, and most
+// platforms' own share sheets already include a "Copy" entry alongside the
+// app list. For a browser without share-sheet support (some desktop
+// browsers) falls back to copying the exact same text straight to the
+// clipboard, with the same "✓ ... copied!" confirmation pattern already
+// used by copyResultsLink().
+async function shareListing(id) {
+  const listing = ALL_LISTINGS.find((l) => l.id === id);
+  if (!listing) return;
+  const text = buildShareText(listing);
+  const btn = document.getElementById("share-btn");
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+      return; // real share sheet handled it -- Copy is already one of its own options
+    } catch (err) {
+      if (err && err.name === "AbortError") return; // visitor just closed the share sheet -- not an error
+      // Any other failure (permission, unsupported content, etc.) -- fall
+      // through to the clipboard fallback below rather than leave the
+      // visitor with nothing.
+    }
+  }
+
+  const done = () => {
+    if (!btn) return;
+    const original = btn.innerHTML;
+    btn.textContent = "✓ Copied!";
+    setTimeout(() => { btn.innerHTML = original; }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => window.prompt("Copy this text:", text));
+  } else {
+    window.prompt("Copy this text:", text);
+  }
 }
 
 // ---------- detail view ----------
@@ -691,7 +732,7 @@ function showDetail(id) {
       <div class="detail-address">${escapeHtml(listing.address)}</div>
       <div class="action-row">
         ${inquireBtn}
-        <a class="btn-outline" href="${shareLink(listing)}">${ICON_LINK}Share</a>
+        <button type="button" id="share-btn" class="btn-outline" onclick="shareListing('${listing.id}')">${ICON_LINK}Share</button>
       </div>
       <!-- Get Directions + Schedule a Viewing share a row, added
            2026-08-29 per Aaron's direct request -- same .action-row flex
