@@ -265,10 +265,17 @@
       <div id="filter-panel" class="filter-panel hidden">
         <label>Availability
           <select id="f-status">
-            <option value="Available" selected>Available</option>
-            <option value="Pending">Pending</option>
-            <option value="Sold">Sold</option>
-            <option value="Any">Any</option>
+          <!-- These options are placeholders for the instant before JS runs
+               -- renderStatusOptions() in app.js rebuilds this select from
+               whatever statuses actually exist in properties.json (same
+               "read it from real data, don't hand-maintain a list" pattern
+               as the Area checkboxes), so a real status added to the Sheet's
+               Available? column always ends up here without an HTML edit. -->
+          <option value="Available" selected>Available</option>
+          <option value="Pending">Pending</option>
+          <option value="Sold">Sold</option>
+          <option value="Off Market">Off Market</option>
+          <option value="Any">Any</option>
           </select>
         </label>
         <label>Max Down Payment

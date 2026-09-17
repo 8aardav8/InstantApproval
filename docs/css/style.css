@@ -314,6 +314,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .card-status { font-size: 12px; font-weight: 700; color: var(--blue); text-transform: uppercase; }
 .card-status.sold { color: #6b7280; }
 .card-status.pending { color: #b45309; }
+.card-status.off-market { color: #6d28d9; }
 .card-address { font-weight: 700; font-size: 14px; margin: 4px 0; }
 .card-meta { font-size: 13px; color: var(--gray-text); }
 .card-money { font-size: 13px; margin-top: 4px; }
@@ -392,6 +393,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .map-popup-status { font-size: 10px; font-weight: 700; color: #1a56db; text-transform: uppercase; }
 .map-popup-status.sold { color: #6b7280; }
 .map-popup-status.pending { color: #b45309; }
+.map-popup-status.off-market { color: #6d28d9; }
 .map-popup-address { font-weight: 700; font-size: 12px; margin: 2px 0; color: #111827; line-height: 1.25; }
 .map-popup-meta { font-size: 11px; color: #6b7280; }
 .map-popup-money { font-size: 11px; color: #111827; margin-top: 2px; }

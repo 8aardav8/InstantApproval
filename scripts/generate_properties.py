@@ -8,8 +8,14 @@ Design principles (see the approved plan, /Users/aarondavid/.claude/plans/woolly
     missing/renamed, fail loudly rather than silently mis-map -- this is the
     primary defense against ever accidentally exposing `Lock box ` after the
     Sheet gets reorganized.
-  - Available, Pending, and Sold are all INCLUDED (status filtering happens in
-    the front end, not here) -- Off-Market and anything unrecognized is excluded.
+  - Available, Pending, Sold, and Off Market are all INCLUDED (status
+    filtering happens in the front end, not here) -- only genuinely
+    unrecognized values (typos, future statuses no one's approved yet) are
+    excluded. Off Market was added 2026-09-17 per Aaron's direct request to
+    show it as a front-end filter option; the raw Sheet has two real
+    spellings for it ("Off-Market" and "Off- market", confirmed via a live
+    snapshot: 31 + 17 rows) which normalize_status() below collapses into
+    one canonical "Off Market" so the front end only ever sees one value.
   - Only the confirmed-public columns are ever written to the output. Sensitive
     columns (Lock box, Seller name and link, Row ID, PHOTO Error, We're
     Marketing, TT Our Link) are read only by the separate admin backend, never
@@ -54,9 +60,23 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "data", "properties.json")
 RAW_SNAPSHOT_PATH = os.path.join(REPO_ROOT, RAW_SNAPSHOT_PATH_NAME)
 
-# Statuses that are ever included in the public dataset. Anything else
-# (Off-Market, "Off- market", typos, future values) is excluded and logged.
-INCLUDED_STATUSES = {"available", "pending", "sold"}
+# Maps every recognized raw "Available?" cell value (normalized: lowercased,
+# spaces/hyphens stripped) to its canonical display status. Anything not in
+# this map (typos, future values no one's approved yet) is excluded and
+# logged -- see normalize_status().
+STATUS_MAP = {
+    "available": "Available",
+    "pending": "Pending",
+    "sold": "Sold",
+    "offmarket": "Off Market",  # covers both "Off-Market" and "Off- market"
+}
+
+
+def normalize_status(raw):
+    """Canonicalize a raw Available? cell to its display status, or None if
+    unrecognized. See STATUS_MAP above for exactly what's recognized."""
+    key = raw.strip().lower().replace(" ", "").replace("-", "")
+    return STATUS_MAP.get(key)
 
 # Confirmed-public columns (see the approved plan's "Public data" section).
 PUBLIC_COLUMNS = [
@@ -235,9 +255,9 @@ def main():
             return row[i] if i < len(row) else ""
 
         raw_status = cell("Available?").strip()
-        status_key = raw_status.lower()
-        if status_key not in INCLUDED_STATUSES:
-            if raw_status and status_key not in {"off-market", "off- market"}:
+        status = normalize_status(raw_status)
+        if status is None:
+            if raw_status:
                 unrecognized_statuses[raw_status] = unrecognized_statuses.get(raw_status, 0) + 1
             continue
 
@@ -264,18 +284,19 @@ def main():
             "beds": cell("Beds").strip(),
             "baths": cell("Baths").strip(),
             "sqft": cell("Sq Ft").strip(),
-            "status": raw_status,  # keep the real casing, e.g. "Available"
+            "status": status,  # canonical, e.g. "Available" or "Off Market" -- see normalize_status()
             "livability": livability_to_number(cell("Livability")),
         }
 
-        # Geocode every included listing (Available/Pending/Sold), not just
-        # Available -- fixed 2026-08-22. The map used to hard-code
+        # Geocode every included listing (Available/Pending/Sold/Off Market),
+        # not just Available -- fixed 2026-08-22. The map used to hard-code
         # "Available only" so only those needed coordinates; now the map
         # mirrors whatever status filter is active on the page (including
-        # Pending/Sold), so all of them need real lat/lng or those filters
-        # would show zero pins. Caching (see load_geocode_cache_from_previous)
-        # means this is a one-time cost for existing Pending/Sold rows -- new
-        # runs only geocode addresses that weren't already cached.
+        # Pending/Sold/Off Market), so all of them need real lat/lng or those
+        # filters would show zero pins. Caching (see
+        # load_geocode_cache_from_previous) means this is a one-time cost for
+        # existing rows -- new runs only geocode addresses that weren't
+        # already cached.
         coords = geocode(address, api_key, geocode_cache)
         listing["lat"] = coords["lat"] if coords else None
         listing["lng"] = coords["lng"] if coords else None

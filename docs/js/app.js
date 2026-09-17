@@ -15,6 +15,15 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
+// CSS class tokens can't contain spaces -- "Off Market".toLowerCase() used
+// directly as a class name would silently split into two bogus classes
+// ("off" and "market") and fall through to the default (blue/Available)
+// styling instead of getting its own color. Used everywhere a status
+// becomes part of a class attribute (card-status, map-popup-status).
+function statusClass(status) {
+  return (status || "").toLowerCase().replace(/\s+/g, "-");
+}
+
 let ALL_LISTINGS = [];
 let GENERATED_AT = null;
 // Redesigned 2026-08-29, per Aaron's direct request: appointments used to
@@ -65,6 +74,7 @@ async function loadData() {
   ALL_LISTINGS = data.listings;
   GENERATED_AT = data.generatedAt;
   renderAreaCheckboxes(); // must run before restoreFilterStateFromUrl(), which checks boxes by value
+  renderStatusOptions(); // same reason -- restoreFilterStateFromUrl() sets #f-status.value directly
   restoreFilterStateFromUrl();
   renderFreshness();
   renderStatsStrip();
@@ -108,6 +118,36 @@ function renderAreaCheckboxes() {
       <span>${escapeHtml(area)}</span>
     </label>
   `).join("");
+}
+
+// Availability filter options, populated live from the real statuses in the
+// data -- never hand-maintained, same "read it from what's actually in the
+// Sheet" pattern as renderAreaCheckboxes above. This is what fixed "Off
+// Market" being entirely missing from the filter (2026-09-17, per Aaron's
+// direct request that every real Available? value always show up here):
+// generate_properties.py's own status allowlist is the real gate against
+// Sheet typos/drift ever reaching the public site, so anything that makes
+// it into properties.json is safe to list here automatically.
+// STATUS_DISPLAY_ORDER only controls ordering for the known statuses --
+// something unexpected still shows up (sorted alphabetically after them)
+// rather than silently vanishing. "Any" is always last; it's a virtual
+// "no restriction" option, not a real status value.
+const STATUS_DISPLAY_ORDER = ["Available", "Pending", "Sold", "Off Market"];
+function renderStatusOptions() {
+  const select = document.getElementById("f-status");
+  const previousValue = select.value || filterState.status;
+  const statuses = [...new Set(ALL_LISTINGS.map((l) => l.status).filter(Boolean))];
+  statuses.sort((a, b) => {
+    const ia = STATUS_DISPLAY_ORDER.indexOf(a);
+    const ib = STATUS_DISPLAY_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  select.innerHTML = statuses.map((s) => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join("")
+    + `<option value="Any">Any</option>`;
+  select.value = (statuses.includes(previousValue) || previousValue === "Any") ? previousValue : "Available";
 }
 
 function renderFreshness() {
@@ -381,7 +421,7 @@ function buildListingCard(listing) {
   // app happens to render for the same data.
   const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
   body.innerHTML = `
-    <div class="card-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
+    <div class="card-status ${statusClass(listing.status)}">${listing.status.toUpperCase()} - ${escapeHtml(listing.lastUpdate)}${escapeHtml(livabilitySuffix)}</div>
     <div class="card-address">${escapeHtml(listing.address)}</div>
     <div class="card-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
     <div class="card-money">${escapeHtml(listing.down)} down</div>
@@ -710,15 +750,21 @@ function loadMapsScript() {
 // orange for Pending, gray for Sold. Applied to both the house glyph and
 // the price pill's border/text, so each marker reads as one consistent
 // color-coded unit rather than a colored house with an always-blue label.
+// Off Market added 2026-09-17 (violet, distinct from Sold's gray) -- keyed
+// via statusClass() like the CSS badges, so "Off Market" maps to a single
+// "off-market" key rather than the broken "off market" (two tokens' worth
+// of confusion doesn't apply to a plain object key, but keeping the same
+// helper everywhere avoids two different normalization rules to remember).
 const MAP_STATUS_COLORS = {
   available: { fill: "#7dd3fc", stroke: "#0369a1" },
   pending: { fill: "#fdba74", stroke: "#c2410c" },
   sold: { fill: "#d1d5db", stroke: "#4b5563" },
+  "off-market": { fill: "#c4b5fd", stroke: "#6d28d9" },
 };
 
 function houseIconWithPrice(downText, status) {
   const label = (downText || "").trim();
-  const colors = MAP_STATUS_COLORS[(status || "").toLowerCase()] || MAP_STATUS_COLORS.available;
+  const colors = MAP_STATUS_COLORS[statusClass(status)] || MAP_STATUS_COLORS.available;
   const houseW = 24, gap = 4, totalH = 24;
   // Real data check (2026-08-22): only 1 of 307 available listings has a
   // blank Down value -- skip the label pill entirely for those rather than
@@ -844,7 +890,7 @@ function mapPopupContent(listing) {
     <div class="map-popup">
       <img class="map-popup-photo" src="${streetViewUrl(listing.address, 168, 96)}" alt="${escapeHtml(listing.address)}">
       <div class="map-popup-body">
-        <div class="map-popup-status ${listing.status.toLowerCase()}">${listing.status.toUpperCase()}${escapeHtml(livabilitySuffix)}</div>
+        <div class="map-popup-status ${statusClass(listing.status)}">${listing.status.toUpperCase()}${escapeHtml(livabilitySuffix)}</div>
         <div class="map-popup-address">${escapeHtml(listing.address)}</div>
         <div class="map-popup-meta">${escapeHtml(listing.beds || "?")} bed / ${escapeHtml(listing.baths || "?")} bath</div>
         <div class="map-popup-money">${escapeHtml(listing.down)} down &middot; ${escapeHtml(listing.monthly)} a month</div>
