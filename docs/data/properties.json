@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T19:21:38.986904+00:00",
+  "generatedAt": "2026-09-17T19:22:23.406015+00:00",
   "listings": [
     {
       "id": "4021-green-lea-place-saint-louis-mo-63107",
@@ -277,7 +277,7 @@
       "id": "7028-dawson-pl-st-louis-mo-63136",
       "address": "7028 Dawson Pl, St. Louis, MO 63136",
       "onMarketDate": "9/10",
-      "lastUpdate": "9/10",
+      "lastUpdate": "9/16",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$795",
@@ -285,7 +285,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 5,
       "lat": 38.7079148,
       "lng": -90.2700136
