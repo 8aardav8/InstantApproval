@@ -66,6 +66,17 @@ let FAVORITE_COUNTS = {};
 // changed to "Any" on 2026-08-21, reverted per Aaron's direct request the
 // next day. area is a checkbox multi-select (array), not free-text.
 let filterState = { status: "Available", sort: "recent", down: null, monthly: null, beds: null, area: [] };
+// Cross-visit persistence, added 2026-09-17 alongside the URL-sync fix --
+// separate concern from that fix, on Aaron's explicit follow-up request.
+// The URL sync keeps filters alive WITHIN a session (reload, tab restore);
+// this makes them survive a genuinely fresh visit (new tab, home-screen
+// icon, any day) by remembering the buyer's last-used filters on their own
+// device -- same localStorage technique already used for Favorites/Viewed
+// below, just for filters. URL params still win when present (an explicit
+// shared link's intent shouldn't be silently overridden by whatever this
+// visitor happened to have saved locally before) -- see
+// restoreFilterState()'s own ordering.
+const FILTER_STORAGE_KEY = "iah_public_filters";
 
 // ---------- data load ----------
 async function loadData() {
@@ -73,9 +84,9 @@ async function loadData() {
   const data = await res.json();
   ALL_LISTINGS = data.listings;
   GENERATED_AT = data.generatedAt;
-  renderAreaCheckboxes(); // must run before restoreFilterStateFromUrl(), which checks boxes by value
-  renderStatusOptions(); // same reason -- restoreFilterStateFromUrl() sets #f-status.value directly
-  restoreFilterStateFromUrl();
+  renderAreaCheckboxes(); // must run before restoreFilterState(), which checks boxes by value
+  renderStatusOptions(); // same reason -- restoreFilterState() sets #f-status.value directly
+  restoreFilterState();
   renderFreshness();
   renderStatsStrip();
   updateFilterBadge();
@@ -2190,19 +2201,45 @@ function applyFilterStateToControls() {
   });
 }
 
-function restoreFilterStateFromUrl() {
+// Renamed from restoreFilterStateFromUrl() 2026-09-17 -- now tries the URL
+// first (an explicit shared link's intent, e.g. from copyResultsLink(),
+// should always win) and falls back to this visitor's own last-saved
+// filters in localStorage when the URL is bare. Only true page defaults
+// (nothing in either place -- a genuinely first-ever visit) fall through
+// to filterState's own hardcoded initial value.
+function restoreFilterState() {
   const params = new URLSearchParams(window.location.search);
-  if ([...params.keys()].length === 0) return;
-  filterState = {
-    status: params.get("status") || "Available",
-    sort: params.get("sort") || "recent",
-    down: parseFloat(params.get("down")) || null,
-    monthly: parseFloat(params.get("monthly")) || null,
-    beds: parseInt(params.get("beds"), 10) || null,
-    area: params.get("area") ? params.get("area").split(",") : [],
-  };
-  if (params.get("q")) document.getElementById("search-box").value = params.get("q");
-  applyFilterStateToControls();
+  if ([...params.keys()].length > 0) {
+    filterState = {
+      status: params.get("status") || "Available",
+      sort: params.get("sort") || "recent",
+      down: parseFloat(params.get("down")) || null,
+      monthly: parseFloat(params.get("monthly")) || null,
+      beds: parseInt(params.get("beds"), 10) || null,
+      area: params.get("area") ? params.get("area").split(",") : [],
+    };
+    if (params.get("q")) document.getElementById("search-box").value = params.get("q");
+    applyFilterStateToControls();
+    return;
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || "null");
+    if (saved) {
+      filterState = {
+        status: saved.status || "Available",
+        sort: saved.sort || "recent",
+        down: saved.down ?? null,
+        monthly: saved.monthly ?? null,
+        beds: saved.beds ?? null,
+        area: Array.isArray(saved.area) ? saved.area : [],
+      };
+      if (saved.q) document.getElementById("search-box").value = saved.q;
+      applyFilterStateToControls();
+    }
+  } catch {
+    // Malformed/corrupted localStorage value -- fall through to defaults
+    // rather than throw and break page load over a saved preference.
+  }
 }
 
 function copyResultsLink() {
@@ -2275,6 +2312,21 @@ function syncFilterStateToUrl() {
   // one entry per change instead of the page the visitor actually meant to
   // go back to.
   window.history.replaceState(null, "", url);
+  persistFilterStateToLocalStorage();
+}
+
+// Cross-visit half of the 2026-09-17 fix -- see FILTER_STORAGE_KEY's own
+// comment. Best-effort: localStorage can throw (private browsing, quota,
+// disabled storage) -- never let a save failure break filtering itself.
+function persistFilterStateToLocalStorage() {
+  try {
+    localStorage.setItem(
+      FILTER_STORAGE_KEY,
+      JSON.stringify({ ...filterState, q: document.getElementById("search-box").value.trim() }),
+    );
+  } catch {
+    // Ignore -- see comment above.
+  }
 }
 
 // Sort applies live on selection, no Apply button -- added 2026-08-29 per
