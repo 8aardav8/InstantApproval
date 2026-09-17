@@ -2206,16 +2206,7 @@ function restoreFilterStateFromUrl() {
 }
 
 function copyResultsLink() {
-  const params = new URLSearchParams();
-  if (filterState.status && filterState.status !== "Available") params.set("status", filterState.status);
-  if (filterState.sort && filterState.sort !== "recent") params.set("sort", filterState.sort);
-  if (filterState.down) params.set("down", filterState.down);
-  if (filterState.monthly) params.set("monthly", filterState.monthly);
-  if (filterState.beds) params.set("beds", filterState.beds);
-  if (filterState.area.length > 0) params.set("area", filterState.area.join(","));
-  const q = document.getElementById("search-box").value.trim();
-  if (q) params.set("q", q);
-  const qs = params.toString();
+  const qs = buildFilterUrlParams().toString();
   const url = `${window.location.origin}${window.location.pathname}${qs ? "?" + qs : ""}`;
   const btn = document.getElementById("copy-link-btn");
   const done = () => {
@@ -2245,9 +2236,45 @@ document.getElementById("sort-toggle").addEventListener("click", () => {
 // Re-renders the card grid, and -- if the map accordion is currently open --
 // the map's markers too, so the two never show a different set of listings
 // from each other. Used everywhere filterState/search changes.
+//
+// Also keeps the URL live-synced to the current filter/search/sort state
+// (via history.replaceState -- no new history entry, no reload) -- real bug
+// fixed here 2026-09-17, reported by a real visitor (Leroy Tyse) whose
+// filters "don't stay sticky." Root cause: restoreFilterStateFromUrl()
+// already existed and worked fine, but nothing ever kept the URL updated as
+// filters changed -- only the explicit "Copy Results Link" button
+// (copyResultsLink()) ever wrote to it. So any normal reload/revisit of the
+// plain URL (no query string) always fell back to filterState's hardcoded
+// defaults, even though the restore mechanism itself was already correct.
+// Fixes it by reusing copyResultsLink()'s own param-building (see
+// buildFilterUrlParams()) rather than duplicating it.
 function refreshCardGridAndMap() {
   renderCardGrid();
   if (isMapAccordionOpen()) renderMapMarkers();
+  syncFilterStateToUrl();
+}
+
+function buildFilterUrlParams() {
+  const params = new URLSearchParams();
+  if (filterState.status && filterState.status !== "Available") params.set("status", filterState.status);
+  if (filterState.sort && filterState.sort !== "recent") params.set("sort", filterState.sort);
+  if (filterState.down) params.set("down", filterState.down);
+  if (filterState.monthly) params.set("monthly", filterState.monthly);
+  if (filterState.beds) params.set("beds", filterState.beds);
+  if (filterState.area.length > 0) params.set("area", filterState.area.join(","));
+  const q = document.getElementById("search-box").value.trim();
+  if (q) params.set("q", q);
+  return params;
+}
+
+function syncFilterStateToUrl() {
+  const qs = buildFilterUrlParams().toString();
+  const url = `${window.location.pathname}${qs ? "?" + qs : ""}`;
+  // replaceState, not pushState -- a filter tweak or keystroke isn't a real
+  // navigation event; using pushState here would flood the back button with
+  // one entry per change instead of the page the visitor actually meant to
+  // go back to.
+  window.history.replaceState(null, "", url);
 }
 
 // Sort applies live on selection, no Apply button -- added 2026-08-29 per
