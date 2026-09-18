@@ -2663,6 +2663,25 @@ function updateAdminButtonState() {
   });
 }
 
+// See the initialize() call's own comment (initAdminUI) for the full
+// reasoning -- this is the "stay signed in while the tab is open" half of
+// that fix. Guarded against double-starting (initAdminUI only ever calls
+// this once per real page load today, but cheap insurance against that
+// changing later).
+let adminTokenRefreshTimerStarted = false;
+function startAdminTokenRefreshTimer() {
+  if (adminTokenRefreshTimerStarted) return;
+  adminTokenRefreshTimerStarted = true;
+  const FORTY_FIVE_MIN = 45 * 60 * 1000;
+  setInterval(() => {
+    // Only bother if actually signed in -- prompting a signed-out visitor
+    // every 45 minutes would be pointless UI noise.
+    if (getStoredAdminToken() && window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.prompt();
+    }
+  }, FORTY_FIVE_MIN);
+}
+
 function handleAdminCredentialResponse(response) {
   localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, response.credential);
   updateAdminButtonState();
@@ -2821,9 +2840,36 @@ function initAdminUI() {
   // than assume it's ready by the time this runs.
   const tryInit = () => {
     if (window.google && google.accounts && google.accounts.id) {
-      google.accounts.id.initialize({ client_id: ADMIN_OAUTH_CLIENT_ID, callback: handleAdminCredentialResponse });
+      // Real constraint, not something this site's code can change: the
+      // ID token Google issues is hard-capped at ~1 hour (the `exp` claim
+      // Google itself sets) -- it's meant to be a one-time proof of
+      // identity, not a long-lived session, and this admin flow just uses
+      // it directly as one instead of exchanging it for the site's own
+      // longer session. Real bug reported by Aaron 2026-09-17: gets
+      // logged out "too frequently." Since the token's actual lifetime
+      // can't be extended, the fix is to silently re-issue a fresh one
+      // before the old one expires, so the expiry is never actually
+      // noticed during a normal admin session:
+      //   - auto_select: true lets Google silently return a fresh
+      //     credential on page load/reload for someone who already
+      //     consented, no click needed.
+      //   - the timer below (startAdminTokenRefreshTimer) proactively
+      //     re-prompts every 45 min (comfortably inside the ~60 min
+      //     window) while the tab stays open and signed in, so an active
+      //     session doesn't go stale mid-use either.
+      // Honest limit: true silence depends on Google's own consent/session
+      // state in that browser, not something this site can force -- if
+      // Google ever needs to show its own UI (a revoked session, a
+      // multi-account picker, etc.), that's Google's behavior, not a bug
+      // here.
+      google.accounts.id.initialize({
+        client_id: ADMIN_OAUTH_CLIENT_ID,
+        callback: handleAdminCredentialResponse,
+        auto_select: true,
+      });
       google.accounts.id.renderButton(document.getElementById("g_id_signin"), { theme: "outline", size: "medium" });
       updateAdminButtonState();
+      startAdminTokenRefreshTimer();
       // Already signed in from a previous visit (valid token still in
       // localStorage) -- fetch the bulk admin view now, added 2026-08-29,
       // so badges show up without needing to sign out/in again to trigger it.
