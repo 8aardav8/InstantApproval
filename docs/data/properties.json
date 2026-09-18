@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T16:37:15.804908+00:00",
+  "generatedAt": "2026-09-18T16:37:57.381051+00:00",
   "listings": [
     {
       "id": "1117-w-packard-st-decatur-il-62522",
@@ -277,7 +277,7 @@
       "id": "1315-e-decatur-st-decatur-il-62521",
       "address": "1315 E Decatur St Decatur IL 62521",
       "onMarketDate": "9/10",
-      "lastUpdate": "9/10",
+      "lastUpdate": "9/17",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$950",
@@ -285,7 +285,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1000",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.83684849999999,
       "lng": -88.9389145
@@ -5003,7 +5003,7 @@
       "id": "5436-hodiamont-ave-st-louis-mo-63136",
       "address": "5436 Hodiamont Ave., St. Louis, MO 63136",
       "onMarketDate": "9/21/2025",
-      "lastUpdate": "7/5/2026",
+      "lastUpdate": "9/17/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$625",
@@ -5011,7 +5011,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "800",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.7083774,
       "lng": -90.263762
