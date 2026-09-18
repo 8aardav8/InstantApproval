@@ -2699,6 +2699,11 @@ function handleAdminCredentialResponse(response) {
     const match = window.location.hash.match(/^#listing\/(.+)$/);
     if (match) showDetail(match[1]);
   }
+  // A buyer link was opened before Aaron was signed in -- restoreFromUrlHash()
+  // (see its own comment) skipped it at page load precisely because there
+  // was no admin token yet; retry now that there is one. Added 2026-09-18
+  // (TASK-000690) alongside restoreFromUrlHash() itself.
+  restoreFromUrlHash();
 }
 
 // Headers already shown somewhere on the public page (card/detail view) --
@@ -2992,6 +2997,33 @@ function initInstallUI() {
   window.addEventListener("appinstalled", hideInstallUI);
 }
 
+// Real deep-linking, added 2026-09-18 (TASK-000690) -- neither #listing/id
+// nor a buyer link worked before this: showDetail() already SET the hash
+// when you navigated INTO a listing (so back/forward worked), but nothing
+// ever read it back on a fresh page load -- pasting a "copied" listing
+// link into a new tab just showed the default grid, hash sitting inert in
+// the URL bar. Buyers had no hash at all. This is the actual fix for both,
+// not just the buyer half TASK-000690 originally asked for.
+//
+// Buyer links are admin-gated by design (the buyers data itself is
+// admin-only) -- if the hash points at a buyer and Aaron isn't signed in
+// yet, this waits rather than silently failing; handleAdminCredentialResponse
+// calls this again once he does sign in (see its own updated comment).
+async function restoreFromUrlHash() {
+  const listingMatch = window.location.hash.match(/^#listing\/(.+)$/);
+  if (listingMatch) {
+    showDetail(listingMatch[1]);
+    return;
+  }
+  const buyerMatch = window.location.hash.match(/^#buyer\/(.+)$/);
+  if (buyerMatch) {
+    if (!getStoredAdminToken()) return; // not signed in yet -- retried after sign-in, see handleAdminCredentialResponse
+    activateTab("buyers");
+    await loadBuyers();
+    showBuyerDetail(decodeURIComponent(buyerMatch[1]));
+  }
+}
+
 initNav();
 initDrawer();
 initStepTabs();
@@ -3012,6 +3044,7 @@ loadData().then(() => {
   initGetStartedForm();
   initVisitorSync();
   restoreTabAfterPullRefresh();
+  restoreFromUrlHash();
 });
 
 // PWA install support (2026-08-27) -- minimal service worker, exists mainly
@@ -4442,6 +4475,11 @@ function showBuyerDetail(phone, opts = {}) {
   document.getElementById("buyers-detail-view").classList.remove("hidden");
   renderBuyerDetail(buyer);
   refreshQuoNameInBackground(phone);
+  // Real link for TASK-000690 -- same pattern showDetail() already used for
+  // listings (window.location.hash = `listing/${id}`), now actually
+  // restorable on page load too, see restoreFromUrlHash(). encodeURIComponent
+  // since phone numbers carry a literal "+".
+  window.location.hash = `buyer/${encodeURIComponent(phone)}`;
 }
 
 // Fire-and-forget: checks the buyer's REAL current Quo contact name and
@@ -4651,6 +4689,10 @@ function backToBuyersList() {
   const phone = CURRENT_BUYER_DETAIL_PHONE;
   document.getElementById("buyers-detail-view").classList.add("hidden");
   document.getElementById("buyers-list-view").classList.remove("hidden");
+  // Matches backToList()'s own pattern for listings -- clear the hash so
+  // the URL bar doesn't keep pointing at a buyer page you've navigated
+  // away from. Added 2026-09-18 alongside showBuyerDetail's own hash-set.
+  history.replaceState(null, "", window.location.pathname);
   renderBuyersList();
   if (phone) {
     const row = document.querySelector(`.buyer-row[data-phone="${cssEscapeAttrValue(phone)}"]`);
