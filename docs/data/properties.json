@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T16:42:34.918351+00:00",
+  "generatedAt": "2026-09-18T16:43:53.665977+00:00",
   "listings": [
     {
       "id": "1117-w-packard-st-decatur-il-62522",
@@ -65,7 +65,7 @@
       "baths": "1",
       "sqft": "",
       "status": "Available",
-      "livability": 0,
+      "livability": 4,
       "lat": 38.6224918,
       "lng": -90.10251470000001
     },
