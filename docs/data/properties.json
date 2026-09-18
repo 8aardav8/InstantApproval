@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T16:09:09.725168+00:00",
+  "generatedAt": "2026-09-18T16:30:40.803586+00:00",
   "listings": [
     {
       "id": "4021-green-lea-place-saint-louis-mo-63107",
@@ -28828,7 +28828,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.7097579,
       "lng": -90.13660259999999
