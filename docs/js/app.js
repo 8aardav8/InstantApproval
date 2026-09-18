@@ -3206,6 +3206,22 @@ function listingAvailabilityBadgeHtml(address) {
 // unset); the emoji itself is purely a client-side rendering choice.
 const SENTIMENT_EMOJI = { smile: "😊", neutral: "😐", frown: "😟" };
 
+// Token-based name comparison -- added 2026-09-17, fixing a real bug in
+// the ID-name-mismatch flag below (see its own comment for the Leroy Tyse
+// incident this came from). Every word in `idName` must appear somewhere
+// in `quoName`, in ANY order -- so "Tyse, Leroy" (most US IDs print
+// Last, First) correctly matches Quo's "Leroy Tyse" instead of only ever
+// accepting one exact word order the way a plain substring check did.
+// Still tolerant of Quo having extra words (a suffix like "WMTB"), same
+// as the original check.
+function namesLooselyMatch(quoName, idName) {
+  if (!quoName || !idName) return false;
+  const tokenize = (s) => s.toLowerCase().replace(/[,.]/g, " ").split(/\s+/).filter(Boolean);
+  const idTokens = tokenize(idName);
+  const quoTokens = new Set(tokenize(quoName));
+  return idTokens.length > 0 && idTokens.every((t) => quoTokens.has(t));
+}
+
 // Shared markup builders, added 2026-09-12 -- used on both the buyer list
 // card AND the top of the buyer detail page (Aaron's direct request to be
 // able to update these from either place), so both stay in sync rather
@@ -3699,11 +3715,24 @@ function renderBuyersList() {
     // Flags a mismatch between the Quo contact's own name and the name
     // actually read off their ID -- added 2026-09-12 per Aaron's direct
     // request to distinguish the two at a glance, not just on the detail
-    // page. Loose case-insensitive substring check (not exact-equal) so a
-    // clean match like "Alexis Langston" vs. Quo's "Alexis Langston WMTB"
-    // doesn't falsely flag.
+    // page. Real bug fixed 2026-09-17, reported by Aaron re: Leroy Tyse:
+    // a plain substring check ("does Quo's name contain the ID name")
+    // false-flagged any ID read in "Last, First" order -- the standard
+    // format on most US driver's licenses -- because "tyse, leroy" is
+    // never a literal substring of "leroy tyse", comma and word order
+    // both breaking the match even though it's clearly the same name.
+    // Confirmed as a real code bug, not a data problem: Aaron had already
+    // corrected the OCR text to accurately read "Tyse, Leroy" and the
+    // warning still didn't clear, since no amount of accurate data can
+    // satisfy a check that only ever accepts one exact word order.
+    // Fixed with a token-based comparison (namesLooselyMatch) instead --
+    // every word in the ID name must appear somewhere in the Quo name,
+    // in ANY order, so "Tyse, Leroy" now correctly matches "Leroy Tyse".
+    // Still catches a genuine mismatch (different token content), and
+    // still tolerates Quo having extra words (a suffix like "WMTB") the
+    // same as the original substring check did.
     const idNameVal = b.loginsMatch && b.loginsMatch.idName;
-    const idNameMismatch = idNameVal && b.quoName && !b.quoName.toLowerCase().includes(idNameVal.toLowerCase());
+    const idNameMismatch = idNameVal && b.quoName && !namesLooselyMatch(b.quoName, idNameVal);
     const idNameMismatchHtml = idNameMismatch
       ? `<span class="buyer-row-idname-flag" title="ID reads: ${escapeAttr(idNameVal)}">🪪⚠️ ID says "${escapeHtml(idNameVal)}"</span>`
       : "";
