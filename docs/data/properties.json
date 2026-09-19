@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T14:50:40.021479+00:00",
+  "generatedAt": "2026-09-19T14:51:50.147544+00:00",
   "listings": [
     {
       "id": "1117-w-packard-st-decatur-il-62522",
@@ -5093,8 +5093,8 @@
       "down": "$2,250",
       "monthly": "$875",
       "picsLink": "https://photos.app.goo.gl/jEkWRBwbNkHrLvXY9",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 2,
