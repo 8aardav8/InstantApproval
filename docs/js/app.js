@@ -859,12 +859,12 @@ async function toggleMapAccordion() {
 
   if (isOpen) {
     accordion.classList.add("hidden");
-    label.textContent = "View Map of Homes Meeting Filter Criteria";
+    label.textContent = "View Map";
     return;
   }
 
   accordion.classList.remove("hidden");
-  label.textContent = "Hide map";
+  label.textContent = "Hide Map";
   const canvas = document.getElementById("map-canvas");
 
   try {

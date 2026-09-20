@@ -334,8 +334,14 @@
            the card grid below, per Aaron's explicit request (this
            supersedes the original plan's "map always shows Available
            only" rule). Its own search bar was removed the same day --
-           redundant now that the map already mirrors the page's filters. -->
-      <button id="show-map-btn" class="link-pill"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="show-map-btn-label">View Map of Homes Meeting Filter Criteria</span></button>
+           redundant now that the map already mirrors the page's filters.
+           Styling changed 2026-09-20 (Aaron's direct request): was
+           class="link-pill" (a flat, light-blue pill -- read as "a link,"
+           not a button) with a long label; now class="btn-outline btn-full"
+           (the same real-button look used everywhere else on the site)
+           and a short "View Map" label, toggling to "Hide Map" -- see
+           toggleMapAccordion() in app.js. -->
+      <button id="show-map-btn" class="btn-outline btn-full"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="show-map-btn-label">View Map</span></button>
 
       <div id="map-accordion" class="map-accordion hidden">
         <div id="map-canvas"></div>
