@@ -734,15 +734,18 @@ function showDetail(id) {
         ${inquireBtn}
         <button type="button" id="share-btn" class="btn-outline" onclick="shareListing('${listing.id}')">${ICON_LINK}Share</button>
       </div>
-      <!-- Get Directions + Schedule a Viewing share a row, added
-           2026-08-29 per Aaron's direct request -- same .action-row flex
-           pattern as Inquire/Share above (both dropped btn-full so they
-           flex to share the space instead of each forcing its own
-           full-width block). scheduleBtn can be an empty string for a
-           Sold/Pending listing, in which case Get Directions alone just
-           naturally fills the row via its own flex: 1. -->
+      <!-- View Map + Schedule a Viewing share a row, added 2026-08-29 per
+           Aaron's direct request -- same .action-row flex pattern as
+           Inquire/Share above (both dropped btn-full so they flex to
+           share the space instead of each forcing its own full-width
+           block). scheduleBtn can be an empty string for a Sold/Pending
+           listing, in which case View Map alone just naturally fills the
+           row via its own flex: 1. Converted from <a href> to a real
+           <button> 2026-09-20 (Aaron's request, to match every other
+           action in this row) -- see viewMapFor() for the click handler;
+           same destination URL and new-tab behavior as before. -->
       <div class="action-row">
-        <a class="btn-outline" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
+        <button type="button" class="btn-outline" onclick="viewMapFor('${listing.id}')">${ICON_DIRECTIONS}View Map</button>
         ${scheduleBtn}
       </div>
       ${detailField("First Available", listing.onMarketDate)}
@@ -1049,6 +1052,21 @@ let pendingGetStartedPropertyId = null;
 function goToGetStartedFor(listingId) {
   pendingGetStartedPropertyId = listingId;
   activateTab("get-started");
+}
+
+// Added 2026-09-20, Aaron's direct request: the map link was an <a href>
+// (opens Google Maps directions in a new tab) while every other action in
+// this same row (Inquire, Share, Schedule a Viewing) is a real <button> --
+// converted to match, same window.open behavior, same destination URL.
+// Looks up the listing fresh rather than passing the address through the
+// onclick string, so an address containing a quote/apostrophe can't break
+// the inline handler (the exact class of bug already avoided elsewhere in
+// this file by looking listings up by id instead).
+function viewMapFor(listingId) {
+  const listing = ALL_LISTINGS.find((l) => l.id === listingId);
+  if (!listing) return;
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}`;
+  window.open(url, "_blank", "noopener");
 }
 
 // Rebuilt 2026-08-29 as a type-to-filter autocomplete -- real reported
