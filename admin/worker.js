@@ -858,6 +858,36 @@ async function pushTelegramPing(env, name, email, phone, quoResult, kind = "new"
   }
 }
 
+// Real incident, 2026-09-20: a visitor (name/email/phone all valid) got the
+// generic "Something went wrong" error on a clean gate submission. Root
+// cause investigated directly -- no code change since 2026-09-14, the
+// underlying credential/Sheet access confirmed still working (a live
+// synthetic test succeeded end-to-end the same day) -- pointing at a
+// one-off transient failure (a momentary Google Sheets API hiccup, or the
+// token exchange) rather than a real outage. This endpoint had zero
+// retry anywhere in the chain: one failed fetch, anywhere in
+// getSheetsAccessToken/findOrNextLoginsRow/writeLoginsRow, immediately
+// surfaced as a lost lead with no second attempt. `withRetry` absorbs
+// exactly that class of failure. Retrying the whole three-call sequence
+// (not just the failing call in isolation) is safe and idempotent:
+// findOrNextLoginsRow re-runs first on any retry, so a write that
+// actually succeeded before a later step failed is correctly found as an
+// existing row on the next attempt, not duplicated.
+async function withRetry(fn, attempts = 3, delaysMs = [300, 900]) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delaysMs[i] ?? delaysMs[delaysMs.length - 1]));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 async function handleGateLogin(request, env) {
   let body;
   try {
@@ -876,28 +906,31 @@ async function handleGateLogin(request, env) {
 
   let accessToken, target;
   try {
-    accessToken = await getSheetsAccessToken(env);
-    // phone now passed through -- see findOrNextLoginsRow's own comment on
-    // the phone-fallback match added 2026-09-14 (a first-ever gate sign-in
-    // with a new email but a phone that already has a row used to create a
-    // genuine duplicate row instead of reusing the existing one).
-    target = await findOrNextLoginsRow(accessToken, email, phone);
-    // Captured BEFORE writeLoginsRow, which is what actually fills the gap --
-    // this reflects the row's state as it stood coming into this request.
-    const phoneWasBlank = !target.isNew && !target.existingPhone;
-    const emailWasBlank = !target.isNew && !target.existingEmail;
-    await writeLoginsRow(accessToken, target, { name, email, phone, agreed });
-    target.phoneJustBackfilled = phoneWasBlank && !!phone;
-    // Mirrors phoneJustBackfilled -- the new real case this covers: a
-    // buyer found only via the phone-fallback match above (a Quo
-    // conversation, or tonight's Sheet backfill) signing into the gate for
-    // the first time and having their email attached to that same row.
-    target.emailJustBackfilled = emailWasBlank && !!email;
+    target = await withRetry(async () => {
+      accessToken = await getSheetsAccessToken(env);
+      // phone now passed through -- see findOrNextLoginsRow's own comment on
+      // the phone-fallback match added 2026-09-14 (a first-ever gate sign-in
+      // with a new email but a phone that already has a row used to create a
+      // genuine duplicate row instead of reusing the existing one).
+      const t = await findOrNextLoginsRow(accessToken, email, phone);
+      // Captured BEFORE writeLoginsRow, which is what actually fills the gap --
+      // this reflects the row's state as it stood coming into this request.
+      const phoneWasBlank = !t.isNew && !t.existingPhone;
+      const emailWasBlank = !t.isNew && !t.existingEmail;
+      await writeLoginsRow(accessToken, t, { name, email, phone, agreed });
+      t.phoneJustBackfilled = phoneWasBlank && !!phone;
+      // Mirrors phoneJustBackfilled -- the new real case this covers: a
+      // buyer found only via the phone-fallback match above (a Quo
+      // conversation, or tonight's Sheet backfill) signing into the gate for
+      // the first time and having their email attached to that same row.
+      t.emailJustBackfilled = emailWasBlank && !!email;
+      return t;
+    });
   } catch (e) {
     // The Sheet row is the one thing this endpoint can't silently skip --
-    // if writing it fails, report the real error (app.js shows its own
-    // generic "something went wrong" message to the visitor) rather than
-    // claim success and quietly lose the lead.
+    // if writing it fails after retrying, report the real error (app.js
+    // shows its own generic "something went wrong" message to the
+    // visitor) rather than claim success and quietly lose the lead.
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
 
