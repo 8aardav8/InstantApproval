@@ -888,6 +888,74 @@ async function withRetry(fn, attempts = 3, delaysMs = [300, 900]) {
   throw lastErr;
 }
 
+// Fire-and-forget raw safety net, added 2026-09-20 after the SAME incident
+// above turned out to have a second, worse layer: the visitor's page had
+// loaded over plain http:// (GitHub Pages' "Enforce HTTPS" was off), so
+// his page's Origin was `http://instantapprovalhomes.com` -- not on
+// ALLOWED_ORIGINS, which only lists the https:// variants. The browser
+// never even sent the real /gate-login request at all (a JSON POST
+// triggers a CORS preflight; the preflight response didn't grant
+// permission, so nothing further happened) -- his info was never on file
+// anywhere, not even a failed attempt.
+//
+// This endpoint exists to survive exactly that class of failure, not just
+// this one instance of it. Called via `navigator.sendBeacon()` from the
+// client the INSTANT the visitor clicks submit -- before, and independent
+// of, the real /gate-login call. sendBeacon requests never trigger a CORS
+// preflight (the spec disallows custom headers on them, which is what
+// preflight exists to gate) and the browser never reads/cares about the
+// response, so this reaches the server and writes real data regardless of
+// any Origin/CORS misconfiguration, a dead Worker, a slow Sheets API, or
+// anything else that could take down the real endpoint.
+//
+// Deliberately dumb on purpose: one raw append, no matching/backfill/
+// enrichment logic that could itself fail. This is a safety net, never
+// the source of truth -- Aaron/Nathan reconcile "Gate Capture Log" against
+// the real "App: Logins" periodically (daily-health-check.ts's own
+// reconciliation pass, see agent-system SESSION_LOG.md) rather than this
+// endpoint trying to be clever about matching/deduping itself.
+async function handleGateCapture(request, env) {
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch (e) {
+    return new Response(null, { status: 204 });
+  }
+  const name = (body.name || "").trim();
+  const email = (body.email || "").trim();
+  const phone = (body.phone || "").trim();
+  if (!name && !email && !phone) return new Response(null, { status: 204 }); // nothing typed yet -- not worth a row
+
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = [
+      new Date().toISOString(),
+      name,
+      email,
+      phone,
+      body.agreed ? "TRUE" : "FALSE",
+      request.headers.get("User-Agent") || "",
+      "",
+    ];
+    const range = encodeURIComponent("Gate Capture Log!A:G");
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ values: [row] }),
+    });
+  } catch (e) {
+    // Swallowed deliberately -- a beacon caller never reads the response,
+    // and this is itself the last-resort safety net; there's nothing
+    // further downstream to hand a failure to.
+  }
+  // 204, not jsonResponse() -- sendBeacon discards the response body/status
+  // either way, and this deliberately skips the CORS-rewrite wrapper
+  // (`route()`'s per-request Origin rewrite) since a beacon call doesn't
+  // need it and this endpoint's whole point is to not depend on CORS
+  // being configured correctly.
+  return new Response(null, { status: 204 });
+}
+
 async function handleGateLogin(request, env) {
   let body;
   try {
@@ -931,6 +999,30 @@ async function handleGateLogin(request, env) {
     // if writing it fails after retrying, report the real error (app.js
     // shows its own generic "something went wrong" message to the
     // visitor) rather than claim success and quietly lose the lead.
+    //
+    // Real-time alert, added 2026-09-20 alongside handleGateCapture's own
+    // safety-net write: Aaron's own words -- "I'll need to get a
+    // notification letting me know the info was captured, but their login
+    // failed." Fired right here rather than a later periodic reconciliation
+    // pass, since the Worker already knows the exact moment and reason it
+    // failed. Independent of Sheets/Quo entirely (a plain Telegram API
+    // call), so it still gets through even when the failure IS Sheets
+    // access itself -- exactly the case this needs to survive.
+    if (env.TELEGRAM_BOT_TOKEN) {
+      try {
+        await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: AARON_TELEGRAM_CHAT_ID,
+            text: `🚩 Gate login FAILED after retrying -- info was captured (Gate Capture Log) but never made it to App: Logins.\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nError: ${String(e).slice(0, 300)}`,
+          }),
+        });
+      } catch (notifyErr) {
+        // Swallowed -- this is already the failure path, nothing further
+        // downstream to hand a second failure to.
+      }
+    }
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
 
@@ -5209,6 +5301,10 @@ async function route(request, env) {
 
   if (url.pathname === "/gate-login" && request.method === "POST") {
     return handleGateLogin(request, env);
+  }
+
+  if (url.pathname === "/gate-capture" && request.method === "POST") {
+    return handleGateCapture(request, env);
   }
 
   if (url.pathname === "/sync-visitor" && request.method === "POST") {

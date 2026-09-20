@@ -2441,6 +2441,16 @@ const FAVORITE_COUNTS_ENDPOINT = `${ADMIN_API_URL}/favorite-counts`;
 // Same Worker as the admin API above, new route -- no auth needed, this is
 // the public lead-capture gate (see admin/worker.js's handleGateLogin).
 const GATE_LOGIN_ENDPOINT = `${ADMIN_API_URL}/gate-login`;
+// Fire-and-forget raw safety net, added 2026-09-20 -- see
+// admin/worker.js's handleGateCapture for the full incident this exists
+// to survive (a visitor's real submission never even reached the server,
+// due to an Origin/CORS gap the browser enforced before the main request
+// could be sent). navigator.sendBeacon() never triggers a CORS preflight
+// and the browser never reads its response, so this reaches the server
+// and gets logged regardless of any Origin/CORS/Worker-health problem
+// that could take down the real gate-login flow -- called separately, not
+// as a replacement for it.
+const GATE_CAPTURE_ENDPOINT = `${ADMIN_API_URL}/gate-capture`;
 const UPLOAD_ID_ENDPOINT = `${ADMIN_API_URL}/upload-id`;
 // Appointment scheduling, added 2026-08-29 -- see admin/worker.js's job 5
 // for the full design (slots stored as "<address> | <date>" in App:
@@ -2483,6 +2493,17 @@ function initLoginGate() {
       localStorage.setItem(GATE_STORAGE_KEY, "1");
       gate.classList.add("hidden");
       return;
+    }
+
+    // Fire the raw safety-net capture the instant they click submit --
+    // deliberately independent of, and before, the real request below.
+    // Best-effort: sendBeacon itself can fail to queue (returns false) on
+    // some browsers under memory pressure; nothing to do about that here,
+    // it's already the last-resort layer.
+    try {
+      navigator.sendBeacon(GATE_CAPTURE_ENDPOINT, JSON.stringify({ name, email, phone, agreed }));
+    } catch (captureErr) {
+      // Never let the safety net itself block the real submission.
     }
 
     status.textContent = "Continuing...";
