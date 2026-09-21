@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-21T18:28:03.064659+00:00",
+  "generatedAt": "2026-09-21T18:28:34.213863+00:00",
   "listings": [
+    {
+      "id": "7320-park-dr-st-louis-mo-63-133",
+      "address": "7320 Park Dr. St. Louis MO 63,133",
+      "onMarketDate": "9/19",
+      "lastUpdate": "9/19",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/08wixxn1iz704mh7la35s/AKxI3WckyF7P8FUjyVX9TOI?rlkey=knpppx627o6pkwlxcgetopjp3&st=e6sv1jg7&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6864262,
+      "lng": -90.3084633
+    },
     {
       "id": "912-slosson-st-akron-oh-44320",
       "address": "912 Slosson St, Akron, OH 44320",
