@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T17:33:42.984842+00:00",
+  "generatedAt": "2026-09-21T17:34:13.899753+00:00",
   "listings": [
     {
       "id": "912-slosson-st-akron-oh-44320",
@@ -8,10 +8,10 @@
       "lastUpdate": "9/18",
       "area": "OH",
       "down": "$2,000",
-      "monthly": "",
+      "monthly": "$795",
       "picsLink": "https://app.companycam.com/timeline/LwvW4Gaq3cyJ7m9G",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "2",
       "sqft": "",
       "status": "Available",
       "livability": 0,
@@ -2937,7 +2937,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "800",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.58994060000001,
       "lng": -90.0663019
