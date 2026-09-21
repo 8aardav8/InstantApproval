@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T18:29:44.723567+00:00",
+  "generatedAt": "2026-09-21T18:32:56.318918+00:00",
   "listings": [
     {
       "id": "7320-park-dr-st-louis-mo-63-133",
@@ -11412,7 +11412,7 @@
       "id": "968-w-view-st-decatur-il-62522",
       "address": "968 W View St, Decatur, IL 62522",
       "onMarketDate": "3/11/2026",
-      "lastUpdate": "8/29/2026",
+      "lastUpdate": "9/19/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$925",
@@ -11420,7 +11420,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1044",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8503509,
       "lng": -88.9696865
