@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T18:32:56.318918+00:00",
+  "generatedAt": "2026-09-21T18:33:28.918471+00:00",
   "listings": [
     {
       "id": "7320-park-dr-st-louis-mo-63-133",
@@ -13,7 +13,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "754",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.6864262,
       "lng": -90.3084633
