@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T18:35:58.081105+00:00",
+  "generatedAt": "2026-09-21T18:36:17.605082+00:00",
   "listings": [
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$895",
       "picsLink": "https://drive.google.com/drive/folders/1kddFyAadFNcFhcyiVoDOALxMVV00oYG6?usp=sharing\"",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1501",
       "status": "Available",
       "livability": 0,
       "lat": 38.5669527,
