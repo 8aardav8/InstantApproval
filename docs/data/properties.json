@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T18:37:48.736763+00:00",
+  "generatedAt": "2026-09-21T18:38:38.724189+00:00",
   "listings": [
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
@@ -28616,7 +28616,7 @@
       "id": "617-w-1st-st-sparta-il-62286",
       "address": "617 W 1st St, Sparta, IL 62286",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/11/2026",
+      "lastUpdate": "9/21/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$900",
@@ -28624,7 +28624,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "750",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.1209773,
       "lng": -89.7120851
