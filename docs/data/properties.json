@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T18:36:17.605082+00:00",
+  "generatedAt": "2026-09-21T18:37:29.043304+00:00",
   "listings": [
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
@@ -10145,7 +10145,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "660",
-      "status": "Pending",
+      "status": "Available",
       "livability": 3,
       "lat": 38.892137,
       "lng": -90.14330849999999
@@ -22938,7 +22938,7 @@
       "id": "601-homestead-ave-peoria-il-61603",
       "address": "601 Homestead Ave, Peoria, IL 61603",
       "onMarketDate": "9/10/2026",
-      "lastUpdate": "9/10/2026",
+      "lastUpdate": "9/20/2026",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$895",
@@ -22946,7 +22946,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1156",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 0,
       "lat": 40.7201344,
       "lng": -89.5609061
