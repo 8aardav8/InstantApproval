@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T18:28:34.213863+00:00",
+  "generatedAt": "2026-09-21T18:29:12.925195+00:00",
   "listings": [
     {
       "id": "7320-park-dr-st-louis-mo-63-133",
@@ -8,11 +8,11 @@
       "lastUpdate": "9/19",
       "area": "MO - St. Louis",
       "down": "$2,000",
-      "monthly": "",
+      "monthly": "$850",
       "picsLink": "https://www.dropbox.com/scl/fo/08wixxn1iz704mh7la35s/AKxI3WckyF7P8FUjyVX9TOI?rlkey=knpppx627o6pkwlxcgetopjp3&st=e6sv1jg7&dl=0",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "754",
       "status": "Available",
       "livability": 0,
       "lat": 38.6864262,
