@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-21T18:35:10.761019+00:00",
+  "generatedAt": "2026-09-21T18:35:58.081105+00:00",
   "listings": [
+    {
+      "id": "1123-saint-benedict-dr-cahokia-il-62-206",
+      "address": "1123 Saint Benedict Dr Cahokia IL 62,206",
+      "onMarketDate": "9/19",
+      "lastUpdate": "9/19",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$895",
+      "picsLink": "https://drive.google.com/drive/folders/1kddFyAadFNcFhcyiVoDOALxMVV00oYG6?usp=sharing\"",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5669527,
+      "lng": -90.1619671
+    },
     {
       "id": "7320-park-dr-st-louis-mo-63-133",
       "address": "7320 Park Dr. St. Louis MO 63,133",
