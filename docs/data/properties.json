@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T18:18:25.247890+00:00",
+  "generatedAt": "2026-09-22T18:19:14.590841+00:00",
   "listings": [
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
@@ -9899,7 +9899,7 @@
       "id": "740-valencia-st-jackson-ms-39204",
       "address": "740 Valencia St., Jackson MS 39204",
       "onMarketDate": "5/1/2026",
-      "lastUpdate": "8/3/2026",
+      "lastUpdate": "9/21/2026",
       "area": "MS",
       "down": "$2,000",
       "monthly": "$1,098",
@@ -9907,7 +9907,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1333",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.2790072,
       "lng": -90.2284294
