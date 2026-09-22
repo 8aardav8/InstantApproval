@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-22T19:19:11.247600+00:00",
+  "generatedAt": "2026-09-22T19:19:59.747273+00:00",
   "listings": [
+    {
+      "id": "1871-e-lawrence-st-decatur-il-62521",
+      "address": "1871 E Lawrence St, Decatur, IL 62521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1se6QuRm15vU9hI8d9NiU4N4WShRm20Ts",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8363913,
+      "lng": -88.9310623
+    },
     {
       "id": "1021-maple-st-pekin-il-61554",
       "address": "1021 Maple St, Pekin, IL 61554",
