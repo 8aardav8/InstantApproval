@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-22T18:55:29.477367+00:00",
+  "generatedAt": "2026-09-22T18:56:10.276685+00:00",
   "listings": [
+    {
+      "id": "3238-colorado-ave-flint-mi-48-506",
+      "address": "3238 Colorado Ave Flint MI 48,506",
+      "onMarketDate": "9/21",
+      "lastUpdate": "9/21",
+      "area": "MI",
+      "down": "$3,000",
+      "monthly": "$825",
+      "picsLink": "https://drive.google.com/drive/folders/1gOaN6JecRCNIS8-kSyhPACKTUflVkt8V?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.0448021,
+      "lng": -83.64620529999999
+    },
     {
       "id": "523-grace-st-flint-mi-48503",
       "address": "523 Grace St. Flint MI 48503",
