@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T18:20:08.449059+00:00",
+  "generatedAt": "2026-09-22T18:20:24.822327+00:00",
   "listings": [
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
@@ -772,8 +772,8 @@
       "onMarketDate": "9/21",
       "lastUpdate": "9/21",
       "area": "IL - East St Louis",
-      "down": "$3,000",
-      "monthly": "$1,250",
+      "down": "$2,000",
+      "monthly": "$750",
       "picsLink": "https://photos.app.goo.gl/f9FxCi22qwQZtrR28",
       "beds": "3",
       "baths": "1",
