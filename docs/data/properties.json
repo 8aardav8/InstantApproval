@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T18:48:17.105053+00:00",
+  "generatedAt": "2026-09-22T18:48:45.441284+00:00",
   "listings": [
     {
       "id": "523-grace-st-flint-mi-48503",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$850",
       "picsLink": "https://photos.app.goo.gl/5pVJ5bZX6tV5bvzg6",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1144",
       "status": "Available",
       "livability": 0,
       "lat": 43.0322871,
