@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-22T18:46:45.195288+00:00",
+  "generatedAt": "2026-09-22T18:47:40.984819+00:00",
   "listings": [
+    {
+      "id": "523-grace-st-flint-mi-48503",
+      "address": "523 Grace St. Flint MI 48503",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.0322871,
+      "lng": -83.7118149
+    },
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
       "address": "1123 Saint Benedict Dr Cahokia IL 62,206",
