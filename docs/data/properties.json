@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T18:48:47.037162+00:00",
+  "generatedAt": "2026-09-23T18:49:13.459232+00:00",
   "listings": [
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
@@ -1824,7 +1824,7 @@
       "id": "1828-e-main-st-decatur-il-62-521",
       "address": "1828 E Main St Decatur IL 62,521",
       "onMarketDate": "7/26",
-      "lastUpdate": "8/3",
+      "lastUpdate": "9/22",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$895",
@@ -1832,7 +1832,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1050",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 0,
       "lat": 39.8423253,
       "lng": -88.9319474
