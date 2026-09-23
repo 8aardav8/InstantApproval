@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T18:49:13.459232+00:00",
+  "generatedAt": "2026-09-23T18:49:43.522927+00:00",
   "listings": [
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
@@ -9244,7 +9244,7 @@
       "beds": "3",
       "baths": "1.5",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 36.8185647,
       "lng": -76.27366649999999
