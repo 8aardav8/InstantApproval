@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T18:48:23.594418+00:00",
+  "generatedAt": "2026-09-23T18:48:47.037162+00:00",
   "listings": [
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
@@ -29078,10 +29078,10 @@
       "lastUpdate": "9/22/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
-      "monthly": "$950",
+      "monthly": "$780",
       "picsLink": "https://drive.google.com/drive/folders/1gppwoAUAXXK3zoYYH-qe66bh6562s5y0?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 2,
