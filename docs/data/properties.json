@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T18:46:29.383382+00:00",
+  "generatedAt": "2026-09-23T18:47:11.809025+00:00",
   "listings": [
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
@@ -1755,16 +1755,16 @@
     {
       "id": "428-s-central-st-benton-il-62812",
       "address": "428 S. Central St. Benton IL 62812",
-      "onMarketDate": "7/28",
-      "lastUpdate": "8/7",
+      "onMarketDate": "9/22",
+      "lastUpdate": "9/22",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$950",
-      "picsLink": "https://drive.google.com/drive/folders/1iZQF54yAKLaMe8MCcf2OG92gzRFAJlne?usp=drive_link",
+      "picsLink": "https://drive.google.com/drive/folders/1iZQF54yAKLaMe8MCcf2OG92gzRFAJlne?usp=sharing",
       "beds": "3",
       "baths": "1",
       "sqft": "1450",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 37.9917873,
       "lng": -88.937928
