@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T19:21:36.369958+00:00",
+  "generatedAt": "2026-09-24T19:22:07.012983+00:00",
   "listings": [
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
@@ -3048,7 +3048,7 @@
       "id": "516-n-84th-street-east-st-louis-il-62203",
       "address": "516 N 84th street East St Louis IL 62203",
       "onMarketDate": "7/17",
-      "lastUpdate": "9/18",
+      "lastUpdate": "9/23",
       "area": "IL - East St Louis",
       "down": "$2,000",
       "monthly": "$725",
@@ -3056,7 +3056,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "800",
-      "status": "Pending",
+      "status": "Available",
       "livability": 2,
       "lat": 38.58994060000001,
       "lng": -90.0663019
