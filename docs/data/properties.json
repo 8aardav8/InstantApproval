@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T17:48:15.317160+00:00",
+  "generatedAt": "2026-09-24T19:20:42.964731+00:00",
   "listings": [
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
@@ -4833,7 +4833,7 @@
       "id": "1729-n-woodford-st-decatur-il-62526",
       "address": "1729 N Woodford St, Decatur, IL 62526",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/11/2026",
+      "lastUpdate": "9/23/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$695",
@@ -4841,7 +4841,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "728",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8598889,
       "lng": -88.9365179
