@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-24T19:26:01.060489+00:00",
+  "generatedAt": "2026-09-24T19:26:38.498154+00:00",
   "listings": [
+    {
+      "id": "1615-w-9th-st-marion-in-46953",
+      "address": "1615 W 9th St Marion IN 46953",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1TDrO3XhaQf6kWxJHyoAG7E0RsI31BDIh",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.5525381,
+      "lng": -85.679811
+    },
     {
       "id": "1871-e-lawrence-st-decatur-il-62521",
       "address": "1871 E Lawrence St, Decatur, IL 62521",
