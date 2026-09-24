@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T19:27:10.033736+00:00",
+  "generatedAt": "2026-09-24T19:27:49.642047+00:00",
   "listings": [
     {
       "id": "1615-w-9th-st-marion-in-46953",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$925",
       "picsLink": "https://drive.google.com/drive/folders/1TDrO3XhaQf6kWxJHyoAG7E0RsI31BDIh",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "839",
       "status": "Available",
       "livability": 0,
       "lat": 40.5525381,
@@ -693,7 +693,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1326",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.41129979999999,
       "lng": -83.97566719999999
