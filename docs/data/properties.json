@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T19:21:37.868725+00:00",
+  "generatedAt": "2026-09-25T19:22:13.009464+00:00",
   "listings": [
+    {
+      "id": "2207-oakdale-ave-st-louis-mo-63121",
+      "address": "2207 Oakdale Ave, St Louis, MO 63121",
+      "onMarketDate": "9/24",
+      "lastUpdate": "9/24",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6873894,
+      "lng": -90.2840923
+    },
     {
       "id": "803-e-5th-st-cahokia-il-62206",
       "address": "803 E 5th St, Cahokia, IL 62206",
