@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T20:26:29.962416+00:00",
+  "generatedAt": "2026-09-25T20:27:21.983190+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -141,7 +141,7 @@
       "id": "234-home-ave-decatur-il-62-522",
       "address": "234 Home Ave Decatur IL 62,522",
       "onMarketDate": "9/21",
-      "lastUpdate": "9/21",
+      "lastUpdate": "9/24",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$955",
@@ -3337,10 +3337,10 @@
       "id": "2109-s-martin-luther-king-jr-dr-springfield-il-62703",
       "address": "2109 S Martin Luther King Jr. Dr Springfield IL 62703",
       "onMarketDate": "8/20",
-      "lastUpdate": "9/11",
+      "lastUpdate": "9/24",
       "area": "IL - Rural",
-      "down": "$3,000",
-      "monthly": "$950",
+      "down": "$2,500",
+      "monthly": "$895",
       "picsLink": "https://drive.google.com/drive/folders/1khk3_uN-7HkBPBbN3eYuLwgesXvCQzAF?usp=share_link",
       "beds": "2",
       "baths": "1",
