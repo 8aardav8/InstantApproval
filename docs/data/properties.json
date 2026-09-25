@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T19:48:57.128039+00:00",
+  "generatedAt": "2026-09-25T19:50:43.275771+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -17676,7 +17676,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1064",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.5711125,
       "lng": -90.1040179
