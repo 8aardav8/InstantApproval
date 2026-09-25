@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T19:22:44.351908+00:00",
+  "generatedAt": "2026-09-25T19:23:23.123274+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -191,16 +191,16 @@
     {
       "id": "1123-saint-benedict-dr-cahokia-il-62-206",
       "address": "1123 Saint Benedict Dr Cahokia IL 62,206",
-      "onMarketDate": "9/19",
+      "onMarketDate": "9/24",
       "lastUpdate": "9/21",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$895",
-      "picsLink": "https://drive.google.com/drive/folders/1kddFyAadFNcFhcyiVoDOALxMVV00oYG6?usp=sharing\"",
+      "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "1501",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 38.5669527,
       "lng": -90.1619671
