@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T20:52:51.024682+00:00",
+  "generatedAt": "2026-09-25T20:53:15.670942+00:00",
   "listings": [
+    {
+      "id": "1175-e-division-street-decatur-il-62526",
+      "address": "1175 E Division Street Decatur IL 62526",
+      "onMarketDate": "9/24",
+      "lastUpdate": "9/24",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/15_c8or_94EYJ3IoDaaKfMeO5N_505DxT",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8591331,
+      "lng": -88.94130849999999
+    },
     {
       "id": "120-n-crowder-st-bethany-il-61914",
       "address": "120 N Crowder St, Bethany IL 61914",
