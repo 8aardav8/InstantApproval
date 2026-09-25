@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T17:58:57.932613+00:00",
+  "generatedAt": "2026-09-25T17:59:32.241079+00:00",
   "listings": [
+    {
+      "id": "34-saint-columba-dr-cahokia-il-62206",
+      "address": "34 Saint Columba Dr, Cahokia, IL 62206",
+      "onMarketDate": "9/24",
+      "lastUpdate": "9/24",
+      "area": "IL - East St Louis",
+      "down": "$1,500",
+      "monthly": "$575",
+      "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
+      "beds": "4",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5545157,
+      "lng": -90.1986563
+    },
     {
       "id": "1615-w-9th-st-marion-in-46953",
       "address": "1615 W 9th St Marion IN 46953",
