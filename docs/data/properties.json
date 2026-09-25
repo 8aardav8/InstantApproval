@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T18:00:35.667816+00:00",
+  "generatedAt": "2026-09-25T18:01:04.894466+00:00",
   "listings": [
+    {
+      "id": "2309-w-malone-st-peoria-il-61605",
+      "address": "2309 W Malone St, Peoria, IL 61605",
+      "onMarketDate": "9/24",
+      "lastUpdate": "9/24",
+      "area": "IL - Peoria",
+      "down": "$2,000",
+      "monthly": "$675",
+      "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.6752165,
+      "lng": -89.62948100000001
+    },
     {
       "id": "34-saint-columba-dr-cahokia-il-62206",
       "address": "34 Saint Columba Dr, Cahokia, IL 62206",
