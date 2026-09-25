@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T18:09:53.777552+00:00",
+  "generatedAt": "2026-09-25T18:10:32.915447+00:00",
   "listings": [
     {
       "id": "2309-w-malone-st-peoria-il-61605",
@@ -11347,7 +11347,7 @@
       "lastUpdate": "9/25/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
-      "monthly": "$825",
+      "monthly": "$475",
       "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
       "beds": "2",
       "baths": "1",
@@ -23932,7 +23932,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "792",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
       "lat": 38.6971388,
       "lng": -90.2741629
