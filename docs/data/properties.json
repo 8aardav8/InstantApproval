@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T20:27:54.506479+00:00",
+  "generatedAt": "2026-09-25T20:28:30.838954+00:00",
   "listings": [
+    {
+      "id": "327-n-hickory-st-centralia-il-62-798",
+      "address": "327 N Hickory St Centralia IL 62,798",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/FKMgBXmKcGpsCHSd6",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.53194750000001,
+      "lng": -89.1381435
+    },
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
       "address": "2207 Oakdale Ave, St Louis, MO 63121",
