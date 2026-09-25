@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T16:08:48.841303+00:00",
+  "generatedAt": "2026-09-25T16:12:43.419457+00:00",
   "listings": [
     {
       "id": "1615-w-9th-st-marion-in-46953",
@@ -1042,7 +1042,7 @@
       "id": "1818-n-maple-ave-decatur-il-62526",
       "address": "1818 N Maple Ave. Decatur IL 62526",
       "onMarketDate": "8/24",
-      "lastUpdate": "8/24",
+      "lastUpdate": "9/24",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$794",
@@ -1050,7 +1050,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "824",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8612175,
       "lng": -88.96660829999999
