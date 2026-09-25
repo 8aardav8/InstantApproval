@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T17:59:32.241079+00:00",
+  "generatedAt": "2026-09-25T18:00:35.667816+00:00",
   "listings": [
     {
       "id": "34-saint-columba-dr-cahokia-il-62206",
@@ -11,8 +11,8 @@
       "monthly": "$575",
       "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
       "beds": "4",
-      "baths": "",
-      "sqft": "",
+      "baths": "1",
+      "sqft": "1104",
       "status": "Available",
       "livability": 0,
       "lat": 38.5545157,
