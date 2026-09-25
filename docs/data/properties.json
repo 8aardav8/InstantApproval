@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T20:29:05.599851+00:00",
+  "generatedAt": "2026-09-25T20:30:02.314267+00:00",
   "listings": [
+    {
+      "id": "120-n-crowder-st-bethany-il-61914",
+      "address": "120 N Crowder St, Bethany IL 61914",
+      "onMarketDate": "9/24",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/11oIINFrMBQ8up-14qBLKtwHVgwnT5pyK?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Sold",
+      "livability": 0,
+      "lat": 39.6462021,
+      "lng": -88.7457652
+    },
     {
       "id": "327-n-hickory-st-centralia-il-62-798",
       "address": "327 N Hickory St Centralia IL 62,798",
