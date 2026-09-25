@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T19:27:41.883331+00:00",
+  "generatedAt": "2026-09-25T19:29:32.995901+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -9344,8 +9344,8 @@
       "monthly": "$1,695",
       "picsLink": "drive.google.com/drive/folders/\u2026?usp=drive_link",
       "beds": "3",
-      "baths": "1.5",
-      "sqft": "",
+      "baths": "2",
+      "sqft": "1412",
       "status": "Available",
       "livability": 0,
       "lat": 36.8185647,
@@ -28683,7 +28683,7 @@
     {
       "id": "1027-garth-ave-saint-louis-mo-63147",
       "address": "1027 Garth Ave, Saint Louis, MO 63147",
-      "onMarketDate": "9/14/2026",
+      "onMarketDate": "9/24/2026",
       "lastUpdate": "9/14/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
