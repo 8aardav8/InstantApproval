@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T18:11:06.445084+00:00",
+  "generatedAt": "2026-09-25T18:11:50.551827+00:00",
   "listings": [
+    {
+      "id": "1322-williams-st-cahokia-il-62206",
+      "address": "1322 Williams St, Cahokia, IL 62206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5606643,
+      "lng": -90.1656718
+    },
     {
       "id": "2309-w-malone-st-peoria-il-61605",
       "address": "2309 W Malone St, Peoria, IL 61605",
