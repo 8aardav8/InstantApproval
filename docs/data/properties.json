@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T18:04:39.383371+00:00",
+  "generatedAt": "2026-09-25T18:05:01.573183+00:00",
   "listings": [
     {
       "id": "2309-w-malone-st-peoria-il-61605",
@@ -8249,11 +8249,11 @@
     {
       "id": "1205-n-sheridan-rd-peoria-il-61606",
       "address": "1205 N Sheridan Rd Peoria IL 61606",
-      "onMarketDate": "9249/24",
-      "lastUpdate": "5/30/2026",
+      "onMarketDate": "9/24",
+      "lastUpdate": "9/24/2026",
       "area": "IL - Peoria",
       "down": "$2,000",
-      "monthly": "$825",
+      "monthly": "$775",
       "picsLink": "https://drive.google.com/drive/folders/1c93E4yAOikUyUpE538-FBcWdSaU2L-fk?usp=sharing",
       "beds": "3",
       "baths": "2",
