@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T20:24:50.558673+00:00",
+  "generatedAt": "2026-09-25T20:25:25.469222+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -1229,7 +1229,7 @@
       "id": "505-sicily-street-greenville-ms-38701",
       "address": "505 Sicily Street, Greenville, MS 38701",
       "onMarketDate": "8/21",
-      "lastUpdate": "8/21",
+      "lastUpdate": "9/24",
       "area": "MS",
       "down": "$1,000",
       "monthly": "$495",
@@ -3864,7 +3864,7 @@
       "id": "451-mason-blvd-jackson-ms-39212",
       "address": "451 Mason Blvd, Jackson, MS 39212",
       "onMarketDate": "",
-      "lastUpdate": "8/21/2026",
+      "lastUpdate": "9/24/2026",
       "area": "MS",
       "down": "$2,000",
       "monthly": "$795",
