@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T18:02:07.948668+00:00",
+  "generatedAt": "2026-09-25T18:03:08.482511+00:00",
   "listings": [
     {
       "id": "2309-w-malone-st-peoria-il-61605",
@@ -17336,7 +17336,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1400",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.7051135,
       "lng": -90.1350894
@@ -28108,12 +28108,12 @@
       "onMarketDate": "9/24/2026",
       "lastUpdate": "9/24/2026",
       "area": "IL - Peoria",
-      "down": "$1,000",
-      "monthly": "$600",
+      "down": "$1,500",
+      "monthly": "$525",
       "picsLink": "drive.google.com/drive/folders/\u2026?usp=sharing",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
+      "sqft": "793",
       "status": "Available",
       "livability": 0,
       "lat": 40.6824629,
