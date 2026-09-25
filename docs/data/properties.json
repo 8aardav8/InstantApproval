@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T20:25:25.469222+00:00",
+  "generatedAt": "2026-09-25T20:25:58.008896+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -1637,7 +1637,7 @@
       "id": "314-clubview-dr-jackson-ms-39209",
       "address": "314 Clubview Dr, Jackson, MS 39209",
       "onMarketDate": "8/4",
-      "lastUpdate": "9/17",
+      "lastUpdate": "9/24",
       "area": "MS",
       "down": "$3,000",
       "monthly": "$1,095",
@@ -22292,7 +22292,7 @@
       "id": "819-elias-ave-st-louis-mo-63147",
       "address": "819 Elias Ave, St. Louis, MO 63147",
       "onMarketDate": "8/28/2026",
-      "lastUpdate": "8/31/2026",
+      "lastUpdate": "9/24/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
