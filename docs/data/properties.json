@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T20:53:15.670942+00:00",
+  "generatedAt": "2026-09-25T20:53:49.299410+00:00",
   "listings": [
     {
       "id": "1175-e-division-street-decatur-il-62526",
@@ -7,12 +7,12 @@
       "onMarketDate": "9/24",
       "lastUpdate": "9/24",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/15_c8or_94EYJ3IoDaaKfMeO5N_505DxT",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "825",
       "status": "Available",
       "livability": 0,
       "lat": 39.8591331,
