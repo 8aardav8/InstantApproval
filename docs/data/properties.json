@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-25T18:12:58.036525+00:00",
+  "generatedAt": "2026-09-25T18:13:32.720822+00:00",
   "listings": [
+    {
+      "id": "803-e-5th-st-cahokia-il-62206",
+      "address": "803 E 5th St, Cahokia, IL 62206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5636315,
+      "lng": -90.18552590000002
+    },
     {
       "id": "1322-williams-st-cahokia-il-62206",
       "address": "1322 Williams St, Cahokia, IL 62206",
