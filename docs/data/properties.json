@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T19:48:10.357642+00:00",
+  "generatedAt": "2026-09-25T19:48:57.128039+00:00",
   "listings": [
     {
       "id": "2207-oakdale-ave-st-louis-mo-63121",
@@ -787,7 +787,7 @@
       "id": "801-s-21st-st-decatur-il-62521",
       "address": "801 S 21st St. Decatur IL 62521",
       "onMarketDate": "9/3",
-      "lastUpdate": "9/24",
+      "lastUpdate": "9/25",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$995",
@@ -27329,8 +27329,8 @@
       "down": "$2,500",
       "monthly": "$975",
       "picsLink": "https://1drv.ms/f/c/9d4cf8c436fe597d/IgALbL8cH-uHSJATC2vpOrDeAblbEzrlWG20eCBFSYGvuOw?e=NTUGAU",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
