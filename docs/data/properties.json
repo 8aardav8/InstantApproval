@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T18:23:37.525206+00:00",
+  "generatedAt": "2026-09-28T18:24:08.289873+00:00",
   "listings": [
+    {
+      "id": "244-w-garfield-ave-decatur-il-62526",
+      "address": "244 W Garfield Ave, Decatur, IL 62526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1VCTGm2qPWlsW99RJc1jNnrj5kEqpigv-able",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.86224989999999,
+      "lng": -88.9588304
+    },
     {
       "id": "1175-e-division-street-decatur-il-62526",
       "address": "1175 E Division Street Decatur IL 62526",
