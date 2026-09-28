@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T19:26:44.403462+00:00",
+  "generatedAt": "2026-09-28T19:27:14.761020+00:00",
   "listings": [
     {
       "id": "765-w-division-street-decatur-il-62526",
@@ -804,7 +804,7 @@
       "id": "2528-avis-st-jennings-mo-63136",
       "address": "2528 Avis St, Jennings, MO 63136",
       "onMarketDate": "9/9",
-      "lastUpdate": "9/9",
+      "lastUpdate": "9/28",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$795",
@@ -812,7 +812,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.7236719,
       "lng": -90.26715039999999
