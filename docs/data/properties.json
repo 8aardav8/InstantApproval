@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-09-28T18:33:45.369834+00:00",
+  "generatedAt": "2026-09-28T18:34:19.646654+00:00",
   "listings": [
     {
       "id": "524-albert-st-nokomis-il-62075",
       "address": "524 Albert St Nokomis, IL 62075",
       "onMarketDate": "9/25",
       "lastUpdate": "9/25",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "area": "IL - Rural",
+      "down": "$3,000",
+      "monthly": "$1,030",
       "picsLink": "https://www.dropbox.com/scl/fo/q66ncr72wt9obykxrif0r/ABvAryy9cJzAt-wJArIWD_w?rlkey=4rgrp8kq3it9kmbqc2xj1527z&st=5hv0b32n&dl=0",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
