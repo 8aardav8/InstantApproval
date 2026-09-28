@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T19:23:00.894173+00:00",
+  "generatedAt": "2026-09-28T19:24:05.976480+00:00",
   "listings": [
+    {
+      "id": "765-w-division-street-decatur-il-62526",
+      "address": "765 W. Division Street Decatur IL 62526",
+      "onMarketDate": "9/27",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1sHMk5ijHLd_HGLE69K2Dn_Xg-g0Lrnst?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.858581,
+      "lng": -88.96639189999999
+    },
     {
       "id": "634-n-8th-st-east-st-louis-il-62201",
       "address": "634 N 8th St., East St. Louis, IL 62201",
