@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T18:38:43.059526+00:00",
+  "generatedAt": "2026-09-28T18:39:18.986119+00:00",
   "listings": [
+    {
+      "id": "1444-e-clay-st-decatur-il-62521",
+      "address": "1444 E Clay St Decatur, IL 62521",
+      "onMarketDate": "9/25",
+      "lastUpdate": "9/25",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "$1,075",
+      "picsLink": "https://www.dropbox.com/scl/fo/0776m7r3bapv1zx3dt2ov/AAl2iU0jKrk_VFnmmml9amE?rlkey=flc1s9v47d3pth6w8i28lnsup&st=e60nkeah&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8400137,
+      "lng": -88.93715209999999
+    },
     {
       "id": "524-albert-st-nokomis-il-62075",
       "address": "524 Albert St Nokomis, IL 62075",
