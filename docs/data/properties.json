@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T19:13:45.130553+00:00",
+  "generatedAt": "2026-09-28T19:20:29.847749+00:00",
   "listings": [
     {
       "id": "605-fremont-st-st-louis-mo-63147",
@@ -1892,7 +1892,7 @@
       "id": "1060-water-st-sauget-il-62206",
       "address": "1060 Water St, Sauget, IL 62206",
       "onMarketDate": "7/30",
-      "lastUpdate": "9/24",
+      "lastUpdate": "9/27",
       "area": "IL - East St Louis",
       "down": "$1,300",
       "monthly": "$695",
@@ -1900,7 +1900,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.55819779999999,
       "lng": -90.19784109999999
@@ -11089,7 +11089,7 @@
       "id": "7310-jenwood-ave-st-louis-mo-63136",
       "address": "7310 Jenwood Ave., St. Louis, MO 63136",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/17/2026",
+      "lastUpdate": "9/26/2026",
       "area": "MO - St. Louis",
       "down": "$4,000",
       "monthly": "$1,195",
@@ -11097,7 +11097,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "864",
-      "status": "Available",
+      "status": "Pending",
       "livability": 5,
       "lat": 38.7193756,
       "lng": -90.2701089
