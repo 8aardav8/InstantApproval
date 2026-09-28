@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T18:31:26.110246+00:00",
+  "generatedAt": "2026-09-28T18:31:59.688881+00:00",
   "listings": [
+    {
+      "id": "1970-n-maple-ave-decatur-il-62526",
+      "address": "1970 N Maple Ave, Decatur, IL 62526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8619861,
+      "lng": -88.9666204
+    },
     {
       "id": "244-w-garfield-ave-decatur-il-62526",
       "address": "244 W Garfield Ave, Decatur, IL 62526",
