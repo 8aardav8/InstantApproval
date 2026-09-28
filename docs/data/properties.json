@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T18:40:49.748928+00:00",
+  "generatedAt": "2026-09-28T18:41:22.005195+00:00",
   "listings": [
     {
       "id": "1484-e-moore-st-decatur-il-62521",
@@ -7,11 +7,11 @@
       "onMarketDate": "9/25",
       "lastUpdate": "9/25",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$1,075",
       "picsLink": "https://www.dropbox.com/scl/fo/o7pc2djf2el4vf3n1z8ec/ANBU61T0NpkaIjflULLDKns?rlkey=uum8cnd8t2pa3d0o6r46lqnb0&st=s9c39qga&dl=0",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
