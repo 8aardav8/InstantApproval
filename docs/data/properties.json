@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T19:03:06.784024+00:00",
+  "generatedAt": "2026-09-28T19:09:03.749795+00:00",
   "listings": [
     {
       "id": "1484-e-moore-st-decatur-il-62521",
@@ -17566,7 +17566,7 @@
       "id": "303-cedar-st-harvel-il-62538",
       "address": "303 Cedar St, Harvel, IL 62538",
       "onMarketDate": "7/24/2026",
-      "lastUpdate": "7/24/2026",
+      "lastUpdate": "9/26/2026",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$795",
@@ -17574,7 +17574,7 @@
       "beds": "4",
       "baths": "2",
       "sqft": "1745",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.3567343,
       "lng": -89.5342265
