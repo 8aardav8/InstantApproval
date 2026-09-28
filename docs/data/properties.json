@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T19:25:42.773027+00:00",
+  "generatedAt": "2026-09-28T19:26:44.403462+00:00",
   "listings": [
     {
       "id": "765-w-division-street-decatur-il-62526",
@@ -1858,10 +1858,10 @@
       "id": "1746-n-woodford-st-decatur-il-62526",
       "address": "1746 N Woodford St, Decatur, IL 62526",
       "onMarketDate": "8/3",
-      "lastUpdate": "8/3",
+      "lastUpdate": "9/27",
       "area": "IL - Decatur",
-      "down": "$2,000",
-      "monthly": "$895",
+      "down": "$1,500",
+      "monthly": "$850",
       "picsLink": "https://photos.app.goo.gl/jpU2MSHi47fyRppN8",
       "beds": "2",
       "baths": "1",
@@ -20200,7 +20200,7 @@
     {
       "id": "933-elmhurst-ave-decatur-il-62526",
       "address": "933 elmhurst Ave, Decatur Il 62526",
-      "onMarketDate": "9/17/2026",
+      "onMarketDate": "9/27/2026",
       "lastUpdate": "9/27/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
@@ -20208,7 +20208,7 @@
       "picsLink": "https://drive.google.com/drive/folders/1uX7NU8WuoyfF1dQZKJ5btNmQKdG74xoL",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
+      "sqft": "780",
       "status": "Available",
       "livability": 0,
       "lat": 39.86304,
