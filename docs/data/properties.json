@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T19:24:20.426502+00:00",
+  "generatedAt": "2026-09-28T19:24:39.399230+00:00",
   "listings": [
     {
       "id": "765-w-division-street-decatur-il-62526",
@@ -10,8 +10,8 @@
       "down": "$3,000",
       "monthly": "$894",
       "picsLink": "https://drive.google.com/drive/folders/1sHMk5ijHLd_HGLE69K2Dn_Xg-g0Lrnst?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
