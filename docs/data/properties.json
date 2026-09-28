@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T18:32:32.274477+00:00",
+  "generatedAt": "2026-09-28T18:33:04.756649+00:00",
   "listings": [
     {
       "id": "1970-n-maple-ave-decatur-il-62526",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,099",
       "picsLink": "https://www.dropbox.com/scl/fo/42h87uhl6x71c10b66aeu/AC_LU1HqRzy96P-TxlDcaqE?rlkey=vf65xllh6jkkztnu9xeux5i41&st=49eognky&dl=0",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "768",
       "status": "Available",
       "livability": 0,
       "lat": 39.8619861,
