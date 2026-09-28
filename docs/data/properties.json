@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T19:12:29.986854+00:00",
+  "generatedAt": "2026-09-28T19:13:11.719487+00:00",
   "listings": [
+    {
+      "id": "605-fremont-st-st-louis-mo-63147",
+      "address": "605 Fremont St St. Louis MO 63147",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "Elexa Wagaman, Manager",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.723638,
+      "lng": -90.2263165
+    },
     {
       "id": "1484-e-moore-st-decatur-il-62521",
       "address": "1484 E Moore St, Decatur, IL 62521",
