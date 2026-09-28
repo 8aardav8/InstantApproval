@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T18:40:23.549362+00:00",
+  "generatedAt": "2026-09-28T18:40:49.748928+00:00",
   "listings": [
+    {
+      "id": "1484-e-moore-st-decatur-il-62521",
+      "address": "1484 E Moore St, Decatur, IL 62521",
+      "onMarketDate": "9/25",
+      "lastUpdate": "9/25",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/o7pc2djf2el4vf3n1z8ec/ANBU61T0NpkaIjflULLDKns?rlkey=uum8cnd8t2pa3d0o6r46lqnb0&st=s9c39qga&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8346306,
+      "lng": -88.93631789999999
+    },
     {
       "id": "1444-e-clay-st-decatur-il-62521",
       "address": "1444 E Clay St Decatur, IL 62521",
