@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-28T19:21:11.291230+00:00",
+  "generatedAt": "2026-09-28T19:21:53.559971+00:00",
   "listings": [
+    {
+      "id": "634-n-8th-st-east-st-louis-il-62201",
+      "address": "634 N 8th St., East St. Louis, IL 62201",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1Yy4U9--AY1GoN7wnziOSuwKLJDeh5JEO?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.62956,
+      "lng": -90.147269
+    },
     {
       "id": "605-fremont-st-st-louis-mo-63147",
       "address": "605 Fremont St St. Louis MO 63147",
