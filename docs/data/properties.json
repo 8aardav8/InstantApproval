@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T15:39:03.522370+00:00",
+  "generatedAt": "2026-09-29T15:39:52.113261+00:00",
   "listings": [
     {
       "id": "765-w-division-street-decatur-il-62526",
@@ -5122,7 +5122,7 @@
       "id": "1729-n-woodford-st-decatur-il-62526",
       "address": "1729 N Woodford St, Decatur, IL 62526",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/23/2026",
+      "lastUpdate": "9/28/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$695",
@@ -5130,7 +5130,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "728",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8598889,
       "lng": -88.9365179
