@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T15:40:35.452188+00:00",
+  "generatedAt": "2026-09-29T15:41:17.371172+00:00",
   "listings": [
     {
       "id": "765-w-division-street-decatur-il-62526",
@@ -634,7 +634,7 @@
       "id": "1310-e-poplar-st-west-frankfort-il-62896",
       "address": "1310 E Poplar St, West Frankfort, IL 62896",
       "onMarketDate": "9/14",
-      "lastUpdate": "9/22",
+      "lastUpdate": "9/28",
       "area": "IL - Rural",
       "down": "$2,500",
       "monthly": "$1,100",
@@ -31055,7 +31055,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 38.6981891,
       "lng": -90.25788279999999
