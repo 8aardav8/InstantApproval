@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-29T15:45:33.182630+00:00",
+  "generatedAt": "2026-09-29T15:46:13.355354+00:00",
   "listings": [
+    {
+      "id": "238-connolly-dr-st-louis-mo-63135",
+      "address": "238 Connolly Dr, St. Louis, MO 63135",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/045fmpip6Hxtyk4p2qR2nY-pQ",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7704594,
+      "lng": -90.3226433
+    },
     {
       "id": "765-w-division-street-decatur-il-62526",
       "address": "765 W. Division Street Decatur IL 62526",
