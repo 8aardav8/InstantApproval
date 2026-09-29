@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T17:11:53.027058+00:00",
+  "generatedAt": "2026-09-29T17:12:28.052322+00:00",
   "listings": [
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
@@ -8029,7 +8029,7 @@
       "id": "4931-plover-ave-st-louis-mo-63120",
       "address": "4931 Plover Ave, St. Louis, MO 63120",
       "onMarketDate": "8/19/2025",
-      "lastUpdate": "8/28/2026",
+      "lastUpdate": "9/28/2026",
       "area": "MO - St. Louis",
       "down": "$1,600",
       "monthly": "$680",
@@ -8037,7 +8037,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "912",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6957825,
       "lng": -90.2557523
