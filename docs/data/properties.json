@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T17:14:35.749127+00:00",
+  "generatedAt": "2026-09-29T17:15:45.948729+00:00",
   "listings": [
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
@@ -1637,7 +1637,7 @@
       "id": "1303-e-hickory-st-decatur-il-62526",
       "address": "1303 E. Hickory St. Decatur IL 62526",
       "onMarketDate": "8/12",
-      "lastUpdate": "8/12",
+      "lastUpdate": "9/29",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$950",
@@ -1645,7 +1645,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1064",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.857114,
       "lng": -88.93905170000001
@@ -22496,7 +22496,7 @@
       "id": "819-elias-ave-st-louis-mo-63147",
       "address": "819 Elias Ave, St. Louis, MO 63147",
       "onMarketDate": "8/28/2026",
-      "lastUpdate": "9/24/2026",
+      "lastUpdate": "9/28/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -22504,7 +22504,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.7213024,
       "lng": -90.229665
