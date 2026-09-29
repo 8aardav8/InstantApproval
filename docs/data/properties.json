@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T15:39:52.113261+00:00",
+  "generatedAt": "2026-09-29T15:40:35.452188+00:00",
   "listings": [
     {
       "id": "765-w-division-street-decatur-il-62526",
@@ -107,7 +107,7 @@
       "id": "1970-n-maple-ave-decatur-il-62526",
       "address": "1970 N Maple Ave, Decatur, IL 62526",
       "onMarketDate": "9/25",
-      "lastUpdate": "9/25",
+      "lastUpdate": "9/28",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,099",
@@ -115,7 +115,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "768",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8619861,
       "lng": -88.9666204
@@ -642,7 +642,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1350",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 37.8987302,
       "lng": -88.9115844
@@ -1926,7 +1926,7 @@
       "id": "1060-water-st-sauget-il-62206",
       "address": "1060 Water St, Sauget, IL 62206",
       "onMarketDate": "7/30",
-      "lastUpdate": "9/27",
+      "lastUpdate": "9/28",
       "area": "IL - East St Louis",
       "down": "$1,300",
       "monthly": "$695",
@@ -1934,7 +1934,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.55819779999999,
       "lng": -90.19784109999999
