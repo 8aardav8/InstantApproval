@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T17:19:57.329863+00:00",
+  "generatedAt": "2026-09-30T17:20:38.041407+00:00",
   "listings": [
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
@@ -1526,7 +1526,7 @@
       "beds": "4",
       "baths": "1.5",
       "sqft": "800",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6203961,
       "lng": -90.12868089999999
