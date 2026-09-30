@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-30T19:09:45.550938+00:00",
+  "generatedAt": "2026-09-30T19:10:18.334122+00:00",
   "listings": [
+    {
+      "id": "30-delores-dr-cahokia-heights-il-62206",
+      "address": "30 Delores Dr Cahokia heights IL 62206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5527545,
+      "lng": -90.1346176
+    },
     {
       "id": "567-glorose-dr-st-louis-mo-63137",
       "address": "567 Glorose Dr. St Louis MO 63137",
