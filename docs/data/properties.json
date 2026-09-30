@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T18:52:46.109230+00:00",
+  "generatedAt": "2026-09-30T18:53:14.730289+00:00",
   "listings": [
     {
       "id": "567-glorose-dr-st-louis-mo-63137",
@@ -7,12 +7,12 @@
       "onMarketDate": "9/29",
       "lastUpdate": "9/29",
       "area": "MO - St. Louis",
-      "down": "",
-      "monthly": "",
+      "down": "$2,500",
+      "monthly": "$895",
       "picsLink": "https://share.icloud.com/photos/062yzgRaEPAOwctQr8meFSB-Q",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "834",
       "status": "Available",
       "livability": 0,
       "lat": 38.7523509,
