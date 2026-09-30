@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T18:22:31.881741+00:00",
+  "generatedAt": "2026-09-30T18:23:58.526775+00:00",
   "listings": [
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
@@ -158,7 +158,7 @@
       "id": "1175-e-division-street-decatur-il-62526",
       "address": "1175 E Division Street Decatur IL 62526",
       "onMarketDate": "9/24",
-      "lastUpdate": "9/24",
+      "lastUpdate": "9/29",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$875",
@@ -166,7 +166,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "825",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8591331,
       "lng": -88.94130849999999
@@ -14761,15 +14761,15 @@
       "id": "909-s-maffit-st-decatur-il-62521",
       "address": "909 S Maffit St, Decatur, IL 62521",
       "onMarketDate": "8/30/2026",
-      "lastUpdate": "9/21/2026",
+      "lastUpdate": "9/29/2026",
       "area": "IL - Decatur",
-      "down": "$3,000",
-      "monthly": "$895",
+      "down": "$2,750",
+      "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/1qvFck1j6sX5q9W1Sc6mH7UPYiGf8tcCB?usp=drive_link",
       "beds": "3",
       "baths": "1",
       "sqft": "830",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8317526,
       "lng": -88.9449712
