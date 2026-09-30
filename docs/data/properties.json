@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-30T18:47:48.446062+00:00",
+  "generatedAt": "2026-09-30T18:48:30.149407+00:00",
   "listings": [
+    {
+      "id": "3235-whittier-st-flint-mi-48506",
+      "address": "3235 Whittier St. Flint MI 48506",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1FmmgMrfezUwrdfvvsL0MTSlykFQs5c68?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.036843,
+      "lng": -83.64613299999999
+    },
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
       "address": "238 Connolly Dr, St. Louis, MO 63135",
