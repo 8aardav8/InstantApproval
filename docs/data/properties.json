@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T17:20:38.041407+00:00",
+  "generatedAt": "2026-09-30T17:53:22.510233+00:00",
   "listings": [
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
@@ -23465,7 +23465,7 @@
       "id": "1174-w-king-st-decatur-il-62522",
       "address": "1174 W King St, Decatur, IL 62522",
       "onMarketDate": "9/2/2026",
-      "lastUpdate": "9/2/2026",
+      "lastUpdate": "9/29/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,050",
@@ -23473,7 +23473,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1296",
-      "status": "Available",
+      "status": "Sold",
       "livability": 5,
       "lat": 39.8494153,
       "lng": -88.9747923
