@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T20:46:29.721061+00:00",
+  "generatedAt": "2026-09-30T20:47:28.108902+00:00",
   "listings": [
     {
       "id": "2421-w-lincoln-peoria-il-61605",
@@ -1603,7 +1603,7 @@
       "id": "740-n-22nd-street-east-st-louis-il-62205",
       "address": "740 N 22nd Street East St. Louis IL 62205",
       "onMarketDate": "8/17",
-      "lastUpdate": "9/29",
+      "lastUpdate": "9/30",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$926",
@@ -1611,7 +1611,7 @@
       "beds": "4",
       "baths": "1.5",
       "sqft": "800",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6203961,
       "lng": -90.12868089999999
@@ -8683,7 +8683,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8411059,
       "lng": -88.9365715
