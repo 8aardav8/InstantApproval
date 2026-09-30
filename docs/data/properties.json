@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-30T18:52:12.010235+00:00",
+  "generatedAt": "2026-09-30T18:52:46.109230+00:00",
   "listings": [
+    {
+      "id": "567-glorose-dr-st-louis-mo-63137",
+      "address": "567 Glorose Dr. St Louis MO 63137",
+      "onMarketDate": "9/29",
+      "lastUpdate": "9/29",
+      "area": "MO - St. Louis",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/062yzgRaEPAOwctQr8meFSB-Q",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7523509,
+      "lng": -90.2164918
+    },
     {
       "id": "539-w-marengo-ave-flint-mi-48505",
       "address": "539 W. Marengo Ave. Flint MI 48505",
