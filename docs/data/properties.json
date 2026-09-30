@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-30T20:22:14.425100+00:00",
+  "generatedAt": "2026-09-30T20:22:59.918449+00:00",
   "listings": [
+    {
+      "id": "2421-w-lincoln-peoria-il-61605",
+      "address": "2421 W Lincoln Peoria IL 61605",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1mfLHtZglppU7vLOAhAPcwks7gaA6gjo-",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.68156690000001,
+      "lng": -89.6322252
+    },
     {
       "id": "30-delores-dr-cahokia-heights-il-62206",
       "address": "30 Delores Dr Cahokia heights IL 62206",
