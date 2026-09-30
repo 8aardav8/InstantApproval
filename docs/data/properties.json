@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T18:10:52.284667+00:00",
+  "generatedAt": "2026-09-30T18:11:39.241729+00:00",
   "listings": [
     {
       "id": "238-connolly-dr-st-louis-mo-63135",
@@ -16325,7 +16325,7 @@
       "id": "1920-prior-dr-st-louis-mo-63136",
       "address": "1920 Prior Dr, St. Louis, MO 63136",
       "onMarketDate": "8/26/2026",
-      "lastUpdate": "8/31/2026",
+      "lastUpdate": "9/29/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -16333,7 +16333,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.76223940000001,
       "lng": -90.2658748
