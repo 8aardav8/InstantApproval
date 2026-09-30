@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T20:23:26.354364+00:00",
+  "generatedAt": "2026-09-30T20:24:03.792571+00:00",
   "listings": [
     {
       "id": "2421-w-lincoln-peoria-il-61605",
@@ -10,8 +10,8 @@
       "down": "$2,000",
       "monthly": "$925",
       "picsLink": "https://drive.google.com/drive/folders/1mfLHtZglppU7vLOAhAPcwks7gaA6gjo-",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
@@ -4901,7 +4901,7 @@
       "id": "1333-walton-ave-saint-louis-mo-63113",
       "address": "1333 Walton Ave, Saint Louis, MO 63113",
       "onMarketDate": "8/26/2024",
-      "lastUpdate": "8/31/2026",
+      "lastUpdate": "9/29/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$250",
