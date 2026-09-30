@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-09-30T18:49:40.729624+00:00",
+  "generatedAt": "2026-09-30T18:51:06.547481+00:00",
   "listings": [
+    {
+      "id": "539-w-marengo-ave-flint-mi-48505",
+      "address": "539 W. Marengo Ave. Flint MI 48505",
+      "onMarketDate": "9/29",
+      "lastUpdate": "9/29",
+      "area": "MI",
+      "down": "$2,500",
+      "monthly": "$930",
+      "picsLink": "https://drive.google.com/drive/folders/1KqRi2gKTxHXMhYNiePebYdGxpOk8nFDy?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.0592379,
+      "lng": -83.7113935
+    },
     {
       "id": "3235-whittier-st-flint-mi-48506",
       "address": "3235 Whittier St. Flint MI 48506",
