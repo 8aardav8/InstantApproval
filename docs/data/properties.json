@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T18:51:06.547481+00:00",
+  "generatedAt": "2026-09-30T18:51:24.596749+00:00",
   "listings": [
     {
       "id": "539-w-marengo-ave-flint-mi-48505",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$930",
       "picsLink": "https://drive.google.com/drive/folders/1KqRi2gKTxHXMhYNiePebYdGxpOk8nFDy?usp=drive_link",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "639",
       "status": "Available",
       "livability": 0,
       "lat": 43.0592379,
