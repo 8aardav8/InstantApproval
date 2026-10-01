@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T16:34:20.072497+00:00",
+  "generatedAt": "2026-10-01T16:58:03.801410+00:00",
   "listings": [
     {
       "id": "2421-w-lincoln-peoria-il-61605",
@@ -29355,7 +29355,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
       "lat": 38.59729919999999,
       "lng": -90.1340382
