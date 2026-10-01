@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T16:11:55.063035+00:00",
+  "generatedAt": "2026-10-01T16:12:31.804608+00:00",
   "listings": [
     {
       "id": "2421-w-lincoln-peoria-il-61605",
@@ -3762,7 +3762,7 @@
       "id": "718-south-church-street-belleville-il-62220",
       "address": "718 South Church Street Belleville IL 62220",
       "onMarketDate": "7/15",
-      "lastUpdate": "9/24",
+      "lastUpdate": "9/30",
       "area": "IL - East St Louis",
       "down": "$2,000",
       "monthly": "$725",
@@ -3770,7 +3770,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "850",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.5061825,
       "lng": -89.9800862
