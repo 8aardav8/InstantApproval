@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T18:42:58.902581+00:00",
+  "generatedAt": "2026-10-02T18:43:13.210564+00:00",
   "listings": [
     {
       "id": "1829-w-butler-st-peoria-il-61605",
@@ -141,7 +141,7 @@
       "id": "634-n-8th-st-east-st-louis-il-62201",
       "address": "634 N 8th St., East St. Louis, IL 62201",
       "onMarketDate": "9/27",
-      "lastUpdate": "9/27",
+      "lastUpdate": "10/1",
       "area": "IL - East St Louis",
       "down": "$2,000",
       "monthly": "$720",
@@ -149,7 +149,7 @@
       "beds": "3",
       "baths": "1.5",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.62956,
       "lng": -90.147269
