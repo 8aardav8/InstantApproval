@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T18:58:51.757865+00:00",
+  "generatedAt": "2026-10-02T19:02:16.388004+00:00",
   "listings": [
     {
       "id": "1829-w-butler-st-peoria-il-61605",
@@ -12262,7 +12262,7 @@
       "id": "5508-beacon-ave-st-louis-mo-63120",
       "address": "5508 Beacon Ave, St. Louis, MO 63120",
       "onMarketDate": "3/2/2026",
-      "lastUpdate": "9/9/2026",
+      "lastUpdate": "10/2/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$290",
@@ -12270,7 +12270,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "616",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6983476,
       "lng": -90.24440279999999
