@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T18:52:37.055341+00:00",
+  "generatedAt": "2026-10-02T18:53:08.252564+00:00",
   "listings": [
     {
       "id": "1829-w-butler-st-peoria-il-61605",
@@ -1739,7 +1739,7 @@
       "id": "1303-e-hickory-st-decatur-il-62526",
       "address": "1303 E. Hickory St. Decatur IL 62526",
       "onMarketDate": "8/12",
-      "lastUpdate": "9/29",
+      "lastUpdate": "10/1",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$950",
@@ -1747,7 +1747,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1064",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.857114,
       "lng": -88.93905170000001
@@ -10633,7 +10633,7 @@
       "lastUpdate": "10/1/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
-      "monthly": "$550",
+      "monthly": "$500",
       "picsLink": "https://www.icloud.com/photos/#/icloudlinks/05b_Qm8LyPcSvvT4BgWX-6BnQ/",
       "beds": "2",
       "baths": "1",
