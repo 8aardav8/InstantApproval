@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T18:44:37.121819+00:00",
+  "generatedAt": "2026-10-02T18:46:55.557553+00:00",
   "listings": [
     {
       "id": "1829-w-butler-st-peoria-il-61605",
@@ -1722,7 +1722,7 @@
       "id": "2236-king-st-saginaw-mi-48602-saginaw-mi-48602",
       "address": "2236 King St, Saginaw, MI 48602 Saginaw MI 48602",
       "onMarketDate": "8/12",
-      "lastUpdate": "9/24",
+      "lastUpdate": "10/1",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$685",
@@ -1730,7 +1730,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "806",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 43.4018186,
       "lng": -83.9787974
@@ -21909,7 +21909,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1000",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6886335,
       "lng": -90.29179309999999
