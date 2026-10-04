@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T20:26:33.853489+00:00",
+  "generatedAt": "2026-10-04T20:28:40.897151+00:00",
   "listings": [
     {
       "id": "1829-w-butler-st-peoria-il-61605",
@@ -7425,7 +7425,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "416",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8545575,
       "lng": -88.9841063
