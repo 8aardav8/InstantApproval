@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T20:06:53.603665+00:00",
+  "generatedAt": "2026-10-06T20:07:53.588329+00:00",
   "listings": [
     {
       "id": "125-s-16th-st-decatur-il-62521",
@@ -8845,7 +8845,7 @@
       "id": "165-s-east-ave-decatur-il-62521",
       "address": "165 S EAST AVE DECATUR, IL 62521",
       "onMarketDate": "9/30/2026",
-      "lastUpdate": "9/30/2026",
+      "lastUpdate": "10/6/2026",
       "area": "IL - Decatur",
       "down": "$1,500",
       "monthly": "$850",
@@ -8853,7 +8853,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8411059,
       "lng": -88.9365715
