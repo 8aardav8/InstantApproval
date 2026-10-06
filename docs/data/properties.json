@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T20:00:10.064096+00:00",
+  "generatedAt": "2026-10-06T20:01:19.554240+00:00",
   "listings": [
     {
       "id": "1517-s-branson-st-marion-in-46953",
@@ -464,7 +464,7 @@
       "id": "803-e-5th-st-cahokia-il-62206",
       "address": "803 E 5th St, Cahokia, IL 62206",
       "onMarketDate": "9/24",
-      "lastUpdate": "9/25",
+      "lastUpdate": "10/5",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$825",
@@ -472,7 +472,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "912",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.5636315,
       "lng": -90.18552590000002
@@ -2758,12 +2758,12 @@
     {
       "id": "2081-n-college-st-decatur-il-62526",
       "address": "2081 N College St Decatur IL 62526",
-      "onMarketDate": "7/8",
-      "lastUpdate": "7/22",
+      "onMarketDate": "10/5",
+      "lastUpdate": "10/5",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$860",
-      "picsLink": "https://drive.google.com/drive/folders/1FHxiFQBl3EgYz_PBD_uo9EkcjBOBGoBc?usp=sharing",
+      "picsLink": "https://drive.google.com/drive/folders/1sD2mtntWP5Oae5m-5f9b9XaydVaYEzuz?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "",
