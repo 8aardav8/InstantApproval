@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T19:55:04.159387+00:00",
+  "generatedAt": "2026-10-06T19:55:36.992822+00:00",
   "listings": [
     {
       "id": "818-e-dewey-flint-mi-48505",
@@ -532,7 +532,7 @@
       "id": "1871-e-lawrence-st-decatur-il-62521",
       "address": "1871 E Lawrence St, Decatur, IL 62521",
       "onMarketDate": "9/21",
-      "lastUpdate": "9/21",
+      "lastUpdate": "10/5",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$895",
@@ -566,7 +566,7 @@
       "id": "234-home-ave-decatur-il-62-522",
       "address": "234 Home Ave Decatur IL 62,522",
       "onMarketDate": "9/21",
-      "lastUpdate": "10/4",
+      "lastUpdate": "10/5",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$955",
@@ -574,7 +574,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "960",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 0,
       "lat": 39.8429905,
       "lng": -88.97049450000002
