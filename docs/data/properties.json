@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T20:02:01.603393+00:00",
+  "generatedAt": "2026-10-06T20:02:31.050167+00:00",
   "listings": [
     {
       "id": "1517-s-branson-st-marion-in-46953",
@@ -14922,7 +14922,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "700",
-      "status": "Sold",
+      "status": "Available",
       "livability": 4,
       "lat": 38.7026127,
       "lng": -90.2470697
