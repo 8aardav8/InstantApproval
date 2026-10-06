@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T20:07:53.588329+00:00",
+  "generatedAt": "2026-10-06T20:31:16.561292+00:00",
   "listings": [
     {
       "id": "125-s-16th-st-decatur-il-62521",
@@ -16733,7 +16733,7 @@
       "id": "651-n-53rd-st-east-saint-louis-il-62203",
       "address": "651 N 53rd St, East Saint Louis, IL 62203",
       "onMarketDate": "5/24/2025",
-      "lastUpdate": "8/27/2026",
+      "lastUpdate": "10/6/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
       "monthly": "$625",
@@ -16741,7 +16741,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "744",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.60813479999999,
       "lng": -90.09857749999999
