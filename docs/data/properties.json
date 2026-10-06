@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T19:44:20.643298+00:00",
+  "generatedAt": "2026-10-06T19:55:04.159387+00:00",
   "listings": [
     {
       "id": "818-e-dewey-flint-mi-48505",
@@ -549,7 +549,7 @@
       "id": "1021-maple-st-pekin-il-61554",
       "address": "1021 Maple St, Pekin, IL 61554",
       "onMarketDate": "9/21",
-      "lastUpdate": "9/21",
+      "lastUpdate": "10/5",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$900",
@@ -557,7 +557,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.5606495,
       "lng": -89.6542006
@@ -29111,12 +29111,12 @@
       "onMarketDate": "9/24/2026",
       "lastUpdate": "10/5/2026",
       "area": "MO - St. Louis",
-      "down": "$2,000",
-      "monthly": "$800",
+      "down": "$1,500",
+      "monthly": "$790",
       "picsLink": "https://drive.google.com/drive/folders/1El5YHraIZmACXY_J-oDx4Sxyw65x3PnO",
       "beds": "3",
       "baths": "2",
-      "sqft": "",
+      "sqft": "1440",
       "status": "Available",
       "livability": 4,
       "lat": 38.7126123,
