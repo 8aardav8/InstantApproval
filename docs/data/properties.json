@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-06T20:02:58.195964+00:00",
+  "generatedAt": "2026-10-06T20:04:04.231760+00:00",
   "listings": [
+    {
+      "id": "125-s-16th-st-decatur-il-62521",
+      "address": "125 S 16th St Decatur IL 62521",
+      "onMarketDate": "10/5",
+      "lastUpdate": "10/5",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://docs.google.com/document/d/1-vN17cvGPOHqs4AmA10t0n-LrCc5IewS8nRqGpGy1E8/edit?usp=drivesdk",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8415246,
+      "lng": -88.93541090000001
+    },
     {
       "id": "1517-s-branson-st-marion-in-46953",
       "address": "1517 S Branson St Marion IN 46953",
