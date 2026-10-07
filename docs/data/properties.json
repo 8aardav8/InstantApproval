@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-07T18:09:15.814973+00:00",
+  "generatedAt": "2026-10-07T18:21:12.512674+00:00",
   "listings": [
     {
       "id": "407-w-saint-louis-st-west-frankfort-il-62896",
@@ -10,8 +10,8 @@
       "down": "$1,500",
       "monthly": "$599",
       "picsLink": "https://photos.app.goo.gl/Bo5rRqRXBKV7tQ9s7",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "2.5",
       "sqft": "",
       "status": "Available",
       "livability": 0,
