@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-07T18:22:07.622030+00:00",
+  "generatedAt": "2026-10-07T18:22:32.760211+00:00",
   "listings": [
+    {
+      "id": "1744-n-monroe-street-decatur-il-62526",
+      "address": "1744 N Monroe Street Decatur IL 62526",
+      "onMarketDate": "10/7",
+      "lastUpdate": "10/7",
+      "area": "IL - Decatur",
+      "down": "$4,000",
+      "monthly": "$1,500",
+      "picsLink": "https://www.dropbox.com/scl/fo/f0idzmb6h9bm40ck1kcgj/AITvbncLI48WIUN3QBOoDRE?rlkey=9f9fp6bx23pxtguz5vwbjqlfz&st=coj4oded&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8602364,
+      "lng": -88.96354869999999
+    },
     {
       "id": "407-w-saint-louis-st-west-frankfort-il-62896",
       "address": "407 W Saint Louis St West Frankfort IL 62896",
