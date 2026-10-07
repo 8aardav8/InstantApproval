@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-07T18:05:56.249219+00:00",
+  "generatedAt": "2026-10-07T18:06:35.043964+00:00",
   "listings": [
     {
       "id": "125-s-16th-st-decatur-il-62521",
@@ -1934,7 +1934,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "700",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8111481,
       "lng": -89.61504579999999
