@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-07T18:07:53.765325+00:00",
+  "generatedAt": "2026-10-07T18:08:38.422203+00:00",
   "listings": [
+    {
+      "id": "407-w-saint-louis-st-west-frankfort-il-62896",
+      "address": "407 W Saint Louis St West Frankfort IL 62896",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/Bo5rRqRXBKV7tQ9s7",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.9004314,
+      "lng": -88.9337891
+    },
     {
       "id": "125-s-16th-st-decatur-il-62521",
       "address": "125 S 16th St Decatur IL 62521",
