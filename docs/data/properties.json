@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T20:00:07.871406+00:00",
+  "generatedAt": "2026-10-08T20:04:47.094064+00:00",
   "listings": [
     {
       "id": "1744-n-monroe-street-decatur-il-62526",
@@ -26295,7 +26295,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8516036,
       "lng": -88.8933866
@@ -29114,8 +29114,8 @@
       "down": "$3,000",
       "monthly": "$995",
       "picsLink": "https://drive.google.com/drive/folders/1A7Q-C_zmLKsppAxHmKQAraUqhqlSddEL",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 5,
