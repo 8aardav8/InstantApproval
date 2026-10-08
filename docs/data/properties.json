@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T20:06:55.805602+00:00",
+  "generatedAt": "2026-10-08T20:07:21.681994+00:00",
   "listings": [
     {
       "id": "2015-n-union-st-decatur-il-62523",
@@ -7,12 +7,12 @@
       "onMarketDate": "10/7",
       "lastUpdate": "10/7",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$1,295",
       "picsLink": "https://photos.app.goo.gl/qFnuRDLNwRnzP4iT8",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "4",
+      "baths": "1",
+      "sqft": "1042",
       "status": "Available",
       "livability": 0,
       "lat": 39.8623704,
