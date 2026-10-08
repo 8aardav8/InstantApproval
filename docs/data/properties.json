@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T19:50:59.624755+00:00",
+  "generatedAt": "2026-10-08T19:57:35.097179+00:00",
   "listings": [
     {
       "id": "1744-n-monroe-street-decatur-il-62526",
@@ -22785,7 +22785,7 @@
       "id": "819-elias-ave-st-louis-mo-63147",
       "address": "819 Elias Ave, St. Louis, MO 63147",
       "onMarketDate": "8/28/2026",
-      "lastUpdate": "9/28/2026",
+      "lastUpdate": "10/7/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -22793,7 +22793,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.7213024,
       "lng": -90.229665
