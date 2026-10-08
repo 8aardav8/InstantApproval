@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T20:17:05.134973+00:00",
+  "generatedAt": "2026-10-08T20:17:43.405096+00:00",
   "listings": [
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
@@ -3983,7 +3983,7 @@
       "id": "4-w-delmar-ave-alton-il-62002",
       "address": "4 W Delmar Ave, Alton, IL 62002",
       "onMarketDate": "4/23/2025",
-      "lastUpdate": "9/21/2026",
+      "lastUpdate": "10/8/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
       "monthly": "$775",
@@ -3991,7 +3991,7 @@
       "beds": "4",
       "baths": "2",
       "sqft": "1575",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.92223440000001,
       "lng": -90.18388089999999
@@ -7774,7 +7774,7 @@
       "id": "1283-s-illinois-st-decatur-il-62-521",
       "address": "1283 S. Illinois St. Decatur IL 62,521",
       "onMarketDate": "10/6",
-      "lastUpdate": "10/6/2026",
+      "lastUpdate": "10/8/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,000",
@@ -7782,7 +7782,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1160",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8280136,
       "lng": -88.94213479999999
