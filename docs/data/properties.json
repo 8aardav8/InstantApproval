@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T20:17:43.405096+00:00",
+  "generatedAt": "2026-10-08T20:18:34.537633+00:00",
   "listings": [
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
@@ -4051,7 +4051,7 @@
       "id": "327-e-stuart-ave-decatur-il-62526",
       "address": "327 E Stuart Ave, Decatur, IL 62526",
       "onMarketDate": "6/3/2026",
-      "lastUpdate": "9/7/2026",
+      "lastUpdate": "10/8/2026",
       "area": "IL - Decatur",
       "down": "$1,750",
       "monthly": "$775",
@@ -4059,7 +4059,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1318",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8573981,
       "lng": -88.9529802
@@ -5360,7 +5360,7 @@
       "id": "205-east-st-louis-street-west-frankfort-il-62-896",
       "address": "205 East St. Louis Street West Frankfort IL 62,896",
       "onMarketDate": "7/8",
-      "lastUpdate": "9/13",
+      "lastUpdate": "10/8",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$955",
