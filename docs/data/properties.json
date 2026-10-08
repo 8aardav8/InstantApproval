@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T20:11:18.674494+00:00",
+  "generatedAt": "2026-10-08T20:14:29.624411+00:00",
   "listings": [
     {
       "id": "2015-n-union-st-decatur-il-62523",
@@ -6456,7 +6456,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "804",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.852049,
       "lng": -88.9722736
@@ -21816,11 +21816,11 @@
       "id": "1931-n-edward-st-decatur-il-62526",
       "address": "1931 N Edward St, Decatur, IL 62526",
       "onMarketDate": "10/7/2026",
-      "lastUpdate": "10/7/2026",
+      "lastUpdate": "10/8/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$800",
-      "picsLink": "https://photos.google.com/share/AF1QipNUsqPx5lYN-MiT1dver-kruWxPepoOK211nZnXt_WV7VVar9cDafv4cVXzPUwsRQ?pli=1&key=TlR4M1ZKLTkyUW5Zd2p4X3BmWkVOR1lFQUw0MS1n,https://photos.google.com/share/AF1QipMUXyL1o--deX7Mu_JpmRx5oXMm1ukxapYzsWDsJMk-GUNhKCwgVkrwUKbEA7rgow?key=MDl2dFRoNWxSMFdxWmdnc1N1QlB5QzVkMWdZRFhB",
+      "picsLink": "https://photos.app.goo.gl/YMGYsxn1YxCoFfRj7   \nhttps://photos.app.goo.gl/xAqcK8WE2J8bmD3V8",
       "beds": "4",
       "baths": "2",
       "sqft": "",
