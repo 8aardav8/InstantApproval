@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-08T20:06:10.261827+00:00",
+  "generatedAt": "2026-10-08T20:06:55.805602+00:00",
   "listings": [
+    {
+      "id": "2015-n-union-st-decatur-il-62523",
+      "address": "2015 N Union St Decatur IL 62523",
+      "onMarketDate": "10/7",
+      "lastUpdate": "10/7",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/qFnuRDLNwRnzP4iT8",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8623704,
+      "lng": -88.95955149999999
+    },
     {
       "id": "1744-n-monroe-street-decatur-il-62526",
       "address": "1744 N Monroe Street Decatur IL 62526",
