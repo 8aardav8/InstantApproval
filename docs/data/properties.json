@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T19:48:18.399632+00:00",
+  "generatedAt": "2026-10-08T19:49:36.600099+00:00",
   "listings": [
     {
       "id": "1744-n-monroe-street-decatur-il-62526",
@@ -192,7 +192,7 @@
       "id": "1829-w-butler-st-peoria-il-61605",
       "address": "1829 W Butler St Peoria IL 61605",
       "onMarketDate": "10/1",
-      "lastUpdate": "10/5",
+      "lastUpdate": "10/7",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$875",
@@ -200,7 +200,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1020",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.6842647,
       "lng": -89.622177
@@ -29483,10 +29483,10 @@
       "id": "3422-lucas-and-hunt-rd-saint-louis-mo-63121",
       "address": "3422 Lucas And Hunt Rd, Saint Louis, MO 63121",
       "onMarketDate": "9/4/2026",
-      "lastUpdate": "9/24/2026",
+      "lastUpdate": "10/7/2026",
       "area": "MO - St. Louis",
-      "down": "$2,000",
-      "monthly": "$895",
+      "down": "$1,500",
+      "monthly": "$595",
       "picsLink": "https://drive.google.com/drive/folders/1s9fzGr3tve5ttzapEW6lTtpDHzDe9tWd",
       "beds": "3",
       "baths": "1",
