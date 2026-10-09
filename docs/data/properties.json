@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T19:33:42.441555+00:00",
+  "generatedAt": "2026-10-09T19:34:35.383325+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -1161,7 +1161,7 @@
       "id": "210-n-17th-stl-mo-63103",
       "address": "210 N 17th STL MO 63103",
       "onMarketDate": "9/10",
-      "lastUpdate": "9/11",
+      "lastUpdate": "10/9",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$875",
@@ -1169,7 +1169,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 3,
       "lat": 38.6306584,
       "lng": -90.20424229999999
