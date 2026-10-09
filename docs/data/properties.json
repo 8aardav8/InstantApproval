@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T19:37:28.066006+00:00",
+  "generatedAt": "2026-10-09T19:49:25.604279+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -31,7 +31,7 @@
       "baths": "2.5",
       "sqft": "1500",
       "status": "Available",
-      "livability": 0,
+      "livability": 3,
       "lat": 38.608014,
       "lng": -90.1308113
     },
