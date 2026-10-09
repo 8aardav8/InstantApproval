@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T19:35:17.755456+00:00",
+  "generatedAt": "2026-10-09T19:37:28.066006+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -1586,7 +1586,7 @@
       "id": "2410-n-ellis-st-peoria-il-61604",
       "address": "2410 N Ellis St, Peoria, IL 61604",
       "onMarketDate": "8/29",
-      "lastUpdate": "10/8",
+      "lastUpdate": "10/9",
       "area": "IL - Peoria",
       "down": "$1,500",
       "monthly": "$865",
@@ -1594,7 +1594,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.7172756,
       "lng": -89.60186089999999
