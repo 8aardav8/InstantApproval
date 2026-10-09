@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T19:32:23.461911+00:00",
+  "generatedAt": "2026-10-09T19:32:52.713411+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -770,7 +770,7 @@
       "id": "3238-colorado-ave-flint-mi-48-506",
       "address": "3238 Colorado Ave Flint MI 48,506",
       "onMarketDate": "9/21",
-      "lastUpdate": "9/21",
+      "lastUpdate": "10/9",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$825",
@@ -778,7 +778,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "750",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.0448021,
       "lng": -83.64620529999999
