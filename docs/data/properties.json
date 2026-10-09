@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T07:02:05.408952+00:00",
+  "generatedAt": "2026-10-09T07:12:22.136874+00:00",
   "listings": [
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
@@ -33167,6 +33167,23 @@
       "livability": 0,
       "lat": 36.8762778,
       "lng": -89.60751909999999
+    },
+    {
+      "id": "900-s-16th-street-herrin-il-62948",
+      "address": "900 S. 16th Street Herrin IL 62948",
+      "onMarketDate": "10/9/2026",
+      "lastUpdate": "10/9/2026",
+      "area": "IL - Rural",
+      "down": "$3,500",
+      "monthly": "$995",
+      "picsLink": "https://photos.app.goo.gl/rncyP4GvqbWgr8Pj9",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.7949656,
+      "lng": -89.0286278
     }
   ]
 }
