@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-09T07:38:16.317949+00:00",
+  "generatedAt": "2026-10-09T07:46:50.166957+00:00",
   "listings": [
+    {
+      "id": "4228-johnson-ct-jackson-ms-39209",
+      "address": "4228 Johnson Ct. Jackson ,MS 39209",
+      "onMarketDate": "10/9",
+      "lastUpdate": "10/9",
+      "area": "MS",
+      "down": "$3,000",
+      "monthly": "$1,067",
+      "picsLink": "https://drive.google.com/drive/folders/1FuhSffTVxBTf7kBdYN9Yxk34ntYAxVN0",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1683",
+      "status": "Available",
+      "livability": 0,
+      "lat": 32.3282376,
+      "lng": -90.23693589999999
+    },
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
       "address": "724 N 82nd St East Saint Louis IL 62203",
