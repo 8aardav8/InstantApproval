@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T20:22:24.227047+00:00",
+  "generatedAt": "2026-10-09T20:42:54.537276+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -12279,7 +12279,7 @@
       "id": "1045-n-monroe-st-decatur-il-62522",
       "address": "1045 N Monroe St, Decatur, IL 62522",
       "onMarketDate": "4/6/2026",
-      "lastUpdate": "4/9/2026",
+      "lastUpdate": "10/9/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$1,000",
@@ -12287,7 +12287,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1094",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.851797,
       "lng": -88.9639668
