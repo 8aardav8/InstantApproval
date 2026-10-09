@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T19:34:35.383325+00:00",
+  "generatedAt": "2026-10-09T19:35:17.755456+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -14421,7 +14421,7 @@
       "id": "835-n-74th-st-east-saint-louis-il-62203",
       "address": "835 N 74th St, East Saint Louis, IL 62203",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/11/2026",
+      "lastUpdate": "10/9/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
       "monthly": "$550",
@@ -14429,7 +14429,7 @@
       "beds": "2",
       "baths": "2",
       "sqft": "988",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 4,
       "lat": 38.6024969,
       "lng": -90.0715546
