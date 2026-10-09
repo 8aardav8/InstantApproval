@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T19:32:52.713411+00:00",
+  "generatedAt": "2026-10-09T19:33:29.021348+00:00",
   "listings": [
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
@@ -73,7 +73,7 @@
       "id": "138-s-18th-st-decatur-il-62521",
       "address": "138 S 18th St Decatur IL 62521",
       "onMarketDate": "10/8/2026",
-      "lastUpdate": "10/8/2026",
+      "lastUpdate": "10/9/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,042",
@@ -6184,7 +6184,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1187",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.5816217,
       "lng": -90.17869879999999
