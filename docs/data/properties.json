@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-09T08:04:34.555729+00:00",
+  "generatedAt": "2026-10-09T08:14:18.760073+00:00",
   "listings": [
+    {
+      "id": "201-n-gray-st-jacksonville-ar-72076",
+      "address": "201 N Gray St Jacksonville AR 72076",
+      "onMarketDate": "10/9",
+      "lastUpdate": "10/9",
+      "area": "AR",
+      "down": "$4,000",
+      "monthly": "$1,316",
+      "picsLink": "https://www.dropbox.com/scl/fo/k2txrw21o4f5d3173jxr6/AJnNmwCxNcszYSXZlfffyT0?rlkey=w91x71l71z732aajtgrmq8wm8&st=xa2kcrfg&dl=0",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1090",
+      "status": "Available",
+      "livability": 0,
+      "lat": 34.8682671,
+      "lng": -92.1116772
+    },
     {
       "id": "351-n-26th-st-east-saint-louis-il-62205",
       "address": "351 N 26th St East Saint Louis IL 62205",
