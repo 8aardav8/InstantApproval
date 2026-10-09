@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T07:54:59.429035+00:00",
+  "generatedAt": "2026-10-09T07:57:34.484084+00:00",
   "listings": [
     {
       "id": "4228-johnson-ct-jackson-ms-39209",
@@ -61,9 +61,9 @@
       "down": "$3,500",
       "monthly": "$995",
       "picsLink": "https://photos.app.goo.gl/rncyP4GvqbWgr8Pj9",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1540",
       "status": "Available",
       "livability": 0,
       "lat": 37.7949656,
