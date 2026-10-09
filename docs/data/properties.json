@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T03:58:02.662967+00:00",
+  "generatedAt": "2026-10-09T03:59:49.740262+00:00",
   "listings": [
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
@@ -821,7 +821,7 @@
       "id": "1127-n-45th-st-east-st-louis-il-62204",
       "address": "1127 N 45th St East St Louis IL 62204",
       "onMarketDate": "9/16",
-      "lastUpdate": "9/23",
+      "lastUpdate": "10/8",
       "area": "IL - East St Louis",
       "down": "$2,500",
       "monthly": "$900",
@@ -829,7 +829,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 4,
       "lat": 38.6224918,
       "lng": -90.10251470000001
