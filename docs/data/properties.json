@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-09T07:33:25.492073+00:00",
+  "generatedAt": "2026-10-09T07:38:16.317949+00:00",
   "listings": [
+    {
+      "id": "724-n-82nd-st-east-saint-louis-il-62203",
+      "address": "724 N 82nd St East Saint Louis IL 62203",
+      "onMarketDate": "10/8",
+      "lastUpdate": "10/8",
+      "area": "IL - East St Louis",
+      "down": "$2,500",
+      "monthly": "$795",
+      "picsLink": "https://drive.google.com/drive/folders/1ts1cZI2KL0-9nFKll9YTvVbKb9ZelYvT",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "720",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5947353,
+      "lng": -90.06522559999999
+    },
     {
       "id": "138-s-18th-st-decatur-il-62521",
       "address": "138 S 18th St Decatur IL 62521",
@@ -34,23 +51,6 @@
       "livability": 0,
       "lat": 37.7949656,
       "lng": -89.0286278
-    },
-    {
-      "id": "724-n-82nd-st-east-saint-louis-il-62203",
-      "address": "724 N 82nd St East Saint Louis IL 62203",
-      "onMarketDate": "10/8",
-      "lastUpdate": "10/8",
-      "area": "IL - East St Louis",
-      "down": "$2,500",
-      "monthly": "$795",
-      "picsLink": "https://drive.google.com/drive/folders/1ts1cZI2KL0-9nFKll9YTvVbKb9ZelYvT",
-      "beds": "2",
-      "baths": "1",
-      "sqft": "720",
-      "status": "Available",
-      "livability": 0,
-      "lat": 38.5947353,
-      "lng": -90.06522559999999
     },
     {
       "id": "2015-n-union-st-decatur-il-62523",
