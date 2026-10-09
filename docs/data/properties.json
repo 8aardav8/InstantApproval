@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T06:57:00.908298+00:00",
+  "generatedAt": "2026-10-09T07:01:50.101103+00:00",
   "listings": [
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
@@ -9253,15 +9253,15 @@
       "id": "2313-w-wiswall-street-peoria-il-61605",
       "address": "2313 W Wiswall street Peoria, IL. 61605",
       "onMarketDate": "2/3/2026",
-      "lastUpdate": "5/26/2026",
+      "lastUpdate": "10/9/2026",
       "area": "IL - Peoria",
-      "down": "$1,250",
+      "down": "$1,000",
       "monthly": "$750",
       "picsLink": "https://drive.google.com/drive/folders/1e2R0QuZBUBsBW-lvD4wStDD_qah19TET",
       "beds": "2",
       "baths": "1",
       "sqft": "759",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 40.6806824,
       "lng": -89.6296938
