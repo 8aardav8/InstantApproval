@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-09T07:23:18.946855+00:00",
+  "generatedAt": "2026-10-09T07:33:12.603269+00:00",
   "listings": [
+    {
+      "id": "138-s-18th-st-decatur-il-62521",
+      "address": "138 S 18th St Decatur IL 62521",
+      "onMarketDate": "10/9/2026",
+      "lastUpdate": "10/9/2026",
+      "area": "IL - Decatur",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8412516,
+      "lng": -88.93230319999999
+    },
     {
       "id": "900-s-16th-street-herrin-il-62948",
       "address": "900 S. 16th Street Herrin IL 62948",
