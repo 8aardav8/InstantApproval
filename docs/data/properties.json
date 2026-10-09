@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T06:20:31.928568+00:00",
+  "generatedAt": "2026-10-09T06:31:54.053830+00:00",
   "listings": [
     {
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
@@ -22496,7 +22496,7 @@
       "id": "725-n-39th-st-east-saint-louis-il-62205",
       "address": "725 N 39th St, East Saint Louis, IL 62205",
       "onMarketDate": "9/24/2026",
-      "lastUpdate": "10/5/2026",
+      "lastUpdate": "10/8/2026",
       "area": "IL - East St Louis",
       "down": "$2,500",
       "monthly": "$880",
@@ -22504,7 +22504,7 @@
       "beds": "5",
       "baths": "3",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.6129172,
       "lng": -90.11248839999999
