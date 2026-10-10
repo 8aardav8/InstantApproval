@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T00:26:50.732738+00:00",
+  "generatedAt": "2026-10-10T00:38:59.803099+00:00",
   "listings": [
     {
       "id": "222-grampian-rd-saint-louis-mo-63-137",
@@ -14829,7 +14829,7 @@
       "id": "505-chaudet-ave-cahokia-il-62206",
       "address": "505 Chaudet Ave, Cahokia, IL 62206",
       "onMarketDate": "8/16/2026",
-      "lastUpdate": "9/16/2026",
+      "lastUpdate": "10/9/2026",
       "area": "IL - East St Louis",
       "down": "$2,500",
       "monthly": "$863",
@@ -14837,7 +14837,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "780",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.573635,
       "lng": -90.1750146
