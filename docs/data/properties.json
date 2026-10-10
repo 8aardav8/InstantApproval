@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T00:39:13.523557+00:00",
+  "generatedAt": "2026-10-10T00:41:16.615121+00:00",
   "listings": [
     {
       "id": "222-grampian-rd-saint-louis-mo-63-137",
@@ -1722,7 +1722,7 @@
       "id": "802-n-71st-st-east-st-louis-il-62203",
       "address": "802 N 71st St East St Louis IL 62203",
       "onMarketDate": "9/16",
-      "lastUpdate": "10/8",
+      "lastUpdate": "10/9",
       "area": "IL - East St Louis",
       "down": "$2,500",
       "monthly": "$800",
@@ -1730,7 +1730,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Off Market",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6028521,
       "lng": -90.07451669999999
