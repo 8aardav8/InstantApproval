@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-09T20:43:07.619473+00:00",
+  "generatedAt": "2026-10-10T00:26:35.100906+00:00",
   "listings": [
+    {
+      "id": "222-grampian-rd-saint-louis-mo-63-137",
+      "address": "222 Grampian Rd Saint Louis MO 63,137",
+      "onMarketDate": "10/9",
+      "lastUpdate": "10/9",
+      "area": "",
+      "down": "$3,000",
+      "monthly": "$995",
+      "picsLink": "https://photos.app.goo.gl/cQPL6g5YVNZMkLpr7",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "873",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7571406,
+      "lng": -90.1966717
+    },
     {
       "id": "201-n-gray-st-jacksonville-ar-72076",
       "address": "201 N Gray St Jacksonville AR 72076",
