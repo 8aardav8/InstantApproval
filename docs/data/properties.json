@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T13:30:21.969327+00:00",
+  "generatedAt": "2026-10-10T14:38:09.799054+00:00",
   "listings": [
     {
       "id": "222-grampian-rd-saint-louis-mo-63-137",
@@ -2552,10 +2552,10 @@
       "lng": -88.9410643
     },
     {
-      "id": "1828-e-main-st-decatur-il-62-521",
-      "address": "1828 E Main St Decatur IL 62,521",
+      "id": "1828-e-main-st-decatur-il-62521",
+      "address": "1828 E Main St Decatur IL 62521",
       "onMarketDate": "7/26",
-      "lastUpdate": "10/8",
+      "lastUpdate": "10/10",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$895",
