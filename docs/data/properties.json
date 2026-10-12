@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-12T20:49:44.386421+00:00",
+  "generatedAt": "2026-10-12T20:50:20.908720+00:00",
   "listings": [
+    {
+      "id": "714-s-adams-st-lewistown-il-61542",
+      "address": "714 S Adams St Lewistown IL 61542",
+      "onMarketDate": "10/11",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/311P7YqCoq8LHkjE6",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.3918429,
+      "lng": -90.1563285
+    },
     {
       "id": "18-violet-drive-cahokia-il-62206",
       "address": "18 Violet Drive, Cahokia, IL 62206",
