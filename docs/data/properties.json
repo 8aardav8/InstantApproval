@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T20:25:40.998575+00:00",
+  "generatedAt": "2026-10-12T20:26:31.405242+00:00",
   "listings": [
     {
       "id": "945-s-maffit-st-decatur-il-62521",
@@ -1543,7 +1543,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "672",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8494027,
       "lng": -88.97681229999999
@@ -12313,7 +12313,7 @@
       "id": "1045-n-monroe-st-decatur-il-62522",
       "address": "1045 N Monroe St, Decatur, IL 62522",
       "onMarketDate": "4/6/2026",
-      "lastUpdate": "10/9/2026",
+      "lastUpdate": "10/10/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$1,000",
