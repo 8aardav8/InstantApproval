@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T20:34:06.784627+00:00",
+  "generatedAt": "2026-10-12T20:41:53.151460+00:00",
   "listings": [
     {
       "id": "18-violet-drive-cahokia-il-62206",
@@ -5411,7 +5411,7 @@
       "id": "3024-glenwood-ave-alton-il-62002",
       "address": "3024 Glenwood Ave, Alton, IL 62002",
       "onMarketDate": "4/13/2026",
-      "lastUpdate": "8/29/2026",
+      "lastUpdate": "10/10/2026",
       "area": "IL - East St Louis",
       "down": "$900",
       "monthly": "$510",
@@ -5419,7 +5419,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.8956603,
       "lng": -90.14076229999999
