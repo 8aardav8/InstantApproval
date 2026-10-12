@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T20:47:17.203719+00:00",
+  "generatedAt": "2026-10-12T20:48:03.787639+00:00",
   "listings": [
     {
       "id": "18-violet-drive-cahokia-il-62206",
@@ -430,7 +430,7 @@
       "id": "539-w-marengo-ave-flint-mi-48505",
       "address": "539 W. Marengo Ave. Flint MI 48505",
       "onMarketDate": "9/29",
-      "lastUpdate": "9/29",
+      "lastUpdate": "10/11",
       "area": "MI",
       "down": "$2,500",
       "monthly": "$930",
@@ -438,7 +438,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "639",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.0592379,
       "lng": -83.7113935
@@ -906,7 +906,7 @@
       "id": "1117-w-packard-st-decatur-il-62522",
       "address": "1117 W Packard St, Decatur IL 62522",
       "onMarketDate": "9/17",
-      "lastUpdate": "9/17",
+      "lastUpdate": "10/11",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$895",
@@ -914,7 +914,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1066",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8520476,
       "lng": -88.9735651
