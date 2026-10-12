@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T21:05:15.845541+00:00",
+  "generatedAt": "2026-10-12T21:05:47.323001+00:00",
   "listings": [
     {
       "id": "4824-margaretta-ave-saint-louis-mo-63-115",
@@ -12092,7 +12092,7 @@
       "id": "2416-mary-st-cahokia-il-62206",
       "address": "2416 Mary St, \nCahokia, IL \n62206",
       "onMarketDate": "9/25/2025",
-      "lastUpdate": "9/25/2026",
+      "lastUpdate": "10/12/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
       "monthly": "$475",
@@ -12100,7 +12100,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1000",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.5708849,
       "lng": -90.1901113
