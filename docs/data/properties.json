@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T20:45:06.687990+00:00",
+  "generatedAt": "2026-10-12T20:46:32.412737+00:00",
   "listings": [
     {
       "id": "18-violet-drive-cahokia-il-62206",
@@ -1518,7 +1518,7 @@
       "id": "611-haungs-ave-peoria-il-61603",
       "address": "611 Haungs Ave, Peoria, IL 61603",
       "onMarketDate": "9/3",
-      "lastUpdate": "10/9",
+      "lastUpdate": "10/10",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$850",
@@ -1526,7 +1526,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.7139986,
       "lng": -89.56456209999999
@@ -5496,7 +5496,7 @@
       "id": "205-east-st-louis-street-west-frankfort-il-62-896",
       "address": "205 East St. Louis Street West Frankfort IL 62,896",
       "onMarketDate": "7/8",
-      "lastUpdate": "10/8",
+      "lastUpdate": "10/11",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$955",
@@ -5504,7 +5504,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1135",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 37.9002675,
       "lng": -88.92614569999999
