@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-12T20:33:11.384983+00:00",
+  "generatedAt": "2026-10-12T20:33:36.499979+00:00",
   "listings": [
+    {
+      "id": "18-violet-drive-cahokia-il-62206",
+      "address": "18 Violet Drive, Cahokia, IL 62206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/u/0/folders/1nckzoGv3zIT6dt4N7SzqGuZ_kiM4I6tT",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.557965,
+      "lng": -90.1249102
+    },
     {
       "id": "945-s-maffit-st-decatur-il-62521",
       "address": "945 S Maffit St Decatur IL 62521",
