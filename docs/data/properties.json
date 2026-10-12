@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T20:48:50.366926+00:00",
+  "generatedAt": "2026-10-12T20:49:44.386421+00:00",
   "listings": [
     {
       "id": "18-violet-drive-cahokia-il-62206",
@@ -3422,7 +3422,7 @@
       "id": "1705-e-north-st-decatur-il-62-521",
       "address": "1705 E North St Decatur IL 62,521",
       "onMarketDate": "7/20",
-      "lastUpdate": "9/15",
+      "lastUpdate": "10/11",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$725",
@@ -3430,7 +3430,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "900",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8451058,
       "lng": -88.9337689
