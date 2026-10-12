@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-10-12T20:53:40.767293+00:00",
+  "generatedAt": "2026-10-12T20:54:25.072911+00:00",
   "listings": [
     {
       "id": "4824-margaretta-ave-saint-louis-mo-63-115",
       "address": "4824 Margaretta Ave Saint Louis MO 63,115",
       "onMarketDate": "10/11",
       "lastUpdate": "10/11",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "area": "MO - St. Louis",
+      "down": "$2,000",
+      "monthly": "$800",
       "picsLink": "https://photos.app.goo.gl/89HsyZKJv4socW7N7",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
