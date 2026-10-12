@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-12T20:06:59.503242+00:00",
+  "generatedAt": "2026-10-12T20:07:39.280436+00:00",
   "listings": [
+    {
+      "id": "945-s-maffit-st-decatur-il-62521",
+      "address": "945 S Maffit St Decatur IL 62521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1r38kkr9QpJibkW3skGnTXHYHo4xEyH_L",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.83137199999999,
+      "lng": -88.94496679999999
+    },
     {
       "id": "222-grampian-rd-saint-louis-mo-63-137",
       "address": "222 Grampian Rd Saint Louis MO 63,137",
