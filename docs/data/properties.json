@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-13T19:40:42.184118+00:00",
+  "generatedAt": "2026-10-13T19:41:07.364769+00:00",
   "listings": [
+    {
+      "id": "4121-clara-place-saint-louis-mo-63115",
+      "address": "4121 Clara Place Saint Louis MO 63115",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6798101,
+      "lng": -90.24821399999999
+    },
     {
       "id": "6211-reichman-ave-saint-louis-mo-63121",
       "address": "6211 Reichman Ave Saint Louis MO 63121",
