@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T06:09:16.361713+00:00",
+  "generatedAt": "2026-10-13T06:11:33.536097+00:00",
   "listings": [
     {
       "id": "214-pyle-st-carrier-mills-il",
@@ -10205,7 +10205,7 @@
       "id": "1117-ne-glendale-ave-peoria-il-61603",
       "address": "1117 NE Glendale Ave, Peoria, IL 61603",
       "onMarketDate": "5/10/2026",
-      "lastUpdate": "10/1/2026",
+      "lastUpdate": "10/12/2026",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$850",
@@ -10213,7 +10213,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1500",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.7050995,
       "lng": -89.58179489999999
