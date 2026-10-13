@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T21:36:07.349659+00:00",
+  "generatedAt": "2026-10-13T22:03:32.152377+00:00",
   "listings": [
     {
       "id": "4121-clara-place-saint-louis-mo-63115",
@@ -29398,7 +29398,7 @@
       "id": "6153-laura-ave-st-louis-mo-63136",
       "address": "6153 Laura Ave. St. Louis, MO 63136",
       "onMarketDate": "10/7/2026",
-      "lastUpdate": "10/10/2026",
+      "lastUpdate": "10/13/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$995",
@@ -29406,7 +29406,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 5,
       "lat": 38.7019372,
       "lng": -90.2617265
