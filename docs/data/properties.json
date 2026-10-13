@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T05:41:14.720912+00:00",
+  "generatedAt": "2026-10-13T05:47:18.562491+00:00",
   "listings": [
     {
       "id": "214-pyle-st-carrier-mills-il",
@@ -3966,7 +3966,7 @@
       "id": "108-e-shipping-st-edwardsport-in-47-528",
       "address": "108 E Shipping St, Edwardsport IN 47,528",
       "onMarketDate": "6/19",
-      "lastUpdate": "9/17/2026",
+      "lastUpdate": "10/12/2026",
       "area": "IN",
       "down": "$2,700",
       "monthly": "$825",
@@ -3974,7 +3974,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1235",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.8123019,
       "lng": -87.24966599999999
