@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-13T19:26:29.516664+00:00",
+  "generatedAt": "2026-10-13T19:27:06.215774+00:00",
   "listings": [
+    {
+      "id": "303-w-sycamore-street-carbondale-il-62-901",
+      "address": "303 W. Sycamore Street Carbondale IL 62,901",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/u/0/mobile/folders/15bQj8av_gpg8mHjdFc1oRomW3FJiC-B-",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.7304171,
+      "lng": -89.21943019999999
+    },
     {
       "id": "214-pyle-st-carrier-mills-il",
       "address": "214 Pyle St, Carrier Mills, IL",
