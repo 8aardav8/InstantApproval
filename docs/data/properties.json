@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-13T19:32:01.044912+00:00",
+  "generatedAt": "2026-10-13T19:34:17.219506+00:00",
   "listings": [
+    {
+      "id": "322-west-cole-street-du-quoin-il-62-833",
+      "address": "322 West Cole Street Du Quoin IL 62,833",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/rGqh7QMXAc5E85Qq6",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.0196268,
+      "lng": -89.2443861
+    },
     {
       "id": "303-w-sycamore-street-carbondale-il-62-901",
       "address": "303 W. Sycamore Street Carbondale IL 62,901",
