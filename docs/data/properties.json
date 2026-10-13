@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-13T19:37:25.562694+00:00",
+  "generatedAt": "2026-10-13T19:38:01.331342+00:00",
   "listings": [
+    {
+      "id": "6211-reichman-ave-saint-louis-mo-63121",
+      "address": "6211 Reichman Ave Saint Louis MO 63121",
+      "onMarketDate": "10/13",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/07cdWTILZa_HX7GPwP3L5827g",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6986807,
+      "lng": -90.2731189
+    },
     {
       "id": "322-west-cole-street-du-quoin-il-62-833",
       "address": "322 West Cole Street Du Quoin IL 62,833",
