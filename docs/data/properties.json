@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T19:35:19.091308+00:00",
+  "generatedAt": "2026-10-13T19:36:10.815025+00:00",
   "listings": [
     {
       "id": "322-west-cole-street-du-quoin-il-62-833",
@@ -11497,15 +11497,15 @@
       "id": "5152-maffitt-ave-saint-louis-mo-63113",
       "address": "5152 Maffitt Ave, Saint Louis, MO 63113",
       "onMarketDate": "2/16/2026",
-      "lastUpdate": "4/24/2026",
+      "lastUpdate": "10/13/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
-      "monthly": "$595",
+      "monthly": "$695",
       "picsLink": "https://share.icloud.com/photos/075vZ5Fxo7CWem5vs_nm7F1vA",
       "beds": "2",
       "baths": "1",
       "sqft": "1218",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6712509,
       "lng": -90.2604148
