@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T21:31:05.039786+00:00",
+  "generatedAt": "2026-10-13T21:34:52.841004+00:00",
   "listings": [
     {
       "id": "4121-clara-place-saint-louis-mo-63115",
@@ -982,7 +982,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1501",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.5669527,
       "lng": -90.1619671
