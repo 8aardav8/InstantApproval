@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T20:04:43.537820+00:00",
+  "generatedAt": "2026-10-13T21:30:49.622252+00:00",
   "listings": [
     {
       "id": "4121-clara-place-saint-louis-mo-63115",
@@ -821,7 +821,7 @@
       "id": "1322-williams-st-cahokia-il-62206",
       "address": "1322 Williams St, Cahokia, IL 62206",
       "onMarketDate": "9/24",
-      "lastUpdate": "10/2",
+      "lastUpdate": "10/13",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$795",
@@ -829,7 +829,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.5606643,
       "lng": -90.1656718
