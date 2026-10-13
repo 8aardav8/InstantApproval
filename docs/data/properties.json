@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-13T05:14:54.126808+00:00",
+  "generatedAt": "2026-10-13T05:15:39.723243+00:00",
   "listings": [
+    {
+      "id": "214-pyle-st-carrier-mills-il",
+      "address": "214 Pyle St, Carrier Mills, IL",
+      "onMarketDate": "",
+      "lastUpdate": "10/12",
+      "area": "",
+      "down": "$2,000",
+      "monthly": "$850",
+      "picsLink": "https://drive.google.com/drive/folders/17rQ4Pve_8T9nlwyAanycq4efTYbwZZTI",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.6932228,
+      "lng": -88.6282846
+    },
     {
       "id": "4824-margaretta-ave-saint-louis-mo-63-115",
       "address": "4824 Margaretta Ave Saint Louis MO 63,115",
