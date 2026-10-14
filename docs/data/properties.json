@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T19:34:22.910134+00:00",
+  "generatedAt": "2026-10-14T19:34:58.425973+00:00",
   "listings": [
     {
       "id": "18465-caldwell-street-detroit-mi-48234",
@@ -30843,7 +30843,7 @@
       "id": "3-pohlman-ln-saint-louis-mo-63136-20",
       "address": "3 Pohlman Ln, Saint Louis, MO 63136",
       "onMarketDate": "",
-      "lastUpdate": "",
+      "lastUpdate": "10/13/2026",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$850",
@@ -30851,7 +30851,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Sold",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.7284761,
       "lng": -90.26142139999999
