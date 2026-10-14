@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T04:09:20.551819+00:00",
+  "generatedAt": "2026-10-14T04:17:27.157610+00:00",
   "listings": [
     {
       "id": "4121-clara-place-saint-louis-mo-63115",
@@ -155,8 +155,8 @@
       "lng": -88.94496679999999
     },
     {
-      "id": "222-grampian-rd-saint-louis-mo-63-137",
-      "address": "222 Grampian Rd Saint Louis MO 63,137",
+      "id": "222-grampian-rd-st-louis-mo-63137",
+      "address": "222 Grampian Rd, St. Louis, MO 63137",
       "onMarketDate": "10/9",
       "lastUpdate": "10/9",
       "area": "",
@@ -21949,7 +21949,7 @@
       "lng": -90.2280344
     },
     {
-      "id": "222-grampian-rd-st-louis-mo-63137",
+      "id": "222-grampian-rd-st-louis-mo-63137-13",
       "address": "222 Grampian Rd, St. Louis, MO 63137",
       "onMarketDate": "10/15/2025",
       "lastUpdate": "10/24/2025",
@@ -22119,7 +22119,7 @@
       "lng": -90.2479005
     },
     {
-      "id": "5639-wilborn-dr-saint-louis-mo-63136-13",
+      "id": "5639-wilborn-dr-saint-louis-mo-63136-14",
       "address": "5639 Wilborn Dr, Saint Louis, MO 63136",
       "onMarketDate": "9/17/2025",
       "lastUpdate": "10/20/2025",
@@ -22731,7 +22731,7 @@
       "lng": -90.11135039999999
     },
     {
-      "id": "2421-w-garden-st-peoria-il-61605-14",
+      "id": "2421-w-garden-st-peoria-il-61605-15",
       "address": "2421 W Garden St, Peoria, IL 61605",
       "onMarketDate": "7/16/2025",
       "lastUpdate": "9/29/2025",
@@ -25842,7 +25842,7 @@
       "lng": -89.6148923
     },
     {
-      "id": "1235-e-walnut-st-decatur-il-62526-15",
+      "id": "1235-e-walnut-st-decatur-il-62526-16",
       "address": "1235 E Walnut St, Decatur, IL 62526",
       "onMarketDate": "7/11/2025",
       "lastUpdate": "",
@@ -29446,7 +29446,7 @@
       "lng": -90.26489509999999
     },
     {
-      "id": "1105-shawnee-st-mount-vernon-il-62864-16",
+      "id": "1105-shawnee-st-mount-vernon-il-62864-17",
       "address": "1105 Shawnee St, Mount Vernon, IL 62864",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30041,7 +30041,7 @@
       "lng": -90.13800909999999
     },
     {
-      "id": "6725-schofield-pl-saint-louis-mo-63133-17",
+      "id": "6725-schofield-pl-saint-louis-mo-63133-18",
       "address": "6725 Schofield Pl, Saint Louis, MO 63133",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -30109,7 +30109,7 @@
       "lng": -90.2302121
     },
     {
-      "id": "2964-iowa-st-granite-city-il-62040-18",
+      "id": "2964-iowa-st-granite-city-il-62040-19",
       "address": "2964 Iowa St, Granite City, IL 62040",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -31078,7 +31078,7 @@
       "lng": -90.15514209999999
     },
     {
-      "id": "5445-robin-ave-saint-louis-mo-63120-19",
+      "id": "5445-robin-ave-saint-louis-mo-63120-20",
       "address": "5445 Robin Ave, Saint Louis, MO, 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -31350,7 +31350,7 @@
       "lng": -90.0194786
     },
     {
-      "id": "14-s-beard-st-danville-il-61832-20",
+      "id": "14-s-beard-st-danville-il-61832-21",
       "address": "14 S Beard St, Danville, IL 61832",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -32557,7 +32557,7 @@
       "lng": -76.33330959999999
     },
     {
-      "id": "1127-31st-st-newport-news-va-23607-21",
+      "id": "1127-31st-st-newport-news-va-23607-22",
       "address": "1127 31st St, Newport News, VA 23607",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -32693,7 +32693,7 @@
       "lng": -76.3411186
     },
     {
-      "id": "5338-claxton-ave-saint-louis-mo-63120-22",
+      "id": "5338-claxton-ave-saint-louis-mo-63120-23",
       "address": "5338 Claxton Ave, Saint Louis, MO 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -32744,7 +32744,7 @@
       "lng": -76.56196550000001
     },
     {
-      "id": "108-n-10th-st-suffolk-va-23434-23",
+      "id": "108-n-10th-st-suffolk-va-23434-24",
       "address": "108 N 10th St, Suffolk, VA 23434",
       "onMarketDate": "",
       "lastUpdate": "",
