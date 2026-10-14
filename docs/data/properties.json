@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-14T06:05:24.878528+00:00",
+  "generatedAt": "2026-10-14T06:09:00.761863+00:00",
   "listings": [
+    {
+      "id": "18465-caldwell-street-detroit-mi-48234",
+      "address": "18465 Caldwell Street Detroit MI 48234",
+      "onMarketDate": "10/13",
+      "lastUpdate": "10/13",
+      "area": "MI",
+      "down": "$2,000",
+      "monthly": "$795",
+      "picsLink": "https://drive.google.com/drive/folders/1U1jtobpX_U9_WXXWK-hBE5EamyYRK4ms?usp=sharing",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "720",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.428983,
+      "lng": -83.047141
+    },
     {
       "id": "1206-markham-st-flint-mi-48507",
       "address": "1206 Markham St Flint MI 48507",
@@ -863,7 +880,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.5606643,
       "lng": -90.1656718
