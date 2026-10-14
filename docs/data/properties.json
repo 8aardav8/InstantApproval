@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-14T05:38:12.826844+00:00",
+  "generatedAt": "2026-10-14T05:57:28.781716+00:00",
   "listings": [
+    {
+      "id": "3-pohlman-ln-saint-louis-mo-63136",
+      "address": "3 Pohlman Ln, Saint Louis, MO 63136",
+      "onMarketDate": "10/13",
+      "lastUpdate": "10/13",
+      "area": "",
+      "down": "$3,000",
+      "monthly": "$1,250",
+      "picsLink": "https://share.icloud.com/photos/0afxmYj_NRuYixZVfnWdBzdBg",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7284761,
+      "lng": -90.26142139999999
+    },
     {
       "id": "4121-clara-place-saint-louis-mo-63115",
       "address": "4121 Clara Place Saint Louis MO 63115",
@@ -30789,7 +30806,7 @@
       "lng": -90.1931504
     },
     {
-      "id": "3-pohlman-ln-saint-louis-mo-63136",
+      "id": "3-pohlman-ln-saint-louis-mo-63136-20",
       "address": "3 Pohlman Ln, Saint Louis, MO 63136",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -31078,7 +31095,7 @@
       "lng": -90.15514209999999
     },
     {
-      "id": "5445-robin-ave-saint-louis-mo-63120-20",
+      "id": "5445-robin-ave-saint-louis-mo-63120-21",
       "address": "5445 Robin Ave, Saint Louis, MO, 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -31350,7 +31367,7 @@
       "lng": -90.0194786
     },
     {
-      "id": "14-s-beard-st-danville-il-61832-21",
+      "id": "14-s-beard-st-danville-il-61832-22",
       "address": "14 S Beard St, Danville, IL 61832",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -32557,7 +32574,7 @@
       "lng": -76.33330959999999
     },
     {
-      "id": "1127-31st-st-newport-news-va-23607-22",
+      "id": "1127-31st-st-newport-news-va-23607-23",
       "address": "1127 31st St, Newport News, VA 23607",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -32693,7 +32710,7 @@
       "lng": -76.3411186
     },
     {
-      "id": "5338-claxton-ave-saint-louis-mo-63120-23",
+      "id": "5338-claxton-ave-saint-louis-mo-63120-24",
       "address": "5338 Claxton Ave, Saint Louis, MO 63120",
       "onMarketDate": "",
       "lastUpdate": "",
@@ -32744,7 +32761,7 @@
       "lng": -76.56196550000001
     },
     {
-      "id": "108-n-10th-st-suffolk-va-23434-24",
+      "id": "108-n-10th-st-suffolk-va-23434-25",
       "address": "108 N 10th St, Suffolk, VA 23434",
       "onMarketDate": "",
       "lastUpdate": "",
