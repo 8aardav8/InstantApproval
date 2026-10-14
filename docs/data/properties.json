@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T04:17:27.157610+00:00",
+  "generatedAt": "2026-10-14T04:17:52.695339+00:00",
   "listings": [
     {
       "id": "4121-clara-place-saint-louis-mo-63115",
@@ -158,7 +158,7 @@
       "id": "222-grampian-rd-st-louis-mo-63137",
       "address": "222 Grampian Rd, St. Louis, MO 63137",
       "onMarketDate": "10/9",
-      "lastUpdate": "10/9",
+      "lastUpdate": "10/13",
       "area": "",
       "down": "$3,000",
       "monthly": "$995",
@@ -166,7 +166,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "873",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.7571406,
       "lng": -90.1966717
