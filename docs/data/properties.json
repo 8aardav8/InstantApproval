@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-14T21:31:16.184374+00:00",
+  "generatedAt": "2026-10-14T23:10:32.646498+00:00",
   "listings": [
+    {
+      "id": "1922-harvest-ave-cahokia-il-62206",
+      "address": "1922 Harvest Ave Cahokia IL 62206",
+      "onMarketDate": "10/14",
+      "lastUpdate": "10/14",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$875",
+      "picsLink": "https://photos.app.goo.gl/9hkSeUw3h3gySS7i9",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1050",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5582399,
+      "lng": -90.15443189999999
+    },
     {
       "id": "18465-caldwell-street-detroit-mi-48234",
       "address": "18465 Caldwell Street Detroit MI 48234",
