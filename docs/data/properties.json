@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T06:13:40.901415+00:00",
+  "generatedAt": "2026-10-14T06:17:15.691230+00:00",
   "listings": [
     {
       "id": "18465-caldwell-street-detroit-mi-48234",
@@ -1790,7 +1790,7 @@
       "id": "1510-23rd-st-granite-city-il-62040",
       "address": "1510 23rd St Granite City IL 62040",
       "onMarketDate": "9/21",
-      "lastUpdate": "9/21",
+      "lastUpdate": "10/13",
       "area": "IL - East St Louis",
       "down": "$2,000",
       "monthly": "$750",
@@ -1798,7 +1798,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.7045757,
       "lng": -90.14095909999999
