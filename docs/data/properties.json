@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T19:36:42.035328+00:00",
+  "generatedAt": "2026-10-14T21:21:02.823744+00:00",
   "listings": [
     {
       "id": "18465-caldwell-street-detroit-mi-48234",
@@ -28157,7 +28157,7 @@
       "id": "327-sauget-ave-cahokia-il-62206",
       "address": "327 Sauget Ave, Cahokia, IL 62206",
       "onMarketDate": "9/24/2026",
-      "lastUpdate": "10/5/2026",
+      "lastUpdate": "10/14/2026",
       "area": "IL - East St Louis",
       "down": "$1,800",
       "monthly": "$900",
@@ -28165,7 +28165,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.5650523,
       "lng": -90.1986956
