@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-14T05:57:42.454230+00:00",
+  "generatedAt": "2026-10-14T06:05:05.794148+00:00",
   "listings": [
+    {
+      "id": "1206-markham-st-flint-mi-48507",
+      "address": "1206 Markham St Flint MI 48507",
+      "onMarketDate": "10/13",
+      "lastUpdate": "10/13",
+      "area": "MI",
+      "down": "$5,000",
+      "monthly": "$996",
+      "picsLink": "https://drive.google.com/drive/mobile/folders/1CcON9e9Ub3xFmMfUcaR-NuZOpOO47IXL?usp=sharing",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1200",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.9825917,
+      "lng": -83.69621959999999
+    },
     {
       "id": "3-pohlman-ln-saint-louis-mo-63136",
       "address": "3 Pohlman Ln, Saint Louis, MO 63136",
