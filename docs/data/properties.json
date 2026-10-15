@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-15T18:20:11.911713+00:00",
+  "generatedAt": "2026-10-15T18:36:30.609667+00:00",
   "listings": [
     {
       "id": "1106-st-michael-dr-cahokia-il-62206",
@@ -23388,7 +23388,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 32.2852777,
       "lng": -90.2355914
