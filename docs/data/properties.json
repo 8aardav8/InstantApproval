@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-15T04:11:07.669934+00:00",
+  "generatedAt": "2026-10-15T04:13:18.240934+00:00",
   "listings": [
+    {
+      "id": "1106-st-michael-dr-cahokia-il-62206",
+      "address": "1106 St Michael Dr Cahokia IL 62206",
+      "onMarketDate": "10/14",
+      "lastUpdate": "10/14",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$850",
+      "picsLink": "https://photos.app.goo.gl/yaKJn9DeoeM4i7SD7",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1075",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5639132,
+      "lng": -90.1748156
+    },
     {
       "id": "1922-harvest-ave-cahokia-il-62206",
       "address": "1922 Harvest Ave Cahokia IL 62206",
