@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-15T02:35:06.252499+00:00",
+  "generatedAt": "2026-10-15T03:27:06.654355+00:00",
   "listings": [
     {
       "id": "1922-harvest-ave-cahokia-il-62206",
@@ -342,13 +342,13 @@
       "lng": -89.0286278
     },
     {
-      "id": "2015-n-union-st-decatur-il-62523",
-      "address": "2015 N Union St Decatur IL 62523",
+      "id": "2015-n-union-st-decatur-il-62526",
+      "address": "2015 N Union St Decatur IL 62526",
       "onMarketDate": "10/7",
       "lastUpdate": "10/7",
       "area": "IL - Decatur",
-      "down": "$3,000",
-      "monthly": "$1,295",
+      "down": "$2,500",
+      "monthly": "$1,095",
       "picsLink": "https://photos.app.goo.gl/qFnuRDLNwRnzP4iT8",
       "beds": "4",
       "baths": "1",
