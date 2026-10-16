@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-16T20:37:00.471973+00:00",
+  "generatedAt": "2026-10-16T20:37:18.812582+00:00",
   "listings": [
+    {
+      "id": "520-east-frye-avenue-peoria-il-61603",
+      "address": "520 East Frye Avenue Peoria IL 61603",
+      "onMarketDate": "10/15",
+      "lastUpdate": "10/15",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1w7wMlRrgj_kXlmnJYrhNsGJUCqG2X8EI",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.7120857,
+      "lng": -89.58802709999999
+    },
     {
       "id": "1106-st-michael-dr-cahokia-il-62206",
       "address": "1106 St Michael Dr Cahokia IL 62206",
