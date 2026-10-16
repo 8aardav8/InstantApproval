@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T20:40:09.920202+00:00",
+  "generatedAt": "2026-10-16T20:41:24.038431+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -515,7 +515,7 @@
       "id": "9853-green-valley-dr-st-louis-mo-63136",
       "address": "9853 Green Valley Dr, St Louis, MO 63136",
       "onMarketDate": "10/3",
-      "lastUpdate": "10/6",
+      "lastUpdate": "10/15",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$625",
@@ -523,7 +523,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "768",
-      "status": "Pending",
+      "status": "Available",
       "livability": 3,
       "lat": 38.7480552,
       "lng": -90.2634951
@@ -2181,7 +2181,7 @@
       "id": "12094-littlefield-street-detroit-mi-48227",
       "address": "12094 Littlefield Street Detroit MI 48227",
       "onMarketDate": "8/19",
-      "lastUpdate": "10/4",
+      "lastUpdate": "10/16",
       "area": "MI",
       "down": "$2,500",
       "monthly": "$1,099",
@@ -2189,7 +2189,7 @@
       "beds": "4",
       "baths": "1",
       "sqft": "926",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 42.3768415,
       "lng": -83.1754148
