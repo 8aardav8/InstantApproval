@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T20:41:24.038431+00:00",
+  "generatedAt": "2026-10-16T20:42:00.481416+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -13112,7 +13112,7 @@
       "id": "3100-bond-ave-east-st-louis-il-62207",
       "address": "3100 Bond Ave, East St Louis, IL 62207",
       "onMarketDate": "3/20/2026",
-      "lastUpdate": "9/9/2026",
+      "lastUpdate": "10/16/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
       "monthly": "$875",
@@ -13120,7 +13120,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.5964316,
       "lng": -90.1371662
