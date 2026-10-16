@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T20:51:01.251448+00:00",
+  "generatedAt": "2026-10-16T20:52:12.603930+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -150,7 +150,7 @@
       "baths": "1",
       "sqft": "",
       "status": "Sold",
-      "livability": 0,
+      "livability": 3,
       "lat": 38.6986807,
       "lng": -90.2731189
     },
