@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T20:20:25.672681+00:00",
+  "generatedAt": "2026-10-16T20:31:18.524285+00:00",
   "listings": [
     {
       "id": "1106-st-michael-dr-cahokia-il-62206",
@@ -2215,7 +2215,7 @@
       "id": "2810-norwood-ave-saint-louis-mo-63115",
       "address": "2810 Norwood Ave Saint Louis MO 63115",
       "onMarketDate": "8/17",
-      "lastUpdate": "8/29",
+      "lastUpdate": "10/15",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$1,000",
@@ -2223,7 +2223,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "734",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6709878,
       "lng": -90.25821839999999
