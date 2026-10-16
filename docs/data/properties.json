@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T20:31:18.524285+00:00",
+  "generatedAt": "2026-10-16T20:32:02.458196+00:00",
   "listings": [
     {
       "id": "1106-st-michael-dr-cahokia-il-62206",
@@ -31727,7 +31727,7 @@
       "id": "5811-saloma-ave-saint-louis-mo-63120",
       "address": "5811 Saloma Ave, Saint Louis, MO 63120",
       "onMarketDate": "9/28/2026",
-      "lastUpdate": "9/29/2026",
+      "lastUpdate": "10/15/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$795",
@@ -31735,7 +31735,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.6981891,
       "lng": -90.25788279999999
