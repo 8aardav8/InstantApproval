@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T20:32:52.023677+00:00",
+  "generatedAt": "2026-10-16T20:33:34.446522+00:00",
   "listings": [
     {
       "id": "1106-st-michael-dr-cahokia-il-62206",
@@ -107,7 +107,7 @@
       "id": "6211-reichman-ave-saint-louis-mo-63121",
       "address": "6211 Reichman Ave Saint Louis MO 63121",
       "onMarketDate": "10/13",
-      "lastUpdate": "10/13",
+      "lastUpdate": "10/15",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$995",
@@ -464,7 +464,7 @@
       "id": "3117-finley-st-middletown-oh-45045",
       "address": "3117 Finley St ,Middletown OH 45045",
       "onMarketDate": "10/4",
-      "lastUpdate": "10/12",
+      "lastUpdate": "10/15",
       "area": "OH",
       "down": "$3,000",
       "monthly": "$1,120",
