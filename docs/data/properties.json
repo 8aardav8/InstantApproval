@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-16T20:38:21.629343+00:00",
+  "generatedAt": "2026-10-16T20:38:57.188373+00:00",
   "listings": [
+    {
+      "id": "205-e-jackson-ave-flint-mi-48505",
+      "address": "205 E Jackson Ave Flint MI 48505",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1wWuKjpyW-Ul04yizQ3g_QpmJkotyVKVi?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.04185020000001,
+      "lng": -83.70262509999999
+    },
     {
       "id": "520-east-frye-avenue-peoria-il-61603",
       "address": "520 East Frye Avenue Peoria IL 61603",
