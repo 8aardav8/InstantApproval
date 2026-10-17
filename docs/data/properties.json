@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17T18:55:46.469838+00:00",
+  "generatedAt": "2026-10-17T19:05:17.908061+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -1858,7 +1858,7 @@
       "id": "1510-23rd-st-granite-city-il-62040",
       "address": "1510 23rd St Granite City IL 62040",
       "onMarketDate": "9/21",
-      "lastUpdate": "10/13",
+      "lastUpdate": "10/16",
       "area": "IL - East St Louis",
       "down": "$2,000",
       "monthly": "$750",
@@ -1866,7 +1866,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.7045757,
       "lng": -90.14095909999999
