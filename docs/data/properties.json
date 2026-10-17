@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17T20:23:24.119577+00:00",
+  "generatedAt": "2026-10-17T20:35:20.850249+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -1042,7 +1042,7 @@
       "id": "234-home-ave-decatur-il-62-522",
       "address": "234 Home Ave Decatur IL 62,522",
       "onMarketDate": "9/21",
-      "lastUpdate": "10/5",
+      "lastUpdate": "10/17",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$955",
@@ -1050,7 +1050,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "960",
-      "status": "Off Market",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8429905,
       "lng": -88.97049450000002
@@ -5394,7 +5394,7 @@
       "id": "304-n-spruce-st-nokomis-il-62075",
       "address": "304 N Spruce St, Nokomis, IL 62075",
       "onMarketDate": "11/7/2025",
-      "lastUpdate": "9/29/2026",
+      "lastUpdate": "10/16/2026",
       "area": "IL - Rural",
       "down": "$1,000",
       "monthly": "$500",
