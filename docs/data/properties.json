@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T22:31:38.669396+00:00",
+  "generatedAt": "2026-10-19T22:32:29.939075+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -702,7 +702,7 @@
       "id": "238-connolly-dr-st-louis-mo-63135",
       "address": "238 Connolly Dr, St. Louis, MO 63135",
       "onMarketDate": "9/29",
-      "lastUpdate": "9/29",
+      "lastUpdate": "10/16",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$875",
@@ -10528,7 +10528,7 @@
       "id": "5333-jennings-station-rd-st-louis-mo-63136",
       "address": "5333 Jennings Station Rd St Louis MO 63136",
       "onMarketDate": "10/1/2026",
-      "lastUpdate": "10/12/2026",
+      "lastUpdate": "10/16/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$650",
