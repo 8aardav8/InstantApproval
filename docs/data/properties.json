@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T23:03:27.133180+00:00",
+  "generatedAt": "2026-10-19T23:04:08.378942+00:00",
   "listings": [
     {
       "id": "1428-south-ave-toledo-oh-43-609",
@@ -8,11 +8,11 @@
       "lastUpdate": "10/18",
       "area": "OH",
       "down": "$5,000",
-      "monthly": "",
+      "monthly": "$1,195",
       "picsLink": "https://photos.app.goo.gl/MduTEoGyiiJJqiR69",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1704",
       "status": "Available",
       "livability": 0,
       "lat": 41.6310213,
