@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-19T22:37:36.439553+00:00",
+  "generatedAt": "2026-10-19T22:38:16.663077+00:00",
   "listings": [
+    {
+      "id": "1546-e-division-st-decatur-il-62526",
+      "address": "1546 E Division St Decatur IL 62526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1X6gkURjygRYI4Sd7VhWD1PwYQadoNJJB?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.859663,
+      "lng": -88.9354046
+    },
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
       "address": "205 E Jackson Ave Flint MI 48505",
