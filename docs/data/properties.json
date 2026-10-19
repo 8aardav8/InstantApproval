@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-19T23:02:56.429397+00:00",
+  "generatedAt": "2026-10-19T23:03:27.133180+00:00",
   "listings": [
+    {
+      "id": "1428-south-ave-toledo-oh-43-609",
+      "address": "1428 South Ave. Toledo OH 43,609",
+      "onMarketDate": "10/18",
+      "lastUpdate": "10/18",
+      "area": "OH",
+      "down": "$5,000",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/MduTEoGyiiJJqiR69",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 41.6310213,
+      "lng": -83.575666
+    },
     {
       "id": "1546-e-division-st-decatur-il-62526",
       "address": "1546 E Division St Decatur IL 62526",
