@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T22:11:55.355339+00:00",
+  "generatedAt": "2026-10-19T22:12:59.017667+00:00",
   "listings": [
     {
       "id": "205-e-jackson-ave-flint-mi-48505",
@@ -5241,14 +5241,14 @@
       "id": "608-st-monica-dr-sauget-il-62206",
       "address": "608 St Monica Dr, Sauget, IL 62206",
       "onMarketDate": "6/7",
-      "lastUpdate": "9/29/2026",
+      "lastUpdate": "10/16/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
       "monthly": "$575",
       "picsLink": "https://photos.app.goo.gl/HKLTkSRa3faPHkp88",
       "beds": "3",
       "baths": "1",
-      "sqft": "",
+      "sqft": "1104",
       "status": "Available",
       "livability": 2,
       "lat": 38.5624514,
@@ -5258,7 +5258,7 @@
       "id": "5657-roosevelt-pl-saint-louis-mo-63120",
       "address": "5657 Roosevelt Pl, Saint Louis, MO 63120",
       "onMarketDate": "5/31/2026",
-      "lastUpdate": "9/29/2026",
+      "lastUpdate": "10/16/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$650",
