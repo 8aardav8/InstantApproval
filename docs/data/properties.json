@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T23:10:00.907308+00:00",
+  "generatedAt": "2026-10-19T23:10:52.688773+00:00",
   "listings": [
     {
       "id": "1630-s-elm-st-muncie-in-47302",
@@ -209,7 +209,7 @@
       "id": "322-west-cole-street-du-quoin-il-62-833",
       "address": "322 West Cole Street Du Quoin IL 62,833",
       "onMarketDate": "10/13",
-      "lastUpdate": "10/17",
+      "lastUpdate": "10/19",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$1,200",
@@ -4459,7 +4459,7 @@
       "id": "2120-st-louis-ave-east-st-louis-il-62205",
       "address": "2120 St. Louis Ave East St. Louis IL 62205",
       "onMarketDate": "9/14",
-      "lastUpdate": "9/14",
+      "lastUpdate": "10/19",
       "area": "IL - East St Louis",
       "down": "$2,000",
       "monthly": "$500",
@@ -4467,7 +4467,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "704",
-      "status": "Available",
+      "status": "Pending",
       "livability": 5,
       "lat": 38.6100493,
       "lng": -90.13705519999999
