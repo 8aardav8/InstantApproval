@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T22:38:47.902279+00:00",
+  "generatedAt": "2026-10-19T22:39:20.186331+00:00",
   "listings": [
     {
       "id": "1546-e-division-st-decatur-il-62526",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/1X6gkURjygRYI4Sd7VhWD1PwYQadoNJJB?usp=drive_link",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "725",
       "status": "Available",
       "livability": 0,
       "lat": 39.859663,
@@ -8165,7 +8165,7 @@
       "id": "1283-s-illinois-st-decatur-il-62-521",
       "address": "1283 S. Illinois St. Decatur IL 62,521",
       "onMarketDate": "10/6",
-      "lastUpdate": "10/8/2026",
+      "lastUpdate": "10/17/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,000",
@@ -8173,7 +8173,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1160",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8280136,
       "lng": -88.94213479999999
