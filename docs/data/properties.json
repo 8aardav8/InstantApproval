@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-19T23:05:02.026289+00:00",
+  "generatedAt": "2026-10-19T23:05:48.560482+00:00",
   "listings": [
+    {
+      "id": "1630-s-elm-st-muncie-in-47302",
+      "address": "1630 S Elm St Muncie IN 47302",
+      "onMarketDate": "10/18",
+      "lastUpdate": "10/18",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/12F9S34K6QGMvhwc6NWjEjeWMNYHV-XNd?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.180185,
+      "lng": -85.38270729999999
+    },
     {
       "id": "1428-south-ave-toledo-oh-43-609",
       "address": "1428 South Ave. Toledo OH 43,609",
