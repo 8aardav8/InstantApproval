@@ -15,6 +15,59 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
 
+// ---------- Visitor session (texted login code), 2026-10-18 ----------
+// Aaron: "I want the whole site behind it." The Worker now refuses every
+// personal endpoint (My Info, appointments, IDs, filter sync...) without a
+// session token earned by entering a texted code -- see admin/worker.js,
+// requireVisitorSession. This wrapper attaches that token to EVERY call to
+// the Worker, so no individual fetch() call site needed changing. It sits
+// at the top of the file, with its own copy of the Worker origin, because
+// some fetches can fire before ADMIN_API_URL's own `const` line runs (the
+// TDZ bug class noted at ADMIN_API_URL).
+const SESSION_API_ORIGIN = "https://super-frost-1dbb.notactuallyit.workers.dev";
+const SESSION_TOKEN_STORAGE_KEY = "iah_session_token";
+const SESSION_EXP_STORAGE_KEY = "iah_session_exp";
+
+function getSessionToken() {
+  try {
+    const token = localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    const exp = Date.parse(localStorage.getItem(SESSION_EXP_STORAGE_KEY) || "");
+    return token && exp > Date.now() ? token : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+  localStorage.removeItem(SESSION_EXP_STORAGE_KEY);
+  localStorage.removeItem("iah_gate_passed"); // GATE_STORAGE_KEY, declared further down
+}
+
+(function installSessionFetch() {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (input, init = {}) => {
+    const url = typeof input === "string" ? input : input.url;
+    const token = url.startsWith(SESSION_API_ORIGIN) ? getSessionToken() : null;
+    if (token) {
+      const headers = new Headers(init.headers || (typeof input === "string" ? undefined : input.headers));
+      headers.set("X-IAH-Session", token);
+      init = { ...init, headers };
+    }
+    const res = await nativeFetch(input, init);
+    // A token the Worker no longer accepts (expired, or the phone on file
+    // changed) -- send the visitor back through the gate.
+    if (token && res.status === 401) {
+      const data = await res.clone().json().catch(() => ({}));
+      if (data.error === "session required") {
+        clearSession();
+        if (typeof showLoginGate === "function") showLoginGate();
+      }
+    }
+    return res;
+  };
+})();
+
 // CSS class tokens can't contain spaces -- "Off Market".toLowerCase() used
 // directly as a class name would silently split into two bogus classes
 // ("off" and "market") and fall through to the default (blue/Available)
@@ -1210,6 +1263,7 @@ async function fetchMyInfo(phone, email) {
 // from scratch and correctly matches their now-updated row as a returning
 // visitor.
 function handleStaleIdentity() {
+  clearSession(); // 2026-10-18: re-establishing identity now also means a fresh texted code
   localStorage.removeItem(GATE_STORAGE_KEY);
   localStorage.removeItem(GATE_EMAIL_STORAGE_KEY);
   localStorage.removeItem(GATE_NAME_STORAGE_KEY);
@@ -2470,14 +2524,101 @@ const GATE_EMAIL_STORAGE_KEY = "iah_gate_email";
 const GATE_NAME_STORAGE_KEY = "iah_gate_name";
 const GATE_PHONE_STORAGE_KEY = "iah_gate_phone";
 
+// Two steps since 2026-10-18 (see the visitor-session block at the top of
+// this file): the info form below records the lead exactly as before, then
+// the code form trades a texted code for a session token. The gate stays
+// up until that token exists -- or Aaron's own admin sign-in does.
+const SEND_LOGIN_CODE_ENDPOINT = `${ADMIN_API_URL}/send-login-code`;
+const VERIFY_LOGIN_CODE_ENDPOINT = `${ADMIN_API_URL}/verify-login-code`;
+
+function showLoginGate() {
+  document.getElementById("gate-name").value = localStorage.getItem(GATE_NAME_STORAGE_KEY) || "";
+  document.getElementById("gate-email").value = localStorage.getItem(GATE_EMAIL_STORAGE_KEY) || "";
+  document.getElementById("gate-phone").value = localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "";
+  document.getElementById("gate-form").classList.remove("hidden");
+  document.getElementById("gate-code-form").classList.add("hidden");
+  document.getElementById("login-gate").classList.remove("hidden");
+}
+
+async function sendLoginCode(phone, statusEl) {
+  try {
+    const res = await fetch(SEND_LOGIN_CODE_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      statusEl.textContent = data.message || "We couldn't text your code. Please try again, or call/text us at 618-418-4180.";
+      return false;
+    }
+    statusEl.textContent = "";
+    return true;
+  } catch (err) {
+    statusEl.textContent = "We couldn't text your code. Please try again, or call/text us at 618-418-4180.";
+    return false;
+  }
+}
+
 function initLoginGate() {
   const gate = document.getElementById("login-gate");
-  if (localStorage.getItem(GATE_STORAGE_KEY) === "1") {
-    gate.classList.add("hidden");
-    return;
-  }
   const form = document.getElementById("gate-form");
   const status = document.getElementById("gate-status");
+  const codeForm = document.getElementById("gate-code-form");
+  const codeStatus = document.getElementById("gate-code-status");
+
+  function showCodeStep(phone) {
+    const last4 = phone.replace(/\D/g, "").slice(-4);
+    document.getElementById("gate-code-prompt").textContent = `We texted a 6-digit code to the number ending in ${last4}.`;
+    document.getElementById("gate-code").value = "";
+    form.classList.add("hidden");
+    codeForm.classList.remove("hidden");
+    document.getElementById("gate-code").focus();
+  }
+
+  codeForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const phone = localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "";
+    const code = document.getElementById("gate-code").value.replace(/\D/g, "");
+    codeStatus.textContent = "Checking...";
+    try {
+      const res = await fetch(VERIFY_LOGIN_CODE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.token) {
+        codeStatus.textContent = data.message || "That didn't work. Please try again.";
+        return;
+      }
+      localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, data.token);
+      localStorage.setItem(SESSION_EXP_STORAGE_KEY, data.expiresAt);
+      localStorage.setItem(GATE_STORAGE_KEY, "1");
+      // Reload rather than re-run each loader by hand: everything personal
+      // (My Info, appointments, favorites sync) already ran once on this
+      // page without a session and got refused, so a clean load is simplest.
+      location.reload();
+    } catch (err) {
+      codeStatus.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
+    }
+  });
+  document.getElementById("gate-code-resend").addEventListener("click", async () => {
+    codeStatus.textContent = "Sending...";
+    if (await sendLoginCode(localStorage.getItem(GATE_PHONE_STORAGE_KEY) || "", codeStatus)) codeStatus.textContent = "New code sent.";
+  });
+  document.getElementById("gate-code-back").addEventListener("click", () => {
+    codeStatus.textContent = "";
+    codeForm.classList.add("hidden");
+    form.classList.remove("hidden");
+  });
+
+  if (getSessionToken() || getStoredAdminToken()) {
+    gate.classList.add("hidden");
+  } else {
+    showLoginGate();
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = document.getElementById("gate-name").value.trim();
@@ -2514,30 +2655,13 @@ function initLoginGate() {
         body: JSON.stringify({ name, email, phone, agreed }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      localStorage.setItem(GATE_STORAGE_KEY, "1");
+      // The lead is saved at this point (RULE-000072). Entry now waits on
+      // the texted code -- see the code form handler above.
       localStorage.setItem(GATE_EMAIL_STORAGE_KEY, email);
       localStorage.setItem(GATE_NAME_STORAGE_KEY, name);
       localStorage.setItem(GATE_PHONE_STORAGE_KEY, phone);
-      gate.classList.add("hidden");
-      // Real reported bug, fixed 2026-08-29: prefillGetStartedContactFields()
-      // was only ever called once, at initial page load, via
-      // initGetStartedForm() -- for a first-time visitor who submits the
-      // gate and THEN visits Get Started in that same page session (no
-      // reload), that one-shot call already ran before this localStorage
-      // write ever happened, so it read empty values and never re-ran.
-      // Calling it again right here, the moment real values exist, closes
-      // that gap. Guarded since this function is declared later in the
-      // file but is a hoisted `function` declaration, not a `const`, so
-      // this call is safe regardless of source order (see the ADMIN_API_URL
-      // TDZ bug fixed the same day for why that distinction matters here).
-      if (typeof prefillGetStartedContactFields === "function") prefillGetStartedContactFields();
-      // Same timing-bug class, fixed 2026-08-29: a RETURNING visitor (real
-      // existing appointments on the Sheet) who cleared localStorage and
-      // re-gates on this device wouldn't see their own appointment cards
-      // until a reload, since the initial refreshMyAppointments() in
-      // loadData() already ran (and found no email) before this write ever
-      // happened. Calling it again right here closes that gap too.
-      if (typeof refreshAndRerenderAppointments === "function") refreshAndRerenderAppointments();
+      status.textContent = "Texting your code...";
+      if (await sendLoginCode(phone, status)) showCodeStep(phone);
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
     }

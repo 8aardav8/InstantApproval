@@ -127,7 +127,12 @@ const DROPBOX_IDS_FOLDER = "/**WORK BOX/**REAL ESTATE/*SLOW FLIPS/FILLING/Buyer 
 // then a full OAuth re-authorization, same process as the earlier
 // files.content.write upgrade). Aaron chose the folder-link now, exact-
 // file-link-later tradeoff explicitly rather than waiting on that.
-const DROPBOX_BUYER_IDS_FOLDER_LINK = "https://www.dropbox.com/scl/fo/jj1egrthqv88f7btqaofq/AFonsjf0bIQ08B9f9nS80PA?rlkey=kit7qc346vzpdk6gv0wn9n60c&st=1wef8h8q&dl=0";
+// 2026-10-19 (lessons L51): that folder link was PUBLIC ("anyone with the
+// link") and sat in this public repo for seven weeks, exposing every ID.
+// Revoked. Now a dropbox.com/home URL, which only opens for someone signed
+// in to Aaron's own Dropbox account. Never put a share link in this repo --
+// scripts/check_no_private_links.py blocks it.
+const DROPBOX_BUYER_IDS_FOLDER_LINK = "https://www.dropbox.com/home/**WORK%20BOX/**REAL%20ESTATE/*SLOW%20FLIPS/FILLING/Buyer%20IDs";
 
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 const SHEET_TAB = "PROPERTIES";
@@ -199,7 +204,7 @@ function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-IAH-Session",
   };
 }
 
@@ -651,9 +656,14 @@ function toE164(phone) {
 // handler does in the same request (checked every caller: none does more
 // than a handful of other subrequests). Not a full guarantee for a contact
 // sitting past 2000, but a real, large improvement over 500.
-async function quoFindContactByPhone(env, e164Phone) {
+// maxPages, added 2026-10-05: that "checked every caller" claim stopped
+// being true once linkIdToBuyer started calling syncBuyerToSheet inline --
+// a 40-page walk plus its ~12 Dropbox/Sheets calls blew the 50 cap for real
+// ("lockett, Malik - 5500.jpeg", Too many subrequests). Callers that do
+// meaningful other work in the same invocation pass a smaller cap.
+async function quoFindContactByPhone(env, e164Phone, maxPages = 40) {
   let pageToken;
-  for (let page = 0; page < 40; page++) {
+  for (let page = 0; page < maxPages; page++) {
     const resp = await quoCall(env, "/contacts", { maxResults: "50", pageToken });
     const found = (resp.data || []).find((c) => (c.defaultFields.phoneNumbers || []).some((p) => p.value === e164Phone));
     if (found) return found;
@@ -3629,9 +3639,69 @@ async function handleInternalFindLoginsRow(request, env) {
 // surfaced (flagged to Telegram) rather than a silent "(1)" suffix if that
 // assumption is ever wrong. idName (the OCR'd name off the ID itself) is
 // optional -- only the auto-link caller ever has one.
-async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename }) {
-  await syncBuyerToSheet(env, toE164(buyerPhone));
+// Shared links keyed by Dropbox's own stable /scl/fi/<id>/ segment, not the
+// full URL -- added 2026-10-05: the URL's slug carries the filename, so the
+// same link compared as a string stops matching the Sheet's ID Link the
+// moment the file is renamed (found live: two already-linked Lockett files
+// showed up as "unassociated" in the browse picker after a rename).
+function sharedLinkKey(url) {
+  const m = /\/scl\/fi\/([^/?]+)/.exec(url || "");
+  return m ? m[1] : (url || "").trim();
+}
+
+// Which App: Logins row (if any) already has this exact file as its ID
+// Link. Two cheap reads -- the file's existing shared link (never creates
+// one) and column F.
+async function findRowAlreadyLinkedToFile(dropboxToken, accessToken, dropboxPath) {
+  const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ path: dropboxPath, direct_only: true }),
+  });
+  if (!listRes.ok) throw new Error(`dropbox list_shared_links failed: ${await listRes.text()}`);
+  const existingUrl = (((await listRes.json()).links || [])[0] || {}).url;
+  if (!existingUrl) return null; // no link at all -- nobody can be pointing at it
+  const key = sharedLinkKey(existingUrl);
+  const range = encodeURIComponent(`${LOGINS_TAB}!D:F`);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`id-link column read failed: ${await res.text()}`);
+  const rows = (await res.json()).values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][2] || "").trim() && sharedLinkKey(rows[i][2]) === key) return { row: i + 1, phone: rows[i][0] || "", name: rows[i][1] || "" };
+  }
+  return null;
+}
+
+// Restructured 2026-10-05 after a real "Too many subrequests" failure on
+// the auto-link path ("lockett, Malik - 5500.jpeg"): syncBuyerToSheet used
+// to run FIRST, its up-to-40-page Quo walk ate the 50-subrequest budget,
+// and the invocation died between the Dropbox rename and the ID Link write
+// -- file renamed, buyer never linked, the worst possible half-state. Per
+// RULE-000072 the one thing this function exists for is rename + link, so
+// that now runs first, and the Quo/Sheet identity sync runs after it with
+// a capped walk, best-effort: a sync failure is returned as syncError, it
+// never un-does or fails a link that already landed. The rename+link path
+// itself is idempotent on retry (an already-renamed file skips the move,
+// createOrReuseSharedLink reuses, writeIdLink overwrites with the same
+// value), so a caller that retries a failed file converges.
+// refuseIfLinkedElsewhere (auto-link caller only): the OCR watcher sees
+// EVERY new file in the folder, including site uploads that are already
+// some buyer's ID -- in the Lockett incident it matched two such files to
+// a duplicate row for the same person and renamed both away from their
+// real owners' naming. Refusing there is right for an automated guess; the
+// manual browse panel is an explicit human choice and keeps the old
+// behavior.
+async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename, refuseIfLinkedElsewhere = false, quoMaxPages = 20 }) {
   const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
+
+  if (refuseIfLinkedElsewhere) {
+    const owner = await findRowAlreadyLinkedToFile(dropboxToken, accessToken, dropboxPath);
+    if (owner && toE164(owner.phone) !== toE164(buyerPhone)) {
+      throw Object.assign(new Error("already linked"), { alreadyLinked: owner });
+    }
+  }
 
   const originalFilename = dropboxPath.split("/").pop() || "";
   const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
@@ -3663,7 +3733,14 @@ async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, 
     }
   }
 
-  return { finalPath, idLink };
+  let syncError = null;
+  try {
+    await syncBuyerToSheet(env, toE164(buyerPhone), undefined, true, quoMaxPages);
+  } catch (e) {
+    syncError = String(e);
+  }
+
+  return { finalPath, idLink, syncError };
 }
 
 async function handleInternalAutoLinkId(request, env) {
@@ -3683,9 +3760,11 @@ async function handleInternalAutoLinkId(request, env) {
   if (!dropboxPath || !buyerPhone) return jsonResponse({ error: "missing dropboxPath or buyerPhone" }, 400);
 
   try {
-    const { finalPath, idLink } = await linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename: false });
-    return jsonResponse({ ok: true, renamedTo: finalPath, idLink });
+    const { finalPath, idLink, syncError } = await linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename: false, refuseIfLinkedElsewhere: true });
+    return jsonResponse({ ok: true, renamedTo: finalPath, idLink, syncError });
   } catch (e) {
+    // 409, not 500: a permanent "don't do this", the watcher must not retry it.
+    if (e.alreadyLinked) return jsonResponse({ error: "already linked", detail: `already the ID for row ${e.alreadyLinked.row} (${e.alreadyLinked.name}, ${e.alreadyLinked.phone})`, alreadyLinked: e.alreadyLinked }, 409);
     if (e.httpDetail) return jsonResponse({ error: "rename failed", detail: e.httpDetail }, 500);
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -3821,7 +3900,7 @@ async function handleAdminBrowseIdPhotos(request, env) {
     if (!linksRes.ok) throw new Error(`id-link column read failed: ${await linksRes.text()}`);
     const linksData = await linksRes.json();
     const linkedUrls = new Set(
-      (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean)
+      (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean).map(sharedLinkKey)
     );
     // OCR cache lookup, added 2026-09-14 per Aaron's direct request ("OCR
     // search... once the IDs load") -- see handleInternalCacheOcrText's own
@@ -3853,7 +3932,7 @@ async function handleAdminBrowseIdPhotos(request, env) {
       if (!listRes.ok) continue; // best-effort -- skip a file whose link status we couldn't check rather than fail the whole browse
       const listData = await listRes.json();
       const existingUrl = (listData.links || [])[0] && listData.links[0].url;
-      if (existingUrl && linkedUrls.has(existingUrl)) continue; // a real buyer already points at this file -- not a candidate
+      if (existingUrl && linkedUrls.has(sharedLinkKey(existingUrl))) continue; // a real buyer already points at this file -- not a candidate
       const cached = ocrByFileId.get(file.id);
       unassociated.push({ path: file.path_display, name: file.name, ocrText: cached ? cached.ocrText : "", idName: cached ? cached.idName : "" });
     }
@@ -4470,6 +4549,188 @@ async function handleUpdateAppointmentDate(request, env) {
   }
 }
 
+// ---------- Texted login code + visitor session (2026-10-18, TASK-000737) ----------
+// Aaron: "Just a texted code to enter the site" / "I want the whole site
+// behind it." Real gap this closes: every visitor endpoint below trusted
+// whatever phone/email the request carried -- anyone who knew a buyer's
+// phone number could POST /id-photo and get their driver's license back.
+//
+// Flow: /gate-login still records the lead FIRST, unchanged (RULE-000072 --
+// a visitor who never enters the code is still a captured lead). Then
+// /send-login-code texts a 6-digit code, /verify-login-code trades it for
+// a signed session token (stateless HMAC, 90 days, no KV), and
+// requireVisitorSession() checks that token on every personal endpoint and
+// OVERWRITES the request's phone with the verified one -- so the handlers
+// stay unchanged and phone-first lookup (findLoginsRowByIdentity /
+// findOrNextLoginsRow) can only ever land on the caller's own row.
+const LOGIN_CODES_TAB = "Login Codes"; // Phone | Code Hash | Expires At | Attempts | Last Sent At | Sends In Window | Window Start
+const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
+const LOGIN_CODE_MAX_ATTEMPTS = 5;
+const LOGIN_CODE_RESEND_GAP_MS = 30 * 1000;
+const LOGIN_CODE_MAX_SENDS_PER_HOUR = 5;
+const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+const SESSION_HEADER = "X-IAH-Session";
+const SESSION_GATED_PATHS = new Set([
+  "/sync-visitor", "/upload-id", "/my-appointments", "/cancel-appointment", "/update-appointment-date",
+  "/id-photo", "/my-info", "/update-name", "/request-phone-change", "/request-email-change",
+  "/update-co-buyer", "/upload-co-buyer-id", "/upload-my-id",
+]);
+
+function bytesToB64url(bytes) {
+  let s = "";
+  for (const b of new Uint8Array(bytes)) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// Keys are derived from INTERNAL_TOOLS_SECRET per purpose, so this needed
+// no new Worker secret (no extra manual `wrangler secret put` step).
+async function hmacB64url(env, purpose, message) {
+  if (!env.INTERNAL_TOOLS_SECRET) throw new Error("INTERNAL_TOOLS_SECRET not set");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(`${env.INTERNAL_TOOLS_SECRET}:${purpose}`), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return bytesToB64url(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message)));
+}
+
+function timingSafeEqualStr(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function createSessionToken(env, e164) {
+  const exp = Date.now() + SESSION_TTL_MS;
+  const payload = bytesToB64url(new TextEncoder().encode(JSON.stringify({ p: e164, exp })));
+  return { token: `${payload}.${await hmacB64url(env, "session-v1", payload)}`, exp };
+}
+
+// Returns the verified E.164 phone, or null.
+async function verifySessionToken(env, token) {
+  const [payload, sig] = (token || "").split(".");
+  if (!payload || !sig) return null;
+  if (!timingSafeEqualStr(sig, await hmacB64url(env, "session-v1", payload))) return null;
+  try {
+    const { p, exp } = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    if (!p || !exp || exp < Date.now()) return null;
+    return p;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function readLoginCodeRow(accessToken, e164) {
+  const range = encodeURIComponent(`${LOGIN_CODES_TAB}!A:G`);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`login-codes read failed: ${await res.text()}`);
+  const rows = (await res.json()).values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][0] || "").trim() === e164) return { row: i + 1, values: rows[i], nextRow: rows.length + 1 };
+  }
+  return { row: null, values: null, nextRow: rows.length + 1 };
+}
+
+async function writeLoginCodeRow(accessToken, row, values) {
+  const a1 = `${LOGIN_CODES_TAB}!A${row}:G${row}`;
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(a1)}?valueInputOption=RAW`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: a1, values: [values] }),
+  });
+  if (!res.ok) throw new Error(`login-codes write failed: ${await res.text()}`);
+}
+
+// Only texts numbers that already have an App: Logins row (i.e. went
+// through /gate-login first) -- keeps this from being an open "text any
+// number" endpoint -- and rate-limits per phone.
+async function handleSendLoginCode(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  if (!isPlausiblePhone(body.phone)) return jsonResponse({ error: "invalid phone" }, 400);
+  const e164 = toE164(body.phone);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    if (!(await findLoginsRowByPhone(accessToken, e164))) return jsonResponse({ error: "not found", message: "Please fill in the form first." }, 404);
+    const existing = await readLoginCodeRow(accessToken, e164);
+    const now = Date.now();
+    const [, , , , lastSentAt, sendsRaw, windowStartRaw] = existing.values || [];
+    if (lastSentAt && now - Date.parse(lastSentAt) < LOGIN_CODE_RESEND_GAP_MS) {
+      return jsonResponse({ error: "too soon", message: "A code was just sent. Please wait a few seconds before asking for another." }, 429);
+    }
+    const windowOpen = windowStartRaw && now - Date.parse(windowStartRaw) < 60 * 60 * 1000;
+    const sends = windowOpen ? Number(sendsRaw || 0) : 0;
+    if (sends >= LOGIN_CODE_MAX_SENDS_PER_HOUR) {
+      return jsonResponse({ error: "too many codes", message: "Too many codes requested. Please try again in an hour, or call/text us at 618-418-4180." }, 429);
+    }
+    const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, "0");
+    const nowIso = new Date(now).toISOString();
+    await writeLoginCodeRow(accessToken, existing.row || existing.nextRow, [
+      e164, await hmacB64url(env, "login-code-v1", `${e164}|${code}`), new Date(now + LOGIN_CODE_TTL_MS).toISOString(), "0",
+      nowIso, String(sends + 1), windowOpen ? windowStartRaw : nowIso,
+    ]);
+    await sendQuoText(env, e164, `Your InstantApprovalHomes.com code is ${code}. It expires in 10 minutes. Didn't request this? Just ignore this text.`);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: "server error", message: "We couldn't text your code. Please try again, or call/text us at 618-418-4180.", detail: String(e) }, 500);
+  }
+}
+
+async function handleVerifyLoginCode(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const code = String(body.code || "").replace(/\D/g, "");
+  if (!isPlausiblePhone(body.phone) || code.length !== 6) return jsonResponse({ error: "invalid", message: "Please enter the 6-digit code." }, 400);
+  const e164 = toE164(body.phone);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const existing = await readLoginCodeRow(accessToken, e164);
+    const [, hash, expiresAt, attemptsRaw, ...rest] = existing.values || [];
+    if (!existing.row || !hash) return jsonResponse({ error: "no code", message: "Please request a new code." }, 400);
+    if (!expiresAt || Date.parse(expiresAt) < Date.now()) return jsonResponse({ error: "expired", message: "That code expired. Please request a new one." }, 400);
+    const attempts = Number(attemptsRaw || 0);
+    if (attempts >= LOGIN_CODE_MAX_ATTEMPTS) return jsonResponse({ error: "too many attempts", message: "Too many tries. Please request a new code." }, 429);
+    if (!timingSafeEqualStr(hash, await hmacB64url(env, "login-code-v1", `${e164}|${code}`))) {
+      await writeLoginCodeRow(accessToken, existing.row, [e164, hash, expiresAt, String(attempts + 1), ...rest]);
+      return jsonResponse({ error: "wrong code", message: "That code doesn't match. Please try again." }, 400);
+    }
+    await writeLoginCodeRow(accessToken, existing.row, [e164, "", "", "0", ...rest]); // single-use
+    const { token, exp } = await createSessionToken(env, e164);
+    return jsonResponse({ ok: true, token, expiresAt: new Date(exp).toISOString() });
+  } catch (e) {
+    return jsonResponse({ error: "server error", message: "Something went wrong. Please try again.", detail: String(e) }, 500);
+  }
+}
+
+// Returns { request } (possibly rewritten) to continue, or { response } to
+// stop. Aaron's own admin Google token also passes, unchanged -- he uses
+// the site as himself.
+async function requireVisitorSession(request, env) {
+  const bearer = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (bearer && (await verifyIdToken(bearer)).ok) return { request };
+  const e164 = await verifySessionToken(env, request.headers.get(SESSION_HEADER));
+  const unauthorized = { response: jsonResponse({ error: "session required", message: "Please sign in again." }, 401) };
+  if (!e164) return unauthorized;
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    // The row can disappear from under a token (phone changed, row merged)
+    // -- without this check, findLoginsRowByIdentity would fall back to a
+    // caller-supplied email and could land on someone else's row.
+    if (!(await findLoginsRowByPhone(accessToken, e164))) return unauthorized;
+  } catch (e) {
+    return { response: jsonResponse({ error: "server error", detail: String(e) }, 500) };
+  }
+  const contentType = request.headers.get("Content-Type") || "";
+  if (contentType.includes("multipart/form-data")) {
+    const form = await request.formData();
+    form.set("phone", e164);
+    const headers = new Headers(request.headers);
+    headers.delete("Content-Type"); // regenerated with a fresh multipart boundary
+    return { request: new Request(request.url, { method: request.method, headers, body: form }) };
+  }
+  let body = {};
+  try { body = await request.json(); } catch (e) { /* empty/invalid body -- handler reports its own error */ }
+  body.phone = e164;
+  return { request: new Request(request.url, { method: request.method, headers: request.headers, body: JSON.stringify(body) }) };
+}
+
 // ---------- Phone-number change, verified via a reply-to-confirm text ----------
 // Added 2026-09-02 -- see the PHONE_CHANGE_TIMEOUT_MS comment above for the
 // full "why" (writeLoginsRow deliberately never overwrites an existing
@@ -4883,16 +5144,14 @@ function deriveAreasFromQuoName(name) {
 // admin-UI button was removed the same night it was added) -- a
 // freshly-created row could sit with a genuinely blank Stage
 // indefinitely otherwise, same shape of bug as the areas gap above.
-async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = true) {
-  const [contact, accessToken] = await Promise.all([
-    quoFindContactByPhone(env, e164Phone),
-    getSheetsAccessToken(env),
-  ]);
-  const d = (contact && contact.defaultFields) || {};
-  const quoName = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
-  const quoLink = contact ? `https://my.quo.com/contacts/${contact.id}` : "";
+//
+// quoMaxPages, added 2026-10-05 (see quoFindContactByPhone's maxPages): the
+// Quo walk is now skipped entirely when the row already has both Quo Link
+// and Quo Name -- everything it feeds is fill-a-gap only, so a full walk
+// for an already-filled row was pure subrequest spend.
+async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = true, quoMaxPages = 40) {
+  const accessToken = await getSheetsAccessToken(env);
   const nowIso = new Date().toISOString();
-  const derivedAreas = areasIfBlank !== undefined ? areasIfBlank : (quoName ? deriveAreasFromQuoName(quoName).join(", ") : "");
 
   let row = await findLoginsRowByPhone(accessToken, e164Phone);
   if (!row) {
@@ -4916,6 +5175,17 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = tr
   const existingQuoName = (((getData.valueRanges || [])[1] || {}).values || [[]])[0]?.[0] || "";
   const existingAreas = (((getData.valueRanges || [])[2] || {}).values || [[]])[0]?.[0] || "";
   const existingStage = (((getData.valueRanges || [])[3] || {}).values || [[]])[0]?.[0] || "";
+
+  let quoName = "";
+  let quoLink = "";
+  if (!existingQuoLink || !existingQuoName) {
+    const contact = await quoFindContactByPhone(env, e164Phone, quoMaxPages);
+    const d = (contact && contact.defaultFields) || {};
+    quoName = [d.firstName, d.lastName].filter(Boolean).join(" ").trim();
+    quoLink = contact ? `https://my.quo.com/contacts/${contact.id}` : "";
+  }
+  const nameForAreas = quoName || existingQuoName;
+  const derivedAreas = areasIfBlank !== undefined ? areasIfBlank : (nameForAreas ? deriveAreasFromQuoName(nameForAreas).join(", ") : "");
 
   const data = [];
   if (touchActivity) data.push({ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[nowIso]] });
@@ -5302,6 +5572,17 @@ async function route(request, env) {
   if (url.pathname === "/gate-login" && request.method === "POST") {
     return handleGateLogin(request, env);
   }
+  if (url.pathname === "/send-login-code" && request.method === "POST") {
+    return handleSendLoginCode(request, env);
+  }
+  if (url.pathname === "/verify-login-code" && request.method === "POST") {
+    return handleVerifyLoginCode(request, env);
+  }
+  if (SESSION_GATED_PATHS.has(url.pathname) && request.method === "POST") {
+    const gate = await requireVisitorSession(request, env);
+    if (gate.response) return gate.response;
+    request = gate.request;
+  }
 
   if (url.pathname === "/gate-capture" && request.method === "POST") {
     return handleGateCapture(request, env);
@@ -5538,4 +5819,5 @@ export default {
   },
 };
 
-
+
+

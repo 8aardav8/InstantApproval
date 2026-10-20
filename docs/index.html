@@ -73,6 +73,18 @@
       <button type="submit" class="btn-primary full-width">Continue</button>
       <div id="gate-status" class="form-status"></div>
     </form>
+    <!-- Step 2, added 2026-10-18: the texted login code. See initLoginGate
+         and the visitor-session block at the top of app.js. -->
+    <form id="gate-code-form" class="login-gate-form hidden">
+      <p id="gate-code-prompt" class="login-gate-code-prompt">We texted you a 6-digit code.</p>
+      <input type="text" id="gate-code" name="code" placeholder="Enter your 6-digit code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}">
+      <button type="submit" class="btn-primary full-width">Verify</button>
+      <div class="login-gate-code-links">
+        <button type="button" id="gate-code-resend" class="login-gate-link">Text me a new code</button>
+        <button type="button" id="gate-code-back" class="login-gate-link">Change my info</button>
+      </div>
+      <div id="gate-code-status" class="form-status"></div>
+    </form>
   </div>
 </div>
 

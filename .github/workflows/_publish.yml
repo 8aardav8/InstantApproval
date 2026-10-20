@@ -40,6 +40,9 @@ jobs:
       - name: Verify no sensitive data leaked
         run: python3 scripts/verify_no_sensitive_data.py
 
+      - name: Block private links and credentials anywhere in the repo
+        run: python3 scripts/check_no_private_links.py
+
       - name: Commit and push if changed
         run: |
           git config user.name "listings-bot"

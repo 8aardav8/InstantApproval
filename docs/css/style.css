@@ -715,6 +715,10 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .login-gate-consent input { margin-top: 3px; flex-shrink: 0; }
 .login-gate .btn-primary { padding: 14px; border-radius: 10px; font-size: 16px; border: none; }
 .login-gate .form-status { color: #b9c2dd; }
+.login-gate-code-prompt { color: #b9c2dd; font-size: 15px; margin: 0; text-align: center; }
+#gate-code { text-align: center; font-size: 22px; letter-spacing: 6px; }
+.login-gate-code-links { display: flex; justify-content: space-between; gap: 12px; }
+.login-gate-link { background: none; border: none; color: #b9c2dd; text-decoration: underline; font-size: 14px; padding: 4px 0; cursor: pointer; font-family: inherit; }
 
 /* ---------- bottom nav ---------- */
 .bottom-nav {
