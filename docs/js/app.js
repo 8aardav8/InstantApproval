@@ -3218,6 +3218,20 @@ if ("serviceWorker" in navigator) {
 // defined there) and this tab's markup into docs/index.html, both spots
 // marked in the README. Kept as its own file for review before merging.
 
+// ID expiration badge for the admin Buyers list and detail, added
+// 2026-10-20 (TASK-000737; Aaron: "Build column + badge"). idExp comes from
+// App: Logins "ID Exp" (YYYY-MM-DD or "lifetime"), kept in sync from the ID
+// filename by id-photo-watch.ts. Dates compare as local YYYY-MM-DD strings.
+const ID_EXPIRING_SOON_DAYS = 30;
+function idExpBadgeHtml(idExp, now = new Date()) {
+  if (!idExp || idExp === "lifetime" || !/^\d{4}-\d{2}-\d{2}$/.test(idExp)) return "";
+  const today = now.toLocaleDateString("en-CA");
+  const soon = new Date(now.getTime() + ID_EXPIRING_SOON_DAYS * 86400000).toLocaleDateString("en-CA");
+  if (idExp < today) return `<span class="buyer-badge id-expired-badge" title="ID expired ${idExp}. Ask for a current one.">⚠️ ID expired</span>`;
+  if (idExp <= soon) return `<span class="buyer-badge id-expiring-badge" title="ID expires ${idExp}">ID expires ${idExp}</span>`;
+  return "";
+}
+
 const BUYERS_API_URL = "https://iah-buyers.notactuallyit.workers.dev";
 
 let BUYERS_CACHE = null; // the last /buyers response, re-sorted client-side on dropdown change
@@ -3999,7 +4013,8 @@ function renderBuyersList() {
     // still needs to appear at a glance since a DNC buyer's card stays
     // visible in the normal list).
     const dncBadgeHtml = b.dnc ? `<span class="buyer-badge dnc-badge" title="Do Not Contact/Call -- excluded from automated texts">🚫 DNC</span>` : "";
-    const badgesHtml = dncBadgeHtml ? `<span class="buyer-row-badges">${dncBadgeHtml}</span>` : "";
+    const idExpBadge = idExpBadgeHtml(b.loginsMatch && b.loginsMatch.idExp);
+    const badgesHtml = dncBadgeHtml || idExpBadge ? `<span class="buyer-row-badges">${dncBadgeHtml}${idExpBadge}</span>` : "";
     // Narrow right-side icon column, added 2026-09-14 per Aaron's direct
     // request ("create a narrow column on the very right of every buyer
     // card. 4 rows. Three dot, login, id, calendar icons from top to
@@ -5394,7 +5409,7 @@ function renderBuyerDetail(buyer) {
     ${nameHeadingHtml}
     ${detailHeaderHtml}
     ${stageBlockHtml}
-    <div class="buyer-id-section">${idPhoto}</div>
+    <div class="buyer-id-section">${idPhoto}${idExpBadgeHtml(lm && lm.idExp)}</div>
     ${possibleIdHtml}
     ${areasBlockHtml}
     ${factsHtml}
