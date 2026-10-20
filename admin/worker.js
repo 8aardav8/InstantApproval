@@ -1569,7 +1569,7 @@ async function handleUploadCoBuyerId(request, env) {
     });
     if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
 
-    const idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+    const idLink = await getIdFileRef(dropboxToken, destPath);
 
     // Re-read the cell immediately before writing back (not the copy read
     // above) so a concurrent name/phone edit isn't clobbered by this
@@ -1591,7 +1591,7 @@ async function handleUploadCoBuyerId(request, env) {
     if (!writeRes.ok) throw new Error(`co-buyer id-link write failed: ${await writeRes.text()}`);
 
     if (env.TELEGRAM_BOT_TOKEN) {
-      const text = `Co-buyer ID uploaded — ${coName} (co-buyer of ${primaryName}), ${coPhone}.\nFiled as: ${filename}\n${idLink}`;
+      const text = `Co-buyer ID uploaded — ${coName} (co-buyer of ${primaryName}), ${coPhone}.\nFiled as: ${filename}\n${DROPBOX_BUYER_IDS_FOLDER_LINK}`;
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1695,13 +1695,7 @@ async function handleIdPhoto(request, env) {
     // sharing/get_shared_link_file -- downloads the actual file content
     // directly from an already-known shared link, no need to separately
     // track/derive the raw internal Dropbox path.
-    const fileRes = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${dropboxToken}`,
-        "Dropbox-API-Arg": JSON.stringify({ url: sharedLink }),
-      },
-    });
+    const fileRes = await fetchIdFile(dropboxToken, sharedLink);
     if (!fileRes.ok) throw new Error(`dropbox file fetch failed: ${await fileRes.text()}`);
 
     // Real Dropbox behavior, confirmed live: this endpoint always returns
@@ -1959,40 +1953,57 @@ function buildCoBuyerIdFilename(coBuyerName, coBuyerPhone, primaryName, original
   return `${namePart} (Co-buyer of ${primaryLast})${extPart}`;
 }
 
-// Real regression found and fixed 2026-09-02: CLAUDE.md documented this as
-// already built ("handleUploadId updated to create/reuse a real shared
-// link, write it to ID Link") but the actual deployed code never had it --
-// most likely an earlier direct-Cloudflare deploy this session was built
-// from a stale local worker.js snapshot that predated the feature, silently
-// dropping it on a later redeploy. Found by checking the real code before
-// building co-buyer ID upload on top of it, not assumed from the docs.
-// mode: "overwrite" already guarantees a re-upload reuses the same path, so
-// the 409 fallback (list_shared_links) is the normal, expected path on any
-// second-or-later upload for the same person, not a rare edge case.
-async function createOrReuseSharedLink(dropboxToken, path) {
-  const createRes = await fetch("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings", {
+// ---------- Private ID file references (2026-10-19, TASK-000737) ----------
+// ID Link (App: Logins column F) and each co-buyer cell's 4th field now hold
+// Dropbox's own stable file id ("id:..."), never a share link. Aaron chose
+// private storage after the audit that found every ID reachable by public
+// link ("Go private, skip public links"). Photos reach Aaron's admin pages
+// and each buyer's own My Info only through this Worker (fetchIdFile),
+// behind his Google sign-in or the buyer's texted-code session. The old
+// createOrReuseSharedLink is gone on purpose: nothing in this Worker may
+// create a public link (scripts/check_no_private_links.py rejects
+// create_shared_link in code). Legacy share-link values are still READ
+// during the switch; scripts/migrate-id-refs converts them, then they're
+// revoked.
+async function getIdFileRef(dropboxToken, path) {
+  const res = await fetch("https://api.dropboxapi.com/2/files/get_metadata", {
     method: "POST",
     headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({ path }),
   });
-  if (createRes.ok) {
-    const data = await createRes.json();
-    return data.url;
+  if (!res.ok) throw new Error(`dropbox get_metadata failed: ${await res.text()}`);
+  const meta = await res.json();
+  if (!meta.id) throw new Error(`dropbox get_metadata returned no id for ${path}`);
+  return meta.id;
+}
+
+function isIdFileRef(ref) {
+  return /^id:[A-Za-z0-9_-]+$/.test((ref || "").trim());
+}
+
+// Downloads an ID photo by its stored reference. File-id refs must resolve
+// inside the Buyer IDs folder -- a ref can never be used to read any other
+// file in Aaron's Dropbox. Returns the Dropbox fetch Response (bytes +
+// dropbox-api-result header), same shape the callers already handle.
+async function fetchIdFile(dropboxToken, ref) {
+  ref = (ref || "").trim();
+  if (isIdFileRef(ref)) {
+    const res = await fetch("https://content.dropboxapi.com/2/files/download", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${dropboxToken}`, "Dropbox-API-Arg": JSON.stringify({ path: ref }) },
+    });
+    if (!res.ok) return res;
+    const meta = JSON.parse(res.headers.get("dropbox-api-result") || "{}");
+    if (!(meta.path_lower || "").startsWith(DROPBOX_IDS_FOLDER.toLowerCase() + "/")) {
+      throw new Error("ID reference points outside the Buyer IDs folder");
+    }
+    return res;
   }
-  const errText = await createRes.text();
-  if (!errText.includes("shared_link_already_exists")) {
-    throw new Error(`dropbox create_shared_link failed: ${errText}`);
-  }
-  const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
+  // Legacy share link -- only until the migration converts every stored value.
+  return fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
     method: "POST",
-    headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ path, direct_only: true }),
+    headers: { Authorization: `Bearer ${dropboxToken}`, "Dropbox-API-Arg": JSON.stringify({ url: ref }) },
   });
-  if (!listRes.ok) throw new Error(`dropbox list_shared_links failed: ${await listRes.text()}`);
-  const listData = await listRes.json();
-  const link = (listData.links || [])[0];
-  if (!link) throw new Error("dropbox: link reported existing but list_shared_links returned none");
-  return link.url;
 }
 
 // ---------- ID photo preservation, added 2026-09-13 ----------
@@ -2117,7 +2128,7 @@ async function handleAdminUploadId(request, env) {
     });
     if (!uploadRes.ok) return jsonResponse({ error: "dropbox upload failed", detail: await uploadRes.text() }, 500);
 
-    const idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+    const idLink = await getIdFileRef(dropboxToken, destPath);
     const row = await findLoginsRowByPhone(accessToken, phone);
     if (row) await writeIdLink(accessToken, row, idLink);
     else await appendLoginsRow(accessToken, toE164(phone), fullName, idLink);
@@ -3652,24 +3663,39 @@ function sharedLinkKey(url) {
 // Which App: Logins row (if any) already has this exact file as its ID
 // Link. Two cheap reads -- the file's existing shared link (never creates
 // one) and column F.
+// Stored ID reference -> comparable key: a file-id ref is its own key; a
+// legacy share link compares by its stable /scl/fi/<id> (see sharedLinkKey).
+function idRefKey(ref) {
+  ref = (ref || "").trim();
+  return isIdFileRef(ref) ? ref : sharedLinkKey(ref);
+}
+
+// Every key this file could be stored under: its Dropbox file id, plus its
+// legacy share link's key while unmigrated links still exist.
+async function idRefKeysForFile(dropboxToken, dropboxPath, includeLegacy) {
+  const keys = new Set([await getIdFileRef(dropboxToken, dropboxPath)]);
+  if (includeLegacy) {
+    const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ path: dropboxPath, direct_only: true }),
+    });
+    if (listRes.ok) for (const l of (await listRes.json()).links || []) keys.add(sharedLinkKey(l.url));
+  }
+  return keys;
+}
+
 async function findRowAlreadyLinkedToFile(dropboxToken, accessToken, dropboxPath) {
-  const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ path: dropboxPath, direct_only: true }),
-  });
-  if (!listRes.ok) throw new Error(`dropbox list_shared_links failed: ${await listRes.text()}`);
-  const existingUrl = (((await listRes.json()).links || [])[0] || {}).url;
-  if (!existingUrl) return null; // no link at all -- nobody can be pointing at it
-  const key = sharedLinkKey(existingUrl);
   const range = encodeURIComponent(`${LOGINS_TAB}!D:F`);
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`id-link column read failed: ${await res.text()}`);
   const rows = (await res.json()).values || [];
+  const hasLegacy = rows.slice(1).some((r) => (r[2] || "").trim() && !isIdFileRef(r[2]));
+  const keys = await idRefKeysForFile(dropboxToken, dropboxPath, hasLegacy);
   for (let i = 1; i < rows.length; i++) {
-    if ((rows[i][2] || "").trim() && sharedLinkKey(rows[i][2]) === key) return { row: i + 1, phone: rows[i][0] || "", name: rows[i][1] || "" };
+    if ((rows[i][2] || "").trim() && keys.has(idRefKey(rows[i][2]))) return { row: i + 1, phone: rows[i][0] || "", name: rows[i][1] || "" };
   }
   return null;
 }
@@ -3684,8 +3710,8 @@ async function findRowAlreadyLinkedToFile(dropboxToken, accessToken, dropboxPath
 // a capped walk, best-effort: a sync failure is returned as syncError, it
 // never un-does or fails a link that already landed. The rename+link path
 // itself is idempotent on retry (an already-renamed file skips the move,
-// createOrReuseSharedLink reuses, writeIdLink overwrites with the same
-// value), so a caller that retries a failed file converges.
+// getIdFileRef returns the same stable file id, writeIdLink overwrites with
+// the same value), so a caller that retries a failed file converges.
 // refuseIfLinkedElsewhere (auto-link caller only): the OCR watcher sees
 // EVERY new file in the folder, including site uploads that are already
 // some buyer's ID -- in the Lockett incident it matched two such files to
@@ -3718,7 +3744,7 @@ async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, 
     finalPath = moveData.metadata.path_display;
   }
 
-  const idLink = await createOrReuseSharedLink(dropboxToken, finalPath);
+  const idLink = await getIdFileRef(dropboxToken, finalPath);
   // Most matched buyers have no App: Logins row at all -- find one if it
   // exists, otherwise create a minimal new row rather than requiring one.
   const row = await findLoginsRowByPhone(accessToken, buyerPhone);
@@ -3899,9 +3925,9 @@ async function handleAdminBrowseIdPhotos(request, env) {
     });
     if (!linksRes.ok) throw new Error(`id-link column read failed: ${await linksRes.text()}`);
     const linksData = await linksRes.json();
-    const linkedUrls = new Set(
-      (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean).map(sharedLinkKey)
-    );
+    const storedRefs = (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean);
+    const linkedKeys = new Set(storedRefs.map(idRefKey));
+    const hasLegacy = storedRefs.some((r) => !isIdFileRef(r));
     // OCR cache lookup, added 2026-09-14 per Aaron's direct request ("OCR
     // search... once the IDs load") -- see handleInternalCacheOcrText's own
     // comment for the full why. Keyed by Dropbox's stable file id, same as
@@ -3924,15 +3950,18 @@ async function handleAdminBrowseIdPhotos(request, env) {
     const files = await listDropboxFolder(dropboxToken, DROPBOX_IDS_FOLDER);
     const unassociated = [];
     for (const file of files) {
-      const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ path: file.path_display, direct_only: true }),
-      });
-      if (!listRes.ok) continue; // best-effort -- skip a file whose link status we couldn't check rather than fail the whole browse
-      const listData = await listRes.json();
-      const existingUrl = (listData.links || [])[0] && listData.links[0].url;
-      if (existingUrl && linkedUrls.has(sharedLinkKey(existingUrl))) continue; // a real buyer already points at this file -- not a candidate
+      if (linkedKeys.has(file.id)) continue; // a real buyer already points at this file -- not a candidate
+      if (hasLegacy) {
+        // Unmigrated share-link refs only (pre-2026-10-19 values).
+        const listRes = await fetch("https://api.dropboxapi.com/2/sharing/list_shared_links", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ path: file.path_display, direct_only: true }),
+        });
+        if (!listRes.ok) continue; // best-effort -- skip a file whose link status we couldn't check rather than fail the whole browse
+        const existingUrl = ((await listRes.json()).links || [])[0]?.url;
+        if (existingUrl && linkedKeys.has(sharedLinkKey(existingUrl))) continue;
+      }
       const cached = ocrByFileId.get(file.id);
       unassociated.push({ path: file.path_display, name: file.name, ocrText: cached ? cached.ocrText : "", idName: cached ? cached.idName : "" });
     }
@@ -3960,7 +3989,7 @@ async function handleAdminIdPhotoPreviewLink(request, env) {
 
   try {
     const dropboxToken = await getDropboxAccessToken(env);
-    const idLink = await createOrReuseSharedLink(dropboxToken, dropboxPath);
+    const idLink = await getIdFileRef(dropboxToken, dropboxPath);
     return jsonResponse({ idLink });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -4048,13 +4077,7 @@ async function handleAdminIdPhoto(request, env) {
 
   try {
     const dropboxToken = await getDropboxAccessToken(env);
-    const fileRes = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${dropboxToken}`,
-        "Dropbox-API-Arg": JSON.stringify({ url: sharedLink }),
-      },
-    });
+    const fileRes = await fetchIdFile(dropboxToken, sharedLink);
     if (!fileRes.ok) throw new Error(`dropbox file fetch failed: ${await fileRes.text()}`);
 
     // Same real Dropbox quirk as handleIdPhoto -- always octet-stream,
@@ -4147,13 +4170,12 @@ async function handleUploadId(request, env) {
       });
       if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
 
-      // Real shared link, not just the folder link -- see
-      // createOrReuseSharedLink's own comment for the regression this
-      // fixes. Best-effort: a Dropbox sharing hiccup shouldn't block the
+      // The file's private Dropbox id (see getIdFileRef), never a share
+      // link. Best-effort: a Dropbox metadata hiccup shouldn't block the
       // appointment save below, which is the actually-required part of
       // this submission.
       try {
-        idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+        idLink = await getIdFileRef(dropboxToken, destPath);
       } catch (e) {
         // fall through with whatever idLink already was (existing or "")
         // -- flagged to Aaron via the Telegram note below either way.
@@ -4200,7 +4222,7 @@ async function handleUploadId(request, env) {
           `Property: ${property}\n` +
           `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
           `Filed as: ${filename}\n` +
-          `${idLink || DROPBOX_BUYER_IDS_FOLDER_LINK}` +
+          `${DROPBOX_BUYER_IDS_FOLDER_LINK}` +
           (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)")
         : `Viewing booked (reused ID already on file) — ${name}, ${phone}, ${email}.\n` +
           `Property: ${property}\n` +
@@ -4282,11 +4304,11 @@ async function handleUploadMyId(request, env) {
     });
     if (!uploadRes.ok) throw new Error(`dropbox upload failed: ${await uploadRes.text()}`);
 
-    const idLink = await createOrReuseSharedLink(dropboxToken, destPath);
+    const idLink = await getIdFileRef(dropboxToken, destPath);
     await writeIdLink(accessToken, row, idLink);
 
     if (env.TELEGRAM_BOT_TOKEN) {
-      const text = `ID uploaded via My Info — ${name}, ${phone}, ${email}.\nFiled as: ${filename}\n${idLink}`;
+      const text = `ID uploaded via My Info — ${name}, ${phone}, ${email}.\nFiled as: ${filename}\n${DROPBOX_BUYER_IDS_FOLDER_LINK}`;
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

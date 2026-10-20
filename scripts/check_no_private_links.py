@@ -26,6 +26,11 @@ import sys
 
 ALLOWED_LINK_FILES = {"docs/data/properties.json"}
 DROPBOX = re.compile(r"dropbox\.com/(scl/f[io]|s|sh)/[A-Za-z0-9]+", re.I)
+# Code that would create a public Dropbox link (lessons L51/L53). IDs are
+# stored as private file ids and served through the Worker; nothing here may
+# mint "anyone with the link" access again.
+FORBIDDEN_CODE = re.compile(r"sharing/create_shared_link")
+SELF = "scripts/check_no_private_links.py"
 SECRETS = re.compile(
     r"-----BEGIN [A-Z ]*PRIVATE KEY-----[A-Za-z0-9+/=\s]{40,}"  # an actual key body, not code that strips the header
     r"|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}"
@@ -62,6 +67,8 @@ def main():
         if path not in ALLOWED_LINK_FILES:
             for m in DROPBOX.finditer(text):
                 problems.append(f"{path}: Dropbox link {m.group(0)[:40]}...")
+        if path != SELF and FORBIDDEN_CODE.search(text):
+            problems.append(f"{path}: creates a public Dropbox share link (sharing/create_shared_link)")
         for m in SECRETS.finditer(text):
             problems.append(f"{path}: looks like a credential ({m.group(0)[:12]}...)")
     if problems:
