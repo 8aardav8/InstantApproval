@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T23:03:10.020197+00:00",
+  "generatedAt": "2026-10-21T23:26:32.033241+00:00",
   "listings": [
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
@@ -26763,7 +26763,7 @@
       "id": "3975-e-william-street-rd-decatur-il-62521",
       "address": "3975 E William Street Rd, Decatur, IL 62521",
       "onMarketDate": "10/7/2026",
-      "lastUpdate": "10/7/2026",
+      "lastUpdate": "10/21/2026",
       "area": "IL - Decatur",
       "down": "$3,500",
       "monthly": "$1,350",
@@ -26771,7 +26771,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1416",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8516036,
       "lng": -88.8933866
