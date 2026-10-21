@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T21:25:50.169523+00:00",
+  "generatedAt": "2026-10-21T21:49:10.622860+00:00",
   "listings": [
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
@@ -957,7 +957,7 @@
       "id": "327-n-hickory-st-centralia-il-62-798",
       "address": "327 N Hickory St Centralia IL 62,798",
       "onMarketDate": "9/24",
-      "lastUpdate": "9/24",
+      "lastUpdate": "10/21",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$1,175",
@@ -965,7 +965,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.53194750000001,
       "lng": -89.1381435
