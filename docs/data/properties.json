@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-21T19:44:34.708974+00:00",
+  "generatedAt": "2026-10-21T21:14:12.200042+00:00",
   "listings": [
+    {
+      "id": "3612-wabash-ave-jackson-ms-39205",
+      "address": "3612 Wabash Ave Jackson MS 39205",
+      "onMarketDate": "10/20",
+      "lastUpdate": "10/20",
+      "area": "MS",
+      "down": "$2,000",
+      "monthly": "$840",
+      "picsLink": "https://photos.app.goo.gl/2ubBYTNtt7coWj5Q9",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 32.3419898,
+      "lng": -90.2085962
+    },
     {
       "id": "1630-s-elm-st-muncie-in-47302",
       "address": "1630 S Elm St Muncie IN 47302",
