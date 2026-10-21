@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T21:20:23.913898+00:00",
+  "generatedAt": "2026-10-21T21:20:54.298137+00:00",
   "listings": [
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
@@ -5428,7 +5428,7 @@
       "id": "4127-turner-ave-saint-louis-mo-63115",
       "address": "4127 Turner Ave, Saint Louis, MO 63115",
       "onMarketDate": "3/14/2026",
-      "lastUpdate": "10/16/2026",
+      "lastUpdate": "10/21/2026",
       "area": "IL - Decatur",
       "down": "$1,000",
       "monthly": "$450",
@@ -5436,7 +5436,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.672864,
       "lng": -90.230538
