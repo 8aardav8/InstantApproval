@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T21:16:22.698172+00:00",
+  "generatedAt": "2026-10-21T21:17:00.458898+00:00",
   "listings": [
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
@@ -2436,7 +2436,7 @@
       "id": "905-n-wesley-st-springfield-il-62702",
       "address": "905 N Wesley St Springfield IL 62702",
       "onMarketDate": "10/6",
-      "lastUpdate": "10/12",
+      "lastUpdate": "10/20",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$995",
@@ -2444,7 +2444,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "700",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8111481,
       "lng": -89.61504579999999
