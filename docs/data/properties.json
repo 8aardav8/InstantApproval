@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T03:16:23.858094+00:00",
+  "generatedAt": "2026-10-22T03:23:33.488836+00:00",
   "listings": [
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
@@ -3626,7 +3626,7 @@
       "id": "1311-n-51st-st-east-st-louis-il-62204",
       "address": "1311 N. 51st St., East St. Louis, IL 62204",
       "onMarketDate": "7/28/2026",
-      "lastUpdate": "10/1/2026",
+      "lastUpdate": "10/21/2026",
       "area": "IL - East St Louis",
       "down": "$400",
       "monthly": "$375",
@@ -3634,7 +3634,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "700",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6253761,
       "lng": -90.09656509999999
