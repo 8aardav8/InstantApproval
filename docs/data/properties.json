@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T21:13:01.846357+00:00",
+  "generatedAt": "2026-10-22T21:14:08.504767+00:00",
   "listings": [
     {
       "id": "2807-w-nevada-st-peoria-il-61605",
@@ -277,7 +277,7 @@
       "id": "214-pyle-st-carrier-mills-il",
       "address": "214 Pyle St, Carrier Mills, IL",
       "onMarketDate": "10/12",
-      "lastUpdate": "10/12",
+      "lastUpdate": "10/22",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$850",
@@ -285,7 +285,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 37.6932228,
       "lng": -88.6282846
