@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T23:37:42.985954+00:00",
+  "generatedAt": "2026-10-22T02:58:40.089611+00:00",
   "listings": [
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
@@ -11888,7 +11888,7 @@
       "id": "9145-loganberry-ln-saint-louis-mo-63121",
       "address": "9145 Loganberry Ln, Saint Louis, MO 63121",
       "onMarketDate": "3/23/2026",
-      "lastUpdate": "4/22/2026",
+      "lastUpdate": "10/21/2026",
       "area": "MO - St. Louis",
       "down": "$4,000",
       "monthly": "$1,195",
@@ -11896,7 +11896,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
       "lat": 38.7188946,
       "lng": -90.32535279999999
