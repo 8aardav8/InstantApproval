@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T03:30:41.564716+00:00",
+  "generatedAt": "2026-10-22T03:34:26.426159+00:00",
   "listings": [
     {
       "id": "2807-w-nevada-st-peoria-il-61605",
@@ -158,7 +158,7 @@
       "id": "18465-caldwell-street-detroit-mi-48234",
       "address": "18465 Caldwell Street Detroit MI 48234",
       "onMarketDate": "10/13",
-      "lastUpdate": "10/13",
+      "lastUpdate": "10/21",
       "area": "MI",
       "down": "$2,000",
       "monthly": "$795",
@@ -166,7 +166,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "720",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 42.428983,
       "lng": -83.047141
