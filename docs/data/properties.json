@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T19:13:28.597039+00:00",
+  "generatedAt": "2026-10-22T21:12:28.290007+00:00",
   "listings": [
     {
       "id": "2807-w-nevada-st-peoria-il-61605",
@@ -7187,7 +7187,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1000",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8386355,
       "lng": -88.9395508
