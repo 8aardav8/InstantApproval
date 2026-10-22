@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-22T03:23:48.314864+00:00",
+  "generatedAt": "2026-10-22T03:30:28.286188+00:00",
   "listings": [
+    {
+      "id": "2807-w-nevada-st-peoria-il-61605",
+      "address": "2807 W Nevada St Peoria IL 61605",
+      "onMarketDate": "10/21",
+      "lastUpdate": "10/21",
+      "area": "IL - Peoria",
+      "down": "$2,000",
+      "monthly": "$950",
+      "picsLink": "https://drive.google.com/drive/folders/15zE7-sLKfOIY7q_Esl1I55-tXmfmbY5E?usp=sharing",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "540",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.6616311,
+      "lng": -89.6381746
+    },
     {
       "id": "3612-wabash-ave-jackson-ms-39205",
       "address": "3612 Wabash Ave Jackson MS 39205",
