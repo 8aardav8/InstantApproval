@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T21:14:08.504767+00:00",
+  "generatedAt": "2026-10-22T21:14:43.324310+00:00",
   "listings": [
     {
       "id": "2807-w-nevada-st-peoria-il-61605",
@@ -90,7 +90,7 @@
       "id": "205-e-jackson-ave-flint-mi-48505",
       "address": "205 E Jackson Ave Flint MI 48505",
       "onMarketDate": "10/15",
-      "lastUpdate": "10/15",
+      "lastUpdate": "10/22",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$825",
@@ -98,7 +98,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1296",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 43.04185020000001,
       "lng": -83.70262509999999
