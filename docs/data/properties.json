@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-23T21:52:55.111630+00:00",
+  "generatedAt": "2026-10-23T21:53:20.615974+00:00",
   "listings": [
+    {
+      "id": "1905-n-college-st-decatur-il-62-526",
+      "address": "1905 N College St Decatur IL 62,526",
+      "onMarketDate": "10/22",
+      "lastUpdate": "10/22",
+      "area": "IL - Decatur",
+      "down": "$2,000",
+      "monthly": "$825",
+      "picsLink": "https://drive.google.com/drive/folders/1Kl6auG8wtTD5IdB9jtsK8eFvADhs4p27?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8615184,
+      "lng": -88.9625102
+    },
     {
       "id": "10118-clairmont-drive-saint-louis-mo-63-136",
       "address": "10118 Clairmont Drive Saint Louis MO 63,136",
