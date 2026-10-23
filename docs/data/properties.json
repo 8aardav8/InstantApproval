@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T22:01:14.288115+00:00",
+  "generatedAt": "2026-10-23T22:01:59.953014+00:00",
   "listings": [
     {
       "id": "337-range-ln-cahokia-il-62-206",
@@ -10,8 +10,8 @@
       "down": "$3,000",
       "monthly": "$1,200",
       "picsLink": "https://drive.google.com/drive/folders/1RMnLHYc-7j3pyfLikY93RM02rsALbqTL?usp=drive_link",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
