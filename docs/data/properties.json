@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-23T21:33:00.583781+00:00",
+  "generatedAt": "2026-10-23T21:33:33.568761+00:00",
   "listings": [
+    {
+      "id": "417-w-elm-st-mason-city-il-62664",
+      "address": "417 W Elm St Mason City, IL 62664",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1D6zE-4-rkiqqtdJ7MjjzEt27GYi70iVo?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.2009738,
+      "lng": -89.7030243
+    },
     {
       "id": "2807-w-nevada-st-peoria-il-61605",
       "address": "2807 W Nevada St Peoria IL 61605",
