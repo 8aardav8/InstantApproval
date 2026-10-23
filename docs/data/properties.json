@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-23T21:37:24.300760+00:00",
+  "generatedAt": "2026-10-23T21:38:00.871134+00:00",
   "listings": [
+    {
+      "id": "3437-oakdale-ave-saint-louis-va-63-121",
+      "address": "3437 Oakdale Ave Saint Louis VA 63,121",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/0a3b2GbypNJ4znDOdIHhFNXww",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6902507,
+      "lng": -90.2831222
+    },
     {
       "id": "417-w-elm-st-mason-city-il-62664",
       "address": "417 W Elm St Mason City, IL 62664",
