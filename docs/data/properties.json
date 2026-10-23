@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T21:44:26.155182+00:00",
+  "generatedAt": "2026-10-23T21:49:09.757607+00:00",
   "listings": [
     {
       "id": "10118-clairmont-drive-saint-louis-mo-63-136",
@@ -8241,7 +8241,7 @@
       "beds": "6",
       "baths": "3",
       "sqft": "2300",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6685714,
       "lng": -90.2483558
