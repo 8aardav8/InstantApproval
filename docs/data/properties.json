@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T22:07:51.944377+00:00",
+  "generatedAt": "2026-10-23T22:08:58.364268+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62-901",
@@ -82,7 +82,7 @@
       "baths": "1",
       "sqft": "",
       "status": "Available",
-      "livability": 0,
+      "livability": 2,
       "lat": 38.7534102,
       "lng": -90.2683529
     },
