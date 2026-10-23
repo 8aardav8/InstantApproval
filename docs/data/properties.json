@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T21:55:10.063787+00:00",
+  "generatedAt": "2026-10-23T22:00:00.735882+00:00",
   "listings": [
     {
       "id": "1422-sedgwick-st-decatur-il-62-521",
@@ -10,8 +10,8 @@
       "down": "$2,000",
       "monthly": "$850",
       "picsLink": "https://drive.google.com/drive/folders/1yNO_cHlHk7taJRzLQFdvixNzPHfe2RXZ?usp=drive_link",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
