@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T21:39:03.949039+00:00",
+  "generatedAt": "2026-10-23T21:40:54.811815+00:00",
   "listings": [
     {
       "id": "3437-oakdale-ave-st-louis-mo-63121-usa",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$975",
       "picsLink": "https://share.icloud.com/photos/0a3b2GbypNJ4znDOdIHhFNXww",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "4",
+      "baths": "1.5",
+      "sqft": "1154",
       "status": "Available",
       "livability": 0,
       "lat": 38.6902507,
