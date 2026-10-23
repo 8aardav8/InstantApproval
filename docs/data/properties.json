@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T22:03:08.111017+00:00",
+  "generatedAt": "2026-10-23T22:03:44.896526+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62-901",
@@ -7077,7 +7077,7 @@
       "id": "1505-e-walnut-st-decatur-il-62526",
       "address": "1505 E Walnut St, Decatur, IL 62526",
       "onMarketDate": "5/19/2026",
-      "lastUpdate": "9/3/2026",
+      "lastUpdate": "10/22/2026",
       "area": "IL - Decatur",
       "down": "$1,250",
       "monthly": "$725",
@@ -7085,7 +7085,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "768",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8582332,
       "lng": -88.9361249
