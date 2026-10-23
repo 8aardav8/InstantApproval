@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-23T21:54:39.373384+00:00",
+  "generatedAt": "2026-10-23T21:55:10.063787+00:00",
   "listings": [
+    {
+      "id": "1422-sedgwick-st-decatur-il-62-521",
+      "address": "1422 Sedgwick St Decatur IL 62,521",
+      "onMarketDate": "10/22",
+      "lastUpdate": "10/22",
+      "area": "IL - Decatur",
+      "down": "$2,000",
+      "monthly": "$850",
+      "picsLink": "https://drive.google.com/drive/folders/1yNO_cHlHk7taJRzLQFdvixNzPHfe2RXZ?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.83822079999999,
+      "lng": -88.93726989999999
+    },
     {
       "id": "1905-n-college-st-decatur-il-62-526",
       "address": "1905 N College St Decatur IL 62,526",
