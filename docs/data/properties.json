@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T21:41:46.659065+00:00",
+  "generatedAt": "2026-10-23T21:42:02.764615+00:00",
   "listings": [
     {
       "id": "10118-clairmont-drive-saint-louis-mo-63-136",
@@ -8,10 +8,10 @@
       "lastUpdate": "10/22",
       "area": "MO - St. Louis",
       "down": "$1,500",
-      "monthly": "",
+      "monthly": "$695",
       "picsLink": "https://share.icloud.com/photos/041AkVZWjeyaP8igimWUfO-FA",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
