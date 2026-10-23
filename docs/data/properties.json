@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-23T21:40:54.811815+00:00",
+  "generatedAt": "2026-10-23T21:41:28.312679+00:00",
   "listings": [
+    {
+      "id": "10118-clairmont-drive-saint-louis-mo-63-136",
+      "address": "10118 Clairmont Drive Saint Louis MO 63,136",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/041AkVZWjeyaP8igimWUfO-FA",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7534102,
+      "lng": -90.2683529
+    },
     {
       "id": "3437-oakdale-ave-st-louis-mo-63121-usa",
       "address": "3437 Oakdale Ave, St. Louis, MO 63121, USA",
