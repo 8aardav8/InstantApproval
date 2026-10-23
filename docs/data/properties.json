@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-23T22:00:00.735882+00:00",
+  "generatedAt": "2026-10-23T22:00:43.455928+00:00",
   "listings": [
+    {
+      "id": "337-range-ln-cahokia-il-62-206",
+      "address": "337 Range Ln Cahokia IL 62,206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1RMnLHYc-7j3pyfLikY93RM02rsALbqTL?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5651766,
+      "lng": -90.17472049999999
+    },
     {
       "id": "1422-sedgwick-st-decatur-il-62-521",
       "address": "1422 Sedgwick St Decatur IL 62,521",
