@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-24T16:28:24.985045+00:00",
+  "generatedAt": "2026-10-24T17:19:43.956333+00:00",
   "listings": [
     {
-      "id": "501-carico-street-carbondale-il-62-901",
-      "address": "501 Carico Street Carbondale IL 62,901",
+      "id": "501-carico-street-carbondale-il-62901",
+      "address": "501 Carico Street Carbondale IL 62901",
       "onMarketDate": "10/22",
       "lastUpdate": "10/22",
       "area": "IL - Rural",
@@ -19,8 +19,8 @@
       "lng": -89.22162759999999
     },
     {
-      "id": "337-range-ln-cahokia-il-62-206",
-      "address": "337 Range Ln Cahokia IL 62,206",
+      "id": "337-range-ln-cahokia-il-62206",
+      "address": "337 Range Ln Cahokia IL 62206",
       "onMarketDate": "10/22",
       "lastUpdate": "10/22",
       "area": "IL - East St Louis",
@@ -36,8 +36,8 @@
       "lng": -90.17472049999999
     },
     {
-      "id": "1422-sedgwick-st-decatur-il-62-521",
-      "address": "1422 Sedgwick St Decatur IL 62,521",
+      "id": "1422-sedgwick-st-decatur-il-62521",
+      "address": "1422 Sedgwick St Decatur IL 62521",
       "onMarketDate": "10/22",
       "lastUpdate": "10/22",
       "area": "IL - Decatur",
