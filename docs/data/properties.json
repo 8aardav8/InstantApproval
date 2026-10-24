@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:22:26.677988+00:00",
+  "generatedAt": "2026-10-24T17:23:00.902653+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -4218,8 +4218,8 @@
       "lng": -85.3710071
     },
     {
-      "id": "431-finch-st-johnstown-pa-15-905",
-      "address": "431 Finch St Johnstown PA 15,905",
+      "id": "431-finch-st-johnstown-pa-15905",
+      "address": "431 Finch St Johnstown PA 15905",
       "onMarketDate": "7/17",
       "lastUpdate": "8/7",
       "area": "",
@@ -4269,8 +4269,8 @@
       "lng": -90.0663019
     },
     {
-      "id": "310-e-lyndon-ave-flint-mi-48-505",
-      "address": "310 E. Lyndon Ave. Flint MI 48,505",
+      "id": "310-e-lyndon-ave-flint-mi-48505",
+      "address": "310 E. Lyndon Ave. Flint MI 48505",
       "onMarketDate": "7/7",
       "lastUpdate": "7/17/2026",
       "area": "MI",
@@ -4354,8 +4354,8 @@
       "lng": -89.6237367
     },
     {
-      "id": "108-e-shipping-st-edwardsport-in-47-528",
-      "address": "108 E Shipping St, Edwardsport IN 47,528",
+      "id": "108-e-shipping-st-edwardsport-in-47528",
+      "address": "108 E Shipping St, Edwardsport IN 47528",
       "onMarketDate": "6/19",
       "lastUpdate": "10/12/2026",
       "area": "IN",
@@ -4541,8 +4541,8 @@
       "lng": -90.25759169999999
     },
     {
-      "id": "450-s-22nd-st-decatur-il-62-521",
-      "address": "450 S 22nd St Decatur IL 62,521",
+      "id": "450-s-22nd-st-decatur-il-62521",
+      "address": "450 S 22nd St Decatur IL 62521",
       "onMarketDate": "5/22",
       "lastUpdate": "8/3/2026",
       "area": "IL - Decatur",
@@ -4660,8 +4660,8 @@
       "lng": -88.93901369999999
     },
     {
-      "id": "415-e-division-st-decatur-il-62-526",
-      "address": "415 E Division st Decatur IL 62,526",
+      "id": "415-e-division-st-decatur-il-62526",
+      "address": "415 E Division st Decatur IL 62526",
       "onMarketDate": "5/9/2026",
       "lastUpdate": "8/29/2026",
       "area": "IL - Decatur",
@@ -4813,8 +4813,8 @@
       "lng": -83.1044034
     },
     {
-      "id": "905-west-monroe-street-herrin-il-62-948",
-      "address": "905 West Monroe Street Herrin IL 62,948",
+      "id": "905-west-monroe-street-herrin-il-62948",
+      "address": "905 West Monroe Street Herrin IL 62948",
       "onMarketDate": "6/24",
       "lastUpdate": "7/14/2026",
       "area": "IL - Rural",
