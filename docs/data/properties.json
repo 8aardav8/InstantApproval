@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:25:19.045450+00:00",
+  "generatedAt": "2026-10-24T17:25:42.369795+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -10134,8 +10134,8 @@
       "lng": -79.41382229999999
     },
     {
-      "id": "521-e-marengo-ave-flint-mi-48-505",
-      "address": "521 E Marengo Ave Flint MI 48,505",
+      "id": "521-e-marengo-ave-flint-mi-48505",
+      "address": "521 E Marengo Ave Flint MI 48505",
       "onMarketDate": "4/30/2026",
       "lastUpdate": "5/20/2026",
       "area": "MI",
@@ -11273,8 +11273,8 @@
       "lng": -90.2776251
     },
     {
-      "id": "2020-e-main-st-decatur-il-62-521",
-      "address": "2020 E Main St, Decatur IL 62,521",
+      "id": "2020-e-main-st-decatur-il-62521",
+      "address": "2020 E Main St, Decatur IL 62521",
       "onMarketDate": "4/29/2026",
       "lastUpdate": "4/30/2026",
       "area": "IL - Decatur",
