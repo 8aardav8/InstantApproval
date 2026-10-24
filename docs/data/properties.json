@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:21:20.695137+00:00",
+  "generatedAt": "2026-10-24T17:21:53.212742+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -2484,8 +2484,8 @@
       "lng": -83.7133381
     },
     {
-      "id": "1739-n-gulick-ave-decatur-il-62-526",
-      "address": "1739 N Gulick Ave Decatur IL 62,526",
+      "id": "1739-n-gulick-ave-decatur-il-62526",
+      "address": "1739 N Gulick Ave Decatur IL 62526",
       "onMarketDate": "8/16",
       "lastUpdate": "9/11",
       "area": "IL - Decatur",
@@ -3045,8 +3045,8 @@
       "lng": -88.9319474
     },
     {
-      "id": "4146-labadie-ave-st-louis-mo-63-115",
-      "address": "4146 Labadie Ave St Louis MO 63,115",
+      "id": "4146-labadie-ave-st-louis-mo-63115",
+      "address": "4146 Labadie Ave St Louis MO 63115",
       "onMarketDate": "7/26",
       "lastUpdate": "8/6",
       "area": "MO - St. Louis",
@@ -3215,8 +3215,8 @@
       "lng": -90.1709066
     },
     {
-      "id": "101-day-st-suffolk-va-23-434",
-      "address": "101 Day St Suffolk VA 23,434",
+      "id": "101-day-st-suffolk-va-23434",
+      "address": "101 Day St Suffolk VA 23434",
       "onMarketDate": "7/15",
       "lastUpdate": "7/26",
       "area": "Virginia",
@@ -3385,8 +3385,8 @@
       "lng": -90.14473029999999
     },
     {
-      "id": "107-e-archer-ave-peoria-il-61-603",
-      "address": "107 E Archer Ave Peoria IL 61,603",
+      "id": "107-e-archer-ave-peoria-il-61603",
+      "address": "107 E Archer Ave Peoria IL 61603",
       "onMarketDate": "7/20",
       "lastUpdate": "8/29",
       "area": "IL - Peoria",
@@ -3691,8 +3691,8 @@
       "lng": -90.1037795
     },
     {
-      "id": "715-w-cushing-st-decatur-il-62-526",
-      "address": "715 W Cushing St, Decatur IL 62,526",
+      "id": "715-w-cushing-st-decatur-il-62526",
+      "address": "715 W Cushing St, Decatur IL 62526",
       "onMarketDate": "7/16",
       "lastUpdate": "10/4",
       "area": "IL - Decatur",
@@ -3708,8 +3708,8 @@
       "lng": -88.9655088
     },
     {
-      "id": "121-w-9th-st-mount-vernon-in-47-620",
-      "address": "121 W 9th St, Mount Vernon IN 47,620",
+      "id": "121-w-9th-st-mount-vernon-in-47620",
+      "address": "121 W 9th St, Mount Vernon IN 47620",
       "onMarketDate": "7/8",
       "lastUpdate": "7/21",
       "area": "IN",
