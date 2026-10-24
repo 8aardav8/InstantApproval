@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:23:00.902653+00:00",
+  "generatedAt": "2026-10-24T17:23:40.617103+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -5000,8 +5000,8 @@
       "lng": -90.2834692
     },
     {
-      "id": "2017-mccasland-ave-madison-il-62-060",
-      "address": "2017 McCasland Ave Madison IL 62,060",
+      "id": "2017-mccasland-ave-madison-il-62060",
+      "address": "2017 McCasland Ave Madison IL 62060",
       "onMarketDate": "7/13",
       "lastUpdate": "8/6",
       "area": "IL - Rural",
@@ -5051,8 +5051,8 @@
       "lng": -90.2912623
     },
     {
-      "id": "1220-w-john-h-gwynn-jr-ave-peoria-il-61-605",
-      "address": "1220 W John H Gwynn Jr Ave Peoria IL 61,605",
+      "id": "1220-w-john-h-gwynn-jr-ave-peoria-il-61605",
+      "address": "1220 W John H Gwynn Jr Ave Peoria IL 61605",
       "onMarketDate": "6/26/2026",
       "lastUpdate": "7/13/2026",
       "area": "IL - Peoria",
@@ -5935,8 +5935,8 @@
       "lng": -87.66319
     },
     {
-      "id": "205-east-st-louis-street-west-frankfort-il-62-896",
-      "address": "205 East St. Louis Street West Frankfort IL 62,896",
+      "id": "205-east-st-louis-street-west-frankfort-il-62896",
+      "address": "205 East St. Louis Street West Frankfort IL 62896",
       "onMarketDate": "7/8",
       "lastUpdate": "10/11",
       "area": "IL - Rural",
@@ -5952,8 +5952,8 @@
       "lng": -88.92614569999999
     },
     {
-      "id": "2831-abner-place-saint-louis-mo-63-120",
-      "address": "2831 Abner Place Saint Louis MO 63,120",
+      "id": "2831-abner-place-saint-louis-mo-63120",
+      "address": "2831 Abner Place Saint Louis MO 63120",
       "onMarketDate": "7/8",
       "lastUpdate": "8/1",
       "area": "MO - St. Louis",
@@ -6088,8 +6088,8 @@
       "lng": -87.61288669999999
     },
     {
-      "id": "1404-cody-st-evansville-in-47-710",
-      "address": "1404 Cody St, Evansville IN 47,710",
+      "id": "1404-cody-st-evansville-in-47710",
+      "address": "1404 Cody St, Evansville IN 47710",
       "onMarketDate": "7/7",
       "lastUpdate": "9/17",
       "area": "IN",
@@ -6326,8 +6326,8 @@
       "lng": -90.3179253
     },
     {
-      "id": "519-avenue-x-birmingham-al-35-214",
-      "address": "519 Avenue X Birmingham AL 35,214",
+      "id": "519-avenue-x-birmingham-al-35214",
+      "address": "519 Avenue X Birmingham AL 35214",
       "onMarketDate": "5/17/2026",
       "lastUpdate": "7/5/2026",
       "area": "AL",
@@ -6564,8 +6564,8 @@
       "lng": -90.2666568
     },
     {
-      "id": "3112-w-latrobe-st-peoria-il-61-605",
-      "address": "3112 W Latrobe St Peoria IL 61,605",
+      "id": "3112-w-latrobe-st-peoria-il-61605",
+      "address": "3112 W Latrobe St Peoria IL 61605",
       "onMarketDate": "5/4/2026",
       "lastUpdate": "7/2/2026",
       "area": "IL - Peoria",
