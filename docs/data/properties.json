@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:20:15.741449+00:00",
+  "generatedAt": "2026-10-24T17:20:50.643809+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -410,8 +410,8 @@
       "lng": -88.6282846
     },
     {
-      "id": "4824-margaretta-ave-saint-louis-mo-63-115",
-      "address": "4824 Margaretta Ave Saint Louis MO 63,115",
+      "id": "4824-margaretta-ave-saint-louis-mo-63115",
+      "address": "4824 Margaretta Ave Saint Louis MO 63115",
       "onMarketDate": "10/11",
       "lastUpdate": "10/19",
       "area": "MO - St. Louis",
@@ -1090,8 +1090,8 @@
       "lng": -88.7457652
     },
     {
-      "id": "327-n-hickory-st-centralia-il-62-798",
-      "address": "327 N Hickory St Centralia IL 62,798",
+      "id": "327-n-hickory-st-centralia-il-62798",
+      "address": "327 N Hickory St Centralia IL 62798",
       "onMarketDate": "9/24",
       "lastUpdate": "10/21",
       "area": "IL - Rural",
@@ -1243,8 +1243,8 @@
       "lng": -89.6542006
     },
     {
-      "id": "234-home-ave-decatur-il-62-522",
-      "address": "234 Home Ave Decatur IL 62,522",
+      "id": "234-home-ave-decatur-il-62522",
+      "address": "234 Home Ave Decatur IL 62522",
       "onMarketDate": "9/21",
       "lastUpdate": "10/17",
       "area": "IL - Decatur",
@@ -1260,8 +1260,8 @@
       "lng": -88.97049450000002
     },
     {
-      "id": "3238-colorado-ave-flint-mi-48-506",
-      "address": "3238 Colorado Ave Flint MI 48,506",
+      "id": "3238-colorado-ave-flint-mi-48506",
+      "address": "3238 Colorado Ave Flint MI 48506",
       "onMarketDate": "9/21",
       "lastUpdate": "10/9",
       "area": "MI",
@@ -1294,8 +1294,8 @@
       "lng": -83.7118149
     },
     {
-      "id": "1123-saint-benedict-dr-cahokia-il-62-206",
-      "address": "1123 Saint Benedict Dr Cahokia IL 62,206",
+      "id": "1123-saint-benedict-dr-cahokia-il-62206",
+      "address": "1123 Saint Benedict Dr Cahokia IL 62206",
       "onMarketDate": "9/24",
       "lastUpdate": "9/24",
       "area": "IL - East St Louis",
