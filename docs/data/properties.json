@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:21:53.212742+00:00",
+  "generatedAt": "2026-10-24T17:22:26.677988+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -3844,8 +3844,8 @@
       "lng": -88.92702700000001
     },
     {
-      "id": "293-circuit-lane-unit-f-newport-news-va-23-608",
-      "address": "293 Circuit Lane Unit #F Newport News VA 23,608",
+      "id": "293-circuit-lane-unit-f-newport-news-va-23608",
+      "address": "293 Circuit Lane Unit #F Newport News VA 23608",
       "onMarketDate": "7/20",
       "lastUpdate": "8/3",
       "area": "Virginia",
@@ -3861,8 +3861,8 @@
       "lng": -76.5362959
     },
     {
-      "id": "1705-e-north-st-decatur-il-62-521",
-      "address": "1705 E North St Decatur IL 62,521",
+      "id": "1705-e-north-st-decatur-il-62521",
+      "address": "1705 E North St Decatur IL 62521",
       "onMarketDate": "7/20",
       "lastUpdate": "10/11",
       "area": "IL - Decatur",
@@ -3878,8 +3878,8 @@
       "lng": -88.9337689
     },
     {
-      "id": "3114-lakeland-rd-decatur-il-62-521",
-      "address": "3114 Lakeland Rd Decatur IL 62,521",
+      "id": "3114-lakeland-rd-decatur-il-62521",
+      "address": "3114 Lakeland Rd Decatur IL 62521",
       "onMarketDate": "7/20",
       "lastUpdate": "8/11",
       "area": "IL - Decatur",
@@ -4014,8 +4014,8 @@
       "lng": -90.21071529999999
     },
     {
-      "id": "411-w-marengo-flint-mi-48-505",
-      "address": "411 W. Marengo Flint MI 48,505",
+      "id": "411-w-marengo-flint-mi-48505",
+      "address": "411 W. Marengo Flint MI 48505",
       "onMarketDate": "6/2",
       "lastUpdate": "8/3/2026",
       "area": "MI",
@@ -4133,8 +4133,8 @@
       "lng": -87.40327669999999
     },
     {
-      "id": "1252-e-whitmer-st-decatur-il-62-521",
-      "address": "1252 E Whitmer St Decatur IL 62,521",
+      "id": "1252-e-whitmer-st-decatur-il-62521",
+      "address": "1252 E Whitmer St Decatur IL 62521",
       "onMarketDate": "7/19",
       "lastUpdate": "10/7",
       "area": "IL - Decatur",
