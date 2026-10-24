@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:19:43.956333+00:00",
+  "generatedAt": "2026-10-24T17:20:15.741449+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -53,8 +53,8 @@
       "lng": -88.93726989999999
     },
     {
-      "id": "1905-n-college-st-decatur-il-62-526",
-      "address": "1905 N College St Decatur IL 62,526",
+      "id": "1905-n-college-st-decatur-il-62526",
+      "address": "1905 N College St Decatur IL 62526",
       "onMarketDate": "10/22",
       "lastUpdate": "10/22",
       "area": "IL - Decatur",
@@ -70,8 +70,8 @@
       "lng": -88.9625102
     },
     {
-      "id": "10118-clairmont-drive-saint-louis-mo-63-136",
-      "address": "10118 Clairmont Drive Saint Louis MO 63,136",
+      "id": "10118-clairmont-drive-saint-louis-mo-63136",
+      "address": "10118 Clairmont Drive Saint Louis MO 63136",
       "onMarketDate": "10/22",
       "lastUpdate": "10/22",
       "area": "MO - St. Louis",
@@ -172,8 +172,8 @@
       "lng": -85.38270729999999
     },
     {
-      "id": "1428-south-ave-toledo-oh-43-609",
-      "address": "1428 South Ave. Toledo OH 43,609",
+      "id": "1428-south-ave-toledo-oh-43609",
+      "address": "1428 South Ave. Toledo OH 43609",
       "onMarketDate": "10/18",
       "lastUpdate": "10/18",
       "area": "OH",
@@ -359,8 +359,8 @@
       "lng": -90.2731189
     },
     {
-      "id": "322-west-cole-street-du-quoin-il-62-833",
-      "address": "322 West Cole Street Du Quoin IL 62,833",
+      "id": "322-west-cole-street-du-quoin-il-62833",
+      "address": "322 West Cole Street Du Quoin IL 62833",
       "onMarketDate": "10/13",
       "lastUpdate": "10/19",
       "area": "IL - Rural",
@@ -376,8 +376,8 @@
       "lng": -89.2443861
     },
     {
-      "id": "303-w-sycamore-street-carbondale-il-62-901",
-      "address": "303 W. Sycamore Street Carbondale IL 62,901",
+      "id": "303-w-sycamore-street-carbondale-il-62901",
+      "address": "303 W. Sycamore Street Carbondale IL 62901",
       "onMarketDate": "10/13",
       "lastUpdate": "10/13",
       "area": "IL - Rural",
