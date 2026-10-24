@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:24:44.750828+00:00",
+  "generatedAt": "2026-10-24T17:25:19.045450+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -8825,8 +8825,8 @@
       "lng": -88.93275950000002
     },
     {
-      "id": "3-rotary-street-montgomery-al-36-110",
-      "address": "3 Rotary Street Montgomery AL 36,110",
+      "id": "3-rotary-street-montgomery-al-36110",
+      "address": "3 Rotary Street Montgomery AL 36110",
       "onMarketDate": "5/22",
       "lastUpdate": "6/4/2026",
       "area": "AL",
@@ -9029,8 +9029,8 @@
       "lng": -76.40608019999999
     },
     {
-      "id": "821-n-oakland-ave-decatur-il-62-514",
-      "address": "821 N. Oakland Ave Decatur IL 62,514",
+      "id": "821-n-oakland-ave-decatur-il-62514",
+      "address": "821 N. Oakland Ave Decatur IL 62514",
       "onMarketDate": "6/3",
       "lastUpdate": "9/1/2026",
       "area": "IL - Decatur",
@@ -9165,8 +9165,8 @@
       "lng": -87.3858083
     },
     {
-      "id": "3720-walnut-ave-east-st-louis-il-62-207",
-      "address": "3720 Walnut Ave East St. Louis IL 62,207",
+      "id": "3720-walnut-ave-east-st-louis-il-62207",
+      "address": "3720 Walnut Ave East St. Louis IL 62207",
       "onMarketDate": "6/2",
       "lastUpdate": "8/8/2026",
       "area": "IL - East St Louis",
@@ -9182,8 +9182,8 @@
       "lng": -90.125378
     },
     {
-      "id": "329-mettler-st-toledo-oh-43-608",
-      "address": "329 Mettler St Toledo OH 43,608",
+      "id": "329-mettler-st-toledo-oh-43608",
+      "address": "329 Mettler St Toledo OH 43608",
       "onMarketDate": "6/2",
       "lastUpdate": "7/26/2026",
       "area": "OH",
@@ -9233,8 +9233,8 @@
       "lng": -90.07237429999999
     },
     {
-      "id": "4845-anderson-avenue-st-louis-mo-63-115",
-      "address": "4845 Anderson Avenue St. Louis MO 63,115",
+      "id": "4845-anderson-avenue-st-louis-mo-63115",
+      "address": "4845 Anderson Avenue St. Louis MO 63115",
       "onMarketDate": "5/6/2026",
       "lastUpdate": "6/2/2026",
       "area": "MO - St. Louis",
@@ -9641,8 +9641,8 @@
       "lng": -90.10865559999999
     },
     {
-      "id": "32-connoly-dr-saint-louis-mo-63-135",
-      "address": "32 Connoly Dr, Saint Louis MO 63,135",
+      "id": "32-connoly-dr-saint-louis-mo-63135",
+      "address": "32 Connoly Dr, Saint Louis MO 63135",
       "onMarketDate": "5/27",
       "lastUpdate": "7/30/2026",
       "area": "MO - St. Louis",
