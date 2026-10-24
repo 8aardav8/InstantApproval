@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T17:23:40.617103+00:00",
+  "generatedAt": "2026-10-24T17:24:10.460333+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -7108,8 +7108,8 @@
       "lng": -88.9379902
     },
     {
-      "id": "1975-e-north-st-decatur-il-62-521",
-      "address": "1975 E North St Decatur IL 62,521",
+      "id": "1975-e-north-st-decatur-il-62521",
+      "address": "1975 E North St Decatur IL 62521",
       "onMarketDate": "6/26",
       "lastUpdate": "10/21/2026",
       "area": "IL - Decatur",
@@ -7329,8 +7329,8 @@
       "lng": -88.9175288
     },
     {
-      "id": "319-west-corbin-st-bethalto-il-62-010",
-      "address": "319 West Corbin St Bethalto IL 62,010",
+      "id": "319-west-corbin-st-bethalto-il-62010",
+      "address": "319 West Corbin St Bethalto IL 62010",
       "onMarketDate": "6/24",
       "lastUpdate": "6/24/2026",
       "area": "IL - Rural",
@@ -7465,8 +7465,8 @@
       "lng": -90.1683785
     },
     {
-      "id": "1828-west-leafland-ave-decatur-il-62-522",
-      "address": "1828 West Leafland Ave Decatur IL 62,522",
+      "id": "1828-west-leafland-ave-decatur-il-62522",
+      "address": "1828 West Leafland Ave Decatur IL 62522",
       "onMarketDate": "6/10",
       "lastUpdate": "6/23/2026",
       "area": "IL - Decatur",
@@ -7550,8 +7550,8 @@
       "lng": -88.93851599999999
     },
     {
-      "id": "2804-w-humboldt-st-peoria-il-peoria-il-61-605",
-      "address": "2804 W Humboldt St, Peoria, IL Peoria IL 61,605",
+      "id": "2804-w-humboldt-st-peoria-il-peoria-il-61605",
+      "address": "2804 W Humboldt St, Peoria, IL Peoria IL 61605",
       "onMarketDate": "6/2",
       "lastUpdate": "6/22/2026",
       "area": "IL - Peoria",
@@ -7856,8 +7856,8 @@
       "lng": -90.17051599999999
     },
     {
-      "id": "4331-rozier-dr-saint-louis-mo-63-134",
-      "address": "4331 Rozier Dr Saint Louis MO 63,134",
+      "id": "4331-rozier-dr-saint-louis-mo-63134",
+      "address": "4331 Rozier Dr Saint Louis MO 63134",
       "onMarketDate": "5/30",
       "lastUpdate": "6/19/2026",
       "area": "MO - St. Louis",
