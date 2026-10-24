@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T18:58:51.129366+00:00",
+  "generatedAt": "2026-10-24T20:01:10.733159+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -39,7 +39,7 @@
       "id": "1422-sedgwick-st-decatur-il-62521",
       "address": "1422 Sedgwick St Decatur IL 62521",
       "onMarketDate": "10/22",
-      "lastUpdate": "10/22",
+      "lastUpdate": "10/23",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$850",
@@ -47,7 +47,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.83822079999999,
       "lng": -88.93726989999999
