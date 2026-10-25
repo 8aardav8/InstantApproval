@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-25T16:06:58.914666+00:00",
+  "generatedAt": "2026-10-25T16:32:26.128214+00:00",
   "listings": [
     {
       "id": "4519-june-ave-saint-louis-mo-63121",
@@ -7604,10 +7604,10 @@
       "id": "2028-e-prairie-ave-saint-louis-mo-63107",
       "address": "2028 E Prairie Ave, Saint Louis, MO 63107",
       "onMarketDate": "3/30/2026",
-      "lastUpdate": "10/12/2026",
+      "lastUpdate": "10/25/2026",
       "area": "MO - St. Louis",
-      "down": "$1,600",
-      "monthly": "$620",
+      "down": "$1,500",
+      "monthly": "$575",
       "picsLink": "https://drive.google.com/drive/folders/1y3U6ha7rp7O13sJOQ9X-VWqcAcWxsuUj?usp=drive_link",
       "beds": "1",
       "baths": "1",
