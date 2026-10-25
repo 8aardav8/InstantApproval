@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-25T15:05:02.075746+00:00",
+  "generatedAt": "2026-10-25T15:11:27.861876+00:00",
   "listings": [
     {
       "id": "501-carico-street-carbondale-il-62901",
@@ -2963,7 +2963,7 @@
       "id": "428-s-central-st-benton-il-62812",
       "address": "428 S. Central St. Benton IL 62812",
       "onMarketDate": "9/22",
-      "lastUpdate": "9/22",
+      "lastUpdate": "10/24",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$950",
@@ -2971,7 +2971,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1450",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 37.9917873,
       "lng": -88.937928
