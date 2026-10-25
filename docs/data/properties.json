@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-25T15:11:41.570674+00:00",
+  "generatedAt": "2026-10-25T15:25:40.370340+00:00",
   "listings": [
+    {
+      "id": "4519-june-ave-saint-louis-mo-63121",
+      "address": "4519 June Ave, Saint Louis, MO 63121",
+      "onMarketDate": "10/23",
+      "lastUpdate": "10/23",
+      "area": "MO - St. Louis",
+      "down": "$3,000",
+      "monthly": "$910",
+      "picsLink": "https://drive.google.com/drive/folders/1BpzAhif8Fhg90dPlHHTMN-hbyMx99DfO?usp=sharing",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "925",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7035343,
+      "lng": -90.2745866
+    },
     {
       "id": "501-carico-street-carbondale-il-62901",
       "address": "501 Carico Street Carbondale IL 62901",
