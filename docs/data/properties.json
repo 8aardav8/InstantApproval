@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:27:10.843204+00:00",
+  "generatedAt": "2026-10-26T21:28:11.578771+00:00",
   "listings": [
     {
       "id": "1825-s-idaho-st-peoria-il-61605",
@@ -515,7 +515,7 @@
       "id": "4824-margaretta-ave-saint-louis-mo-63115",
       "address": "4824 Margaretta Ave Saint Louis MO 63115",
       "onMarketDate": "10/11",
-      "lastUpdate": "10/19",
+      "lastUpdate": "10/25",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -651,7 +651,7 @@
       "id": "724-n-82nd-st-east-saint-louis-il-62203",
       "address": "724 N 82nd St East Saint Louis IL 62203",
       "onMarketDate": "10/8",
-      "lastUpdate": "10/8",
+      "lastUpdate": "10/25",
       "area": "IL - East St Louis",
       "down": "$2,500",
       "monthly": "$795",
