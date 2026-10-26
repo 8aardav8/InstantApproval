@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:30:11.949329+00:00",
+  "generatedAt": "2026-10-26T21:31:15.019010+00:00",
   "listings": [
     {
       "id": "1825-s-idaho-st-peoria-il-61605",
@@ -11531,7 +11531,7 @@
       "id": "606-anderson-st-alton-il-62002",
       "address": "606 Anderson St. Alton, IL 62002",
       "onMarketDate": "7/25/2025",
-      "lastUpdate": "10/1/2026",
+      "lastUpdate": "10/26/2026",
       "area": "IL - East St Louis",
       "down": "$1,500",
       "monthly": "$500",
@@ -11539,7 +11539,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "660",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.892137,
       "lng": -90.14330849999999
