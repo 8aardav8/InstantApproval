@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:23:10.235610+00:00",
+  "generatedAt": "2026-10-26T21:23:55.757750+00:00",
   "listings": [
     {
       "id": "1825-s-idaho-st-peoria-il-61605",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/1Wgp083tXlYH7B5DQr5qFhDzwwGYMYtm3?usp=drive_link",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "792",
       "status": "Available",
       "livability": 0,
       "lat": 40.6676312,
@@ -17217,7 +17217,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "720",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
       "lat": 38.6897163,
       "lng": -90.290584
