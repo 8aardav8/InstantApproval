@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:13:02.127817+00:00",
+  "generatedAt": "2026-10-26T21:14:43.809187+00:00",
   "listings": [
     {
       "id": "4519-june-ave-saint-louis-mo-63121",
@@ -5657,7 +5657,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.2600152,
       "lng": -89.3514962
