@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:10:27.803135+00:00",
+  "generatedAt": "2026-10-26T21:11:21.169928+00:00",
   "listings": [
     {
       "id": "4519-june-ave-saint-louis-mo-63121",
@@ -17,6 +17,23 @@
       "livability": 0,
       "lat": 38.7035343,
       "lng": -90.2745866
+    },
+    {
+      "id": "2523-ne-monroe-st-peoria-il-61603",
+      "address": "2523 NE Monroe St Peoria IL 61603",
+      "onMarketDate": "10/23",
+      "lastUpdate": "10/24",
+      "area": "IL - Peoria",
+      "down": "$2,000",
+      "monthly": "$895",
+      "picsLink": "https://drive.google.com/drive/folders/1sUswdPCiieELXXSIMWw1f0JFPdVIn1Pq?usp=sharing",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1038",
+      "status": "Sold",
+      "livability": 0,
+      "lat": 40.712746,
+      "lng": -89.5650525
     },
     {
       "id": "501-carico-street-carbondale-il-62901",
