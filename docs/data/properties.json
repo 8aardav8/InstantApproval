@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-26T21:15:19.044163+00:00",
+  "generatedAt": "2026-10-26T21:16:04.357520+00:00",
   "listings": [
+    {
+      "id": "801-w-patton-ave-montgomery-al-36-105",
+      "address": "801 W. Patton Ave Montgomery AL 36,105",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 32.3336916,
+      "lng": -86.3201989
+    },
     {
       "id": "4519-june-ave-saint-louis-mo-63121",
       "address": "4519 June Ave, Saint Louis, MO 63121",
