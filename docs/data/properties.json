@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-26T21:22:36.668164+00:00",
+  "generatedAt": "2026-10-26T21:23:10.235610+00:00",
   "listings": [
+    {
+      "id": "1825-s-idaho-st-peoria-il-61605",
+      "address": "1825 S Idaho St Peoria IL 61605",
+      "onMarketDate": "10/25",
+      "lastUpdate": "10/25",
+      "area": "IL - Peoria",
+      "down": "$3,000",
+      "monthly": "$875",
+      "picsLink": "https://drive.google.com/drive/folders/1Wgp083tXlYH7B5DQr5qFhDzwwGYMYtm3?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.6676312,
+      "lng": -89.6402595
+    },
     {
       "id": "127-kentucky-ave-danville-il-61-832",
       "address": "127 Kentucky Ave Danville IL 61,832",
