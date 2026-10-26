@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-26T21:17:23.965272+00:00",
+  "generatedAt": "2026-10-26T21:18:04.682338+00:00",
   "listings": [
+    {
+      "id": "1929-e-prairie-st-decatur-il-decatur-il-62521",
+      "address": "1929 E Prairie St, Decatur, Il Decatur IL 62521",
+      "onMarketDate": "10/25",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1-BmCYAQ9hWiGikpkp-AkndTlGmob5ypR?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.84291820000001,
+      "lng": -88.9305737
+    },
     {
       "id": "801-w-patton-ave-montgomery-al-36-105",
       "address": "801 W. Patton Ave Montgomery AL 36,105",
