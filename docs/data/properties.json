@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:25:02.614627+00:00",
+  "generatedAt": "2026-10-26T21:25:35.251552+00:00",
   "listings": [
     {
       "id": "1825-s-idaho-st-peoria-il-61605",
@@ -2682,7 +2682,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "700",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8111481,
       "lng": -89.61504579999999
