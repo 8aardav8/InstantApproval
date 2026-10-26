@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:18:18.116207+00:00",
+  "generatedAt": "2026-10-26T21:18:38.206780+00:00",
   "listings": [
     {
       "id": "1929-e-prairie-st-decatur-il-decatur-il-62521",
@@ -7,10 +7,10 @@
       "onMarketDate": "10/25",
       "lastUpdate": "10/25",
       "area": "IL - Decatur",
-      "down": "",
-      "monthly": "",
+      "down": "$2,500",
+      "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/1-BmCYAQ9hWiGikpkp-AkndTlGmob5ypR?usp=sharing",
-      "beds": "",
+      "beds": "2",
       "baths": "",
       "sqft": "",
       "status": "Available",
