@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:16:38.456423+00:00",
+  "generatedAt": "2026-10-26T21:17:23.965272+00:00",
   "listings": [
     {
       "id": "801-w-patton-ave-montgomery-al-36-105",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,200",
       "picsLink": "https://bit.ly/4cTfcud",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1595",
       "status": "Available",
       "livability": 0,
       "lat": 32.3336916,
