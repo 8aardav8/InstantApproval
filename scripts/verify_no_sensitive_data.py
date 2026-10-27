@@ -35,6 +35,7 @@ Usage:
   (must run in the same CI job/workspace as generate_properties.py, after it)
 """
 import json
+import re
 import os
 import sys
 
@@ -204,10 +205,19 @@ def main():
             if val in template_text:
                 findings.append((listing_id, col, val, "a static template file (HTML/JS/CSS)"))
 
+    # Pics 1 is published as a link; anything else in it is a data-entry
+    # slip that can carry private text onto the site (2026-10-27, L57).
+    for l in output["listings"]:
+        pl = (l.get("picsLink") or "").strip()
+        if pl and not re.match(r"https?://\S+$", pl):
+            findings.append((l["id"], "Pics 1 (picsLink)", pl, "properties.json as a non-link photo value"))
+
     if findings:
         log(f"FATAL: {len(findings)} sensitive-data finding(s), nothing committed:")
         for listing_id, col, val, where in findings:
-            log(f"  - listing {listing_id!r}: column {col!r} value {val[:60]!r}... found in {where}")
+            # Never print the value itself: Actions logs on this public repo
+            # are public, so echoing it would leak it a second way (L57).
+            log(f"  - listing {listing_id!r}: column {col!r} ({len(val)}-character value, not shown) found in {where}")
         sys.exit(1)
 
     log(f"Clean: checked {len(seen_ids)} rows x {len(SENSITIVE_COLUMNS)} sensitive columns "

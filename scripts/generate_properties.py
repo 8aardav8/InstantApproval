@@ -201,6 +201,31 @@ def load_geocode_cache_from_previous(previous):
     return cache
 
 
+# Pics 1 is published as the listing's photo link. Only a web link may go
+# out: on 2026-10-27 a seller's name was typed into Pics 1 by mistake and
+# went live, because nothing checked what kind of value the column held
+# (lessons L57). The cell's first link is published on its own (labels like
+# "Photo:" or "INTERIOR" are dropped; a bare "photos.app.goo.gl/..." gets
+# https:// added). A cell with no link at all is left off the site, and the
+# log names only the listing, never the value -- Actions logs on this
+# public repo are public too.
+_URL_IN_CELL = re.compile(r"https?://[^\s<>\"']+")
+_BARE_URL = re.compile(r"^(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+/[^\s<>\"']*$", re.I)
+
+
+def pics_link_or_blank(value, listing_id):
+    v = value.strip()
+    if not v:
+        return ""
+    m = _URL_IN_CELL.search(v)
+    if m:
+        return m.group(0).rstrip(".,;)")
+    if _BARE_URL.match(v):
+        return "https://" + v
+    log(f"WARNING: listing {listing_id!r}: Pics 1 has no web link -- left off the site (fix the Sheet cell).")
+    return ""
+
+
 def main():
     client = get_client()
     sh = client.open_by_key(SHEET_ID)
@@ -280,7 +305,7 @@ def main():
             "area": cell("Area").strip(),
             "down": cell("Down").strip(),
             "monthly": cell("Monthly").strip(),
-            "picsLink": cell("Pics 1").strip(),
+            "picsLink": pics_link_or_blank(cell("Pics 1"), listing_id),
             "beds": cell("Beds").strip(),
             "baths": cell("Baths").strip(),
             "sqft": cell("Sq Ft").strip(),
