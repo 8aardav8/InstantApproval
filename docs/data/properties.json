@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-27T21:27:05.792591+00:00",
+  "generatedAt": "2026-10-27T21:27:42.297233+00:00",
   "listings": [
+    {
+      "id": "307-w-sycamore-street-carbondale-il-62901",
+      "address": "307 W. Sycamore Street Carbondale IL 62901",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1VOiB66Ld6ILH_qnPq_CQmuED1UrAHMB0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.73040710000001,
+      "lng": -89.21981939999999
+    },
     {
       "id": "5044-claxton-ave-saint-louis-mo-63-120",
       "address": "5044 Claxton Ave Saint Louis MO 63,120",
