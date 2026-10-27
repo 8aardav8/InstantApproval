@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-27T21:25:06.052690+00:00",
+  "generatedAt": "2026-10-27T21:25:57.003574+00:00",
   "listings": [
+    {
+      "id": "5044-claxton-ave-saint-louis-mo-63-120",
+      "address": "5044 Claxton Ave Saint Louis MO 63,120",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/a9769kbmhgyjzlnq4gsvd/AIz7bhyba1BjOub80lv-npk?rlkey=ynuqqfdiduhluqbc8a2604oof&st=i09b5h5l&e=1&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.69153439999999,
+      "lng": -90.246982
+    },
     {
       "id": "1825-s-idaho-st-peoria-il-61605",
       "address": "1825 S Idaho St Peoria IL 61605",
