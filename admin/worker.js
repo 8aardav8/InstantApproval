@@ -4660,6 +4660,39 @@ async function writeLoginCodeRow(accessToken, row, values) {
   if (!res.ok) throw new Error(`login-codes write failed: ${await res.text()}`);
 }
 
+async function findLoginsPhoneByEmail(accessToken, email) {
+  const range = encodeURIComponent(`${LOGINS_TAB}!B:E`);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`logins email read failed: ${await res.text()}`);
+  const col = (await res.json()).values || [];
+  const target = String(email).trim().toLowerCase();
+  for (let i = 1; i < col.length; i++) {
+    if ((col[i][0] || "").trim().toLowerCase() === target) return { row: i + 1, phone: (col[i][2] || "").trim(), name: col[i][3] || "" };
+  }
+  return null;
+}
+
+// One ping per typed number per 6h -- a stuck visitor retries a lot (12
+// times in 32 minutes in the 10/26 case).
+async function pingPhoneMismatch(env, { email, typed, onFile, row, name }) {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  const key = `phone-mismatch:${typed}`;
+  try {
+    if (env.BUYERS_KV && (await env.BUYERS_KV.get(key))) return;
+    await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: AARON_TELEGRAM_CHAT_ID,
+        text: `⚠️ Site sign-in blocked: phone doesn't match the one on file.\nName: ${name}\nEmail: ${email}\nTyped: ${typed}\nOn file: ${onFile} (App: Logins row ${row})\nIf the typed number is really theirs, correct column D on that row and they can sign in.`,
+      }),
+    });
+    if (env.BUYERS_KV) await env.BUYERS_KV.put(key, "1", { expirationTtl: 6 * 60 * 60 });
+  } catch (e) {
+    // Swallowed -- the visitor still gets the clear message either way.
+  }
+}
+
 // Only texts numbers that already have an App: Logins row (i.e. went
 // through /gate-login first) -- keeps this from being an open "text any
 // number" endpoint -- and rate-limits per phone.
@@ -4670,7 +4703,19 @@ async function handleSendLoginCode(request, env) {
   const e164 = toE164(body.phone);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    if (!(await findLoginsRowByPhone(accessToken, e164))) return jsonResponse({ error: "not found", message: "Please fill in the form first." }, 404);
+    if (!(await findLoginsRowByPhone(accessToken, e164))) {
+      // The email is on file under a different phone (e.g. a typo at first
+      // sign-in). /gate-login matched by email and kept the old phone, so
+      // "fill in the form" looped forever (lessons L69, 2026-10-26). The
+      // phone is never swapped here: knowing someone's email must not be
+      // enough to take over their row.
+      const onFile = body.email ? await findLoginsPhoneByEmail(accessToken, body.email) : null;
+      if (onFile && onFile.phone && toE164(onFile.phone) !== e164) {
+        await pingPhoneMismatch(env, { email: body.email, typed: e164, onFile: toE164(onFile.phone), row: onFile.row, name: onFile.name });
+        return jsonResponse({ error: "phone mismatch", message: "This email is on file with a different phone number. Please text us at 618-418-4180 and we'll update it for you." }, 409);
+      }
+      return jsonResponse({ error: "not found", message: "Please fill in the form first." }, 404);
+    }
     const existing = await readLoginCodeRow(accessToken, e164);
     const now = Date.now();
     const [, , , , lastSentAt, sendsRaw, windowStartRaw] = existing.values || [];

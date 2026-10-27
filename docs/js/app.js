@@ -2545,7 +2545,9 @@ async function sendLoginCode(phone, statusEl) {
     const res = await fetch(SEND_LOGIN_CODE_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
+      // Email lets the Worker say "on file with a different number" instead
+      // of looping back to the form (lessons L69).
+      body: JSON.stringify({ phone, email: localStorage.getItem(GATE_EMAIL_STORAGE_KEY) || "" }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
