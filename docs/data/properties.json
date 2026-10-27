@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-27T21:28:49.383782+00:00",
+  "generatedAt": "2026-10-27T21:29:32.639917+00:00",
   "listings": [
+    {
+      "id": "660-e-van-buren-ave-decatur-il-62-526",
+      "address": "660 E Van Buren Ave Decatur IL 62,526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "Charles E Cornett, Manager",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8744419,
+      "lng": -88.94911119999999
+    },
     {
       "id": "307-w-sycamore-street-carbondale-il-62901",
       "address": "307 W. Sycamore Street Carbondale IL 62901",
