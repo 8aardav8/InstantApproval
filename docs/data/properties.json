@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T21:11:06.074119+00:00",
+  "generatedAt": "2026-10-27T21:12:11.559768+00:00",
   "listings": [
     {
       "id": "1825-s-idaho-st-peoria-il-61605",
@@ -328,7 +328,7 @@
       "id": "520-east-frye-avenue-peoria-il-61603",
       "address": "520 East Frye Avenue Peoria IL 61603",
       "onMarketDate": "10/15",
-      "lastUpdate": "10/15",
+      "lastUpdate": "10/26",
       "area": "IL - Peoria",
       "down": "$2,500",
       "monthly": "$900",
@@ -336,7 +336,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1414",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.7120857,
       "lng": -89.58802709999999
@@ -2317,7 +2317,7 @@
       "id": "1963-n-31st-st-decatur-il-62526",
       "address": "1963 N 31st St Decatur IL 62526",
       "onMarketDate": "8/24",
-      "lastUpdate": "8/24",
+      "lastUpdate": "10/26",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$875",
