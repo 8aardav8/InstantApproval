@@ -204,7 +204,7 @@ def load_geocode_cache_from_previous(previous):
 # Pics 1 is published as the listing's photo link. Only a web link may go
 # out: on 2026-10-27 a seller's name was typed into Pics 1 by mistake and
 # went live, because nothing checked what kind of value the column held
-# (lessons L57). The cell's first link is published on its own (labels like
+# (lessons L71). The cell's first link is published on its own (labels like
 # "Photo:" or "INTERIOR" are dropped; a bare "photos.app.goo.gl/..." gets
 # https:// added). A cell with no link at all is left off the site, and the
 # log names only the listing, never the value -- Actions logs on this

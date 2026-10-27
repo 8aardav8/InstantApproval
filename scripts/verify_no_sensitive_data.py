@@ -216,7 +216,7 @@ def main():
         log(f"FATAL: {len(findings)} sensitive-data finding(s), nothing committed:")
         for listing_id, col, val, where in findings:
             # Never print the value itself: Actions logs on this public repo
-            # are public, so echoing it would leak it a second way (L57).
+            # are public, so echoing it would leak it a second way (L71).
             log(f"  - listing {listing_id!r}: column {col!r} ({len(val)}-character value, not shown) found in {where}")
         sys.exit(1)
 
