@@ -206,7 +206,7 @@ def main():
                 findings.append((listing_id, col, val, "a static template file (HTML/JS/CSS)"))
 
     # Pics 1 is published as a link; anything else in it is a data-entry
-    # slip that can carry private text onto the site (2026-10-27, L57).
+    # slip that can carry private text onto the site (2026-10-27, L71).
     for l in output["listings"]:
         pl = (l.get("picsLink") or "").strip()
         if pl and not re.match(r"https?://\S+$", pl):
