@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T21:19:18.424483+00:00",
+  "generatedAt": "2026-10-28T21:20:08.127933+00:00",
   "listings": [
     {
       "id": "1112-e-main-st-decatur-il-62-526",
@@ -4459,7 +4459,7 @@
       "id": "1200-sw-6th-st-fairfield-il-62837",
       "address": "1200 Sw 6th St, Fairfield IL 62837",
       "onMarketDate": "6/25",
-      "lastUpdate": "9/17/2026",
+      "lastUpdate": "10/27/2026",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$685",
@@ -4467,7 +4467,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "900",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.3674854,
       "lng": -88.366821
