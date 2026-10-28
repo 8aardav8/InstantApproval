@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T21:34:40.817692+00:00",
+  "generatedAt": "2026-10-28T21:35:15.005233+00:00",
   "listings": [
     {
       "id": "825-w-elm-street-decatur-il-62-522",
@@ -12,7 +12,7 @@
       "picsLink": "https://www.dropbox.com/scl/fo/4ff25j4pfw3l9g7ju551g/ACroCe7gfYxEdzL6CVviX8Y?rlkey=rso668bnnianqrdzdtjneonvj&st=2z84ja86&dl=0",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
+      "sqft": "936",
       "status": "Available",
       "livability": 0,
       "lat": 39.8515167,
@@ -13392,7 +13392,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1008",
-      "status": "Sold",
+      "status": "Available",
       "livability": 4,
       "lat": 38.6972981,
       "lng": -90.24321300000001
