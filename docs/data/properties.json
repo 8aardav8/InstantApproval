@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T21:18:44.297177+00:00",
+  "generatedAt": "2026-10-28T21:19:18.424483+00:00",
   "listings": [
     {
       "id": "1112-e-main-st-decatur-il-62-526",
@@ -192,7 +192,7 @@
       "id": "337-range-ln-cahokia-il-62206",
       "address": "337 Range Ln Cahokia IL 62206",
       "onMarketDate": "10/22",
-      "lastUpdate": "10/25",
+      "lastUpdate": "10/27",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$1,200",
@@ -200,7 +200,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.5651766,
       "lng": -90.17472049999999
