@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T21:14:43.279440+00:00",
+  "generatedAt": "2026-10-28T21:15:52.053961+00:00",
   "listings": [
     {
       "id": "1112-e-main-st-decatur-il-62-526",
@@ -3949,7 +3949,7 @@
       "id": "7000-florence-pl-saint-louis-mo-63136",
       "address": "7000 Florence Pl, Saint Louis, MO 63136",
       "onMarketDate": "7/23/2025",
-      "lastUpdate": "10/16/2026",
+      "lastUpdate": "10/27/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$575",
@@ -3957,7 +3957,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "764",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.7101507,
       "lng": -90.2670105
@@ -5844,7 +5844,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6813466,
       "lng": -90.2371976
