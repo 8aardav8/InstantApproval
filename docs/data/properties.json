@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-28T21:33:20.198257+00:00",
+  "generatedAt": "2026-10-28T21:34:11.005749+00:00",
   "listings": [
+    {
+      "id": "825-w-elm-street-decatur-il-62-522",
+      "address": "825 W Elm Street Decatur IL 62,522",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/4ff25j4pfw3l9g7ju551g/ACroCe7gfYxEdzL6CVviX8Y?rlkey=rso668bnnianqrdzdtjneonvj&st=2z84ja86&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8515167,
+      "lng": -88.9666599
+    },
     {
       "id": "1112-e-main-st-decatur-il-62-526",
       "address": "1112 E Main St Decatur IL 62,526",
