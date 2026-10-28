@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T21:42:50.474160+00:00",
+  "generatedAt": "2026-10-28T21:43:23.991008+00:00",
   "listings": [
     {
       "id": "825-w-elm-street-decatur-il-62-522",
@@ -1569,7 +1569,7 @@
       "id": "1204-n-jordan-st-decatur-il-62521",
       "address": "1204 N Jordan St Decatur IL 62521",
       "onMarketDate": "9/16",
-      "lastUpdate": "9/23",
+      "lastUpdate": "10/28",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$850",
@@ -1577,7 +1577,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.85438509999999,
       "lng": -88.9347502
