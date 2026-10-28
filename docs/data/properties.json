@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T21:16:28.916631+00:00",
+  "generatedAt": "2026-10-28T21:17:36.024977+00:00",
   "listings": [
     {
       "id": "1112-e-main-st-decatur-il-62-526",
@@ -21935,7 +21935,7 @@
       "id": "614-fremont-st-saint-louis-mo-63147",
       "address": "614 Fremont St, Saint Louis, MO 63147",
       "onMarketDate": "4/9/2025",
-      "lastUpdate": "10/7/2026",
+      "lastUpdate": "10/27/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$795",
@@ -21943,7 +21943,7 @@
       "beds": "4",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 2,
       "lat": 38.7233471,
       "lng": -90.2266545
@@ -23788,7 +23788,7 @@
       "id": "1765-casteel-dr-jackson-ms-39204",
       "address": "1765 Casteel Dr, Jackson, MS 39204",
       "onMarketDate": "10/14/2026",
-      "lastUpdate": "10/14/2026",
+      "lastUpdate": "10/27/2026",
       "area": "MS",
       "down": "$2,000",
       "monthly": "$795",
@@ -23796,7 +23796,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 32.2852777,
       "lng": -90.2355914
