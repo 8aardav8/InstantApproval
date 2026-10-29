@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-29T21:39:06.451445+00:00",
+  "generatedAt": "2026-10-29T21:39:38.441371+00:00",
   "listings": [
+    {
+      "id": "905-w-olive-st-decatur-il-62-526",
+      "address": "905 W. Olive St. Decatur IL 62,526",
+      "onMarketDate": "10/28",
+      "lastUpdate": "10/28",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "$995",
+      "picsLink": "https://drive.google.com/drive/folders/1O6S1IXifFaNczkQtf3HLjMC2zRilgTBa?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8596813,
+      "lng": -88.9691064
+    },
     {
       "id": "926-s-greenlawn-ave-peoria-il-61-605",
       "address": "926 S Greenlawn Ave. Peoria IL 61,605",
