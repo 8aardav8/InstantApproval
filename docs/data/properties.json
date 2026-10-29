@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T20:45:50.678532+00:00",
+  "generatedAt": "2026-10-29T21:24:40.012677+00:00",
   "listings": [
     {
       "id": "926-s-greenlawn-ave-peoria-il-61-605",
@@ -11072,7 +11072,7 @@
       "id": "4627-korte-ave-saint-louis-mo-63115",
       "address": "4627 Korte Ave., Saint Louis MO 63115",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "9/11/2026",
+      "lastUpdate": "10/28/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$900",
@@ -11080,7 +11080,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6804962,
       "lng": -90.2346242
