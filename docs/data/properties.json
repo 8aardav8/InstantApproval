@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T21:41:16.279976+00:00",
+  "generatedAt": "2026-10-29T21:41:42.154223+00:00",
   "listings": [
     {
       "id": "905-w-olive-st-decatur-il-62-526",
@@ -4374,7 +4374,7 @@
       "id": "1180-e-mueller-ave-decatur-il-62526",
       "address": "1180 E Mueller Ave Decatur, IL 62526",
       "onMarketDate": "7/13/2026",
-      "lastUpdate": "9/29/2026",
+      "lastUpdate": "10/29/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$685",
@@ -4382,7 +4382,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "768",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8652711,
       "lng": -88.9413654
