@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T21:35:29.038997+00:00",
+  "generatedAt": "2026-10-29T21:35:59.460240+00:00",
   "listings": [
     {
       "id": "926-s-greenlawn-ave-peoria-il-61-605",
@@ -923,10 +923,10 @@
       "id": "9853-green-valley-dr-st-louis-mo-63136",
       "address": "9853 Green Valley Dr, St Louis, MO 63136",
       "onMarketDate": "10/3",
-      "lastUpdate": "10/21",
+      "lastUpdate": "10/28",
       "area": "MO - St. Louis",
-      "down": "$1,500",
-      "monthly": "$625",
+      "down": "$1,000",
+      "monthly": "$550",
       "picsLink": "https://drive.google.com/drive/folders/16H4tjfeHiEJRwA7IOQuRpI6bEceD71MO?usp=sharing",
       "beds": "2",
       "baths": "1",
