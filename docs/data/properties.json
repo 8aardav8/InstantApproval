@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T21:41:42.154223+00:00",
+  "generatedAt": "2026-10-29T21:42:26.243473+00:00",
   "listings": [
     {
       "id": "905-w-olive-st-decatur-il-62-526",
@@ -362,7 +362,7 @@
       "id": "3612-wabash-ave-jackson-ms-39205",
       "address": "3612 Wabash Ave Jackson MS 39205",
       "onMarketDate": "10/20",
-      "lastUpdate": "10/20",
+      "lastUpdate": "10/29",
       "area": "MS",
       "down": "$2,000",
       "monthly": "$840",
@@ -370,7 +370,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 32.3419898,
       "lng": -90.2085962
