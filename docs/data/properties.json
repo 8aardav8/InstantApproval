@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T21:28:14.962955+00:00",
+  "generatedAt": "2026-10-29T21:28:49.597728+00:00",
   "listings": [
     {
       "id": "926-s-greenlawn-ave-peoria-il-61-605",
@@ -1110,7 +1110,7 @@
       "id": "238-connolly-dr-st-louis-mo-63135",
       "address": "238 Connolly Dr, St. Louis, MO 63135",
       "onMarketDate": "9/29",
-      "lastUpdate": "10/16",
+      "lastUpdate": "10/28",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$875",
@@ -1118,7 +1118,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.7704594,
       "lng": -90.3226433
