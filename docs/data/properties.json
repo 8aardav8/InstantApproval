@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T21:39:38.441371+00:00",
+  "generatedAt": "2026-10-29T21:40:39.073228+00:00",
   "listings": [
     {
       "id": "905-w-olive-st-decatur-il-62-526",
@@ -10,8 +10,8 @@
       "down": "$3,000",
       "monthly": "$995",
       "picsLink": "https://drive.google.com/drive/folders/1O6S1IXifFaNczkQtf3HLjMC2zRilgTBa?usp=drive_link",
-      "beds": "",
-      "baths": "",
+      "beds": "2",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
@@ -12347,7 +12347,7 @@
       "id": "1305-e-whitmer-st-decatur-il-62521",
       "address": "1305 E Whitmer St Decatur IL 62521",
       "onMarketDate": "2/27/2026",
-      "lastUpdate": "10/28/2026",
+      "lastUpdate": "10/29/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$880",
