@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-30T21:26:48.151041+00:00",
+  "generatedAt": "2026-10-30T21:27:35.721198+00:00",
   "listings": [
+    {
+      "id": "525-521-owen-st-saginaw-mi-48-607",
+      "address": "525 & 521 Owen St. Saginaw MI 48,607",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fi/m83tnhtilwt0i3a7zxpg1/525-Owen-Street-photos.zip?rlkey=pqd7wupnmq1wrv244d385wsxk&st=0je3v5ei&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.4270251,
+      "lng": -83.9365218
+    },
     {
       "id": "8577-mark-twain-detroit-mi-48-228",
       "address": "8577 Mark Twain Detroit MI 48,228",
