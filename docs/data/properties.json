@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T21:28:07.528923+00:00",
+  "generatedAt": "2026-10-30T21:29:36.568534+00:00",
   "listings": [
     {
       "id": "525-521-owen-st-saginaw-mi-48-607",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,300",
       "picsLink": "https://www.dropbox.com/scl/fi/m83tnhtilwt0i3a7zxpg1/525-Owen-Street-photos.zip?rlkey=pqd7wupnmq1wrv244d385wsxk&st=0je3v5ei&dl=0",
-      "beds": "31",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1642",
       "status": "Available",
       "livability": 0,
       "lat": 43.4270251,
@@ -25709,10 +25709,10 @@
       "id": "112-n-88th-st-centreville-il-62203",
       "address": "112 N 88th St, Centreville, IL 62203",
       "onMarketDate": "10/3/2026",
-      "lastUpdate": "10/18/2026",
+      "lastUpdate": "10/29/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
-      "monthly": "$475",
+      "monthly": "$450",
       "picsLink": "https://drive.google.com/drive/folders/1lpXUm6UUJ7E2U98t2q6Gpa1Fn8W_FQUi?usp=sharing",
       "beds": "2",
       "baths": "1",
