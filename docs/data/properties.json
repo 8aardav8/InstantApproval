@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T21:22:47.034532+00:00",
+  "generatedAt": "2026-10-30T21:23:40.344035+00:00",
   "listings": [
     {
       "id": "1414-richard-dr-cahokia-il-62-206",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,075",
       "picsLink": "https://drive.google.com/drive/folders/1Vv74iaV5Mz8UNhqQl9x_Sjsw_fXnu0MM?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "936",
       "status": "Available",
       "livability": 0,
       "lat": 38.55891880000001,
