@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T21:41:32.599925+00:00",
+  "generatedAt": "2026-10-30T21:44:20.881867+00:00",
   "listings": [
     {
       "id": "525-521-owen-st-saginaw-mi-48-607",
@@ -167,7 +167,7 @@
       "baths": "1",
       "sqft": "740",
       "status": "Available",
-      "livability": 0,
+      "livability": 2,
       "lat": 38.69153439999999,
       "lng": -90.246982
     },
