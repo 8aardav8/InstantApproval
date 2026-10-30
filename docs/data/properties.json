@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T21:31:56.115223+00:00",
+  "generatedAt": "2026-10-30T21:32:48.778476+00:00",
   "listings": [
     {
       "id": "525-521-owen-st-saginaw-mi-48-607",
@@ -15801,7 +15801,7 @@
       "lastUpdate": "10/29/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
-      "monthly": "$850",
+      "monthly": "$961",
       "picsLink": "https://drive.google.com/drive/folders/10yCD6rE8sFCmlWIcIT_jyhnILEsG73NQ?usp=sharing",
       "beds": "3",
       "baths": "1",
@@ -20405,7 +20405,7 @@
       "id": "8401-n-broadway-st-louis-mo-63147",
       "address": "8401 N Broadway, St. Louis, MO 63147",
       "onMarketDate": "11/9/2025",
-      "lastUpdate": "10/26/2026",
+      "lastUpdate": "10/30/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$1,100",
@@ -20413,7 +20413,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1870",
-      "status": "Sold",
+      "status": "Available",
       "livability": 4,
       "lat": 38.7150544,
       "lng": -90.2301641
