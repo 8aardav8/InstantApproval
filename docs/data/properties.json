@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-10-30T21:21:30.308095+00:00",
+  "generatedAt": "2026-10-30T21:22:17.104525+00:00",
   "listings": [
+    {
+      "id": "1414-richard-dr-cahokia-il-62-206",
+      "address": "1414 Richard Dr. Cahokia IL 62,206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1Vv74iaV5Mz8UNhqQl9x_Sjsw_fXnu0MM?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.55891880000001,
+      "lng": -90.16493179999999
+    },
     {
       "id": "905-w-olive-st-decatur-il-62-526",
       "address": "905 W. Olive St. Decatur IL 62,526",
