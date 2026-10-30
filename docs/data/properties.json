@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T21:33:20.002054+00:00",
+  "generatedAt": "2026-10-30T21:33:50.993252+00:00",
   "listings": [
     {
       "id": "525-521-owen-st-saginaw-mi-48-607",
@@ -379,7 +379,7 @@
       "id": "417-w-elm-st-mason-city-il-62664",
       "address": "417 W Elm St Mason City, IL 62664",
       "onMarketDate": "10/22",
-      "lastUpdate": "10/22",
+      "lastUpdate": "10/30",
       "area": "IL - Rural",
       "down": "$3,500",
       "monthly": "$1,295",
@@ -387,7 +387,7 @@
       "beds": "4",
       "baths": "3",
       "sqft": "1610",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.2009738,
       "lng": -89.7030243
