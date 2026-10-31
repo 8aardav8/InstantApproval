@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T13:30:31.628461+00:00",
+  "generatedAt": "2026-10-31T15:00:43.567903+00:00",
   "listings": [
     {
       "id": "525-521-owen-st-saginaw-mi-48-607",
@@ -8148,7 +8148,7 @@
       "id": "5527-avon-pl-east-saint-louis-il-62204",
       "address": "5527 Avon Pl, East Saint Louis, IL 62204",
       "onMarketDate": "5/15/2026",
-      "lastUpdate": "10/12/2026",
+      "lastUpdate": "10/30/2026",
       "area": "IL - East St Louis",
       "down": "$1,800",
       "monthly": "$650",
@@ -8156,7 +8156,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6257703,
       "lng": -90.0894981
