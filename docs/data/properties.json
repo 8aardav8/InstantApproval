@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:35:04.569130+00:00",
+  "generatedAt": "2026-11-02T22:36:13.787052+00:00",
   "listings": [
     {
       "id": "1822-e-decatur-st-decatur-il-62-521",
@@ -489,7 +489,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "725",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.859663,
       "lng": -88.9354046
