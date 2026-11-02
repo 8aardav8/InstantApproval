@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T23:02:36.131478+00:00",
+  "generatedAt": "2026-11-02T23:02:54.960916+00:00",
   "listings": [
     {
       "id": "5420-queens-ave-saint-louis-mo-63-115",
@@ -413,7 +413,7 @@
       "id": "10118-clairmont-drive-saint-louis-mo-63136",
       "address": "10118 Clairmont Drive Saint Louis MO 63136",
       "onMarketDate": "10/22",
-      "lastUpdate": "10/22",
+      "lastUpdate": "11/2",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$695",
@@ -421,7 +421,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 1,
       "lat": 38.7534102,
       "lng": -90.2683529
