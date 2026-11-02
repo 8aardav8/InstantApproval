@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:28:40.367516+00:00",
+  "generatedAt": "2026-11-02T22:29:36.703081+00:00",
   "listings": [
     {
       "id": "525-521-owen-st-saginaw-mi-48-607",
@@ -22,7 +22,7 @@
       "id": "8577-mark-twain-detroit-mi-48-228",
       "address": "8577 Mark Twain Detroit MI 48,228",
       "onMarketDate": "10/29",
-      "lastUpdate": "10/29",
+      "lastUpdate": "10/30",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$1,375",
@@ -1620,7 +1620,7 @@
       "id": "1117-w-packard-st-decatur-il-62522",
       "address": "1117 W Packard St, Decatur IL 62522",
       "onMarketDate": "9/17",
-      "lastUpdate": "10/11",
+      "lastUpdate": "10/30",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$895",
@@ -32730,7 +32730,7 @@
       "id": "1415-geeston-st-jackson-ms-39213",
       "address": "1415 Geeston St, Jackson, MS 39213",
       "onMarketDate": "9/16/2026",
-      "lastUpdate": "10/1/2026",
+      "lastUpdate": "10/30/2026",
       "area": "MS",
       "down": "$3,000",
       "monthly": "$1,095",
@@ -32738,7 +32738,7 @@
       "beds": "4",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.3513189,
       "lng": -90.1992732
