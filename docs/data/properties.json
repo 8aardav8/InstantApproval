@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:46:07.242134+00:00",
+  "generatedAt": "2026-11-02T22:46:37.613512+00:00",
   "listings": [
     {
       "id": "2539-e-28th-st-granite-city-il-62-040",
@@ -14540,7 +14540,7 @@
       "id": "2315-w-ann-st-peoria-il-61605",
       "address": "2315 W Ann St, Peoria, IL 61605",
       "onMarketDate": "9/17/2026",
-      "lastUpdate": "10/5/2026",
+      "lastUpdate": "10/30/2026",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$695",
@@ -14548,7 +14548,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1120",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 40.67974299999999,
       "lng": -89.62988810000002
