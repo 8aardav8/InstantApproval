@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:49:55.028714+00:00",
+  "generatedAt": "2026-11-02T22:50:33.224793+00:00",
   "listings": [
     {
       "id": "2539-e-28th-st-granite-city-il-62-040",
@@ -447,7 +447,7 @@
       "id": "3612-wabash-ave-jackson-ms-39205",
       "address": "3612 Wabash Ave Jackson MS 39205",
       "onMarketDate": "10/20",
-      "lastUpdate": "10/29",
+      "lastUpdate": "11/1",
       "area": "MS",
       "down": "$2,000",
       "monthly": "$840",
@@ -455,7 +455,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 32.3419898,
       "lng": -90.2085962
