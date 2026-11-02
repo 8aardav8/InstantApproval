@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-02T23:00:32.396159+00:00",
+  "generatedAt": "2026-11-02T23:01:11.402190+00:00",
   "listings": [
+    {
+      "id": "5420-queens-ave-saint-louis-mo-63-115",
+      "address": "5420 Queens Ave Saint Louis MO 63,115",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/MpP8Wmt92eq5PfKi6",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6912202,
+      "lng": -90.2389408
+    },
     {
       "id": "1308-richard-dr-cahokia-il-62-206",
       "address": "1308 Richard Dr. Cahokia IL 62,206",
