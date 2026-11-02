@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-02T22:37:46.602254+00:00",
+  "generatedAt": "2026-11-02T22:39:24.695983+00:00",
   "listings": [
+    {
+      "id": "2539-e-28th-st-granite-city-il-62-040",
+      "address": "2539 E. 28th St. Granite City IL 62,040",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/TdiUgJFNNbXPsXh1A",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7110829,
+      "lng": -90.1260121
+    },
     {
       "id": "1822-e-decatur-st-decatur-il-62-521",
       "address": "1822 E. Decatur St. Decatur IL 62,521",
