@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:50:33.224793+00:00",
+  "generatedAt": "2026-11-02T22:51:12.887860+00:00",
   "listings": [
     {
       "id": "2539-e-28th-st-granite-city-il-62-040",
@@ -396,7 +396,7 @@
       "id": "3437-oakdale-ave-st-louis-mo-63121-usa",
       "address": "3437 Oakdale Ave, St. Louis, MO 63121, USA",
       "onMarketDate": "10/22",
-      "lastUpdate": "10/22",
+      "lastUpdate": "11/1",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$975",
@@ -404,7 +404,7 @@
       "beds": "4",
       "baths": "1.5",
       "sqft": "1154",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6902507,
       "lng": -90.2831222
@@ -3745,7 +3745,7 @@
       "id": "8554-oriole-ave-st-louis-mo-63147",
       "address": "8554 Oriole Ave, St. Louis, MO 63147",
       "onMarketDate": "7/6",
-      "lastUpdate": "10/16/2026",
+      "lastUpdate": "11/1/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$700",
@@ -3753,7 +3753,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.7126917,
       "lng": -90.24028249999999
