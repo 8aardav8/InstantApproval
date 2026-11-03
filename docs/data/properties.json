@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T22:36:47.128007+00:00",
+  "generatedAt": "2026-11-03T22:39:58.154905+00:00",
   "listings": [
     {
       "id": "5420-queens-ave-saint-louis-mo-63-115",
@@ -141,7 +141,7 @@
       "id": "926-s-greenlawn-ave-peoria-il-61-605",
       "address": "926 S Greenlawn Ave. Peoria IL 61,605",
       "onMarketDate": "10/28",
-      "lastUpdate": "10/28",
+      "lastUpdate": "11/2",
       "area": "IL - Peoria",
       "down": "$3,000",
       "monthly": "$875",
@@ -149,7 +149,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "960",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.6782223,
       "lng": -89.62169449999999
