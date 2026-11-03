@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T22:46:45.966164+00:00",
+  "generatedAt": "2026-11-03T22:47:19.421502+00:00",
   "listings": [
     {
       "id": "205-w-dayton-street-flint-mi-48-505",
@@ -1059,7 +1059,7 @@
       "id": "3117-finley-st-middletown-oh-45044",
       "address": "3117 Finley St ,Middletown OH 45044",
       "onMarketDate": "10/4",
-      "lastUpdate": "10/21",
+      "lastUpdate": "11/3",
       "area": "OH",
       "down": "$3,000",
       "monthly": "$1,120",
@@ -1067,7 +1067,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "720",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.4809264,
       "lng": -84.39869139999999
