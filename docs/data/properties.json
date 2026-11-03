@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T22:43:46.986092+00:00",
+  "generatedAt": "2026-11-03T22:44:29.390257+00:00",
   "listings": [
     {
       "id": "205-w-dayton-street-flint-mi-48-505",
@@ -11938,7 +11938,7 @@
     {
       "id": "542-s-wall-street-winchester-in-47394",
       "address": "542 S Wall Street, Winchester, IN 47394",
-      "onMarketDate": "8/31/2025",
+      "onMarketDate": "11/2/2026",
       "lastUpdate": "4/27/2026",
       "area": "IN",
       "down": "$1,250",
@@ -11947,7 +11947,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "834",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 40.1666728,
       "lng": -84.9848774
