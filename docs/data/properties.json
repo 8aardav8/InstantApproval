@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T21:07:42.791767+00:00",
+  "generatedAt": "2026-11-03T22:36:47.128007+00:00",
   "listings": [
     {
       "id": "5420-queens-ave-saint-louis-mo-63-115",
@@ -532,7 +532,7 @@
       "id": "1546-e-division-st-decatur-il-62526",
       "address": "1546 E Division St Decatur IL 62526",
       "onMarketDate": "10/17",
-      "lastUpdate": "10/30",
+      "lastUpdate": "11/2",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$875",
@@ -540,7 +540,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "725",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.859663,
       "lng": -88.9354046
