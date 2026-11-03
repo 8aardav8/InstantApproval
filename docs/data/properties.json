@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T22:46:13.430231+00:00",
+  "generatedAt": "2026-11-03T22:46:45.966164+00:00",
   "listings": [
     {
       "id": "205-w-dayton-street-flint-mi-48-505",
@@ -8896,7 +8896,7 @@
       "id": "2820-ralph-street-granite-city-il-62040",
       "address": "2820 Ralph Street, Granite City, IL 62040",
       "onMarketDate": "9/6/2026",
-      "lastUpdate": "10/5/2026",
+      "lastUpdate": "11/3/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
       "monthly": "$650",
@@ -8904,7 +8904,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "870",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.7111379,
       "lng": -90.1268343
