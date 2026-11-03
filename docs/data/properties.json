@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T22:42:36.316099+00:00",
+  "generatedAt": "2026-11-03T22:43:04.039934+00:00",
   "listings": [
     {
       "id": "205-w-dayton-street-flint-mi-48-505",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,050",
       "picsLink": "https://www.dropbox.com/scl/fo/itsv7taph9z5fwwzs1jan/ANa78LGCJHZEZH_Giyr9oKg?rlkey=s918znb4wqwcjlhg8ritzuqgn&st=6zjjmzzk&dl=0",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1144",
       "status": "Available",
       "livability": 0,
       "lat": 43.0385178,
