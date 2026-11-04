@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T22:35:41.286077+00:00",
+  "generatedAt": "2026-11-04T22:36:20.484009+00:00",
   "listings": [
     {
       "id": "10122-cedarlawn-street-detroit-mi-48-204",
@@ -7,12 +7,12 @@
       "onMarketDate": "11/3",
       "lastUpdate": "11/3",
       "area": "MI",
-      "down": "",
-      "monthly": "",
+      "down": "$3,000",
+      "monthly": "$1,179",
       "picsLink": "https://www.dropbox.com/scl/fo/vucjshmiuc0e7qk27aelr/AGp26dZYjKVCEIO-hMe6sEk?rlkey=4skvl1mmujv17qj2x3imn84x0&st=z3tenmxb&dl=0",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "4",
+      "baths": "1",
+      "sqft": "1512",
       "status": "Available",
       "livability": 0,
       "lat": 42.3728822,
