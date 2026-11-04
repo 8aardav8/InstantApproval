@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T22:16:41.602780+00:00",
+  "generatedAt": "2026-11-04T22:17:01.189053+00:00",
   "listings": [
     {
       "id": "205-w-dayton-street-flint-mi-48-505",
@@ -2504,7 +2504,7 @@
       "id": "1527-n-oakland-ave-decatur-il-62526",
       "address": "1527 N Oakland Ave Decatur IL 62526",
       "onMarketDate": "8/27",
-      "lastUpdate": "10/27",
+      "lastUpdate": "11/3",
       "area": "IL - Decatur",
       "down": "$1,000",
       "monthly": "$725",
@@ -2512,7 +2512,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 0,
       "lat": 39.8579398,
       "lng": -88.9731669
