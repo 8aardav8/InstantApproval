@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-04T22:35:06.521289+00:00",
+  "generatedAt": "2026-11-04T22:35:41.286077+00:00",
   "listings": [
+    {
+      "id": "10122-cedarlawn-street-detroit-mi-48-204",
+      "address": "10122 Cedarlawn Street Detroit MI 48,204",
+      "onMarketDate": "11/3",
+      "lastUpdate": "11/3",
+      "area": "MI",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/vucjshmiuc0e7qk27aelr/AGp26dZYjKVCEIO-hMe6sEk?rlkey=4skvl1mmujv17qj2x3imn84x0&st=z3tenmxb&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.3728822,
+      "lng": -83.1608266
+    },
     {
       "id": "505-yale-street-saginaw-mi-48-602",
       "address": "505 Yale Street Saginaw MI 48,602",
