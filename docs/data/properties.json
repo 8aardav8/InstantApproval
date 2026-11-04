@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-04T22:25:13.682770+00:00",
+  "generatedAt": "2026-11-04T22:25:50.055328+00:00",
   "listings": [
+    {
+      "id": "1373-n-university-avenue-decatur-il-62-526",
+      "address": "1373 N University Avenue Decatur IL 62,526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1bcwQssrUM34yKCqb_Ektqyc3EZ5BTJeY?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.85609040000001,
+      "lng": -88.9754463
+    },
     {
       "id": "1947-sir-richard-ct-decatur-il-62-526",
       "address": "1947 Sir Richard Ct Decatur IL 62,526",
