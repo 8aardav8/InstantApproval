@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-04T22:32:51.856411+00:00",
+  "generatedAt": "2026-11-04T22:33:29.603596+00:00",
   "listings": [
+    {
+      "id": "505-yale-street-saginaw-mi-48-602",
+      "address": "505 Yale Street Saginaw MI 48,602",
+      "onMarketDate": "11/3",
+      "lastUpdate": "11/3",
+      "area": "MI",
+      "down": "$5,000",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fi/xmkb85o01ecv8d8miir1p/505-Yale-St-photos.zip?rlkey=4glac33grffcgd3cbgx9s9v0f&st=ns0hv1le&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.4188746,
+      "lng": -83.9821772
+    },
     {
       "id": "2041-warner-ave-flint-mi-48-503",
       "address": "2041 Warner Ave Flint MI 48,503",
