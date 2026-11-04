@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T20:20:49.516025+00:00",
+  "generatedAt": "2026-11-04T22:16:02.998581+00:00",
   "listings": [
     {
       "id": "205-w-dayton-street-flint-mi-48-505",
@@ -16019,7 +16019,7 @@
       "id": "909-s-maffit-st-decatur-il-62521",
       "address": "909 S Maffit St, Decatur, IL 62521",
       "onMarketDate": "8/30/2026",
-      "lastUpdate": "10/27/2026",
+      "lastUpdate": "11/3/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$825",
@@ -16027,7 +16027,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "830",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8317526,
       "lng": -88.9449712
