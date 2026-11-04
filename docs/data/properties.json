@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T22:43:11.173244+00:00",
+  "generatedAt": "2026-11-04T22:43:40.052398+00:00",
   "listings": [
     {
       "id": "1771-n-union-st-decatur-il-62-526",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/18esq5d7c5CXuJcCPQGueFyMEI2iVjb6t?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1124",
       "status": "Available",
       "livability": 0,
       "lat": 39.8604886,
