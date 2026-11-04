@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T22:24:08.601415+00:00",
+  "generatedAt": "2026-11-04T22:24:40.016324+00:00",
   "listings": [
     {
       "id": "1947-sir-richard-ct-decatur-il-62-526",
@@ -10,9 +10,9 @@
       "down": "$4,000",
       "monthly": "$1,400",
       "picsLink": "https://photos.app.goo.gl/pmANUbXFQRwvyBBS9",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1239",
       "status": "Available",
       "livability": 0,
       "lat": 39.8971277,
