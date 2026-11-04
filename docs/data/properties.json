@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-04T22:28:57.827195+00:00",
+  "generatedAt": "2026-11-04T22:30:25.793101+00:00",
   "listings": [
+    {
+      "id": "2041-warner-ave-flint-mi-48-503",
+      "address": "2041 Warner Ave Flint MI 48,503",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1o7k_42b0TTiAnB9_yE-BZqZ98ij4hnCy",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.004179,
+      "lng": -83.673684
+    },
     {
       "id": "1373-n-university-avenue-decatur-il-62-526",
       "address": "1373 N University Avenue Decatur IL 62,526",
