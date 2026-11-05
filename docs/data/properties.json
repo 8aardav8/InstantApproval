@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-05T22:27:40.529240+00:00",
+  "generatedAt": "2026-11-05T22:28:28.891536+00:00",
   "listings": [
+    {
+      "id": "1132-e-oak-st-springfield-il-62-703",
+      "address": "1132 E Oak St Springfield IL 62,703",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/W2CNYmg9EEw8SMdh8",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.7801746,
+      "lng": -89.63967749999999
+    },
     {
       "id": "4807-birchcrest-dr-flint-mi-48-504",
       "address": "4807 Birchcrest Dr Flint MI 48,504",
