@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T22:00:26.241411+00:00",
+  "generatedAt": "2026-11-05T22:03:39.938412+00:00",
   "listings": [
     {
       "id": "1771-n-union-st-decatur-il-62-526",
@@ -11641,7 +11641,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "787",
-      "status": "Available",
+      "status": "Sold",
       "livability": 4,
       "lat": 38.7316079,
       "lng": -90.2600586
