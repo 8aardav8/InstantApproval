@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-05T22:20:21.725715+00:00",
+  "generatedAt": "2026-11-05T22:21:09.265269+00:00",
   "listings": [
+    {
+      "id": "4807-birchcrest-dr-flint-mi-48-504",
+      "address": "4807 Birchcrest Dr Flint MI 48,504",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/BWtwrXHE93swRDMp8",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.0578028,
+      "lng": -83.7307347
+    },
     {
       "id": "1771-n-union-st-decatur-il-62-526",
       "address": "1771 N Union St Decatur IL 62,526",
