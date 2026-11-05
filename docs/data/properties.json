@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T22:24:07.705549+00:00",
+  "generatedAt": "2026-11-05T22:24:51.223269+00:00",
   "listings": [
     {
       "id": "4807-birchcrest-dr-flint-mi-48-504",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$850",
       "picsLink": "https://photos.app.goo.gl/BWtwrXHE93swRDMp8",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1.5",
+      "sqft": "878",
       "status": "Available",
       "livability": 0,
       "lat": 43.0578028,
@@ -25139,7 +25139,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 38.91132,
       "lng": -90.183467
