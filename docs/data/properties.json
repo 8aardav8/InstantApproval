@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T22:29:00.399155+00:00",
+  "generatedAt": "2026-11-05T22:29:42.012417+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -685,7 +685,7 @@
       "id": "1546-e-division-st-decatur-il-62526",
       "address": "1546 E Division St Decatur IL 62526",
       "onMarketDate": "10/17",
-      "lastUpdate": "11/2",
+      "lastUpdate": "11/4",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$875",
@@ -3932,7 +3932,7 @@
       "id": "8554-oriole-ave-st-louis-mo-63147",
       "address": "8554 Oriole Ave, St. Louis, MO 63147",
       "onMarketDate": "7/6",
-      "lastUpdate": "11/1/2026",
+      "lastUpdate": "11/4/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$700",
@@ -3940,7 +3940,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.7126917,
       "lng": -90.24028249999999
