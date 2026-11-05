@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T22:03:39.938412+00:00",
+  "generatedAt": "2026-11-05T22:05:09.458998+00:00",
   "listings": [
     {
       "id": "1771-n-union-st-decatur-il-62-526",
@@ -11628,23 +11628,6 @@
       "livability": 3,
       "lat": 38.71014479999999,
       "lng": -90.2287506
-    },
-    {
-      "id": "2525-tyrell-dr-st-louis-mo-63136",
-      "address": "2525 Tyrell Dr St Louis MO 63136",
-      "onMarketDate": "5/1/2026",
-      "lastUpdate": "5/1/2026",
-      "area": "MO - St. Louis",
-      "down": "$3,000",
-      "monthly": "$950",
-      "picsLink": "https://drive.google.com/drive/folders/18Zt_duZ6leup_X1UJJctJvPtFrEhxlDs?usp=drive_link",
-      "beds": "2",
-      "baths": "1",
-      "sqft": "787",
-      "status": "Sold",
-      "livability": 4,
-      "lat": 38.7316079,
-      "lng": -90.2600586
     },
     {
       "id": "740-valencia-st-jackson-ms-39204",
