@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T22:31:55.531182+00:00",
+  "generatedAt": "2026-11-05T22:32:42.857428+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -3235,7 +3235,7 @@
       "id": "314-clubview-dr-jackson-ms-39209",
       "address": "314 Clubview Dr, Jackson, MS 39209",
       "onMarketDate": "8/4",
-      "lastUpdate": "9/24",
+      "lastUpdate": "11/5",
       "area": "MS",
       "down": "$3,000",
       "monthly": "$1,095",
@@ -3243,7 +3243,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 32.3372416,
       "lng": -90.2575751
