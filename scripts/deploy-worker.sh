@@ -19,4 +19,5 @@ fi
 [ "$(git rev-list --count HEAD..origin/main)" -eq 0 ] || { echo "REFUSING: still behind origin/main." >&2; exit 1; }
 python3 scripts/check_no_private_links.py
 node --check admin/worker.js
+node tests/login-gate-test.mjs >/dev/null 2>&1 || { echo "REFUSING: sign-in gate tests failed. Run: node tests/login-gate-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml
