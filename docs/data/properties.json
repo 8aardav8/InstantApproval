@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-06T22:32:43.842185+00:00",
+  "generatedAt": "2026-11-06T22:33:21.661923+00:00",
   "listings": [
+    {
+      "id": "2317-reid-st-flint-mi-48-503",
+      "address": "2317 Reid St Flint MI 48,503",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1sm5wlUvyJp8dkgSX3vIk9jGbgjVYiIAx?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.0053628,
+      "lng": -83.7166464
+    },
     {
       "id": "814-n-west-st-alexandria-in-46-001",
       "address": "814 N West St Alexandria IN 46,001",
