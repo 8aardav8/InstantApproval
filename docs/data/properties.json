@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:07:36.248780+00:00",
+  "generatedAt": "2026-11-06T22:12:22.056297+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -16138,7 +16138,7 @@
       "id": "909-s-maffit-st-decatur-il-62521",
       "address": "909 S Maffit St, Decatur, IL 62521",
       "onMarketDate": "8/30/2026",
-      "lastUpdate": "11/3/2026",
+      "lastUpdate": "11/5/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$825",
@@ -16146,7 +16146,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "830",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8317526,
       "lng": -88.9449712
