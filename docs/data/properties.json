@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:36:58.084268+00:00",
+  "generatedAt": "2026-11-06T22:38:17.039083+00:00",
   "listings": [
     {
       "id": "2317-reid-st-flint-mi-48-503",
@@ -668,7 +668,7 @@
       "id": "3612-wabash-ave-jackson-ms-39205",
       "address": "3612 Wabash Ave Jackson MS 39205",
       "onMarketDate": "10/20",
-      "lastUpdate": "11/5",
+      "lastUpdate": "11/6",
       "area": "MS",
       "down": "$2,000",
       "monthly": "$840",
@@ -2011,7 +2011,7 @@
       "id": "4103-beachwood-ave-st-louis-mo-63121",
       "address": "4103 Beachwood Ave St. Louis MO 63121",
       "onMarketDate": "9/15",
-      "lastUpdate": "10/23",
+      "lastUpdate": "11/6",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$763",
@@ -2019,7 +2019,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.69667889999999,
       "lng": -90.27616599999999
