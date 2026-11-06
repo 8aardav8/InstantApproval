@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:40:58.887338+00:00",
+  "generatedAt": "2026-11-06T22:42:35.747398+00:00",
   "listings": [
     {
       "id": "2317-reid-st-flint-mi-48-503",
@@ -201,7 +201,7 @@
       "baths": "1.5",
       "sqft": "1248",
       "status": "Available",
-      "livability": 0,
+      "livability": 3,
       "lat": 38.6912202,
       "lng": -90.2389408
     },
