@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:19:23.860609+00:00",
+  "generatedAt": "2026-11-06T22:29:28.205034+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -15823,7 +15823,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 40.9432178,
       "lng": -90.3547619
