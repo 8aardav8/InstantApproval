@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-06T22:31:18.332920+00:00",
+  "generatedAt": "2026-11-06T22:31:54.821127+00:00",
   "listings": [
+    {
+      "id": "814-n-west-st-alexandria-in-46-001",
+      "address": "814 N West St Alexandria IN 46,001",
+      "onMarketDate": "11/5",
+      "lastUpdate": "11/5",
+      "area": "IN",
+      "down": "$3,000",
+      "monthly": "$950",
+      "picsLink": "https://drive.google.com/drive/folders/1BDqQmkXlR7YjgvT_Q83z-q9QIPhTCAOD?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.2701588,
+      "lng": -85.67711489999999
+    },
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
       "address": "1132 E Oak St Springfield IL 62,703",
