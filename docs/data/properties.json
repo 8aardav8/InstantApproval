@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:31:54.821127+00:00",
+  "generatedAt": "2026-11-06T22:32:43.842185+00:00",
   "listings": [
     {
       "id": "814-n-west-st-alexandria-in-46-001",
@@ -10,8 +10,8 @@
       "down": "$3,000",
       "monthly": "$950",
       "picsLink": "https://drive.google.com/drive/folders/1BDqQmkXlR7YjgvT_Q83z-q9QIPhTCAOD?usp=sharing",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
