@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:16:10.124940+00:00",
+  "generatedAt": "2026-11-06T22:16:42.702786+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -804,7 +804,7 @@
       "id": "3-pohlman-ln-saint-louis-mo-63136",
       "address": "3 Pohlman Ln, Saint Louis, MO 63136",
       "onMarketDate": "10/13",
-      "lastUpdate": "10/13",
+      "lastUpdate": "11/5",
       "area": "",
       "down": "$3,000",
       "monthly": "$1,250",
@@ -812,7 +812,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.7284761,
       "lng": -90.26142139999999
@@ -6533,7 +6533,7 @@
       "id": "1729-n-woodford-st-decatur-il-62526",
       "address": "1729 N Woodford St, Decatur, IL 62526",
       "onMarketDate": "9/11/2026",
-      "lastUpdate": "10/21/2026",
+      "lastUpdate": "11/5/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$695",
@@ -6541,7 +6541,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "728",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8598889,
       "lng": -88.9365179
