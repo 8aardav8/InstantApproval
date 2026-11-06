@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:17:19.150281+00:00",
+  "generatedAt": "2026-11-06T22:17:59.750827+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -906,7 +906,7 @@
       "id": "4824-margaretta-ave-saint-louis-mo-63115",
       "address": "4824 Margaretta Ave Saint Louis MO 63115",
       "onMarketDate": "10/11",
-      "lastUpdate": "11/1",
+      "lastUpdate": "11/5",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -4272,7 +4272,7 @@
       "id": "7000-florence-pl-saint-louis-mo-63136",
       "address": "7000 Florence Pl, Saint Louis, MO 63136",
       "onMarketDate": "7/23/2025",
-      "lastUpdate": "10/27/2026",
+      "lastUpdate": "11/5/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$575",
@@ -4280,7 +4280,7 @@
       "beds": "1",
       "baths": "1",
       "sqft": "764",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.7101507,
       "lng": -90.2670105
@@ -4603,7 +4603,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8576243,
       "lng": -88.9340902
