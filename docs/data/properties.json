@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T22:16:42.702786+00:00",
+  "generatedAt": "2026-11-06T22:17:19.150281+00:00",
   "listings": [
     {
       "id": "1132-e-oak-st-springfield-il-62-703",
@@ -6142,7 +6142,7 @@
       "id": "5586-era-ave-st-louis-mo-63136",
       "address": "5586 Era Ave St. Louis, MO 63136",
       "onMarketDate": "8/29/2025",
-      "lastUpdate": "10/27/2026",
+      "lastUpdate": "11/5/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$415",
@@ -6150,7 +6150,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "850",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.7092708,
       "lng": -90.2551117
@@ -6159,7 +6159,7 @@
       "id": "4424-marcus-ave-st-louis-mo-63115",
       "address": "4424 Marcus Ave, St. Louis, MO 63115",
       "onMarketDate": "8/7/2025",
-      "lastUpdate": "10/27/2026",
+      "lastUpdate": "11/5/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$390",
@@ -6167,7 +6167,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6813466,
       "lng": -90.2371976
