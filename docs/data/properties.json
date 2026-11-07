@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T15:33:20.168772+00:00",
+  "generatedAt": "2026-11-07T15:42:56.454367+00:00",
   "listings": [
     {
       "id": "2317-reid-st-flint-mi-48-503",
@@ -6142,7 +6142,7 @@
       "id": "529-n-2nd-st-witt-il-62094",
       "address": "529 N 2nd St, Witt, IL 62094",
       "onMarketDate": "11/7/2025",
-      "lastUpdate": "10/25/2026",
+      "lastUpdate": "11/6/2026",
       "area": "IL - Rural",
       "down": "$1,000",
       "monthly": "$574",
@@ -6150,7 +6150,7 @@
       "beds": "",
       "baths": "",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.2600152,
       "lng": -89.3514962
