@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-07T19:52:03.337208+00:00",
+  "generatedAt": "2026-11-07T19:55:03.140468+00:00",
   "listings": [
+    {
+      "id": "1432-richard-dr-cahokia-il-62206",
+      "address": "1432 Richard Dr Cahokia IL 62206",
+      "onMarketDate": "11/6",
+      "lastUpdate": "11/6",
+      "area": "IL - East St Louis",
+      "down": "$3,000",
+      "monthly": "$895",
+      "picsLink": "https://drive.google.com/drive/folders/1TclOtN1nLefZAcOI9lm7CboPuja2Ndhl?usp=sharing",
+      "beds": "4",
+      "baths": "1",
+      "sqft": "988",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5578051,
+      "lng": -90.1635895
+    },
     {
       "id": "5085-lillibridge-street-detroit-mi-48213",
       "address": "5085 Lillibridge Street Detroit MI 48213",
