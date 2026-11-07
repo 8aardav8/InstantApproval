@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T14:30:37.942288+00:00",
+  "generatedAt": "2026-11-07T15:33:05.898344+00:00",
   "listings": [
     {
       "id": "2317-reid-st-flint-mi-48-503",
@@ -28378,7 +28378,7 @@
       "id": "231-w-grand-ave-decatur-il-62522",
       "address": "231 W Grand Ave, Decatur, IL 62522",
       "onMarketDate": "9/9/2026",
-      "lastUpdate": "10/28/2026",
+      "lastUpdate": "11/6/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$895",
@@ -28386,7 +28386,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1189",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8546423,
       "lng": -88.9584953
