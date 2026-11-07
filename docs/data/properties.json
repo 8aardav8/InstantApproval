@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-07T17:58:28.727576+00:00",
+  "generatedAt": "2026-11-07T19:51:49.806795+00:00",
   "listings": [
+    {
+      "id": "5085-lillibridge-street-detroit-mi-48213",
+      "address": "5085 Lillibridge Street Detroit MI 48213",
+      "onMarketDate": "11/6",
+      "lastUpdate": "11/6",
+      "area": "MI",
+      "down": "$3,000",
+      "monthly": "$1,179",
+      "picsLink": "https://www.dropbox.com/scl/fo/5f94ktbu80vnaj6t59nc5/ADuT2G9aTR8vs8rNDu7ZYKU?rlkey=f14d9mwn222hdxisp93nv98c1&st=34witw53&dl=0",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1206",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.3874507,
+      "lng": -82.9872608
+    },
     {
       "id": "2317-reid-st-flint-mi-48-503",
       "address": "2317 Reid St Flint MI 48,503",
