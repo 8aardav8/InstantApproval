@@ -6288,7 +6288,7 @@ async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) 
   try {
     const res = await fetch(`${ADMIN_API_URL}/admin/browse-id-photos`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
-    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't load: ${(data && data.error) || res.status}</p>`; return; }
+    if (!res.ok || data.error) { panel.innerHTML = `<p>Couldn't load: ${escapeHtml((data && (data.detail || data.error)) || String(res.status))}</p>`; return; }
     const files = data.files || [];
     if (files.length === 0) { panel.innerHTML = "<p>No unassociated ID photos found in the Dropbox folder.</p>"; return; }
 

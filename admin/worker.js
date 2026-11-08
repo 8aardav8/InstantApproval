@@ -3980,7 +3980,10 @@ async function handleAdminBrowseIdPhotos(request, env) {
     });
     if (!linksRes.ok) throw new Error(`id-link column read failed: ${await linksRes.text()}`);
     const linksData = await linksRes.json();
-    const storedRefs = (linksData.values || []).map((row) => (row[0] || "").trim()).filter(Boolean);
+    // slice(1): row 1 is the column's own header ("ID Link"). Counting it
+    // made hasLegacy always true, so every unlinked file cost a Dropbox call
+    // and the folder outgrew the 50-subrequest cap (2026-11-08, tests/browse-ids-test.mjs).
+    const storedRefs = (linksData.values || []).slice(1).map((row) => (row[0] || "").trim()).filter(Boolean);
     const linkedKeys = new Set(storedRefs.map(idRefKey));
     const hasLegacy = storedRefs.some((r) => !isIdFileRef(r));
     // OCR cache lookup, added 2026-09-14 per Aaron's direct request ("OCR
@@ -4022,6 +4025,7 @@ async function handleAdminBrowseIdPhotos(request, env) {
     }
     return jsonResponse({ files: unassociated });
   } catch (e) {
+    console.error("browse-id-photos failed:", String(e));
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
 }
