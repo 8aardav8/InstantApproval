@@ -2179,7 +2179,7 @@ async function handleAdminSetAreas(request, env) {
     // the Sheet had all three correctly. Calling ensureBuyerInCache first
     // guarantees a cache entry exists (creating a minimal one via a real
     // Quo lookup if needed) before any patch call below ever runs.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     const areasCsv = areas.join(", ");
     const row = await findLoginsRowByPhone(accessToken, phone);
@@ -2232,7 +2232,7 @@ async function handleAdminAddAppointment(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2319,7 +2319,7 @@ async function handleAdminSetSentiment(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2354,7 +2354,7 @@ async function handleAdminSetStage(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2409,7 +2409,7 @@ async function handleAdminSetDepositProperty(request, env) {
   if (address.length > 200) return jsonResponse({ error: "address too long" }, 400);
 
   try {
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2447,7 +2447,7 @@ async function handleAdminSetIdName(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2668,7 +2668,7 @@ async function handleAdminSetHidden(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2705,7 +2705,7 @@ async function handleAdminSetDnc(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     let row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) {
@@ -2761,7 +2761,7 @@ async function handleAdminSetCoBuyer(request, env) {
 
   try {
     // See handleAdminSetAreas' own comment for why this runs first.
-    await syncBuyerToSheet(env, toE164(phone));
+    await syncBuyerToSheet(env, toE164(phone), undefined, false); // an admin edit is not Quo activity (2026-11-08)
     const accessToken = await getSheetsAccessToken(env);
     // Find-or-create, same convention as writeSentiment/writeStage/
     // writeHidden's own handlers -- a BUYERS-tab-only lead has no App:
@@ -2948,7 +2948,7 @@ async function handleInternalResyncBuyer(request, env) {
   const e164Phone = toE164(phone);
 
   try {
-    await syncBuyerToSheet(env, e164Phone);
+    await syncBuyerToSheet(env, e164Phone, undefined, false);
     const accessToken = await getSheetsAccessToken(env);
     const row = await findLoginsRowByPhone(accessToken, e164Phone);
     if (!row) return jsonResponse({ error: "no Sheet row for this phone even after syncBuyerToSheet -- real bug, not a timing issue" }, 500);
@@ -3816,7 +3816,7 @@ async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, 
 
   let syncError = null;
   try {
-    await syncBuyerToSheet(env, toE164(buyerPhone), undefined, true, quoMaxPages);
+    await syncBuyerToSheet(env, toE164(buyerPhone), undefined, false, quoMaxPages);
   } catch (e) {
     syncError = String(e);
   }
@@ -5275,7 +5275,11 @@ function deriveAreasFromQuoName(name) {
 // Quo walk is now skipped entirely when the row already has both Quo Link
 // and Quo Name -- everything it feeds is fill-a-gap only, so a full walk
 // for an already-filled row was pure subrequest spend.
-async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = true, quoMaxPages = 40) {
+// touchActivity stamps "Last Activity (Quo)" (AK) with now. Only a real
+// Quo message (handleQuoMessageWebhook) may pass true: admin edits used to
+// stamp it, so the Buyers list showed "last contact by text" at whatever
+// time Aaron last clicked something (2026-11-08, tests/activity-stamp-test.mjs).
+async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = false, quoMaxPages = 40) {
   const accessToken = await getSheetsAccessToken(env);
   const nowIso = new Date().toISOString();
 
@@ -5425,7 +5429,7 @@ async function handleQuoMessageWebhook(request, env) {
   // lives here. ctx.waitUntil isn't available in this handler's own scope
   // (it's called from the main fetch() below, not given ctx directly), so
   // this is awaited inline; best-effort/swallows its own errors either way.
-  if (fromE164) await syncBuyerToSheet(env, fromE164);
+  if (fromE164) await syncBuyerToSheet(env, fromE164, undefined, true);
 
   if (!fromE164 || !/^(yes|y|confirm|ok)\b/i.test(text)) {
     return jsonResponse({ ok: true }); // not an affirmative reply, nothing to do
