@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-08T03:54:16.839101+00:00",
+  "generatedAt": "2026-11-08T03:54:52.707841+00:00",
   "listings": [
+    {
+      "id": "1815-w-butler-st-peoria-il-61605",
+      "address": "1815 W Butler St Peoria IL 61605",
+      "onMarketDate": "11/6",
+      "lastUpdate": "11/6",
+      "area": "IL - Peoria",
+      "down": "$1,500",
+      "monthly": "$850",
+      "picsLink": "https://drive.google.com/drive/folders/1kLE9dMKcJ8CReLPBjEBulhr_E8RrtscW",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "819",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.6842623,
+      "lng": -89.62137969999999
+    },
     {
       "id": "870-south-stone-st-decatur-il-62521",
       "address": "870 South Stone St Decatur IL 62521",
