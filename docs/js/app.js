@@ -5433,7 +5433,7 @@ function renderBuyerDetail(buyer) {
       <div class="buyer-compose">
         ${suggested.length ? `<div class="buyer-snippet-chips">${suggested.map((s) => `<button type="button" class="btn-outline buyer-snippet-chip" data-snippet="${escapeAttr(s.id)}">⭐ ${escapeHtml(s.label)}</button>`).join("")}</div>` : ""}
         <button type="button" class="btn-outline buyer-snippet-edit">✏️ Edit snippets</button>
-        <select id="buyer-snippet-select"><option value="">More snippets…</option>${MESSAGE_SNIPPETS.map((s) => `<option value="${escapeAttr(s.id)}">${escapeHtml(s.label)}</option>`).join("")}</select>
+        <select id="buyer-snippet-select"><option value="">More snippets…</option>${MESSAGE_SNIPPETS.map((s) => `<option value="${escapeAttr(s.id)}" data-snippet="${escapeAttr(s.id)}">${escapeHtml(s.label)}</option>`).join("")}</select>
         <textarea id="buyer-compose-text" rows="3" placeholder="Type a message…"></textarea>
         ${buyer.dnc ? `<p class="buyer-send-blocked">Marked Do Not Contact: sending is off for this buyer.</p>` : `<button id="buyer-send-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Send</button>`}
         <div id="buyer-send-status"></div>
@@ -5460,13 +5460,21 @@ function renderBuyerDetail(buyer) {
   {
     const section = container.querySelector(".buyer-messages-section");
     let loaded = false;
-    section.addEventListener("toggle", () => { if (section.open) { loadSnippetTexts(true); if (!loaded) { loaded = true; loadBuyerMessages(buyer.phone); } } });
+    // Names edited on the Text Templates page replace the code labels.
+    const relabel = () => loadSnippetTexts().then((saved) => {
+      container.querySelectorAll("[data-snippet]").forEach((el) => {
+        const name = saved[el.dataset.snippet] && saved[el.dataset.snippet].label;
+        if (name) el.textContent = el.tagName === "OPTION" ? name : `⭐ ${name}`;
+      });
+    });
+    relabel();
+    section.addEventListener("toggle", () => { if (section.open) { loadSnippetTexts(true); relabel(); if (!loaded) { loaded = true; loadBuyerMessages(buyer.phone); } } });
     const textEl = container.querySelector("#buyer-compose-text");
     const insert = async (id) => {
       const s = MESSAGE_SNIPPETS.find((x) => x.id === id);
       if (!s) return;
-      const saved = await loadSnippetTexts();
-      textEl.value = fillSnippet(saved[id] || s.text, snippetFirstName, snippetCtx);
+      const saved = (await loadSnippetTexts())[id];
+      textEl.value = fillSnippet((saved && saved.text) || s.text, snippetFirstName, snippetCtx);
       textEl.focus();
     };
     container.querySelector(".buyer-snippet-edit").addEventListener("click", () => {
@@ -6454,56 +6462,69 @@ async function loadBuyerMessages(phone) {
   }
 }
 
-// Message snippets. Quo's API has no snippets endpoint (checked 2026-09-11),
-// so they live here. Restored 2026-11-08 with page-aware suggestions (Aaron:
-// "a handful of message snippets that I can quickly send to people based on
-// what I'm seeing on their buyer page"). `when` decides whether a snippet is
-// suggested for this buyer; every snippet stays available under "More".
-// Tokens: {name} first name, {exp} ID expiry, {address}/{date} next viewing.
+// Buyer-page message snippets. Redrafted 2026-11-08 for check-ins and
+// follow-ups only (Aaron: "most conversations will be happening in the
+// interface. So if I see something like some site activity ... that's when
+// I would just send a quick check in or quick follow up"). "ID expiring"
+// stays because it answers the buyer site's own expiring-ID notice.
+// `when` decides whether a snippet is starred for this buyer; every snippet
+// stays available under "More". Names and wording come from the Text
+// Templates tab (snippet_<id> rows); the label/text here are the fallback.
+// Tokens: {name} first name, {exp} ID expiry, {address}/{date} next viewing
+// (or the most recent one, if none is coming up).
 // Pure (no DOM) so tests/snippets-test.mjs can check it.
 const MESSAGE_SNIPPETS = [
-  { id: "send-id", label: "Send your ID", when: (c) => !c.hasId && !c.textedPhotos,
-    text: "Hi {name}, this is Aaron with Instant Approval Homes. To get you set up to see homes, please text a clear photo of the front of your driver's license or state ID." },
-  { id: "id-photo-again", label: "ID photo again", when: (c) => !c.hasId && c.textedPhotos,
-    text: "Hi {name}, thanks for sending that! Could you send one more photo of just the front of your ID, flat on a table in good light, so we can read it?" },
-  { id: "new-id", label: "New ID needed", when: (c) => c.hasId && c.idExpiresSoon,
-    text: "Hi {name}, the ID we have on file expires {exp}. When you get a chance, please text a photo of your new one." },
-  { id: "see-homes", label: "See homes online", when: (c) => !c.signedIn,
-    text: "Hi {name}, you can see all of our available homes, with prices and photos, at instantapprovalhomes.com. Sign in with this phone number to get started." },
-  { id: "want-a-viewing", label: "Want to see one?", when: (c) => c.signedIn && !c.nextViewing,
-    text: "Hi {name}, I noticed you've been looking at homes on our site. Is there one you'd like to see in person? I can set up a time." },
-  { id: "viewing-reminder", label: "Viewing reminder", when: (c) => !!c.nextViewing,
-    text: "Hi {name}, just confirming your appointment to see {address} on {date}. Reply here if anything changes." },
-  { id: "following-up", label: "Following up", when: () => false,
-    text: "Hi {name}, just following up on the home you were looking at. Still interested? Happy to answer any questions." },
-  { id: "no-longer-available", label: "No longer available", when: () => false,
-    text: "Hi {name}, thanks for your interest. That home is no longer available, but I have similar ones if you'd like to see them." },
+  { id: "id-expiring", label: "ID expiring", when: (c) => c.hasId && c.idExpiresSoon,
+    text: "Hi {name}, it's Aaron with Instant Approval Homes. Quick heads up: the ID we have on file expires {exp}. When you get a chance, just text me a photo of your new one." },
+  { id: "saw-favorites", label: "Saw your favorites", when: (c) => c.hasFavorites && !c.nextViewing,
+    text: "Hi {name}, it's Aaron with Instant Approval Homes. I saw you saved a few homes on our site. Want me to set up a time to see any of them?" },
+  { id: "saw-you-online", label: "Saw you on the site", when: (c) => c.activeRecently && !c.hasFavorites && !c.nextViewing,
+    text: "Hi {name}, it's Aaron with Instant Approval Homes. Saw you were looking at homes on our site. Anything catch your eye? Happy to help." },
+  { id: "after-viewing", label: "After your viewing", when: (c) => c.viewedRecently && !c.nextViewing,
+    text: "Hi {name}, thanks for coming out to see {address}. What did you think? Happy to answer any questions." },
+  { id: "checking-in", label: "Checking in", when: (c) => c.signedIn && c.quiet && !c.nextViewing,
+    text: "Hi {name}, it's Aaron with Instant Approval Homes, just checking in. Are you still looking for a home? Let me know if I can help." },
+  { id: "finish-signing-in", label: "Finish signing in", when: (c) => !c.signedIn,
+    text: "Hi {name}, it's Aaron with Instant Approval Homes. Just following up: you can see all our homes, with prices and photos, at instantapprovalhomes.com. Sign in with this phone number to get started." },
 ];
 
 function buyerSnippetContext(buyer, lm, todayIso) {
+  const day = (iso) => new Date(`${iso}T00:00:00`);
+  const daysFromToday = (iso) => (day(iso) - day(todayIso)) / 86400000;
   const exp = lm && lm.idExp && /^\d{4}-\d{2}-\d{2}$/.test(lm.idExp) ? lm.idExp : "";
-  const soon = exp ? (new Date(`${exp}T00:00:00`) - new Date(`${todayIso}T00:00:00`)) / 86400000 <= 30 : false;
-  const next = ((lm && lm.appointments) || []).filter((a) => a.date >= todayIso && a.status !== "Canceled" && a.status !== "Completed").sort((x, y) => x.date.localeCompare(y.date))[0] || null;
+  const appts = ((lm && lm.appointments) || []).filter((a) => a.date && a.status !== "Canceled");
+  const next = appts.filter((a) => a.date >= todayIso && a.status !== "Completed").sort((x, y) => x.date.localeCompare(y.date))[0] || null;
+  const last = appts.filter((a) => a.date < todayIso || a.status === "Completed").sort((x, y) => y.date.localeCompare(x.date))[0] || null;
+  const login = lm && lm.lastLogin ? new Date(lm.lastLogin) : null;
+  const loginDays = login && !isNaN(login.getTime()) ? (day(todayIso) - login) / 86400000 : null;
   return {
     hasId: !!(lm && lm.idLink),
-    textedPhotos: !!(buyer.possibleIdImages && buyer.possibleIdImages.length),
-    idExpiresSoon: soon,
+    idExpiresSoon: exp ? daysFromToday(exp) <= 30 : false,
     exp,
     signedIn: !!(lm && lm.lastLogin),
+    activeRecently: loginDays !== null && loginDays <= 3,
+    quiet: loginDays !== null && loginDays > 14,
+    hasFavorites: !!(lm && lm.favorites && lm.favorites.length),
     nextViewing: next,
+    lastViewing: last,
+    viewedRecently: !!last && daysFromToday(last.date) >= -7,
   };
 }
 
-// Snippet wording lives in the Text Templates tab (keys "snippet_<id>"), so
-// Aaron edits it on the Text Templates page with no deploy (2026-11-08:
-// "I'd like to pre-edit a handful of snippets"). The texts above are the
-// fallback if the Sheet can't be read. Re-read each time Messages opens.
+// Snippet names and wording live in the Text Templates tab (keys
+// "snippet_<id>"), so Aaron edits both on the Text Templates page with no
+// deploy (2026-11-08: "I'd like to pre-edit a handful of snippets"; "I also
+// wanted to be able to update the names of the snippets"). The code values
+// above are the fallback if the Sheet can't be read. Re-read each time
+// Messages opens.
 let snippetTextsPromise = null;
+// Sheet labels read "Snippet: <name>"; the name is what Aaron edits.
+function snippetLabelFromSheet(label) { return (label || "").replace(/^\s*snippet:\s*/i, "").trim(); }
 function loadSnippetTexts(refresh = false) {
   if (refresh || !snippetTextsPromise) {
     snippetTextsPromise = fetch(`${ADMIN_API_URL}/admin/text-templates`, { headers: { Authorization: `Bearer ${getStoredAdminToken()}` } })
       .then((r) => r.json())
-      .then((d) => Object.fromEntries((d.templates || []).filter((x) => x.key.startsWith("snippet_") && x.text.trim()).map((x) => [x.key.slice(8), x.text])))
+      .then((d) => Object.fromEntries((d.templates || []).filter((x) => x.key.startsWith("snippet_")).map((x) => [x.key.slice(8), { text: x.text.trim() ? x.text : "", label: snippetLabelFromSheet(x.label) }])))
       .catch(() => ({}));
   }
   return snippetTextsPromise;
@@ -6511,12 +6532,13 @@ function loadSnippetTexts(refresh = false) {
 
 function fillSnippet(text, firstName, c) {
   const nice = (iso) => { if (!iso) return ""; const d = new Date(`${iso}T12:00:00`); return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
+  const viewing = c.nextViewing || c.lastViewing;
   // {{field}} (Text Templates style) and {field} both work.
   return text
     .replace(/\{\{?name\}\}?/g, firstName || "there")
     .replace(/\{\{?exp\}\}?/g, nice(c.exp) || "soon")
-    .replace(/\{\{?address\}\}?/g, (c.nextViewing && c.nextViewing.address) || "the home")
-    .replace(/\{\{?date\}\}?/g, nice(c.nextViewing && c.nextViewing.date) || "the scheduled day");
+    .replace(/\{\{?address\}\}?/g, (viewing && viewing.address) || "the home")
+    .replace(/\{\{?date\}\}?/g, nice(viewing && viewing.date) || "the scheduled day");
 }
 
 async function sendBuyerMessage(phone) {
@@ -7329,7 +7351,9 @@ function renderTextTemplates(templates) {
   if (templates.length === 0) { list.innerHTML = "<p>No templates found.</p>"; return; }
   list.innerHTML = templates.map((t) => `
     <div class="template-card" data-key="${escapeAttr(t.key)}">
-      <h3 class="template-label">${escapeHtml(t.label || t.key)}</h3>
+      ${t.key.startsWith("snippet_")
+        ? `<label class="template-name-row">Snippet name <input type="text" class="template-name-input" maxlength="40" value="${escapeAttr(snippetLabelFromSheet(t.label))}"></label>`
+        : `<h3 class="template-label">${escapeHtml(t.label || t.key)}</h3>`}
       <textarea class="template-textarea" rows="5">${escapeHtml(t.text)}</textarea>
       ${t.mergeFields ? `<div class="template-merge-fields">Merge fields: <code>${escapeHtml(t.mergeFields)}</code></div>` : ""}
       <div class="template-save-row">
@@ -7343,22 +7367,25 @@ function renderTextTemplates(templates) {
     btn.addEventListener("click", () => {
       const card = btn.closest(".template-card");
       const textarea = card.querySelector(".template-textarea");
-      saveTextTemplate(btn.dataset.key, textarea.value, card.querySelector(".template-save-status"));
+      const nameInput = card.querySelector(".template-name-input");
+      saveTextTemplate(btn.dataset.key, textarea.value, card.querySelector(".template-save-status"), nameInput ? nameInput.value.trim() : undefined);
     });
   });
 }
 
-async function saveTextTemplate(key, text, statusEl) {
+async function saveTextTemplate(key, text, statusEl, name) {
   statusEl.textContent = "Saving…";
   const token = getStoredAdminToken();
   try {
     const res = await fetch(`${ADMIN_API_URL}/admin/set-text-template`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ key, text }),
+      body: JSON.stringify(name === undefined ? { key, text } : { key, text, label: `Snippet: ${name}` }),
     });
     const data = await res.json();
     if (!res.ok || !data.ok) { statusEl.textContent = `Couldn't save: ${(data && data.error) || res.status}`; return; }
+    // An older worker ignores the name; say so instead of a false "Saved."
+    if (name !== undefined && !data.labelSaved) { statusEl.textContent = "Wording saved, but the name didn't save."; return; }
     statusEl.textContent = "Saved.";
     setTimeout(() => { if (statusEl.isConnected) statusEl.textContent = ""; }, 2500);
   } catch (err) {

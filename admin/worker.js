@@ -2539,6 +2539,15 @@ async function handleAdminSetTextTemplate(request, env) {
   const key = (body.key || "").trim();
   const text = body.text || "";
   if (!key) return jsonResponse({ error: "missing key" }, 400);
+  // Snippet names are editable (2026-11-08, Aaron: "I also wanted to be able
+  // to update the names of the snippets"). Only snippet_ rows: the
+  // appointment templates' labels stay fixed. Column B, "Snippet: <name>".
+  let label = null;
+  if (body.label !== undefined && key.startsWith("snippet_")) {
+    const name = String(body.label).replace(/^\s*snippet:\s*/i, "").trim().slice(0, 40);
+    if (!name) return jsonResponse({ error: "snippet name can't be blank" }, 400);
+    label = `Snippet: ${name}`;
+  }
 
   try {
     const accessToken = await getSheetsAccessToken(env);
@@ -2574,7 +2583,15 @@ async function handleAdminSetTextTemplate(request, env) {
     ]);
     if (!textRes.ok) throw new Error(`text-templates write failed: ${await textRes.text()}`);
     if (!updatedRes.ok) throw new Error(`text-templates timestamp write failed: ${await updatedRes.text()}`);
-    return jsonResponse({ ok: true });
+    if (label !== null) {
+      const labelRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!B${row}:B${row}`)}?valueInputOption=RAW`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ range: `'${TEXT_TEMPLATES_TAB}'!B${row}:B${row}`, values: [[label]] }),
+      });
+      if (!labelRes.ok) throw new Error(`text-templates name write failed: ${await labelRes.text()}`);
+    }
+    return jsonResponse({ ok: true, labelSaved: label !== null });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
