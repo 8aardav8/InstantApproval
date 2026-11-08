@@ -1158,6 +1158,8 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* Shown Properties (editable) + its add row, added 2026-09-11 */
 .shown-property-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.deposit-property-check { flex: 0 0 auto; margin-left: auto; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
+.deposit-property-check input { width: 16px; height: 16px; margin: 0; }
 .shown-remove-btn { flex: 0 0 auto; background: none; border: none; color: #b91c1c; font-size: 12px; cursor: pointer; padding: 2px 6px; }
 /* Date(s) shown, added 2026-09-14 per Aaron's direct request -- right
    underneath the address, same small gray-text treatment as the rest of

@@ -2369,6 +2369,61 @@ async function handleAdminSetStage(request, env) {
   }
 }
 
+// Deposit Property -- added 2026-11-07 per Aaron ("On the buyer page, Next
+// to viewed properties, I can check a box on the one that the deposit was
+// made on."). Holds the one address this buyer's deposit is for; the
+// appointment-notifier worker reads it to fill that buyer's Trello card on
+// the SF - FILLING board. Found by header text, never a fixed letter (the
+// Hidden/Sentiment/Stage lesson above): a missing header throws instead of
+// writing into the wrong column.
+async function writeDepositProperty(accessToken, row, address) {
+  const hdrRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!1:1`)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!hdrRes.ok) throw new Error(`deposit property header read failed: ${await hdrRes.text()}`);
+  const headers = ((await hdrRes.json()).values || [[]])[0] || [];
+  const ci = headers.indexOf("Deposit Property");
+  if (ci < 0) throw new Error("App: Logins has no 'Deposit Property' header");
+  let col = "", n = ci + 1;
+  while (n > 0) { const m = (n - 1) % 26; col = String.fromCharCode(65 + m) + col; n = Math.floor((n - 1) / 26); }
+  const cell = `${LOGINS_TAB}!${col}${row}:${col}${row}`;
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cell)}?valueInputOption=RAW`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: cell, values: [[address]] }),
+  });
+  if (!res.ok) throw new Error(`deposit property write failed: ${await res.text()}`);
+}
+
+async function handleAdminSetDepositProperty(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const phone = (body.phone || "").trim();
+  const fullName = (body.fullName || "").trim();
+  const address = (body.address || "").trim(); // "" clears it
+  if (!phone) return jsonResponse({ error: "missing phone" }, 400);
+  if (address.length > 200) return jsonResponse({ error: "address too long" }, 400);
+
+  try {
+    await syncBuyerToSheet(env, toE164(phone));
+    const accessToken = await getSheetsAccessToken(env);
+    let row = await findLoginsRowByPhone(accessToken, phone);
+    if (!row) {
+      await appendLoginsRow(accessToken, toE164(phone), fullName, "");
+      row = await findLoginsRowByPhone(accessToken, phone);
+      if (!row) throw new Error("could not find or create a row for this buyer");
+    }
+    await writeDepositProperty(accessToken, row, address);
+    return jsonResponse({ ok: true, depositProperty: address });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Manually corrects the OCR'd ID Name (AG) -- added 2026-09-14 per Aaron's
 // direct request ("I would be able to click to edit this name if it
 // doesn't look right"). Previously only ever written by the OCR pipeline
@@ -5693,6 +5748,9 @@ async function route(request, env) {
   }
   if (url.pathname === "/admin/set-stage" && request.method === "POST") {
     return handleAdminSetStage(request, env);
+  }
+  if (url.pathname === "/admin/set-deposit-property" && request.method === "POST") {
+    return handleAdminSetDepositProperty(request, env);
   }
   if (url.pathname === "/admin/set-id-name" && request.method === "POST") {
     return handleAdminSetIdName(request, env);

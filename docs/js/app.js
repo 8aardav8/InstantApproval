@@ -5083,6 +5083,11 @@ function renderBuyerDetail(buyer) {
     shownDatesByAddress.get(a.address).push(a.date);
   }
   for (const dates of shownDatesByAddress.values()) dates.sort((x, y) => y.localeCompare(x));
+  // Deposit Property -- added 2026-11-07 per Aaron: a checkbox next to each
+  // shown house marks the one the deposit was made on. One at a time:
+  // checking another moves it; unchecking clears it. The notifier worker
+  // copies it onto the buyer's Trello card (SF - FILLING board).
+  const depositProperty = (lm && lm.depositProperty) || "";
   const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => {
     const dates = shownDatesByAddress.get(address) || [];
     const datesHtml = dates.length
@@ -5094,10 +5099,18 @@ function renderBuyerDetail(buyer) {
         <span>${escapeHtml(address)}</span>
         ${datesHtml}
       </div>
+      <label class="deposit-property-check" title="The house this buyer's deposit is for (fills their Trello card)">
+        <input type="checkbox" class="deposit-property-cb" data-address="${escapeAttr(address)}"${depositProperty === address ? " checked" : ""}> Deposit
+      </label>
       ${lm && lm.row ? `<button type="button" class="shown-remove-btn" data-row="${lm.row}" data-address="${escapeAttr(address)}">Remove</button>` : ""}
     </div>
   `;
   }).join("");
+  // Deposit property set some other way (e.g. typed into the Sheet) and not
+  // in Shown -- still show it so the page never hides what the card uses.
+  const depositElsewhereHtml = depositProperty && !(lm && lm.shown || []).includes(depositProperty)
+    ? `<div class="buyer-list-item shown-property-item"><div><span>${escapeHtml(depositProperty)}</span><div class="shown-property-dates">Deposit property (not in Shown)</div></div><label class="deposit-property-check"><input type="checkbox" class="deposit-property-cb" data-address="${escapeAttr(depositProperty)}" checked> Deposit</label></div>`
+    : "";
   const shownAddHtml = lm && lm.row ? `
     <div class="shown-add-row">
       <div class="autocomplete-wrap">
@@ -5107,7 +5120,7 @@ function renderBuyerDetail(buyer) {
       <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark shown</button>
     </div>
   ` : "";
-  const shownHtml = `<div class="buyer-section"><h3>Shown Properties${lm && lm.shown && lm.shown.length ? ` (${lm.shown.length})` : ""}</h3>${shownListHtml}${shownAddHtml}</div>`;
+  const shownHtml = `<div class="buyer-section"><h3>Shown Properties${lm && lm.shown && lm.shown.length ? ` (${lm.shown.length})` : ""}</h3>${shownListHtml}${depositElsewhereHtml}${shownAddHtml}</div>`;
 
   // Split into Scheduled (today or later) vs Past, added 2026-09-11 per
   // Aaron's direct request -- previously one flat list with no distinction.
@@ -5628,7 +5641,32 @@ function renderBuyerDetail(buyer) {
   if (scheduleApptOpenBtn) scheduleApptOpenBtn.addEventListener("click", () => openScheduleApptLightbox(scheduleApptOpenBtn.dataset.phone));
   container.querySelectorAll(".shown-remove-btn").forEach((btn) => {
     btn.addEventListener("click", () => markShown(Number(btn.dataset.row), btn.dataset.address, "remove", buyer.phone));
+  });  container.querySelectorAll(".deposit-property-cb").forEach((cb) => {
+    cb.addEventListener("change", () => setDepositProperty(buyer, cb.checked ? cb.dataset.address : ""));
   });
+}
+
+// Saves the Deposit Property (2026-11-07). Re-renders from the saved value,
+// so a failed save shows the box back the way it was.
+async function setDepositProperty(buyer, address) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-deposit-property`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: buyer.phone, address }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't save deposit property: ${(data && data.error) || res.status}`); }
+    else {
+      if (!buyer.loginsMatch) buyer.loginsMatch = {};
+      buyer.loginsMatch.depositProperty = address;
+    }
+  } catch (err) {
+    alert(`Couldn't save deposit property: ${err}`);
+  }
+  const refreshed = findBuyer(buyer.phone) || buyer;
+  renderBuyerDetail(refreshed);
 }
 
 // Calls the PRODUCTION admin worker (needs Sheets write) -- see
