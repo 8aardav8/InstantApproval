@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-08T08:54:01.679623+00:00",
+  "generatedAt": "2026-11-08T08:57:49.943825+00:00",
   "listings": [
     {
       "id": "1815-w-butler-st-peoria-il-61605",
@@ -444,14 +444,14 @@
       "lng": -88.94128959999999
     },
     {
-      "id": "660-e-van-buren-ave-decatur-il-62-526",
-      "address": "660 E Van Buren Ave Decatur IL 62,526",
+      "id": "660-e-van-buren-ave-decatur-il-62526",
+      "address": "660 E Van Buren Ave Decatur IL 62526",
       "onMarketDate": "10/26",
       "lastUpdate": "10/30",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,030",
-      "picsLink": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/ikwng7b4smkfq1fjeo9hq/AOKW3XDAyb9tIVhqkTbuWDo?rlkey=66jd70qsoiohzyru2avi2m67z&st=avycx93u&dl=0",
       "beds": "2",
       "baths": "1",
       "sqft": "792",
