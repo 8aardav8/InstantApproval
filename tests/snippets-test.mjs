@@ -19,5 +19,6 @@ const c = buyerSnippetContext({}, { idLink: 'id:x', idExp: '2026-11-18', appoint
 eq('fills name, expiry, address, date', fillSnippet('{name}|{exp}|{address}|{date}', 'Pat', c), 'Pat|Wed, Nov 18|1 Example St|Tue, Nov 10');
 eq('unknown name falls back', fillSnippet('Hi {name}', '', c), 'Hi there');
 eq('every snippet fills with no leftover tokens', MESSAGE_SNIPPETS.every((s) => !/\{[a-z]+\}/.test(fillSnippet(s.text, 'Pat', c))), true);
+eq('Text Templates style {{name}} works too', fillSnippet('Hi {{name}}, see {{address}}', 'Pat', c), 'Hi Pat, see 1 Example St');
 console.log(`\n${fail} failed`);
 process.exit(fail ? 1 : 0);

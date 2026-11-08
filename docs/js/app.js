@@ -5432,6 +5432,7 @@ function renderBuyerDetail(buyer) {
       <div id="buyer-messages-list"></div>
       <div class="buyer-compose">
         ${suggested.length ? `<div class="buyer-snippet-chips">${suggested.map((s) => `<button type="button" class="btn-outline buyer-snippet-chip" data-snippet="${escapeAttr(s.id)}">⭐ ${escapeHtml(s.label)}</button>`).join("")}</div>` : ""}
+        <button type="button" class="btn-outline buyer-snippet-edit">✏️ Edit snippets</button>
         <select id="buyer-snippet-select"><option value="">More snippets…</option>${MESSAGE_SNIPPETS.map((s) => `<option value="${escapeAttr(s.id)}">${escapeHtml(s.label)}</option>`).join("")}</select>
         <textarea id="buyer-compose-text" rows="3" placeholder="Type a message…"></textarea>
         ${buyer.dnc ? `<p class="buyer-send-blocked">Marked Do Not Contact: sending is off for this buyer.</p>` : `<button id="buyer-send-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Send</button>`}
@@ -5459,9 +5460,18 @@ function renderBuyerDetail(buyer) {
   {
     const section = container.querySelector(".buyer-messages-section");
     let loaded = false;
-    section.addEventListener("toggle", () => { if (section.open && !loaded) { loaded = true; loadBuyerMessages(buyer.phone); } });
+    section.addEventListener("toggle", () => { if (section.open) { loadSnippetTexts(true); if (!loaded) { loaded = true; loadBuyerMessages(buyer.phone); } } });
     const textEl = container.querySelector("#buyer-compose-text");
-    const insert = (id) => { const s = MESSAGE_SNIPPETS.find((x) => x.id === id); if (s) { textEl.value = fillSnippet(s.text, snippetFirstName, snippetCtx); textEl.focus(); } };
+    const insert = async (id) => {
+      const s = MESSAGE_SNIPPETS.find((x) => x.id === id);
+      if (!s) return;
+      const saved = await loadSnippetTexts();
+      textEl.value = fillSnippet(saved[id] || s.text, snippetFirstName, snippetCtx);
+      textEl.focus();
+    };
+    container.querySelector(".buyer-snippet-edit").addEventListener("click", () => {
+      activateTab("templates");
+    });
     container.querySelectorAll(".buyer-snippet-chip").forEach((b) => b.addEventListener("click", () => insert(b.dataset.snippet)));
     container.querySelector("#buyer-snippet-select").addEventListener("change", (e) => { insert(e.target.value); e.target.value = ""; });
     const sendBtn = container.querySelector("#buyer-send-btn");
@@ -6484,13 +6494,29 @@ function buyerSnippetContext(buyer, lm, todayIso) {
   };
 }
 
+// Snippet wording lives in the Text Templates tab (keys "snippet_<id>"), so
+// Aaron edits it on the Text Templates page with no deploy (2026-11-08:
+// "I'd like to pre-edit a handful of snippets"). The texts above are the
+// fallback if the Sheet can't be read. Re-read each time Messages opens.
+let snippetTextsPromise = null;
+function loadSnippetTexts(refresh = false) {
+  if (refresh || !snippetTextsPromise) {
+    snippetTextsPromise = fetch(`${ADMIN_API_URL}/admin/text-templates`, { headers: { Authorization: `Bearer ${getStoredAdminToken()}` } })
+      .then((r) => r.json())
+      .then((d) => Object.fromEntries((d.templates || []).filter((x) => x.key.startsWith("snippet_") && x.text.trim()).map((x) => [x.key.slice(8), x.text])))
+      .catch(() => ({}));
+  }
+  return snippetTextsPromise;
+}
+
 function fillSnippet(text, firstName, c) {
   const nice = (iso) => { if (!iso) return ""; const d = new Date(`${iso}T12:00:00`); return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
+  // {{field}} (Text Templates style) and {field} both work.
   return text
-    .replace(/\{name\}/g, firstName || "there")
-    .replace(/\{exp\}/g, nice(c.exp) || "soon")
-    .replace(/\{address\}/g, (c.nextViewing && c.nextViewing.address) || "the home")
-    .replace(/\{date\}/g, nice(c.nextViewing && c.nextViewing.date) || "the scheduled day");
+    .replace(/\{\{?name\}\}?/g, firstName || "there")
+    .replace(/\{\{?exp\}\}?/g, nice(c.exp) || "soon")
+    .replace(/\{\{?address\}\}?/g, (c.nextViewing && c.nextViewing.address) || "the home")
+    .replace(/\{\{?date\}\}?/g, nice(c.nextViewing && c.nextViewing.date) || "the scheduled day");
 }
 
 async function sendBuyerMessage(phone) {
