@@ -1926,10 +1926,30 @@ async function getDropboxAccessToken(env) {
 // updated ID), the filename comes out identical -- handled as an intentional
 // overwrite (see mode: "overwrite" below), not an error, since same-name
 // plus same-phone is a strong signal it's genuinely the same person.
-function buildIdFilename(fullName, phone, originalFilename) {
+// Quo names carry trailing tags ("Velvia S Foree ESTL TB", "Kristopher
+// Vorte Little Rock TB", "Sabrina Gordon Filler FAM1"). Filenames must use
+// the person's name only: the tag used to become the "last name"
+// ("ESTL, Velvia Foree", 2026-11-08). Strips trailing ALL-CAPS tokens,
+// known area words and "Filler", always keeping at least two words.
+// Checked by tests/id-filename-test.mjs.
+const ID_NAME_TAG_WORDS = /^(?:filler|little|rock|springfield|east|west|memphis|st\.?|saint|louis)$/i;
+function personNameFromQuoName(fullName) {
   const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
+  while (parts.length > 2) {
+    const last = parts[parts.length - 1];
+    if (/^[A-Z0-9]{2,}$/.test(last) || ID_NAME_TAG_WORDS.test(last)) parts.pop();
+    else break;
+  }
+  return parts.join(" ");
+}
+
+function buildIdFilename(fullName, phone, originalFilename) {
+  const parts = personNameFromQuoName(fullName).split(/\s+/).filter(Boolean);
+  // A generational suffix ("3rd", "Jr", "III") isn't the last name: "Walter
+  // Holder 3rd" -> "Holder, Walter 3rd", not "3rd, Walter Holder".
+  const suffix = parts.length > 2 && /^(?:jr|sr|ii|iii|iv|\d+(?:st|nd|rd|th))\.?$/i.test(parts[parts.length - 1]) ? parts.pop() : "";
   const last = parts.length > 1 ? parts[parts.length - 1] : (parts[0] || "Unknown");
-  const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : "";
+  const first = [parts.length > 1 ? parts.slice(0, -1).join(" ") : "", suffix].filter(Boolean).join(" ");
   const digits = (phone || "").replace(/\D/g, "");
   const last4 = digits.slice(-4) || "0000";
   const extMatch = /\.([a-zA-Z0-9]+)$/.exec(originalFilename || "");
@@ -3785,7 +3805,11 @@ async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, 
   }
 
   const originalFilename = dropboxPath.split("/").pop() || "";
-  const targetName = buildIdFilename(buyerName, buyerPhone, originalFilename);
+  // Keep an expiry already in the name (" - exp 2027-02-18" or "_exp_2027-02-18"):
+  // id-photo-watch reads it from the filename for expiry alerts.
+  const expMatch = /[\s_-]exp[\s_-]+(\d{4}-\d{2}-\d{2}|lifetime)/i.exec(originalFilename);
+  const baseName = buildIdFilename(buyerName, buyerPhone, originalFilename);
+  const targetName = expMatch ? baseName.replace(/(\.[A-Za-z0-9]+)$/, ` - exp ${expMatch[1]}$1`) : baseName;
   const targetPath = `${DROPBOX_IDS_FOLDER}/${targetName}`;
   let finalPath = dropboxPath;
   if (targetName !== originalFilename) {
