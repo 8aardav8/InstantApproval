@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-07T23:39:48.869151+00:00",
+  "generatedAt": "2026-11-08T03:49:29.469238+00:00",
   "listings": [
+    {
+      "id": "870-south-stone-st-decatur-il-62521",
+      "address": "870 South Stone St Decatur IL 62521",
+      "onMarketDate": "11/6",
+      "lastUpdate": "11/6",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "$900",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8321852,
+      "lng": -88.9382795
+    },
     {
       "id": "1432-richard-dr-cahokia-il-62206",
       "address": "1432 Richard Dr Cahokia IL 62206",
