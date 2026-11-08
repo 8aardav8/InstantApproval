@@ -5420,12 +5420,32 @@ function renderBuyerDetail(buyer) {
     </div>
   `;
 
+  // Messages, restored 2026-11-08 under a collapsed section (Aaron: "bring
+  // that back, but just put it under an accordion"). The thread loads only
+  // when opened. Sending still asks for confirmation; DNC buyers can't be sent to.
+  const snippetCtx = buyerSnippetContext(buyer, lm, localTodayISO());
+  const snippetFirstName = (personalName || "").split(/\s+/)[0] || "";
+  const suggested = MESSAGE_SNIPPETS.filter((s) => s.when(snippetCtx));
+  const messagesHtml = `
+    <details class="buyer-section buyer-messages-section" data-phone="${escapeAttr(buyer.phone)}">
+      <summary><h3>💬 Messages</h3></summary>
+      <div id="buyer-messages-list"></div>
+      <div class="buyer-compose">
+        ${suggested.length ? `<div class="buyer-snippet-chips">${suggested.map((s) => `<button type="button" class="btn-outline buyer-snippet-chip" data-snippet="${escapeAttr(s.id)}">⭐ ${escapeHtml(s.label)}</button>`).join("")}</div>` : ""}
+        <select id="buyer-snippet-select"><option value="">More snippets…</option>${MESSAGE_SNIPPETS.map((s) => `<option value="${escapeAttr(s.id)}">${escapeHtml(s.label)}</option>`).join("")}</select>
+        <textarea id="buyer-compose-text" rows="3" placeholder="Type a message…"></textarea>
+        ${buyer.dnc ? `<p class="buyer-send-blocked">Marked Do Not Contact: sending is off for this buyer.</p>` : `<button id="buyer-send-btn" data-phone="${escapeAttr(buyer.phone)}" class="btn-primary">Send</button>`}
+        <div id="buyer-send-status"></div>
+      </div>
+    </details>`;
+
   container.innerHTML = `
     ${nameHeadingHtml}
     ${detailHeaderHtml}
     ${stageBlockHtml}
     <div class="buyer-id-section">${idPhoto}${idExpBadgeHtml(lm && lm.idExp)}</div>
     ${possibleIdHtml}
+    ${messagesHtml}
     ${areasBlockHtml}
     ${factsHtml}
     ${favScheduledHtml}
@@ -5435,6 +5455,18 @@ function renderBuyerDetail(buyer) {
     ${coBuyersHtml}
     ${filtersHtml}
   `;
+
+  {
+    const section = container.querySelector(".buyer-messages-section");
+    let loaded = false;
+    section.addEventListener("toggle", () => { if (section.open && !loaded) { loaded = true; loadBuyerMessages(buyer.phone); } });
+    const textEl = container.querySelector("#buyer-compose-text");
+    const insert = (id) => { const s = MESSAGE_SNIPPETS.find((x) => x.id === id); if (s) { textEl.value = fillSnippet(s.text, snippetFirstName, snippetCtx); textEl.focus(); } };
+    container.querySelectorAll(".buyer-snippet-chip").forEach((b) => b.addEventListener("click", () => insert(b.dataset.snippet)));
+    container.querySelector("#buyer-snippet-select").addEventListener("change", (e) => { insert(e.target.value); e.target.value = ""; });
+    const sendBtn = container.querySelector("#buyer-send-btn");
+    if (sendBtn) sendBtn.addEventListener("click", () => sendBuyerMessage(buyer.phone));
+  }
 
   // Light green outline for the whole page when this buyer is currently
   // logged in, added 2026-09-15 per Aaron's direct request -- same
@@ -6412,17 +6444,54 @@ async function loadBuyerMessages(phone) {
   }
 }
 
-// Real Quo (OpenPhone) API has no "snippets"/canned-reply endpoint (checked
-// directly, 2026-09-11 -- /v1/snippets doesn't exist), so this is our own
-// simple saved-reply list, edited here rather than pulled from Quo. "{name}"
-// is replaced with the buyer's first name (from their Quo contact name) when
-// inserted, falling back to "there" if unknown.
+// Message snippets. Quo's API has no snippets endpoint (checked 2026-09-11),
+// so they live here. Restored 2026-11-08 with page-aware suggestions (Aaron:
+// "a handful of message snippets that I can quickly send to people based on
+// what I'm seeing on their buyer page"). `when` decides whether a snippet is
+// suggested for this buyer; every snippet stays available under "More".
+// Tokens: {name} first name, {exp} ID expiry, {address}/{date} next viewing.
+// Pure (no DOM) so tests/snippets-test.mjs can check it.
 const MESSAGE_SNIPPETS = [
-  { label: "Following up", text: "Hi {name}, just following up on the home you were looking at — still interested? Happy to answer any questions." },
-  { label: "Appointment reminder", text: "Hi {name}, quick reminder about your upcoming appointment to view the property. Let me know if anything changes!" },
-  { label: "Send application link", text: "Hi {name}, here's the link to get started: instantapprovalhomes.com — let me know if you have trouble with anything." },
-  { label: "No longer available", text: "Hi {name}, thanks for your interest — that property is no longer available, but I have similar ones if you'd like to see them." },
+  { id: "send-id", label: "Send your ID", when: (c) => !c.hasId && !c.textedPhotos,
+    text: "Hi {name}, this is Aaron with Instant Approval Homes. To get you set up to see homes, please text a clear photo of the front of your driver's license or state ID." },
+  { id: "id-photo-again", label: "ID photo again", when: (c) => !c.hasId && c.textedPhotos,
+    text: "Hi {name}, thanks for sending that! Could you send one more photo of just the front of your ID, flat on a table in good light, so we can read it?" },
+  { id: "new-id", label: "New ID needed", when: (c) => c.hasId && c.idExpiresSoon,
+    text: "Hi {name}, the ID we have on file expires {exp}. When you get a chance, please text a photo of your new one." },
+  { id: "see-homes", label: "See homes online", when: (c) => !c.signedIn,
+    text: "Hi {name}, you can see all of our available homes, with prices and photos, at instantapprovalhomes.com. Sign in with this phone number to get started." },
+  { id: "want-a-viewing", label: "Want to see one?", when: (c) => c.signedIn && !c.nextViewing,
+    text: "Hi {name}, I noticed you've been looking at homes on our site. Is there one you'd like to see in person? I can set up a time." },
+  { id: "viewing-reminder", label: "Viewing reminder", when: (c) => !!c.nextViewing,
+    text: "Hi {name}, just confirming your appointment to see {address} on {date}. Reply here if anything changes." },
+  { id: "following-up", label: "Following up", when: () => false,
+    text: "Hi {name}, just following up on the home you were looking at. Still interested? Happy to answer any questions." },
+  { id: "no-longer-available", label: "No longer available", when: () => false,
+    text: "Hi {name}, thanks for your interest. That home is no longer available, but I have similar ones if you'd like to see them." },
 ];
+
+function buyerSnippetContext(buyer, lm, todayIso) {
+  const exp = lm && lm.idExp && /^\d{4}-\d{2}-\d{2}$/.test(lm.idExp) ? lm.idExp : "";
+  const soon = exp ? (new Date(`${exp}T00:00:00`) - new Date(`${todayIso}T00:00:00`)) / 86400000 <= 30 : false;
+  const next = ((lm && lm.appointments) || []).filter((a) => a.date >= todayIso && a.status !== "Canceled" && a.status !== "Completed").sort((x, y) => x.date.localeCompare(y.date))[0] || null;
+  return {
+    hasId: !!(lm && lm.idLink),
+    textedPhotos: !!(buyer.possibleIdImages && buyer.possibleIdImages.length),
+    idExpiresSoon: soon,
+    exp,
+    signedIn: !!(lm && lm.lastLogin),
+    nextViewing: next,
+  };
+}
+
+function fillSnippet(text, firstName, c) {
+  const nice = (iso) => { if (!iso) return ""; const d = new Date(`${iso}T12:00:00`); return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
+  return text
+    .replace(/\{name\}/g, firstName || "there")
+    .replace(/\{exp\}/g, nice(c.exp) || "soon")
+    .replace(/\{address\}/g, (c.nextViewing && c.nextViewing.address) || "the home")
+    .replace(/\{date\}/g, nice(c.nextViewing && c.nextViewing.date) || "the scheduled day");
+}
 
 async function sendBuyerMessage(phone) {
   const token = getStoredAdminToken();

@@ -1378,3 +1378,13 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   border: 1px solid #e5e7eb; background: #f3f4f6; min-height: 130px;
 }
 .appt-buyer-group-id-warning { font-size: 36px; line-height: 1; }
+
+/* Messages accordion + snippet chips on the buyer page, 2026-11-08 */
+.buyer-messages-section summary { cursor: pointer; list-style: none; }
+.buyer-messages-section summary h3 { display: inline; }
+.buyer-messages-section[open] summary { margin-bottom: 8px; }
+.buyer-snippet-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.buyer-snippet-chip { font-size: 13px; padding: 4px 10px; }
+.buyer-compose select, .buyer-compose textarea { width: 100%; box-sizing: border-box; margin: 6px 0; font: inherit; }
+.buyer-send-blocked { color: #b91c1c; font-size: 13px; }
+
