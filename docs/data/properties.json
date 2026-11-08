@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-08T03:51:11.428419+00:00",
+  "generatedAt": "2026-11-08T03:51:28.905326+00:00",
   "listings": [
     {
       "id": "870-south-stone-st-decatur-il-62521",
@@ -1144,7 +1144,7 @@
       "id": "138-s-18th-st-decatur-il-62521",
       "address": "138 S 18th St Decatur IL 62521",
       "onMarketDate": "10/8/2026",
-      "lastUpdate": "10/12/2026",
+      "lastUpdate": "11/6/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,042",
@@ -1152,7 +1152,7 @@
       "beds": "4",
       "baths": "1.5",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8412516,
       "lng": -88.93230319999999
