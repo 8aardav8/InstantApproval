@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:21:00.926221+00:00",
+  "generatedAt": "2026-11-09T22:21:45.052746+00:00",
   "listings": [
     {
       "id": "1815-w-butler-st-peoria-il-61605",
@@ -260,7 +260,7 @@
       "id": "5420-queens-ave-saint-louis-mo-63-115",
       "address": "5420 Queens Ave Saint Louis MO 63,115",
       "onMarketDate": "11/2",
-      "lastUpdate": "11/2",
+      "lastUpdate": "11/7",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$1,250",
@@ -268,7 +268,7 @@
       "beds": "4",
       "baths": "1.5",
       "sqft": "1248",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6912202,
       "lng": -90.2389408
@@ -1875,7 +1875,7 @@
       "id": "523-grace-st-flint-mi-48503",
       "address": "523 Grace St. Flint MI 48503",
       "onMarketDate": "9/21",
-      "lastUpdate": "10/16",
+      "lastUpdate": "11/7",
       "area": "MI",
       "down": "$2,000",
       "monthly": "$799",
