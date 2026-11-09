@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-09T22:32:00.017870+00:00",
+  "generatedAt": "2026-11-09T22:32:32.097111+00:00",
   "listings": [
     {
       "id": "2000-aycock-ave-new-bern-nc-28-562",
       "address": "2000 Aycock Ave New Bern NC 28,562",
-      "onMarketDate": "",
-      "lastUpdate": "",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "onMarketDate": "11/8",
+      "lastUpdate": "11/8",
+      "area": "NC",
+      "down": "$2,000",
+      "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/1xFc4DDBTG-YLE9wmBIcEvKhoygjNAKkp",
       "beds": "",
       "baths": "",
