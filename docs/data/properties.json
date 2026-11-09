@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:29:43.649393+00:00",
+  "generatedAt": "2026-11-09T22:30:25.306164+00:00",
   "listings": [
     {
       "id": "19459-harned-street-detroit-mi-48-234",
@@ -3218,7 +3218,7 @@
       "id": "221-e-cherry-st-moweaqua-il-62550",
       "address": "221 E Cherry St Moweaqua IL 62550",
       "onMarketDate": "8/7",
-      "lastUpdate": "10/12",
+      "lastUpdate": "11/8",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$1,095",
@@ -3226,7 +3226,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1030",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.6208572,
       "lng": -89.0174219
@@ -16121,10 +16121,10 @@
       "id": "1971-e-cantrell-st-decatur-il-62521",
       "address": "1971 E Cantrell St, Decatur, IL 62521",
       "onMarketDate": "10/29/2026",
-      "lastUpdate": "10/29/2026",
+      "lastUpdate": "11/8/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
-      "monthly": "$961",
+      "monthly": "$800",
       "picsLink": "https://drive.google.com/drive/folders/10yCD6rE8sFCmlWIcIT_jyhnILEsG73NQ?usp=sharing",
       "beds": "3",
       "baths": "1",
