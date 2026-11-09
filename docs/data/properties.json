@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-09T22:24:29.593821+00:00",
+  "generatedAt": "2026-11-09T22:25:00.477600+00:00",
   "listings": [
+    {
+      "id": "19459-harned-street-detroit-mi-48-234",
+      "address": "19459 Harned Street Detroit MI 48,234",
+      "onMarketDate": "11/7",
+      "lastUpdate": "11/7",
+      "area": "MI",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.avail.com/l/61693440",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 42.4377687,
+      "lng": -83.07395819999999
+    },
     {
       "id": "1815-w-butler-st-peoria-il-61605",
       "address": "1815 W Butler St Peoria IL 61605",
