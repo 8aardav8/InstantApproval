@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T21:48:40.450006+00:00",
+  "generatedAt": "2026-11-09T22:17:21.451690+00:00",
   "listings": [
     {
       "id": "1815-w-butler-st-peoria-il-61605",
@@ -4731,7 +4731,7 @@
       "id": "1252-e-whitmer-st-decatur-il-62521",
       "address": "1252 E Whitmer St Decatur IL 62521",
       "onMarketDate": "7/19",
-      "lastUpdate": "10/30",
+      "lastUpdate": "11/6",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$915",
@@ -4739,7 +4739,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "861",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8354404,
       "lng": -88.939149
