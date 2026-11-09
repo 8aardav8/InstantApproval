@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-09T22:31:19.654960+00:00",
+  "generatedAt": "2026-11-09T22:32:00.017870+00:00",
   "listings": [
+    {
+      "id": "2000-aycock-ave-new-bern-nc-28-562",
+      "address": "2000 Aycock Ave New Bern NC 28,562",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1xFc4DDBTG-YLE9wmBIcEvKhoygjNAKkp",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 35.0952106,
+      "lng": -77.0667345
+    },
     {
       "id": "19459-harned-street-detroit-mi-48-234",
       "address": "19459 Harned Street Detroit MI 48,234",
