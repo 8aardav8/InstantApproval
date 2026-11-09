@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:27:53.461901+00:00",
+  "generatedAt": "2026-11-09T22:28:34.536697+00:00",
   "listings": [
     {
       "id": "19459-harned-street-detroit-mi-48-234",
@@ -56,7 +56,7 @@
       "id": "1432-richard-dr-cahokia-il-62206",
       "address": "1432 Richard Dr Cahokia IL 62206",
       "onMarketDate": "11/6",
-      "lastUpdate": "11/6",
+      "lastUpdate": "11/8",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$895",
@@ -64,7 +64,7 @@
       "beds": "4",
       "baths": "1",
       "sqft": "988",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.5578051,
       "lng": -90.1635895
@@ -141,7 +141,7 @@
       "id": "4807-birchcrest-dr-flint-mi-48-504",
       "address": "4807 Birchcrest Dr Flint MI 48,504",
       "onMarketDate": "11/4",
-      "lastUpdate": "11/4",
+      "lastUpdate": "11/8",
       "area": "MI",
       "down": "$2,500",
       "monthly": "$850",
@@ -149,7 +149,7 @@
       "beds": "3",
       "baths": "1.5",
       "sqft": "878",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 43.0578028,
       "lng": -83.7307347
