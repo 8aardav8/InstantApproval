@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:32:32.097111+00:00",
+  "generatedAt": "2026-11-09T22:34:21.410545+00:00",
   "listings": [
     {
       "id": "2000-aycock-ave-new-bern-nc-28-562",
@@ -10,9 +10,9 @@
       "down": "$2,000",
       "monthly": "$875",
       "picsLink": "https://drive.google.com/drive/folders/1xFc4DDBTG-YLE9wmBIcEvKhoygjNAKkp",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "1",
+      "baths": "1",
+      "sqft": "500",
       "status": "Available",
       "livability": 0,
       "lat": 35.0952106,
