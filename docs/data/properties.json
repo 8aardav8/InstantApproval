@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-09T22:34:21.410545+00:00",
+  "generatedAt": "2026-11-09T22:35:11.871104+00:00",
   "listings": [
+    {
+      "id": "2508-arden-ave-saint-louis-mo-63-121",
+      "address": "2508 Arden Ave Saint Louis MO 63,121",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1BkFQQ6uIfGTvSUrg4VE9MHSJtnAxzNJJ",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.6886036,
+      "lng": -90.2809754
+    },
     {
       "id": "2000-aycock-ave-new-bern-nc-28-562",
       "address": "2000 Aycock Ave New Bern NC 28,562",
