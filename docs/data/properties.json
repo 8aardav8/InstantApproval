@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:44:15.409049+00:00",
+  "generatedAt": "2026-11-09T22:45:00.510170+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -515,7 +515,7 @@
       "id": "307-w-sycamore-street-carbondale-il-62901",
       "address": "307 W. Sycamore Street Carbondale IL 62901",
       "onMarketDate": "10/26",
-      "lastUpdate": "10/26",
+      "lastUpdate": "11/9",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$865",
@@ -1790,7 +1790,7 @@
       "id": "1322-williams-st-cahokia-il-62206",
       "address": "1322 Williams St, Cahokia, IL 62206",
       "onMarketDate": "9/24",
-      "lastUpdate": "11/6/2026",
+      "lastUpdate": "11/9/2026",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$775",
@@ -1798,7 +1798,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.5606643,
       "lng": -90.1656718
