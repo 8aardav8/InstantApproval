@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:25:00.477600+00:00",
+  "generatedAt": "2026-11-09T22:25:35.080567+00:00",
   "listings": [
     {
       "id": "19459-harned-street-detroit-mi-48-234",
@@ -7,11 +7,11 @@
       "onMarketDate": "11/7",
       "lastUpdate": "11/7",
       "area": "MI",
-      "down": "",
-      "monthly": "",
+      "down": "$3,575",
+      "monthly": "$1,275",
       "picsLink": "https://www.avail.com/l/61693440",
-      "beds": "",
-      "baths": "",
+      "beds": "3",
+      "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
