@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:28:34.536697+00:00",
+  "generatedAt": "2026-11-09T22:29:03.428151+00:00",
   "listings": [
     {
       "id": "19459-harned-street-detroit-mi-48-234",
@@ -4680,7 +4680,7 @@
       "id": "7205-calvin-ave-saint-louis-mo-63136",
       "address": "7205 Calvin Ave, Saint Louis, MO 63136",
       "onMarketDate": "4/21/2026",
-      "lastUpdate": "7/26/2026",
+      "lastUpdate": "11/8/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$750",
@@ -4688,7 +4688,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "832",
-      "status": "Sold",
+      "status": "Available",
       "livability": 2,
       "lat": 38.7195247,
       "lng": -90.2672238
