@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:21:45.052746+00:00",
+  "generatedAt": "2026-11-09T22:22:18.669768+00:00",
   "listings": [
     {
       "id": "1815-w-butler-st-peoria-il-61605",
@@ -3762,7 +3762,7 @@
       "id": "1180-n-summit-ave-decatur-il-62522",
       "address": "1180 N Summit Ave, Decatur IL 62522",
       "onMarketDate": "7/23",
-      "lastUpdate": "10/20",
+      "lastUpdate": "11/7",
       "area": "IL - Decatur",
       "down": "$1,800",
       "monthly": "$675",
@@ -3770,7 +3770,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "720",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8532458,
       "lng": -88.98667499999999
