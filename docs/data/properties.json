@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:22:18.669768+00:00",
+  "generatedAt": "2026-11-09T22:22:54.364208+00:00",
   "listings": [
     {
       "id": "1815-w-butler-st-peoria-il-61605",
@@ -7638,7 +7638,7 @@
       "id": "1073-w-packard-st-decatur-il-62522",
       "address": "1073 W Packard St Decatur IL 62522",
       "onMarketDate": "6/27",
-      "lastUpdate": "10/13/2026",
+      "lastUpdate": "11/7/2026",
       "area": "IL - Decatur",
       "down": "$2,200",
       "monthly": "$950",
@@ -7646,7 +7646,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "804",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.852049,
       "lng": -88.9722736
@@ -8522,7 +8522,7 @@
       "id": "305-w-7th-st-cahokia-il-62206",
       "address": "305 W 7th St, Cahokia, IL 62206",
       "onMarketDate": "8/31/2026",
-      "lastUpdate": "8/31/2026",
+      "lastUpdate": "11/7/2026",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$918",
@@ -8530,7 +8530,7 @@
       "beds": "2",
       "baths": "1.5",
       "sqft": "728",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.5660396,
       "lng": -90.1955074
