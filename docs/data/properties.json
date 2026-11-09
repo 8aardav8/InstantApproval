@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T22:42:58.105565+00:00",
+  "generatedAt": "2026-11-09T22:44:15.409049+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -17600,7 +17600,7 @@
       "id": "6331-windham-ave-saint-louis-mo-63120",
       "address": "6331 Windham Ave, Saint Louis, MO 63120",
       "onMarketDate": "11/5/2026",
-      "lastUpdate": "11/5/2026",
+      "lastUpdate": "11/9/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$995",
@@ -27603,7 +27603,7 @@
       "picsLink": "https://drive.google.com/drive/u/1/folders/1m_QOZV4mn8GX7JL0-RF1mN8wwUne4RCY",
       "beds": "3",
       "baths": "2",
-      "sqft": "",
+      "sqft": "1512",
       "status": "Available",
       "livability": 0,
       "lat": 39.8555832,
