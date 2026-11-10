@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T22:44:34.694405+00:00",
+  "generatedAt": "2026-11-10T22:45:00.530127+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -328,7 +328,7 @@
       "id": "1308-richard-dr-cahokia-il-62-206",
       "address": "1308 Richard Dr. Cahokia IL 62,206",
       "onMarketDate": "11/1",
-      "lastUpdate": "11/1",
+      "lastUpdate": "11/10",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$1,075",
@@ -336,7 +336,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.5609511,
       "lng": -90.167425
