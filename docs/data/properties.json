@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T16:04:40.129553+00:00",
+  "generatedAt": "2026-11-10T20:01:33.224946+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -257,8 +257,8 @@
       "lng": -83.673684
     },
     {
-      "id": "1373-n-university-avenue-decatur-il-62-526",
-      "address": "1373 N University Avenue Decatur IL 62,526",
+      "id": "1373-n-university-avenue-decatur-il-62526",
+      "address": "1373 N University Avenue Decatur IL 62526",
       "onMarketDate": "11/3",
       "lastUpdate": "11/6",
       "area": "IL - Decatur",
@@ -11973,11 +11973,11 @@
       "id": "5637-jennings-station-road-stl-mo-63136",
       "address": "5637 Jennings Station Road, STL, MO 63136",
       "onMarketDate": "4/23/2026",
-      "lastUpdate": "11/6/2026",
+      "lastUpdate": "4/29/2026",
       "area": "MO - St. Louis",
-      "down": "$1,500",
-      "monthly": "$725",
-      "picsLink": "https://drive.google.com/drive/folders/1aRD0o8vUChQ9WsMoGph7rIG8GaXiosdr",
+      "down": "$2,500",
+      "monthly": "$895",
+      "picsLink": "https://www.icloud.com/photos/#/icloudlinks/0026NIPLKLpO8kvEmPaU-7ikw/",
       "beds": "3",
       "baths": "1",
       "sqft": "1116",
@@ -12041,10 +12041,10 @@
       "id": "526-w-chandler-st-macomb-il-61455",
       "address": "526 W Chandler St Macomb IL 61455",
       "onMarketDate": "10/2/2025",
-      "lastUpdate": "4/29/2026",
+      "lastUpdate": "11/6/2026",
       "area": "IL - Rural",
       "down": "$1,500",
-      "monthly": "$740",
+      "monthly": "$725",
       "picsLink": "https://drive.google.com/drive/folders/1aRD0o8vUChQ9WsMoGph7rIG8GaXiosdr",
       "beds": "2",
       "baths": "1",
@@ -18917,7 +18917,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "840",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.3071125,
       "lng": -89.288837
@@ -20260,7 +20260,7 @@
       "beds": "1",
       "baths": "1.5",
       "sqft": "704",
-      "status": "Off Market",
+      "status": "Available",
       "livability": 2,
       "lat": 38.6878146,
       "lng": -90.2902709
