@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T22:41:13.247558+00:00",
+  "generatedAt": "2026-11-10T22:42:02.609568+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -10740,7 +10740,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1060",
-      "status": "Off Market",
+      "status": "Available",
       "livability": 4,
       "lat": 38.5677352,
       "lng": -90.1265193
