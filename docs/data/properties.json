@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T22:42:35.989458+00:00",
+  "generatedAt": "2026-11-10T22:44:02.004709+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -3541,7 +3541,7 @@
       "id": "1923-n-church-st-decatur-il-62526",
       "address": "1923 N. Church St Decatur IL 62526",
       "onMarketDate": "7/29",
-      "lastUpdate": "10/27",
+      "lastUpdate": "11/10",
       "area": "IL - Decatur",
       "down": "$1,000",
       "monthly": "$425",
@@ -3549,7 +3549,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "624",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8615265,
       "lng": -88.9579358
@@ -10734,8 +10734,8 @@
       "onMarketDate": "11/9/2026",
       "lastUpdate": "11/19/2026",
       "area": "IL - East St Louis",
-      "down": "$3,000",
-      "monthly": "$895",
+      "down": "$2,000",
+      "monthly": "$625",
       "picsLink": "https://drive.google.com/drive/folders/1Xgi5TmN90IOR9mls7lfxV0PYk7tMZT6C?usp=sharing",
       "beds": "3",
       "baths": "1",
