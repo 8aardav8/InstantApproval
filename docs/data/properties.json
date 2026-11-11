@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-11T22:38:48.966057+00:00",
+  "generatedAt": "2026-11-11T22:39:20.478681+00:00",
   "listings": [
     {
       "id": "8800-jordan-st-saint-louis-mo-63-147",
       "address": "8800 Jordan St Saint Louis MO 63,147",
-      "onMarketDate": "",
-      "lastUpdate": "",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "onMarketDate": "11/10",
+      "lastUpdate": "11/10",
+      "area": "MO - St. Louis",
+      "down": "$3,000",
+      "monthly": "$995",
       "picsLink": "https://photos.app.goo.gl/G35kBbRg58UcDec56",
       "beds": "",
       "baths": "",
