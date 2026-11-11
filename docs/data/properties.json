@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-11T22:32:14.511695+00:00",
+  "generatedAt": "2026-11-11T22:32:35.641239+00:00",
   "listings": [
+    {
+      "id": "1690-e-johns-st-decatur-il-62-526",
+      "address": "1690 E. Johns St. Decatur IL 62,526",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1eoqG3KR15QyAmIt4MSK18qZ5hAmtUIC9?usp=drive_link",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8387183,
+      "lng": -88.933973
+    },
     {
       "id": "2002-country-squire-dr-urbana-il-61-802",
       "address": "2002 Country Squire Dr Urbana IL 61,802",
