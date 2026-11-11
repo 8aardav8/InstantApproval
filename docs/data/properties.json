@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T22:27:06.578207+00:00",
+  "generatedAt": "2026-11-11T22:27:54.585516+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -175,7 +175,7 @@
       "id": "4807-birchcrest-dr-flint-mi-48-504",
       "address": "4807 Birchcrest Dr Flint MI 48,504",
       "onMarketDate": "11/4",
-      "lastUpdate": "11/8",
+      "lastUpdate": "11/10",
       "area": "MI",
       "down": "$2,500",
       "monthly": "$850",
@@ -183,7 +183,7 @@
       "beds": "3",
       "baths": "1.5",
       "sqft": "878",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.0578028,
       "lng": -83.7307347
@@ -29058,7 +29058,7 @@
       "id": "327-sauget-ave-cahokia-il-62206",
       "address": "327 Sauget Ave, Cahokia, IL 62206",
       "onMarketDate": "9/24/2026",
-      "lastUpdate": "10/14/2026",
+      "lastUpdate": "11/10/2026",
       "area": "IL - East St Louis",
       "down": "$1,800",
       "monthly": "$900",
@@ -29066,7 +29066,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.5650523,
       "lng": -90.1986956
