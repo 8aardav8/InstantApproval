@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-11T22:29:43.253427+00:00",
+  "generatedAt": "2026-11-11T22:31:59.919757+00:00",
   "listings": [
+    {
+      "id": "2002-country-squire-dr-urbana-il-61-802",
+      "address": "2002 Country Squire Dr Urbana IL 61,802",
+      "onMarketDate": "11/10",
+      "lastUpdate": "11/10",
+      "area": "IL - Rural",
+      "down": "$5,000",
+      "monthly": "$1,675",
+      "picsLink": "https://drive.google.com/drive/folders/1J6htcdcn6OZlcZM8nxhEsTHHu4GVOmVm?usp=sharing",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1665",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.1026662,
+      "lng": -88.1836481
+    },
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
       "address": "2508 Arden Ave Saint Louis MO 63,121",
