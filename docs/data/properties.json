@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T22:41:36.664859+00:00",
+  "generatedAt": "2026-11-11T22:42:04.843862+00:00",
   "listings": [
     {
       "id": "731-saint-norbert-drive-cahokia-il-62-206",
@@ -498,7 +498,7 @@
       "id": "1414-richard-dr-cahokia-il-62-206",
       "address": "1414 Richard Dr. Cahokia IL 62,206",
       "onMarketDate": "10/29",
-      "lastUpdate": "11/5",
+      "lastUpdate": "11/11",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$1,075",
@@ -506,7 +506,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.55891880000001,
       "lng": -90.16493179999999
