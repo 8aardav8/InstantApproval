@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T20:04:24.067210+00:00",
+  "generatedAt": "2026-11-11T22:24:47.815179+00:00",
   "listings": [
     {
       "id": "2508-arden-ave-saint-louis-mo-63-121",
@@ -5377,7 +5377,7 @@
       "id": "2021-edwardsville-rd-madison-il-62060",
       "address": "2021 Edwardsville Rd, Madison, IL 62060",
       "onMarketDate": "7/14/2026",
-      "lastUpdate": "8/30/2026",
+      "lastUpdate": "11/10/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
       "monthly": "$900",
@@ -5385,7 +5385,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1053",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6866523,
       "lng": -90.1466721
