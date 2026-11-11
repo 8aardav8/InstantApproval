@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-11T22:38:24.740336+00:00",
+  "generatedAt": "2026-11-11T22:38:48.966057+00:00",
   "listings": [
+    {
+      "id": "8800-jordan-st-saint-louis-mo-63-147",
+      "address": "8800 Jordan St Saint Louis MO 63,147",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/G35kBbRg58UcDec56",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.7241687,
+      "lng": -90.23016489999999
+    },
     {
       "id": "621-bernard-dr-belleville-il-62223",
       "address": "621 Bernard Dr, Belleville, IL 62223",
