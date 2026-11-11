@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-11T22:33:43.126006+00:00",
+  "generatedAt": "2026-11-11T22:34:39.743239+00:00",
   "listings": [
+    {
+      "id": "621-bernard-dr-belleville-il-62223",
+      "address": "621 Bernard Dr, Belleville, IL 62223",
+      "onMarketDate": "11/10",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://www.dropbox.com/scl/fo/1cgsbe8pj23wkouphu1k9/ABHO6QwdCTSUBrEx1EVgXGw?rlkey=bpfv0auumwppur7fii33s65xf&st=9th6e2tq&e=1&dl=0",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5425376,
+      "lng": -90.08105979999999
+    },
     {
       "id": "1690-e-johns-st-decatur-il-62-526",
       "address": "1690 E. Johns St. Decatur IL 62,526",
