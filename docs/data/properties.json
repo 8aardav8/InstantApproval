@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T22:42:04.843862+00:00",
+  "generatedAt": "2026-11-11T22:44:17.800194+00:00",
   "listings": [
     {
       "id": "731-saint-norbert-drive-cahokia-il-62-206",
@@ -1348,7 +1348,7 @@
       "id": "1744-n-monroe-street-decatur-il-62526",
       "address": "1744 N Monroe Street Decatur IL 62526",
       "onMarketDate": "10/6",
-      "lastUpdate": "10/6",
+      "lastUpdate": "11/11",
       "area": "IL - Decatur",
       "down": "$4,000",
       "monthly": "$1,500",
@@ -1356,7 +1356,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1456",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8602364,
       "lng": -88.96354869999999
