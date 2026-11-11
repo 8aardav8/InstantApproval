@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-11T22:40:03.820076+00:00",
+  "generatedAt": "2026-11-11T22:40:39.465925+00:00",
   "listings": [
+    {
+      "id": "731-saint-norbert-drive-cahokia-il-62-206",
+      "address": "731 Saint Norbert Drive Cahokia IL 62,206",
+      "onMarketDate": "11/11",
+      "lastUpdate": "11/11",
+      "area": "IL - East St Louis",
+      "down": "$2,000",
+      "monthly": "$775",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.559799,
+      "lng": -90.1888532
+    },
     {
       "id": "8800-jordan-st-saint-louis-mo-63-147",
       "address": "8800 Jordan St Saint Louis MO 63,147",
