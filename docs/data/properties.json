@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T23:04:12.868720+00:00",
+  "generatedAt": "2026-11-12T23:05:09.168736+00:00",
   "listings": [
     {
       "id": "7316-park-dr-saint-louis-mo-63-133",
@@ -260,7 +260,7 @@
       "id": "814-n-west-st-alexandria-in-46-001",
       "address": "814 N West St Alexandria IN 46,001",
       "onMarketDate": "11/5",
-      "lastUpdate": "11/5",
+      "lastUpdate": "11/12",
       "area": "IN",
       "down": "$3,000",
       "monthly": "$950",
@@ -268,7 +268,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.2701588,
       "lng": -85.67711489999999
@@ -685,7 +685,7 @@
       "id": "127-kentucky-ave-danville-il-61-832",
       "address": "127 Kentucky Ave Danville IL 61,832",
       "onMarketDate": "10/25",
-      "lastUpdate": "10/25",
+      "lastUpdate": "11/12",
       "area": "IL - Rural",
       "down": "$5,000",
       "monthly": "$1,295",
@@ -693,7 +693,7 @@
       "beds": "4",
       "baths": "2",
       "sqft": "1300",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.1275937,
       "lng": -87.59947900000002
