@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-12T22:51:36.462613+00:00",
+  "generatedAt": "2026-11-12T22:52:21.269749+00:00",
   "listings": [
+    {
+      "id": "1012-e-wood-street-decatur-il-62-521",
+      "address": "1012 E Wood Street Decatur IL 62,521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.8406952,
+      "lng": -88.94301809999999
+    },
     {
       "id": "731-saint-norbert-drive-cahokia-il-62-206",
       "address": "731 Saint Norbert Drive Cahokia IL 62,206",
