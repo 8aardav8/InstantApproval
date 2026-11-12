@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T22:52:36.305050+00:00",
+  "generatedAt": "2026-11-12T22:52:53.625510+00:00",
   "listings": [
     {
       "id": "1012-e-wood-street-decatur-il-62-521",
@@ -8,11 +8,11 @@
       "lastUpdate": "11/11",
       "area": "IL - Decatur",
       "down": "$2,500",
-      "monthly": "",
+      "monthly": "$1,080",
       "picsLink": "",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1350",
       "status": "Available",
       "livability": 0,
       "lat": 39.8406952,
