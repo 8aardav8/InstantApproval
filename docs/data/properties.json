@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-11-12T22:52:21.269749+00:00",
+  "generatedAt": "2026-11-12T22:52:36.305050+00:00",
   "listings": [
     {
       "id": "1012-e-wood-street-decatur-il-62-521",
       "address": "1012 E Wood Street Decatur IL 62,521",
-      "onMarketDate": "",
-      "lastUpdate": "",
-      "area": "",
-      "down": "",
+      "onMarketDate": "11/11",
+      "lastUpdate": "11/11",
+      "area": "IL - Decatur",
+      "down": "$2,500",
       "monthly": "",
       "picsLink": "",
       "beds": "",
