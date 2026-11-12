@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T22:58:36.366723+00:00",
+  "generatedAt": "2026-11-12T22:58:56.460702+00:00",
   "listings": [
     {
       "id": "7316-park-dr-saint-louis-mo-63-133",
@@ -6856,7 +6856,7 @@
       "id": "1404-cody-st-evansville-in-47710",
       "address": "1404 Cody St, Evansville IN 47710",
       "onMarketDate": "7/7",
-      "lastUpdate": "9/17",
+      "lastUpdate": "11/11",
       "area": "IN",
       "down": "$2,700",
       "monthly": "$655",
@@ -6864,7 +6864,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "658",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 37.9991146,
       "lng": -87.5836952
