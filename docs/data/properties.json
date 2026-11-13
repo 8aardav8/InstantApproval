@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T23:40:19.776461+00:00",
+  "generatedAt": "2026-11-13T23:40:56.059025+00:00",
   "listings": [
     {
       "id": "1921-e-edwards-street-springfield-il-62-703",
@@ -260,7 +260,7 @@
       "id": "2317-reid-st-flint-mi-48-503",
       "address": "2317 Reid St Flint MI 48,503",
       "onMarketDate": "11/5",
-      "lastUpdate": "11/5",
+      "lastUpdate": "11/12",
       "area": "MI",
       "down": "$2,500",
       "monthly": "$915",
@@ -268,7 +268,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.0053628,
       "lng": -83.7166464
@@ -651,7 +651,7 @@
       "id": "307-w-sycamore-street-carbondale-il-62901",
       "address": "307 W. Sycamore Street Carbondale IL 62901",
       "onMarketDate": "10/26",
-      "lastUpdate": "11/9",
+      "lastUpdate": "11/12",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$865",
@@ -659,7 +659,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "952",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 37.73040710000001,
       "lng": -89.21981939999999
