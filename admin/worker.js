@@ -1799,7 +1799,9 @@ async function appendLoginsRow(accessToken, phone, name, idLink) {
   const res = await fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!A:F`, values: [["", "", "", phone, name, idLink]] }),
+    // A Quo name carries area tags ("Velvia Foree ESTL"); the Name column is
+    // the person's name (2026-11-08).
+    body: JSON.stringify({ range: `${LOGINS_TAB}!A:F`, values: [["", "", "", phone, personNameFromQuoName(name), idLink]] }),
   });
   if (!res.ok) throw new Error(`logins row append failed: ${await res.text()}`);
 }
@@ -1929,18 +1931,23 @@ async function getDropboxAccessToken(env) {
 // Quo names carry trailing tags ("Velvia S Foree ESTL TB", "Kristopher
 // Vorte Little Rock TB", "Sabrina Gordon Filler FAM1"). Filenames must use
 // the person's name only: the tag used to become the "last name"
-// ("ESTL, Velvia Foree", 2026-11-08). Strips trailing ALL-CAPS tokens,
-// known area words and "Filler", always keeping at least two words.
+// ("ESTL, Velvia Foree", 2026-11-08). Strips only known trailing tags
+// (TB, ...TB, ESTL, STL, LR, WM, FAM1, Filler) and area words, always
+// keeping at least two words. Not any ALL-CAPS word: "MO 63115" stays.
 // Checked by tests/id-filename-test.mjs.
-const ID_NAME_TAG_WORDS = /^(?:filler|little|rock|springfield|east|west|memphis|st\.?|saint|louis)$/i;
+const ID_NAME_TAGS = /^(?:[A-Z]{0,4}TB|ESTL|STL|LR|WM|FAM\d*|filler)$/i;
+const ID_NAME_AREA_SUFFIX = /\s+(?:east\s+st\.?\s+louis|east\s+saint\s+louis|st\.?\s+louis|saint\s+louis|little\s+rock|west\s+memphis|springfield)$/i;
 function personNameFromQuoName(fullName) {
-  const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
-  while (parts.length > 2) {
+  let name = (fullName || "").trim().replace(/\s+/g, " ");
+  const words = () => name.split(" ").filter(Boolean).length;
+  for (;;) {
+    const parts = name.split(" ");
     const last = parts[parts.length - 1];
-    if (/^[A-Z0-9]{2,}$/.test(last) || ID_NAME_TAG_WORDS.test(last)) parts.pop();
-    else break;
+    if (words() > 2 && ID_NAME_TAGS.test(last)) { parts.pop(); name = parts.join(" "); continue; }
+    const area = ID_NAME_AREA_SUFFIX.exec(name);
+    if (area && name.slice(0, area.index).split(" ").filter(Boolean).length >= 2) { name = name.slice(0, area.index); continue; }
+    return name;
   }
-  return parts.join(" ");
 }
 
 function buildIdFilename(fullName, phone, originalFilename) {
@@ -3811,6 +3818,15 @@ async function findRowAlreadyLinkedToFile(dropboxToken, accessToken, dropboxPath
 // real owners' naming. Refusing there is right for an automated guess; the
 // manual browse panel is an explicit human choice and keeps the old
 // behavior.
+async function cachedOcrIdName(accessToken, fileId) {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent("'ID OCR Cache'!A:D")}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return "";
+  const hit = ((await res.json()).values || []).find((r) => (r[0] || "").trim() === fileId);
+  return hit ? (hit[3] || "").trim() : "";
+}
+
 async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename, refuseIfLinkedElsewhere = false, quoMaxPages = 20 }) {
   const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
 
@@ -3841,6 +3857,10 @@ async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, 
   }
 
   const idLink = await getIdFileRef(dropboxToken, finalPath);
+  // A manual link (Browse existing IDs) has no idName; reuse the name the
+  // OCR watcher already read for this file, so ID Name (OCR) isn't left
+  // blank (2026-11-08). Best-effort, one Sheets read.
+  if (!idName) idName = await cachedOcrIdName(accessToken, idLink).catch(() => "");
   // Most matched buyers have no App: Logins row at all -- find one if it
   // exists, otherwise create a minimal new row rather than requiring one.
   const row = await findLoginsRowByPhone(accessToken, buyerPhone);

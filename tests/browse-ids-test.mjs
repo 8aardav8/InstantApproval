@@ -75,5 +75,35 @@ async function browse(w) {
   check('a much bigger folder still stays under the cap', r.status === 200 && w.calls < CAP, `status ${r.status}, ${w.calls} calls`);
 }
 
+// Linking from the browse panel reuses the OCR watcher's name for the file
+// (2026-11-08: Velvia Foree's ID Name stayed blank after a manual link).
+{
+  const writes = [];
+  const w = world();
+  const base = w.fetch;
+  w.fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    const json = (body) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (url.hostname === 'sheets.googleapis.com') {
+      const range = decodeURIComponent(url.pathname.split('/values/')[1] || '');
+      if (range === "'ID OCR Cache'!A:D") return json({ values: [['File ID', 'File Name', 'OCR Text', 'ID Name'], ['id:file7', 'x.jpg', '1 EXAMPLE', 'Pat Example']] });
+      if (range === 'App: Logins!D:D') return json({ values: [['Phone'], ['+16185550123']] });
+      if (url.pathname.endsWith(':batchGet')) return json({ valueRanges: [{}, {}, {}, {}] });
+      if (init.method === 'PUT' || url.pathname.includes(':batchUpdate')) { writes.push(`${range} ${init.body || ''}`); return json({}); }
+      return json({ values: [] });
+    }
+    if (url.hostname === 'api.dropboxapi.com' && url.pathname === '/2/files/get_metadata') return json({ id: 'id:file7' });
+    if (url.hostname === 'api.dropboxapi.com' && url.pathname === '/2/files/move_v2') return json({ metadata: { path_display: '/ids/Example, Pat - 0123.jpg' } });
+    if (url.hostname === 'api.quo.com') return json({ data: [] });
+    return base(input, init);
+  };
+  globalThis.fetch = w.fetch;
+  const res = await worker.fetch(new Request('https://worker.example.com/confirm-id-match', { method: 'POST', headers: { Authorization: 'Bearer fake', 'Content-Type': 'application/json' }, body: JSON.stringify({ dropboxPath: '/ids/Example, Pat0 - 0101.jpg', buyerPhone: '+16185550123', buyerName: 'Pat Example ESTL TB' }) }), { ...w.env, QUO_API_KEY: 'fake' });
+  const body = await res.json().catch(() => ({}));
+  check('manual link succeeds', res.status === 200 && body.ok, `status ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
+  check('manual link fills ID Name from the OCR cache', writes.some((x) => x.includes('Pat Example') && /AG|ID Name/.test(x)), writes.join(' || ').slice(0, 300));
+  check('renamed without the area tag', (body.renamedTo || '').endsWith('/Example, Pat - 0123.jpg'), body.renamedTo);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
