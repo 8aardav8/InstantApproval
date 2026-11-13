@@ -13,5 +13,10 @@ p = sys.argv[1]; s = open(p).read(); a = os.environ["OLD"]
 if s.count(a) != 1: sys.exit(f"text found {s.count(a)} times, need exactly 1")
 open(p, "w").write(s.replace(a, os.environ["NEW"]))
 PY
-caught=$(node "$test" 2>/dev/null | grep -c '^FAIL' || true)
+set +e
+out=$(node "$test" 2>&1); code=$?
+set -e
+caught=$(printf '%s\n' "$out" | grep -c '^FAIL' || true)
+# A crash or any non-zero exit also means the break was caught.
+[ "$caught" -eq 0 ] && [ "$code" -ne 0 ] && caught="crash(exit $code)"
 echo "caught=$caught"

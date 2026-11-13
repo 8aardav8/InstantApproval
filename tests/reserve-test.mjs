@@ -63,13 +63,13 @@ const P_H = ['Available?', 'X', 'X', 'Address', 'Area', 'Down', 'Row ID'];
 // Same positions as the real App: Logins, so the older fixed-letter code (D = phone, O:X = appointments) works in this fake too.
 const LI = { email: 1, phone: 3, name: 4, appt: 14, shown: 27, stage: 31, dep: 39 };
 const L_H = Array.from({ length: 40 }, (_, i) => `col${i}`);
-const D_H = ['Requested At', 'Invoice ID', 'Status', 'Square Env', 'Buyer Phone', 'Buyer Name', 'Buyer Email', 'Property Address', 'Property Row ID', 'State', 'Down', 'Deposit', 'Paid At', 'Amount Paid', 'Note'];
+const D_H = ['Requested At', 'Invoice ID', 'Status', 'Square Env', 'Buyer Phone', 'Buyer Name', 'Buyer Email', 'Property Address', 'Property Row ID', 'State', 'Down', 'Deposit', 'Paid At', 'Amount Paid', 'Note', 'Terms Agreed'];
 const META = [
   [RESERVE_GIDS.props, 0, 'iah.prop.status'], [RESERVE_GIDS.props, 3, 'iah.prop.address'], [RESERVE_GIDS.props, 4, 'iah.prop.area'], [RESERVE_GIDS.props, 5, 'iah.prop.down'], [RESERVE_GIDS.props, 6, 'iah.prop.rowid'],
   [RESERVE_GIDS.logins, LI.email, 'iah.login.email'], [RESERVE_GIDS.logins, LI.phone, 'iah.login.phone'], [RESERVE_GIDS.logins, LI.name, 'iah.login.name'],
   ...Array.from({ length: 10 }, (_, i) => [RESERVE_GIDS.logins, LI.appt + i, 'iah.login.appointment']),
   [RESERVE_GIDS.logins, LI.shown, 'iah.login.shown'], [RESERVE_GIDS.logins, LI.stage, 'iah.login.stage'], [RESERVE_GIDS.logins, LI.dep, 'iah.login.depositProperty'],
-  ...['requestedAt', 'invoiceId', 'status', 'env', 'phone', 'name', 'email', 'address', 'propRowId', 'state', 'down', 'deposit', 'paidAt', 'amountPaid', 'note'].map((k, i) => [RESERVE_GIDS.deposits, i, `iah.dep.${k}`]),
+  ...['requestedAt', 'invoiceId', 'status', 'env', 'phone', 'name', 'email', 'address', 'propRowId', 'state', 'down', 'deposit', 'paidAt', 'amountPaid', 'note', 'termsAgreed'].map((k, i) => [RESERVE_GIDS.deposits, i, `iah.dep.${k}`]),
 ];
 const TITLES = { [RESERVE_GIDS.props]: 'PROPERTIES', [RESERVE_GIDS.logins]: 'App: Logins', [RESERVE_GIDS.deposits]: 'Square Deposits' };
 
@@ -179,6 +179,8 @@ let paidWorld;
   eq('request: photo attached', w.square.some((x) => x.endsWith('/attachments')), true);
   const d = depRow(w);
   eq('request: logged in Square Deposits', [d[1], d[2], d[3], d[4], d[7], d[8], d[9], d[10], d[11]], ['INV1', 'Draft', 'sandbox', PHONE, A, 'ROW-A', 'IL', '$3,000', '$1,500']);
+  eq('request: what the buyer agreed to is recorded', [/^Agreed \d{4}-.* by the buyer, signed in by text code/.test(d[15] || ''), (d[15] || '').includes('Ticked: "I have inspected this property'), (d[15] || '').includes('Illinois properties only'), (d[15] || '').includes('7. As-is.')], [true, true, true, true]);
+  eq('request: Aaron reminded to switch on goods-and-services confirmation', w.telegrams.some((x) => x.includes('Goods and services confirmation')), true);
   eq('request: Aaron told it is a sandbox test', w.telegrams.some((x) => x.includes('Reservation request [SANDBOX TEST]') && x.includes('deposit $1,500')), true);
   const again = await call(w, '/reserve-request', { listingId: LID, inspected: true });
   eq('second click: no second invoice', [again.data.already, Object.keys(w.invoices).length], [true, 1]);
@@ -218,7 +220,7 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
   eq('webhook: repeat full-payment delivery is silent', w.telegrams.length, n2);
   // Second buyer had an invoice too ("Allow both") and pays after.
   w.tabs.PROPERTIES[2][0] = 'Pending';
-  w.tabs['Square Deposits'].push(['t', 'INV9', 'Draft', 'production', PHONE2, 'Sam Second', 's@example.com', A, 'ROW-A', 'IL', '$3,000', '$1,500', '', '', '']);
+  w.tabs['Square Deposits'].push(['t', 'INV9', 'Draft', 'production', PHONE2, 'Sam Second', 's@example.com', A, 'ROW-A', 'IL', '$3,000', '$1,500', '', '', '', '']);
   const raw2 = paidEvent('INV9');
   await call(w, '/square-webhook', null, { phone: null, raw: raw2, headers: { 'x-square-hmacsha256-signature': sign(raw2) } });
   eq('webhook: second payer flagged for refund', [depRow(w, 2)[2], depRow(w, 2)[14]], ['Deposit paid', 'Second payer: refund per terms item 6(a)']);
@@ -240,6 +242,8 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
 { // Aaron, signed in as himself AND as admin, can test as a buyer.
   const w = world(); const r = await call(w, '/reserve-check', { listingId: LID, phone: PHONE2 }, { phone: '+19995550000', admin: true });
   eq('admin with own session can act for a buyer', r.data.ok, true);
+  await call(w, '/reserve-request', { listingId: LID, phone: PHONE2, inspected: true }, { phone: '+19995550000', admin: true });
+  eq('admin test is labelled as such in the agreement record', /by Aaron \(admin test\)/.test(depRow(w)[15] || ''), true);
   // PHONE hasn't toured, PHONE2 has: a non-admin naming PHONE2 must still be judged as PHONE.
   const w2 = world({ shown: '' }); const r2 = await call(w2, '/reserve-check', { listingId: LID, phone: PHONE2 }, { phone: PHONE });
   eq('a buyer cannot act for someone else (body phone ignored)', r2.data.message, MSG.notToured); }

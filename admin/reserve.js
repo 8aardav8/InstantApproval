@@ -236,8 +236,9 @@ export function createReserve(deps) {
     const isAdmin = !!bearer && (await verifyIdToken(bearer)).ok;
     let phone = await verifySessionToken(env, request.headers.get("X-IAH-Session"));
     // Aaron testing as a buyer (his own session is used when he leaves it blank).
-    if (isAdmin && body.phone) phone = toE164(body.phone);
-    return { isAdmin, phone };
+    const actingAdmin = !!(isAdmin && body.phone);
+    if (actingAdmin) phone = toE164(body.phone);
+    return { isAdmin, phone, actingAdmin };
   }
 
   // Everything the decision needs, read fresh from the Sheet.
@@ -331,6 +332,7 @@ export function createReserve(deps) {
       address: layout.one("iah.dep.address", D), propRowId: layout.one("iah.dep.propRowId", D), state: layout.one("iah.dep.state", D),
       down: layout.one("iah.dep.down", D), deposit: layout.one("iah.dep.deposit", D), paidAt: layout.one("iah.dep.paidAt", D),
       amountPaid: layout.one("iah.dep.amountPaid", D), note: layout.one("iah.dep.note", D),
+      termsAgreed: layout.one("iah.dep.termsAgreed", D),
     };
     const depRows = await readRows(token, layout.tab(D));
     const envName = squareEnv(env);
@@ -338,6 +340,7 @@ export function createReserve(deps) {
     const open = depRows.slice(1).find((x) => x[dep.phone] === who.phone && normAddr(x[dep.address]) === normAddr(r.listing.address) && x[dep.env] === envName && /^(Draft|Sent)$/.test(x[dep.status] || ""));
     if (open) return jsonResponse({ ok: true, already: true, message: autoSend(env) ? "Your deposit invoice was already sent. Check your email." : "We already have your reservation request. Your deposit invoice will be emailed to you shortly." });
 
+    const agreedAt = new Date().toISOString();
     // --- core: the Square invoice ---
     let invoice;
     try {
@@ -374,6 +377,13 @@ export function createReserve(deps) {
       set("phone", who.phone); set("name", r.buyer.name); set("email", r.buyer.email); set("address", r.listing.address);
       set("propRowId", r.listing.rowId); set("state", r.state); set("down", fmtMoney(r.downCents)); set("deposit", fmtMoney(r.terms.deposit));
       set("paidAt", ""); set("amountPaid", ""); set("note", problems.join("; "));
+      // The record of what the buyer agreed to (Aaron 11/13: "How are the
+      // terms on the site the record. We don't keep track of that"): when,
+      // from where, the box they ticked, and the exact terms they saw.
+      set("termsAgreed", [
+        `Agreed ${agreedAt} by ${who.actingAdmin ? "Aaron (admin test) for this buyer" : "the buyer, signed in by text code"} | IP ${request.headers.get("CF-Connecting-IP") || "unknown"} | ${(request.headers.get("User-Agent") || "unknown browser").slice(0, 120)}`,
+        `Ticked: "${r.terms.checkbox}"`, "", ...r.terms.items,
+      ].join("\n"));
       for (let i = 0; i < rowVals.length; i++) if (rowVals[i] === undefined) rowVals[i] = "";
       await appendRow(token, layout.tab(D), depRows.length, rowVals, dep.invoiceId, invoice.id);
     } catch (e) { problems.push(`sheet log: ${String(e).slice(0, 200)}`); }
@@ -383,7 +393,7 @@ export function createReserve(deps) {
       `🏠 Reservation request${where}: ${r.buyer.name || "(no name)"} ${who.phone}`,
       `${r.listing.address}${r.isIL ? " (IL: refundable 3 business days)" : ""}`,
       `Down ${fmtMoney(r.downCents)} → deposit ${fmtMoney(r.terms.deposit)}`,
-      status === "Sent" ? `Invoice emailed to ${r.buyer.email}. ${publicUrl}` : `Draft invoice ready. Review and send it in Square: Invoices → Drafts.`,
+      status === "Sent" ? `Invoice emailed to ${r.buyer.email}. ${publicUrl}` : `Draft invoice ready in Square: Invoices → Drafts. Before you tap Send, switch on "Goods and services confirmation" (More Options).`,
       problems.length ? `⚠️ Not done: ${problems.join("; ")}` : "",
     ].filter(Boolean).join("\n"));
 
