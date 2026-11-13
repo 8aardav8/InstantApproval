@@ -1621,6 +1621,10 @@ function initPullToRefresh() {
       // of the page -- if there's room to scroll up first, a downward drag
       // should scroll normally, not trigger a refresh.
       if (e.touches.length !== 1 || window.scrollY > 0) return;
+      // Never from inside a pop-up (2026-11-13, Aaron: scrolling up in the
+      // Reserve pop-up refreshed the page and dropped him on the list).
+      // Covers every lightbox, since they all use .id-lightbox-overlay.
+      if (e.target && e.target.closest && e.target.closest(".id-lightbox-overlay")) return;
       startY = e.touches[0].clientY;
       pulling = true;
       indicator.classList.add("dragging");

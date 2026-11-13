@@ -101,7 +101,7 @@ export function reserveTerms({ address, downCents, isIL }) {
   items.push(
     `3. What it does. Once your deposit is received, we stop marketing the property and reserve it for you while we prepare your closing documents.`,
     `4. Credited to your down payment. The deposit counts toward your down payment. Closing can be finalized after the full down payment is paid (the rest is ${fmtMoney(remaining)}).`,
-    `5. Deadline. You must pay the rest of the down payment and close within 7 days of paying the deposit. If you don't, the reservation ends, the property goes back on the market, and the deposit is kept.`,
+    `5. Deadline. You must pay the rest of the down payment within 7 days of paying the deposit. If you don't, the reservation ends, the property goes back on the market, and the deposit is kept.`,
     `6. When you get it back. You get a full refund if (a) someone else already paid a deposit on this property before you did, or (b) we are unable to sell you the property.`,
     `7. As-is. All homes are sold as-is.`,
     `8. Who is buying. The deposit applies only to the buyer(s) named on the invoice and only to this property. It can't be moved to a different property.`,
@@ -534,7 +534,7 @@ export function createReserve(deps) {
     } else done.push("buyer row not found, Stage not changed");
     const il = rec[c("iah.dep.state")] === "IL" ? "\nIL home: refundable if they ask in writing within 3 business days." : "";
     const head = fullyPaid ? `💰 PAID IN FULL (deposit + rest)` : `💰 DEPOSIT PAID`;
-    return `${head}: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.${fullyPaid ? "" : "\n7-day clock to pay the rest and close starts now."}${il}`;
+    return `${head}: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.${fullyPaid ? "" : "\n7-day clock to pay the rest starts now."}${il}`;
   }
 
   // Marking an appointment Completed also records the house as shown, so

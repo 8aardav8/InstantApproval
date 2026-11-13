@@ -254,5 +254,11 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
   await call(w, '/admin/update-appointment', { phone: PHONE, slot: 1, address: A, date: '2026-11-01', status: 'Canceled' }, { phone: null, admin: true });
   eq('Canceled -> Shown untouched', w.tabs['App: Logins'][1][LI.shown], ''); }
 
+// Pull-to-refresh must ignore touches inside pop-ups (Aaron 2026-11-13: scrolling
+// up in the Reserve pop-up refreshed the page). Source check on the gesture code.
+{ const app = readFileSync(new URL('../docs/js/app.js', import.meta.url), 'utf8');
+  const ptr = app.slice(app.indexOf('function initPullToRefresh'), app.indexOf('"touchmove"', app.indexOf('function initPullToRefresh')));
+  eq('pull-to-refresh skips touches inside pop-ups', ptr.includes('closest(".id-lightbox-overlay")'), true); }
+
 console.log(`\n${fail} failed`);
 process.exit(fail ? 1 : 0);
