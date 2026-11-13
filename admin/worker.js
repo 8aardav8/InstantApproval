@@ -1,3 +1,4 @@
+import { createReserve } from "./reserve.js";
 // Instant-Approval Home Financing -- Admin API + Login-Gate Lead Capture
 // (Cloudflare Worker)
 //
@@ -2342,7 +2343,15 @@ async function handleAdminUpdateAppointment(request, env) {
       body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
     });
     if (!res.ok) return jsonResponse({ error: "appointment write failed", detail: await res.text() }, 500);
-    return jsonResponse({ ok: true });
+    // 2026-11-13: a Completed tour also goes into Shown Properties, because
+    // addAppointment drops past cells and the Reserve button needs proof of
+    // the tour. The appointment write above already succeeded either way.
+    let shownAdded = null;
+    if (status === "Completed") {
+      try { shownAdded = await reserve.addShownOnComplete(env, phone, address); }
+      catch (e) { return jsonResponse({ ok: true, shownError: String(e) }); }
+    }
+    return jsonResponse({ ok: true, shownAdded });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -5776,12 +5785,21 @@ async function handleQuoTriageWebhook(request, env) {
 // not on the allowlist (or with no Origin header at all -- e.g. a direct
 // server-to-server call) is left exactly as the inner handlers already set
 // it, unchanged from the original single-origin behavior.
+// "Reserve this home" (2026-11-13): see admin/reserve.js.
+const reserve = createReserve({ SHEET_ID, getSheetsAccessToken, jsonResponse, verifySessionToken, verifyIdToken, slugify, toE164, AARON_TELEGRAM_CHAT_ID });
+
 async function route(request, env) {
   if (request.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders() });
   }
 
   const url = new URL(request.url);
+
+  if (url.pathname === "/reserve-status" && request.method === "GET") return reserve.handleStatus(request, env);
+  if (url.pathname === "/reserve-check" && request.method === "POST") return reserve.handleCheck(request, env);
+  if (url.pathname === "/reserve-request" && request.method === "POST") return reserve.handleRequest(request, env);
+  // Server-to-server from Square; signature-checked inside.
+  if (url.pathname === "/square-webhook" && request.method === "POST") return reserve.handleWebhook(request, env);
 
   if (url.pathname === "/gate-login" && request.method === "POST") {
     return handleGateLogin(request, env);

@@ -798,6 +798,7 @@ function showDetail(id) {
         <a class="btn-outline" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
         ${scheduleBtn}
       </div>
+      ${availableOnly ? `<div class="action-row hidden" id="reserve-row"><button type="button" class="btn-primary" onclick="openReserve('${listing.id}')">Reserve this home</button></div>` : ""}
       ${detailField("First Available", listing.onMarketDate)}
       ${listing.picsLink && listing.picsLink.trim()
         ? `<div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>`
@@ -814,6 +815,102 @@ function showDetail(id) {
   `;
 
   renderAdminSection(listing);
+  if (availableOnly) showReserveButtonIfOpen();
+}
+
+// ---------- "Reserve this home" (2026-11-13) ----------
+// Pays 50% of the down payment as a deposit, via a Square invoice the
+// Worker makes (admin/reserve.js). The Worker decides everything: who may
+// reserve (toured homes only), the amount (read fresh from the Sheet) and
+// the terms text; this page only shows what it returns. Hidden from buyers
+// until the Worker's RESERVE_PUBLIC is on; Aaron (admin) always sees it.
+let reserveStatusPromise = null;
+async function showReserveButtonIfOpen() {
+  const row = document.getElementById("reserve-row");
+  if (!row) return;
+  try {
+    if (!reserveStatusPromise) reserveStatusPromise = fetch(`${ADMIN_API_URL}/reserve-status`).then((r) => r.json());
+    const status = await reserveStatusPromise;
+    if (status.public || getStoredAdminToken()) row.classList.remove("hidden");
+  } catch (e) { /* stays hidden */ }
+}
+
+function reserveAuthHeaders() {
+  const h = { "Content-Type": "application/json" };
+  const admin = getStoredAdminToken();
+  if (admin) h.Authorization = `Bearer ${admin}`;
+  return h; // the session header is added by installSessionFetch
+}
+
+function closeReserve() {
+  const el = document.getElementById("reserve-overlay");
+  if (el) el.remove();
+}
+
+function reserveMessageHtml(message) {
+  // Turn the phone number in a "call us" message into a tap-to-call link.
+  return escapeHtml(message).replace(/\((\d{3})\) (\d{3})-(\d{4})/, (m, a, b, c) => `<a href="tel:${a}${b}${c}">${m}</a>`);
+}
+
+async function openReserve(listingId) {
+  const body = { listingId };
+  if (!getSessionToken()) {
+    if (!getStoredAdminToken()) { showLoginGate(); return; }
+    const phone = prompt("Admin test: reserve as which buyer phone?");
+    if (!phone) return;
+    body.phone = phone;
+  }
+  closeReserve();
+  const overlay = document.createElement("div");
+  overlay.id = "reserve-overlay";
+  overlay.className = "id-lightbox-overlay";
+  overlay.innerHTML = `<div class="id-lightbox-content reserve-content"><div class="reserve-status">Checking...</div></div>`;
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeReserve(); });
+  document.body.appendChild(overlay);
+  const box = overlay.querySelector(".reserve-content");
+  let data;
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/reserve-check`, { method: "POST", headers: reserveAuthHeaders(), body: JSON.stringify(body) });
+    data = await res.json();
+  } catch (e) {
+    data = { ok: false, message: "Couldn't reach the server. Please try again." };
+  }
+  if (!data.ok) {
+    box.innerHTML = `<h3 class="reserve-title">Reserve this home</h3><p class="reserve-message">${reserveMessageHtml(data.message || "Something went wrong.")}</p><div class="id-lightbox-actions"><button type="button" class="btn-outline" onclick="closeReserve()">Close</button></div>`;
+    return;
+  }
+  box.innerHTML = `
+    <h3 class="reserve-title">Reserve ${escapeHtml(data.address)}</h3>
+    <div class="reserve-amounts"><span>Down payment</span><strong>${escapeHtml(data.down)}</strong><span>Deposit due now (50%)</span><strong>${escapeHtml(data.deposit)}</strong></div>
+    <div class="reserve-terms-title">Reservation Deposit Terms</div>
+    <ul class="reserve-terms">${data.terms.map((t) => `<li${/^\d\./.test(t) ? "" : ' class="reserve-term-sub"'}>${escapeHtml(t)}</li>`).join("")}</ul>
+    <label class="reserve-check"><input type="checkbox" id="reserve-inspected"> ${escapeHtml(data.checkbox)}</label>
+    <div class="id-lightbox-actions">
+      <button type="button" class="btn-outline" onclick="closeReserve()">Cancel</button>
+      <button type="button" class="btn-primary" id="reserve-submit" disabled>Request deposit invoice</button>
+    </div>
+    <div class="reserve-status"></div>`;
+  const check = box.querySelector("#reserve-inspected");
+  const submit = box.querySelector("#reserve-submit");
+  const status = box.querySelector(".reserve-status");
+  check.addEventListener("change", () => { submit.disabled = !check.checked; });
+  submit.addEventListener("click", async () => {
+    submit.disabled = true;
+    status.textContent = "Sending...";
+    try {
+      const res = await fetch(`${ADMIN_API_URL}/reserve-request`, { method: "POST", headers: reserveAuthHeaders(), body: JSON.stringify({ ...body, inspected: check.checked }) });
+      const out = await res.json();
+      if (out.ok) {
+        box.innerHTML = `<h3 class="reserve-title">Request received</h3><p class="reserve-message">${reserveMessageHtml(out.message)}</p><div class="id-lightbox-actions"><button type="button" class="btn-primary" onclick="closeReserve()">Done</button></div>`;
+      } else {
+        status.innerHTML = reserveMessageHtml(out.message || "Something went wrong.");
+        submit.disabled = !check.checked;
+      }
+    } catch (e) {
+      status.textContent = "Couldn't reach the server. Please try again.";
+      submit.disabled = !check.checked;
+    }
+  });
 }
 
 function backToList() {

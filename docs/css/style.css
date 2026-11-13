@@ -1393,3 +1393,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 
 /* Favorited & Scheduled: address opens the property page (2026-11-12). */
 .buyer-property-link { color: var(--navy); text-decoration: underline; cursor: pointer; }
+
+/* "Reserve this home" pop-up, 2026-11-13 -- reuses .id-lightbox-* for the
+   overlay and buttons. */
+.reserve-content { text-align: left; width: 420px; max-width: calc(100vw - 32px); }
+.reserve-title { margin: 0 0 12px; font-size: 16px; color: var(--navy); }
+.reserve-amounts { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; padding: 10px 12px; background: var(--gray-bg); border-radius: 8px; margin-bottom: 12px; }
+.reserve-terms-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.reserve-terms { list-style: none; margin: 0 0 12px; padding-left: 0; font-size: 12.5px; line-height: 1.45; color: #374151; max-height: 38vh; overflow: auto; }
+.reserve-terms li { margin-bottom: 6px; }
+.reserve-terms .reserve-term-sub { margin-left: 14px; font-weight: 600; }
+.reserve-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.reserve-check input { margin-top: 2px; flex: none; width: 18px; height: 18px; }
+.reserve-message { font-size: 14px; line-height: 1.5; }
+.reserve-status { font-size: 13px; color: var(--gray-text); margin-top: 8px; }
+.reserve-content .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
