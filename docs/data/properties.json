@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T23:39:40.277426+00:00",
+  "generatedAt": "2026-11-13T23:40:19.776461+00:00",
   "listings": [
     {
       "id": "1921-e-edwards-street-springfield-il-62-703",
@@ -16427,7 +16427,7 @@
       "id": "909-s-maffit-st-decatur-il-62521",
       "address": "909 S Maffit St, Decatur, IL 62521",
       "onMarketDate": "11/6/2026",
-      "lastUpdate": "11/6/2026",
+      "lastUpdate": "11/12/2026",
       "area": "IL - Decatur",
       "down": "$1,800",
       "monthly": "$795",
@@ -16435,7 +16435,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "830",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8317526,
       "lng": -88.9449712
