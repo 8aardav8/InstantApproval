@@ -473,6 +473,10 @@ export function createReserve(deps) {
       await putCell(token, tab, sheetRow, c("iah.dep.note"), "Second payer: refund per terms item 6(a)");
       return `⚠️ SECOND deposit paid on ${address}: ${who}, ${fmtMoney(paidCents)}. Another buyer paid first. Per terms item 6(a), refund this one in Square. Sheet not changed otherwise.`;
     }
+    // Fake (sandbox) money never changes the real listing or buyer.
+    if (rec[c("iah.dep.env")] !== "production") {
+      return `💰 [SANDBOX TEST] Deposit paid: ${who}, ${address}, ${fmtMoney(paidCents)}. Real Sheet NOT changed; live it would set the home to Pending (now "${propStatus || "row not found"}") and the buyer to Deposit Received.`;
+    }
     const done = [];
     if (pi > 0 && /^available$/i.test(propStatus.replace(/[\s-]/g, ""))) { await putCell(token, layout.tab(P), pi + 1, pStatusIdx, "Pending"); done.push("property set to Pending"); }
     else done.push(pi > 0 ? `property left as "${propStatus}"` : "property row not found by Row ID, status not changed");

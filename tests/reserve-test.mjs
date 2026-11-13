@@ -185,8 +185,15 @@ let paidWorld;
 
 // ---------- webhook ----------
 const sign = (raw) => createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64');
+{ // Sandbox money must never touch the real listing or buyer.
+  const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true });
+  const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
+  await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64') } });
+  eq('sandbox paid: deposit row Paid, real listing and buyer untouched', [depRow(w)[2], w.tabs.PROPERTIES[2][0], w.tabs['App: Logins'][1][LI.stage]], ['Paid', 'Available', 'First Showing Done']);
+  eq('sandbox paid: Aaron told it was a test', w.telegrams.at(-1).startsWith('💰 [SANDBOX TEST]'), true); }
 const paidEvent = (id) => JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id, status: 'PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
 { const w = paidWorld; const raw = paidEvent('INV1');
+  w.tabs['Square Deposits'][1][3] = 'production'; // live-money path
   const bad = await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': 'nope' } });
   eq('webhook: bad signature refused, nothing written', [bad.status, depRow(w)[2]], [401, 'Draft']);
   const ok = await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
@@ -200,7 +207,7 @@ const paidEvent = (id) => JSON.stringify({ type: 'invoice.payment_made', data: {
   eq('webhook: repeat delivery changes nothing, no second alert', w.telegrams.length, n);
   // Second buyer had an invoice too ("Allow both") and pays after.
   w.tabs.PROPERTIES[2][0] = 'Pending';
-  w.tabs['Square Deposits'].push(['t', 'INV9', 'Draft', 'sandbox', PHONE2, 'Sam Second', 's@example.com', A, 'ROW-A', 'IL', '$3,000', '$1,500', '', '', '']);
+  w.tabs['Square Deposits'].push(['t', 'INV9', 'Draft', 'production', PHONE2, 'Sam Second', 's@example.com', A, 'ROW-A', 'IL', '$3,000', '$1,500', '', '', '']);
   const raw2 = paidEvent('INV9');
   await call(w, '/square-webhook', null, { phone: null, raw: raw2, headers: { 'x-square-hmacsha256-signature': sign(raw2) } });
   eq('webhook: second payer flagged for refund', [depRow(w, 2)[2], depRow(w, 2)[14]], ['Paid', 'Second payer: refund per terms item 6(a)']);
