@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T23:30:21.167436+00:00",
+  "generatedAt": "2026-11-13T23:31:05.321930+00:00",
   "listings": [
     {
       "id": "7316-park-dr-saint-louis-mo-63-133",
@@ -124,7 +124,7 @@
       "id": "2508-arden-ave-saint-louis-mo-63-121",
       "address": "2508 Arden Ave Saint Louis MO 63,121",
       "onMarketDate": "11/8",
-      "lastUpdate": "11/8",
+      "lastUpdate": "11/12",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$950",
@@ -132,7 +132,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "656",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 38.6886036,
       "lng": -90.2809754
@@ -226,7 +226,7 @@
       "id": "5085-lillibridge-street-detroit-mi-48213",
       "address": "5085 Lillibridge Street Detroit MI 48213",
       "onMarketDate": "11/6",
-      "lastUpdate": "11/6",
+      "lastUpdate": "11/12",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$1,179",
@@ -234,7 +234,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1206",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 42.3874507,
       "lng": -82.9872608
