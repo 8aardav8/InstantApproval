@@ -45,7 +45,8 @@ eq('3 business days: Fri -> Wed', addBusinessDays('2026-11-13', 3), '2026-11-18'
 eq('3 business days: Mon -> Thu', addBusinessDays('2026-11-16', 3), '2026-11-19');
 { const ph = (k) => Object.fromEntries(agreementPlaceholders({ kind: k, paidYmd: '2026-11-13', paidCents: 150000, downCents: 300000, dueYmd: '2026-11-20', sellerName: 'S LLC', buyerName: 'Pat', address: A, payLink: 'https://pay' }).map((x) => [x.placeholder_key, x.replace_with_text]));
   eq('agreement fields: IL dated 3 business days after the deposit', [ph('il')['TODAYS-DATE'], ph('estl')['TODAYS-DATE'], ph('mo')['TODAYS-DATE']], ['11/18/2026', '11/18/2026', '11/13/2026']);
-  eq('agreement fields: amounts without $ (the template prints it), dates, link', [ph('il')['first-DEPOSIT-AMOUNT'], ph('il')['second-DEPOSIT-AMOUNT'], ph('il')['first-deposit-paid-date'], ph('il')['CLOSING-DATE'], ph('il')['PAY-LINK']], ['1,500', '1,500', '11/13/2026', '11/20/2026', 'https://pay']); }
+  eq('agreement fields: amounts without $ (the template prints it), dates, link', [ph('il')['first-DEPOSIT-AMOUNT'], ph('il')['second-DEPOSIT-AMOUNT'], ph('il')['first-deposit-paid-date'], ph('il')['full-Deposit-Date'], ph('il')['PAY-LINK']], ['1,500', '1,500', '11/13/2026', '11/20/2026', 'https://pay']);
+  eq('agreement: closing is 10 days after the deposit, every template', [ph('il')['CLOSING-DATE'], ph('estl')['CLOSING-DATE'], ph('mo')['CLOSING-DATE']], ['11/23/2026', '11/23/2026', '11/23/2026']); }
 
 // ---------- terms in code match the approved doc ----------
 const DOC = '/Users/aarondavid/Desktop/OS/instant-approval-homes/docs/reserve-deposit-terms.md';

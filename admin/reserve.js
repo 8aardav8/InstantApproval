@@ -172,6 +172,9 @@ export function agreementTemplateFor(address, state) {
   if (state !== "IL") return null;
   return /\be(ast)?\.?\s+(st\.?|saint)\s+louis\b/i.test(address || "") ? "estl" : "il";
 }
+export function addCalendarDays(ymd, n) {
+  const d = new Date(ymd + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);
+}
 // YYYY-MM-DD + n weekdays (holidays not counted).
 export function addBusinessDays(ymd, n) {
   const d = new Date(ymd + "T12:00:00Z");
@@ -189,7 +192,8 @@ export function agreementPlaceholders({ kind, paidYmd, paidCents, downCents, due
     "TODAYS-DATE": mdy(agreementYmd), "SELLER-NAME": sellerName || "", "BUYER-NAME": buyerName || "", "PROPERTY-ADDRESS": address,
     "first-deposit-paid-date": mdy(paidYmd), "first-DEPOSIT-AMOUNT": plain(paidCents),
     "full-Deposit-Date": mdy(dueYmd), "second-DEPOSIT-AMOUNT": plain(Math.max(0, downCents - paidCents)),
-    "PAY-LINK": payLink || "(link not available)", "CLOSING-DATE": mdy(dueYmd),
+    // Aaron 11/13: "always make the closing date 10 days after the deposit receipt date".
+    "PAY-LINK": payLink || "(link not available)", "CLOSING-DATE": mdy(addCalendarDays(paidYmd, 10)),
   };
   return Object.entries(f).map(([placeholder_key, replace_with_text]) => ({ placeholder_key, replace_with_text }));
 }
