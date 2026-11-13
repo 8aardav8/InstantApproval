@@ -4991,10 +4991,12 @@ function renderBuyerDetail(buyer) {
   // Phone/Email copy-to-clipboard, added 2026-09-12 per Aaron's direct
   // request -- these two facts get the copyable-text treatment, everything
   // else in this list stays plain escaped text.
-  // Phone opens the Quo conversation directly (phoneQuoLinkHtml), Email
-  // stays click-to-copy (copyableTextHtml) -- split 2026-09-14 per Aaron's
-  // direct request, see phoneQuoLinkHtml's own comment for why phones and
-  // emails are no longer treated the same way here.
+  // Phone and Email are both click-to-copy again (2026-11-12, Aaron: "When
+  // clicking on the phone number on a buyer page, I'd like it to be copied
+  // to clipboard, similar to how the email is now"). Reverses the
+  // 2026-09-14 Quo-link split on this page only; the Quo app button at the
+  // top still opens the conversation, and list/appointment rows keep
+  // phoneQuoLinkHtml.
   //
   // Login Name (IAH) rendered separately, ahead of the filtered facts list,
   // so it always shows (even with no name on file) and can carry the
@@ -5008,7 +5010,7 @@ function renderBuyerDetail(buyer) {
   // before an ID's been linked -- same reasoning as Login Name above.
   const idNameValue = (lm && lm.idName) || "";
   const idNameHtml = `<div class="detail-field"><span class="label">ID Name (OCR)</span><span class="value buyer-idname-editable" data-phone="${escapeAttr(buyer.phone)}" data-id-name="${escapeAttr(idNameValue)}" tabindex="0" title="Click to edit">${idNameValue ? escapeHtml(idNameValue) : "(none)"}</span></div>`;
-  const factsHtml = loginNameHtml + idNameHtml + facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" ? phoneQuoLinkHtml(String(v)) : k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
+  const factsHtml = loginNameHtml + idNameHtml + facts.map(([k, v]) => `<div class="detail-field"><span class="label">${k}</span><span class="value">${k === "Phone" || k === "Email" ? copyableTextHtml(String(v)) : escapeHtml(String(v))}</span></div>`).join("");
 
   // Lead Info section REMOVED 2026-09-15 per Aaron's direct request ("get
   // rid of the lead info section on the buyer page for leads that came
@@ -5218,7 +5220,16 @@ function renderBuyerDetail(buyer) {
     return x.address.localeCompare(y.address);
   });
   const favScheduledItemHtml = (item) => {
-    const line1 = `${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${escapeHtml(item.address)}`;
+    // Address -> that property's own page (2026-11-12, Aaron: "In favorited
+    // and scheduled list, I'd like clicking on a name to visit that
+    // properties info page"). The rest of a scheduled row still opens its
+    // appointment card. Own attribute, not data-listing-id: that one is
+    // also used by syncFavoriteHearts.
+    const listing = (ALL_LISTINGS || []).find((l) => l.address === item.address);
+    const addressHtml = listing
+      ? `<span class="buyer-property-link" data-open-listing="${escapeAttr(listing.id)}" role="link" tabindex="0" title="Open this property">${escapeHtml(item.address)}</span>`
+      : escapeHtml(item.address);
+    const line1 = `${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${addressHtml}`;
     // Relative-day label right after the date, added 2026-09-14 per
     // Aaron's direct request ("today or in one day or in two days right
     // after the date") -- see relativeDayLabel's own comment.
@@ -5280,7 +5291,7 @@ function renderBuyerDetail(buyer) {
         return `
           <div class="co-buyer-block${matched ? " co-buyer-linked" : ""}" data-phone="${escapeAttr(buyer.phone)}" data-slot="${c.slot}"${matched ? ` data-linked-phone="${escapeAttr(matched.phone)}"` : ""}>
             <div class="detail-field"><span class="label">Name</span><span class="value">${escapeHtml(c.name)}${matched ? ` <span class="co-buyer-goto-hint">(view their page →)</span>` : ""}</span></div>
-            ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${phoneQuoLinkHtml(c.phone)}</span></div>` : ""}
+            ${c.phone ? `<div class="detail-field"><span class="label">Phone</span><span class="value">${copyableTextHtml(c.phone)}</span></div>` : ""}
             ${c.email ? `<div class="detail-field"><span class="label">Email</span><span class="value">${escapeHtml(c.email)}</span></div>` : ""}
             ${c.idLink ? `<img class="buyer-id-photo admin-id-photo" data-dropbox-link="${escapeAttr(c.idLink)}" alt="Co-buyer ID">` : `<p class="buyer-no-id">No ID on file.</p>`}
             <div class="co-buyer-actions">
@@ -5609,6 +5620,11 @@ function renderBuyerDetail(buyer) {
   // 2026-09-16 per Aaron's direct request. Manage-controls clicks inside
   // this same item already stopPropagation (wireAppointmentManageControls
   // above), so they never reach this handler.
+  container.querySelectorAll(".buyer-property-link").forEach((el) => {
+    const open = (e) => { e.stopPropagation(); showDetail(el.dataset.openListing); };
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(e); } });
+  });
   container.querySelectorAll(".buyer-appt-item-clickable").forEach((el) => {
     const go = () => goToAppointmentFromBuyer({ phone: buyer.phone, address: el.dataset.address, date: el.dataset.date });
     el.addEventListener("click", go);

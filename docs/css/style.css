@@ -1390,3 +1390,6 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .buyer-compose select, .buyer-compose textarea { width: 100%; box-sizing: border-box; margin: 6px 0; font: inherit; }
 .buyer-send-blocked { color: #b91c1c; font-size: 13px; }
 
+
+/* Favorited & Scheduled: address opens the property page (2026-11-12). */
+.buyer-property-link { color: var(--navy); text-decoration: underline; cursor: pointer; }
