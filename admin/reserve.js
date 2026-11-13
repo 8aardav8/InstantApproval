@@ -162,15 +162,16 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
 // (Aaron: "ESTL applies to closing costs").
 export const AGREEMENT_TEMPLATES = {
   mo: { id: "f0914096-d69a-4f0a-8ba4-23b118892561", label: "St. Louis MO" },
-  estl: { id: "be461ec8-acc5-4c71-aca1-8894747f30ac", label: "East St. Louis IL" },
-  il: { id: "5e1dd9c7-0624-4c78-9922-b1ac72e6f761", label: "Illinois (not East St. Louis)" },
+  il: { id: "5e1dd9c7-0624-4c78-9922-b1ac72e6f761", label: "Illinois" },
 };
-// East St. Louis proper is by the address's city; the Area "IL - East St
-// Louis" also covers Cahokia and other towns, which use the IL template.
+// Two templates since 2026-11-13 (Aaron: "could we use just two templates
+// now? One for MO and one for IL"): once the "upfront amount" wording
+// replaced East St. Louis's "Closing Costs" line, its template was word for
+// word the Illinois one.
 export function agreementTemplateFor(address, state) {
   if (state === "MO") return "mo";
-  if (state !== "IL") return null;
-  return /\be(ast)?\.?\s+(st\.?|saint)\s+louis\b/i.test(address || "") ? "estl" : "il";
+  if (state === "IL") return "il";
+  return null;
 }
 export function addCalendarDays(ymd, n) {
   const d = new Date(ymd + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);

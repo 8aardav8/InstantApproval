@@ -37,18 +37,18 @@ eq('IL checkbox wording', til.checkbox.endsWith('non-refundable after 3 business
 
 // ---------- deposit agreement helpers ----------
 eq('template: MO', agreementTemplateFor('9853 Green Valley Dr, St Louis, MO 63136', 'MO'), 'mo');
-eq('template: East St. Louis proper', [agreementTemplateFor('740 N 22nd St, East St Louis, IL 62205', 'IL'), agreementTemplateFor('1438 N 44th St, E St Louis, 62204', 'IL'), agreementTemplateFor('12 X Ave East Saint Louis IL', 'IL')], ['estl', 'estl', 'estl']);
+eq('template: East St. Louis uses the one Illinois template', [agreementTemplateFor('740 N 22nd St, East St Louis, IL 62205', 'IL'), agreementTemplateFor('1438 N 44th St, E St Louis, 62204', 'IL')], ['il', 'il']);
 eq('template: Cahokia is rest-of-IL', agreementTemplateFor('337 Range Ln, Cahokia, IL 62206', 'IL'), 'il');
 eq('template: Saint Louis MO is not ESTL', agreementTemplateFor('7316 Park Dr Saint Louis MO 63,133', 'MO'), 'mo');
 eq('template: other states -> none', agreementTemplateFor('1 Main St, Detroit, MI', 'MI'), null);
 eq('3 business days: Fri -> Wed', addBusinessDays('2026-11-13', 3), '2026-11-18');
 eq('3 business days: Mon -> Thu', addBusinessDays('2026-11-16', 3), '2026-11-19');
 { const ph = (k) => Object.fromEntries(agreementPlaceholders({ kind: k, paidYmd: '2026-11-13', paidCents: 150000, downCents: 300000, dueYmd: '2026-11-20', sellerName: 'S LLC', buyerName: 'Pat', address: A, payLink: 'https://pay' }).map((x) => [x.placeholder_key, x.replace_with_text]));
-  eq('agreement: dated the deposit day everywhere (no post-dating)', [ph('il')['TODAYS-DATE'], ph('estl')['TODAYS-DATE'], ph('mo')['TODAYS-DATE']], ['11/13/2026', '11/13/2026', '11/13/2026']);
-  eq('agreement: IL refund-by date is 3 business days later; MO has none', [ph('il')['REFUND-BY-DATE'], ph('estl')['REFUND-BY-DATE'], 'REFUND-BY-DATE' in ph('mo')], ['11/18/2026', '11/18/2026', false]);
+  eq('agreement: dated the deposit day everywhere (no post-dating)', [ph('il')['TODAYS-DATE'], ph('mo')['TODAYS-DATE']], ['11/13/2026', '11/13/2026']);
+  eq('agreement: IL refund-by date is 3 business days later; MO has none', [ph('il')['REFUND-BY-DATE'], 'REFUND-BY-DATE' in ph('mo')], ['11/18/2026', false]);
   eq('agreement: total upfront amount', ph('mo')['TOTAL-UPFRONT'], '3,000');
   eq('agreement fields: amounts without $ (the template prints it), dates, link', [ph('il')['first-DEPOSIT-AMOUNT'], ph('il')['second-DEPOSIT-AMOUNT'], ph('il')['first-deposit-paid-date'], ph('il')['full-Deposit-Date'], ph('il')['PAY-LINK']], ['1,500', '1,500', '11/13/2026', '11/20/2026', 'https://pay']);
-  eq('agreement: closing is 10 days after the deposit, every template', [ph('il')['CLOSING-DATE'], ph('estl')['CLOSING-DATE'], ph('mo')['CLOSING-DATE']], ['11/23/2026', '11/23/2026', '11/23/2026']); }
+  eq('agreement: closing is 10 days after the deposit, every template', [ph('il')['CLOSING-DATE'], ph('mo')['CLOSING-DATE']], ['11/23/2026', '11/23/2026']); }
 
 // ---------- terms in code match the approved doc ----------
 const DOC = '/Users/aarondavid/Desktop/OS/instant-approval-homes/docs/reserve-deposit-terms.md';
