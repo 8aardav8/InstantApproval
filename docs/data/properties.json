@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T23:50:05.342361+00:00",
+  "generatedAt": "2026-11-13T23:50:44.848126+00:00",
   "listings": [
     {
       "id": "1921-e-edwards-street-springfield-il-62-703",
@@ -17532,7 +17532,7 @@
       "id": "19-n-harvey-ave-saint-louis-mo-63135",
       "address": "19 N Harvey Ave, Saint Louis, MO 63135",
       "onMarketDate": "10/14/2026",
-      "lastUpdate": "10/14/2026",
+      "lastUpdate": "11/13/2026",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$995",
@@ -17540,7 +17540,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 3,
       "lat": 38.7449549,
       "lng": -90.3129233
@@ -22734,7 +22734,7 @@
       "id": "10044-green-valley-drive-stl-mo-63136",
       "address": "10044 GREEN VALLEY DRIVE STL MO 63136",
       "onMarketDate": "10/30/2025",
-      "lastUpdate": "9/21/2026",
+      "lastUpdate": "11/13/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$850",
@@ -22742,7 +22742,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.7512225,
       "lng": -90.262946
