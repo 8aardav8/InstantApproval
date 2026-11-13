@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T23:42:33.290724+00:00",
+  "generatedAt": "2026-11-13T23:43:33.211488+00:00",
   "listings": [
     {
       "id": "1921-e-edwards-street-springfield-il-62-703",
@@ -1926,7 +1926,7 @@
       "id": "1322-williams-st-cahokia-il-62206",
       "address": "1322 Williams St, Cahokia, IL 62206",
       "onMarketDate": "9/24",
-      "lastUpdate": "11/10/2026",
+      "lastUpdate": "11/13/2026",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$775",
@@ -1934,7 +1934,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.5606643,
       "lng": -90.1656718
@@ -30554,7 +30554,7 @@
       "id": "1027-garth-ave-saint-louis-mo-63147",
       "address": "1027 Garth Ave, Saint Louis, MO 63147",
       "onMarketDate": "9/24/2026",
-      "lastUpdate": "11/2/2026",
+      "lastUpdate": "11/13/2026",
       "area": "MO - St. Louis",
       "down": "$1,200",
       "monthly": "$750",
