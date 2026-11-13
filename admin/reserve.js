@@ -100,7 +100,7 @@ export function reserveTerms({ address, downCents, isIL }) {
   if (isIL) items.push(`Illinois properties only: the deposit is fully refundable if you ask in writing within 3 business days of paying it. After that it is non-refundable, except as stated in item 6.`);
   items.push(
     `3. What it does. Once your deposit is received, we stop marketing the property and reserve it for you while we prepare your closing documents.`,
-    `4. Credited to your down payment. The deposit counts toward your down payment. Closing is finalized on the same day you pay the rest of the down payment (${fmtMoney(remaining)}).`,
+    `4. Credited to your down payment. The deposit counts toward your down payment. Closing can be finalized after the full down payment is paid (the rest is ${fmtMoney(remaining)}).`,
     `5. Deadline. You must pay the rest of the down payment and close within 7 days of paying the deposit. If you don't, the reservation ends, the property goes back on the market, and the deposit is kept.`,
     `6. When you get it back. You get a full refund if (a) someone else already paid a deposit on this property before you did, or (b) we are unable to sell you the property.`,
     `7. As-is. All homes are sold as-is.`,
