@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T23:46:39.190085+00:00",
+  "generatedAt": "2026-11-13T23:47:14.622899+00:00",
   "listings": [
     {
       "id": "1921-e-edwards-street-springfield-il-62-703",
@@ -31,7 +31,7 @@
       "baths": "1",
       "sqft": "636",
       "status": "Available",
-      "livability": 0,
+      "livability": 2,
       "lat": 38.68635769999999,
       "lng": -90.30837029999999
     },
