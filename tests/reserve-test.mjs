@@ -5,7 +5,7 @@
 import { generateKeyPairSync, createHmac } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import worker from '../admin/worker.js';
-import { parseMoneyCents, listingState, hasToured, reserveTerms, MSG, RESERVE_GIDS } from '../admin/reserve.js';
+import { parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, MSG, RESERVE_GIDS } from '../admin/reserve.js';
 
 let fail = 0;
 const eq = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fail++; console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : `: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`}`); };
@@ -170,7 +170,10 @@ let paidWorld;
 { const w = world(); const r = await call(w, '/reserve-request', { listingId: LID, inspected: true });
   const inv = w.invoices.INV1;
   eq('request: ok', r.data.ok, true);
-  eq('request: order line is the 50% deposit in cents', w.lastOrder.line_items[0].base_price_money, { amount: 150000, currency: 'USD' });
+  eq('request: invoice total is the full down payment', w.lastOrder.line_items[0].base_price_money, { amount: 300000, currency: 'USD' });
+  eq('request: 50% deposit due today, rest due in 7 days', [inv.payment_requests[0].request_type, inv.payment_requests[0].fixed_amount_requested_money.amount, inv.payment_requests[0].due_date, inv.payment_requests[1].request_type, inv.payment_requests[1].due_date], ['DEPOSIT', 150000, invoiceDate(0), 'BALANCE', invoiceDate(7)]);
+  eq('request: Earline settings (Cash App + card only, card on file, reminders, title)', [inv.accepted_payment_methods, inv.store_payment_method_enabled, inv.payment_requests[1].reminders.map((x) => x.relative_scheduled_days), inv.title], [{ card: true, cash_app_pay: true, bank_account: false, square_gift_card: false, buy_now_pay_later: false }, true, [-6, -3, 0, 1, 3], `Pat Example - ${A}`]);
+  eq('request: message is personal and never mentions the PDF', [inv.description.startsWith("Hi Pat. Once you've decided"), /attach|example agreement/i.test(inv.description)], [true, false]);
   eq('request: invoice carries the address and IL terms', [inv.title.includes(A), inv.description.includes('Illinois properties only'), inv.description.includes('3 business days')], [true, true, true]);
   eq('request: draft only (no publish) while auto-send is off', w.square.some((x) => x.endsWith('/publish')), false);
   eq('request: photo attached', w.square.some((x) => x.endsWith('/attachments')), true);
@@ -187,17 +190,19 @@ let paidWorld;
 const sign = (raw) => createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64');
 { // Sandbox money must never touch the real listing or buyer.
   const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true });
-  const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
+  const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PARTIALLY_PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
   await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64') } });
-  eq('sandbox paid: deposit row Paid, real listing and buyer untouched', [depRow(w)[2], w.tabs.PROPERTIES[2][0], w.tabs['App: Logins'][1][LI.stage]], ['Paid', 'Available', 'First Showing Done']);
+  eq('sandbox paid: deposit row Paid, real listing and buyer untouched', [depRow(w)[2], w.tabs.PROPERTIES[2][0], w.tabs['App: Logins'][1][LI.stage]], ['Deposit paid', 'Available', 'First Showing Done']);
   eq('sandbox paid: Aaron told it was a test', w.telegrams.at(-1).startsWith('💰 [SANDBOX TEST]'), true); }
-const paidEvent = (id) => JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id, status: 'PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
+// Square reports each payment request's completed amount; status PARTIALLY_PAID until all is paid.
+const payEvt = (id, paid, status) => JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id, status, payment_requests: [{ request_type: 'DEPOSIT', total_completed_amount_money: { amount: Math.min(paid, 150000) } }, { request_type: 'BALANCE', total_completed_amount_money: { amount: Math.max(0, paid - 150000) } }] } } } });
+const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
 { const w = paidWorld; const raw = paidEvent('INV1');
   w.tabs['Square Deposits'][1][3] = 'production'; // live-money path
   const bad = await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': 'nope' } });
   eq('webhook: bad signature refused, nothing written', [bad.status, depRow(w)[2]], [401, 'Draft']);
   const ok = await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
-  eq('webhook: paid -> deposit row Paid', [ok.status, depRow(w)[2], depRow(w)[13]], [200, 'Paid', '$1,500']);
+  eq('webhook: deposit paid -> row Deposit paid', [ok.status, depRow(w)[2], depRow(w)[13]], [200, 'Deposit paid', '$1,500']);
   eq('webhook: property -> Pending', w.tabs.PROPERTIES[2][0], 'Pending');
   eq('webhook: other property untouched', w.tabs.PROPERTIES[1][0], 'Available');
   eq('webhook: buyer Stage + Deposit Property set', [w.tabs['App: Logins'][1][LI.stage], w.tabs['App: Logins'][1][LI.dep]], ['Deposit Received', A]);
@@ -205,14 +210,39 @@ const paidEvent = (id) => JSON.stringify({ type: 'invoice.payment_made', data: {
   const n = w.telegrams.length;
   await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
   eq('webhook: repeat delivery changes nothing, no second alert', w.telegrams.length, n);
+  const full = payEvt('INV1', 300000, 'PAID');
+  await call(w, '/square-webhook', null, { phone: null, raw: full, headers: { 'x-square-hmacsha256-signature': sign(full) } });
+  eq('webhook: rest paid -> Paid in full, Stage left for Aaron', [depRow(w)[2], depRow(w)[13], w.tabs['App: Logins'][1][LI.stage], w.telegrams.at(-1).startsWith('💰 PAID IN FULL')], ['Paid in full', '$3,000', 'Deposit Received', true]);
+  const n2 = w.telegrams.length;
+  await call(w, '/square-webhook', null, { phone: null, raw: full, headers: { 'x-square-hmacsha256-signature': sign(full) } });
+  eq('webhook: repeat full-payment delivery is silent', w.telegrams.length, n2);
   // Second buyer had an invoice too ("Allow both") and pays after.
   w.tabs.PROPERTIES[2][0] = 'Pending';
   w.tabs['Square Deposits'].push(['t', 'INV9', 'Draft', 'production', PHONE2, 'Sam Second', 's@example.com', A, 'ROW-A', 'IL', '$3,000', '$1,500', '', '', '']);
   const raw2 = paidEvent('INV9');
   await call(w, '/square-webhook', null, { phone: null, raw: raw2, headers: { 'x-square-hmacsha256-signature': sign(raw2) } });
-  eq('webhook: second payer flagged for refund', [depRow(w, 2)[2], depRow(w, 2)[14]], ['Paid', 'Second payer: refund per terms item 6(a)']);
+  eq('webhook: second payer flagged for refund', [depRow(w, 2)[2], depRow(w, 2)[14]], ['Deposit paid', 'Second payer: refund per terms item 6(a)']);
   eq('webhook: second payer does not change their Stage', w.tabs['App: Logins'][2][LI.stage], 'First Showing Done');
-  eq('webhook: Aaron told to refund', w.telegrams.at(-1).includes('SECOND deposit'), true); }
+  eq('webhook: Aaron told to refund', w.telegrams.at(-1).includes('SECOND deposit'), true);
+  const more = payEvt('INV9', 300000, 'PAID');
+  await call(w, '/square-webhook', null, { phone: null, raw: more, headers: { 'x-square-hmacsha256-signature': sign(more) } });
+  eq('webhook: second payer paying the rest is told to refund all', w.telegrams.at(-1).includes('Refund all of it'), true); }
+{ // Paying in full at once reserves too.
+  const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true }); w.tabs['Square Deposits'][1][3] = 'production';
+  const raw = payEvt('INV1', 300000, 'PAID');
+  await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
+  eq('paid in full at once: reserved and logged', [depRow(w)[2], w.tabs.PROPERTIES[2][0], w.tabs['App: Logins'][1][LI.stage]], ['Paid in full', 'Pending', 'Deposit Received']); }
+{ // Less than the deposit does not reserve.
+  const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true }); w.tabs['Square Deposits'][1][3] = 'production';
+  const raw = payEvt('INV1', 50000, 'PARTIALLY_PAID');
+  await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
+  eq('below the deposit: not reserved', [depRow(w)[2], w.tabs.PROPERTIES[2][0]], ['Partly paid', 'Available']); }
+{ // Aaron, signed in as himself AND as admin, can test as a buyer.
+  const w = world(); const r = await call(w, '/reserve-check', { listingId: LID, phone: PHONE2 }, { phone: '+19995550000', admin: true });
+  eq('admin with own session can act for a buyer', r.data.ok, true);
+  // PHONE hasn't toured, PHONE2 has: a non-admin naming PHONE2 must still be judged as PHONE.
+  const w2 = world({ shown: '' }); const r2 = await call(w2, '/reserve-check', { listingId: LID, phone: PHONE2 }, { phone: PHONE });
+  eq('a buyer cannot act for someone else (body phone ignored)', r2.data.message, MSG.notToured); }
 
 // ---------- Completed appointment also marks the house shown ----------
 { const w = world({ shown: '' });

@@ -112,6 +112,46 @@ export function reserveTerms({ address, downCents, isIL }) {
   return { deposit, remaining, items, checkbox };
 }
 
+// Square invoice settings copied from Aaron's hand-made Earline Betts
+// invoice #001288 (2026-11-13): card + Cash App Pay, card on file allowed,
+// no tips, "Name - address" title, his message, rest due in 7 days with
+// reminders at -6/-3/0/+1/+3 days. Differences he chose: the 50% deposit
+// is a real Square deposit due today, and no closing-packet PDF or mention
+// of it ("Skip the pdf or any mention of it on the invoice").
+export function invoiceDate(daysAhead, now = Date.now()) {
+  return new Date(now + daysAhead * 86400e3).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+}
+export function buildInvoice({ locationId, orderId, customerId, buyer, listing, downCents, terms, now = Date.now() }) {
+  const first = (buyer.name || "").trim().split(/\s+/)[0];
+  const message = [
+    `Hi${first ? " " + first : ""}. Once you've decided to move forward with the purchase, you may pay this entire invoice, or just the 50% deposit. Once payment is received, your home is reserved for you and taken off the market.`,
+    "",
+    "The final closing packet with the specifics of your deal will be ready the next day after payment.",
+    "",
+    "Once full down payment is received, we can e-sign your agreement, and the place is yours same day!",
+    "",
+    `Down payment: ${fmtMoney(downCents)}. Deposit due now (50%): ${fmtMoney(terms.deposit)}. Rest due within 7 days: ${fmtMoney(terms.remaining)}.`,
+    `You confirmed: "${terms.checkbox}"`,
+    "",
+    "Reservation Deposit Terms",
+    ...terms.items,
+  ].join("\n");
+  return {
+    location_id: locationId, order_id: orderId, primary_recipient: { customer_id: customerId },
+    title: `${buyer.name ? buyer.name + " - " : ""}${listing.address}`.slice(0, 255),
+    description: message.slice(0, 65000),
+    payment_requests: [
+      { request_type: "DEPOSIT", fixed_amount_requested_money: { amount: terms.deposit, currency: "USD" }, due_date: invoiceDate(0, now), tipping_enabled: false },
+      { request_type: "BALANCE", due_date: invoiceDate(7, now), tipping_enabled: false,
+        reminders: [-6, -3, 0, 1, 3].map((d) => ({ relative_scheduled_days: d, message: "Reminder: the rest of your down payment is due." })) },
+    ],
+    delivery_method: "EMAIL",
+    sale_or_service_date: invoiceDate(0, now),
+    store_payment_method_enabled: true,
+    accepted_payment_methods: { card: true, cash_app_pay: true, bank_account: false, square_gift_card: false, buy_now_pay_later: false },
+  };
+}
+
 function colLetter(i) {
   let s = "";
   for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s;
@@ -195,7 +235,8 @@ export function createReserve(deps) {
     const bearer = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     const isAdmin = !!bearer && (await verifyIdToken(bearer)).ok;
     let phone = await verifySessionToken(env, request.headers.get("X-IAH-Session"));
-    if (!phone && isAdmin && body.phone) phone = toE164(body.phone);
+    // Aaron testing as a buyer (his own session is used when he leaves it blank).
+    if (isAdmin && body.phone) phone = toE164(body.phone);
     return { isAdmin, phone };
   }
 
@@ -255,7 +296,7 @@ export function createReserve(deps) {
       const token = await getSheetsAccessToken(env);
       const r = await evaluate(token, await loadLayout(token), who.phone, String(body.listingId || ""));
       if (!r.ok) return jsonResponse({ ok: false, code: r.code, message: r.message });
-      return jsonResponse({ ok: true, address: r.listing.address, down: fmtMoney(r.downCents), deposit: fmtMoney(r.terms.deposit), isIL: r.isIL, terms: r.terms.items, checkbox: r.terms.checkbox });
+      return jsonResponse({ ok: true, address: r.listing.address, down: fmtMoney(r.downCents), deposit: fmtMoney(r.terms.deposit), remaining: fmtMoney(r.terms.remaining), isIL: r.isIL, terms: r.terms.items, checkbox: r.terms.checkbox });
     } catch (e) {
       return jsonResponse({ ok: false, message: MSG.needsCall, detail: String(e) }, 500);
     }
@@ -304,21 +345,11 @@ export function createReserve(deps) {
       const order = await square(env, "POST", "/v2/orders", {
         idempotency_key: crypto.randomUUID(),
         order: { location_id: env.SQUARE_LOCATION_ID, customer_id: customerId, reference_id: (r.listing.rowId || "").slice(0, 40),
-          line_items: [{ name: `Reservation deposit (50% of down payment): ${r.listing.address}`.slice(0, 512), quantity: "1", base_price_money: { amount: r.terms.deposit, currency: "USD" } }] },
+          line_items: [{ name: `Down payment: ${r.listing.address}`.slice(0, 512), quantity: "1", base_price_money: { amount: r.downCents, currency: "USD" } }] },
       });
-      const due = new Date(Date.now() + 2 * 86400e3).toISOString().slice(0, 10);
-      const description = [
-        `Property: ${r.listing.address}`, `Down payment: ${fmtMoney(r.downCents)}`, `Reservation deposit (50%): ${fmtMoney(r.terms.deposit)}`,
-        `Buyer confirmed: "${r.terms.checkbox}"`, "", "Reservation Deposit Terms", ...r.terms.items,
-      ].join("\n");
       invoice = (await square(env, "POST", "/v2/invoices", {
         idempotency_key: crypto.randomUUID(),
-        invoice: {
-          location_id: env.SQUARE_LOCATION_ID, order_id: order.order.id, primary_recipient: { customer_id: customerId },
-          title: `Reservation Deposit: ${r.listing.address}`.slice(0, 255), description: description.slice(0, 65000),
-          payment_requests: [{ request_type: "BALANCE", due_date: due }], delivery_method: "EMAIL",
-          accepted_payment_methods: { card: true, bank_account: false, square_gift_card: false },
-        },
+        invoice: buildInvoice({ locationId: env.SQUARE_LOCATION_ID, orderId: order.order.id, customerId, buyer: r.buyer, listing: r.listing, downCents: r.downCents, terms: r.terms }),
       })).invoice;
     } catch (e) {
       await telegram(env, `⚠️ Reserve request FAILED at Square: ${r.buyer.name} ${who.phone}, ${r.listing.address}, deposit ${fmtMoney(r.terms.deposit)}.\n${String(e).slice(0, 500)}`);
@@ -357,8 +388,8 @@ export function createReserve(deps) {
     ].filter(Boolean).join("\n"));
 
     return jsonResponse({ ok: true, message: status === "Sent"
-      ? `Your deposit invoice for ${fmtMoney(r.terms.deposit)} was emailed to ${r.buyer.email}. Pay it to reserve this home.`
-      : `Reservation request received. Your deposit invoice for ${fmtMoney(r.terms.deposit)} will be emailed to ${r.buyer.email} shortly.` });
+      ? `Your invoice was emailed to ${r.buyer.email}. Pay the ${fmtMoney(r.terms.deposit)} deposit (or the full ${fmtMoney(r.downCents)}) to reserve this home.`
+      : `Reservation request received. Your invoice will be emailed to ${r.buyer.email} shortly. Paying the ${fmtMoney(r.terms.deposit)} deposit reserves this home.` });
   }
 
   function autoSend(env) { return env.RESERVE_AUTO_SEND === "true"; }
@@ -450,20 +481,33 @@ export function createReserve(deps) {
     const i = rows.findIndex((x, n) => n > 0 && x[c("iah.dep.invoiceId")] === inv.id);
     if (i < 0) return `💰 Square invoice ${inv.id} was paid, but it isn't in the Square Deposits tab (not made by the Reserve button?). Nothing changed.`;
     const rec = rows[i], sheetRow = i + 1;
-    if (rec[c("iah.dep.status")] === "Paid") return ""; // already handled
-    const req = (inv.payment_requests || [])[0] || {};
-    const paidCents = ((req.total_completed_amount_money || {}).amount) || 0;
+    // The invoice is the full down payment with 50% due now (Aaron
+    // 2026-11-13, "Full down, 50% due now"). Paying the deposit reserves
+    // the home; paying the rest only updates the log. Square sends one
+    // event per payment, possibly more than once.
+    const prev = rec[c("iah.dep.status")] || "";
+    if (prev === "Paid in full") return ""; // already handled
+    const paidCents = (inv.payment_requests || []).reduce((sum, q) => sum + (((q.total_completed_amount_money || {}).amount) || 0), 0);
     const fullyPaid = inv.status === "PAID";
+    const depositCents = parseMoneyCents(rec[c("iah.dep.deposit")]) || Infinity;
+    const reservedNow = fullyPaid || paidCents >= depositCents;
+    const next = fullyPaid ? "Paid in full" : reservedNow ? "Deposit paid" : "Partly paid";
+    if (next === prev && fmtMoney(paidCents) === rec[c("iah.dep.amountPaid")]) return ""; // repeat delivery
     const tab = layout.tab(D);
-    await putCell(token, tab, sheetRow, c("iah.dep.status"), fullyPaid ? "Paid" : "Partly paid");
+    await putCell(token, tab, sheetRow, c("iah.dep.status"), next);
     await putCell(token, tab, sheetRow, c("iah.dep.paidAt"), new Date().toISOString());
     await putCell(token, tab, sheetRow, c("iah.dep.amountPaid"), fmtMoney(paidCents));
     const who = `${rec[c("iah.dep.name")] || "(no name)"} ${rec[c("iah.dep.phone")]}`;
     const address = rec[c("iah.dep.address")];
-    if (!fullyPaid) return `💰 Partial deposit payment: ${who}, ${address}, ${fmtMoney(paidCents)} so far. Nothing else changed.`;
+    const flagged = /^Second payer/.test(rec[c("iah.dep.note")] || "");
+    if (!reservedNow) return `💰 Partial payment, below the deposit: ${who}, ${address}, ${fmtMoney(paidCents)} of ${fmtMoney(depositCents)}. Not reserved yet; nothing else changed.`;
+    if (prev === "Deposit paid") {
+      if (flagged) return `⚠️ ${who} paid MORE on ${address} (${fmtMoney(paidCents)} total), but they were the second payer. Refund all of it in Square.`;
+      return fullyPaid ? `💰 PAID IN FULL: ${who}, ${address}, ${fmtMoney(paidCents)}. Set their Stage to Full Down Received when the paperwork is ready.` : `💰 More paid: ${who}, ${address}, ${fmtMoney(paidCents)} so far.`;
+    }
 
     // Someone else paid first? (Aaron chose "Allow both"; terms item 6a refunds the second.)
-    const otherPaid = rows.some((x, n) => n > 0 && n !== i && x[c("iah.dep.status")] === "Paid" && normAddr(x[c("iah.dep.address")]) === normAddr(address));
+    const otherPaid = rows.some((x, n) => n > 0 && n !== i && /^(Deposit paid|Paid in full)$/.test(x[c("iah.dep.status")] || "") && normAddr(x[c("iah.dep.address")]) === normAddr(address));
     const props = await readRows(token, layout.tab(P));
     const pRowIdx = layout.one("iah.prop.rowid", P), pStatusIdx = layout.one("iah.prop.status", P);
     const rowId = rec[c("iah.dep.propRowId")];
@@ -471,7 +515,7 @@ export function createReserve(deps) {
     const propStatus = pi > 0 ? (props[pi][pStatusIdx] || "").trim() : "";
     if (otherPaid) {
       await putCell(token, tab, sheetRow, c("iah.dep.note"), "Second payer: refund per terms item 6(a)");
-      return `⚠️ SECOND deposit paid on ${address}: ${who}, ${fmtMoney(paidCents)}. Another buyer paid first. Per terms item 6(a), refund this one in Square. Sheet not changed otherwise.`;
+      return `⚠️ SECOND deposit paid on ${address}: ${who}, ${fmtMoney(paidCents)}. Another buyer paid first. Per terms item 6(a), refund this one in Square and cancel the rest of their invoice. Sheet not changed otherwise.`;
     }
     // Fake (sandbox) money never changes the real listing or buyer.
     if (rec[c("iah.dep.env")] !== "production") {
@@ -489,7 +533,8 @@ export function createReserve(deps) {
       done.push("buyer Stage → Deposit Received (Trello card follows)");
     } else done.push("buyer row not found, Stage not changed");
     const il = rec[c("iah.dep.state")] === "IL" ? "\nIL home: refundable if they ask in writing within 3 business days." : "";
-    return `💰 DEPOSIT PAID: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.\n7-day clock to e-sign and pay the rest starts now.${il}`;
+    const head = fullyPaid ? `💰 PAID IN FULL (deposit + rest)` : `💰 DEPOSIT PAID`;
+    return `${head}: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.${fullyPaid ? "" : "\n7-day clock to e-sign and pay the rest starts now."}${il}`;
   }
 
   // Marking an appointment Completed also records the house as shown, so

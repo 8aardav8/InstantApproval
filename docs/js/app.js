@@ -798,7 +798,7 @@ function showDetail(id) {
         <a class="btn-outline" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(listing.address)}" target="_blank" rel="noopener">${ICON_DIRECTIONS}Get Directions</a>
         ${scheduleBtn}
       </div>
-      ${availableOnly ? `<div class="action-row hidden" id="reserve-row"><button type="button" class="btn-primary" onclick="openReserve('${listing.id}')">Reserve this home</button></div>` : ""}
+      ${availableOnly ? `<div class="action-row hidden" id="reserve-row"><button type="button" class="btn-primary btn-reserve" onclick="openReserve('${listing.id}')">Reserve this home</button></div>` : ""}
       ${detailField("First Available", listing.onMarketDate)}
       ${listing.picsLink && listing.picsLink.trim()
         ? `<div class="detail-field"><span>Photo Link</span><span class="value"><a href="${escapeHtml(listing.picsLink)}" target="_blank" rel="noopener">${escapeHtml(listing.picsLink)}</a></span></div>`
@@ -854,12 +854,13 @@ function reserveMessageHtml(message) {
 
 async function openReserve(listingId) {
   const body = { listingId };
-  if (!getSessionToken()) {
-    if (!getStoredAdminToken()) { showLoginGate(); return; }
-    const phone = prompt("Admin test: reserve as which buyer phone?");
-    if (!phone) return;
-    body.phone = phone;
-  }
+  if (getStoredAdminToken()) {
+    // Aaron testing: pick a buyer, or leave blank to use his own sign-in.
+    const phone = prompt("Admin test: reserve as which buyer's phone? (blank = you)");
+    if (phone === null) return;
+    if (phone.trim()) body.phone = phone.trim();
+    else if (!getSessionToken()) return;
+  } else if (!getSessionToken()) { showLoginGate(); return; }
   closeReserve();
   const overlay = document.createElement("div");
   overlay.id = "reserve-overlay";
@@ -881,13 +882,14 @@ async function openReserve(listingId) {
   }
   box.innerHTML = `
     <h3 class="reserve-title">Reserve ${escapeHtml(data.address)}</h3>
-    <div class="reserve-amounts"><span>Down payment</span><strong>${escapeHtml(data.down)}</strong><span>Deposit due now (50%)</span><strong>${escapeHtml(data.deposit)}</strong></div>
+    <div class="reserve-amounts"><span>Down payment</span><strong>${escapeHtml(data.down)}</strong><span>Deposit due now (50%)</span><strong>${escapeHtml(data.deposit)}</strong><span>Rest, due within 7 days</span><strong>${escapeHtml(data.remaining || "")}</strong></div>
+    <p class="reserve-note">You'll get one invoice for the full down payment. Pay the deposit, or all of it, by card or Cash App.</p>
     <div class="reserve-terms-title">Reservation Deposit Terms</div>
     <ul class="reserve-terms">${data.terms.map((t) => `<li${/^\d\./.test(t) ? "" : ' class="reserve-term-sub"'}>${escapeHtml(t)}</li>`).join("")}</ul>
     <label class="reserve-check"><input type="checkbox" id="reserve-inspected"> ${escapeHtml(data.checkbox)}</label>
     <div class="id-lightbox-actions">
       <button type="button" class="btn-outline" onclick="closeReserve()">Cancel</button>
-      <button type="button" class="btn-primary" id="reserve-submit" disabled>Request deposit invoice</button>
+      <button type="button" class="btn-primary btn-reserve" id="reserve-submit" disabled>Request my invoice</button>
     </div>
     <div class="reserve-status"></div>`;
   const check = box.querySelector("#reserve-inspected");
