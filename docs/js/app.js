@@ -4006,7 +4006,7 @@ function renderBuyersList() {
     const today = localTodayISO();
     const upcomingCount = (b.loginsMatch && b.loginsMatch.appointments ? b.loginsMatch.appointments : []).filter((a) => a.date >= today).length;
     const hasId = !!(b.loginsMatch && b.loginsMatch.idLink);
-    const hasLoggedIn = !!(b.loginsMatch && b.loginsMatch.firstLogin);
+    const hasLoggedIn = everLoggedIn(b.loginsMatch);
     // DNC badge -- the only one of the old inline badges left; ID/login/
     // showing moved into the narrow right-side icon column below (see
     // buyerRowIconColumnHtml), added 2026-09-14 per Aaron's direct
@@ -4899,6 +4899,10 @@ function quoAppLinkHtml(phone) {
 // doesn't ALSO bubble up into whatever clickable card it sits inside (see
 // initPhoneQuoLinkDelegation below, same pattern initCopyableTextDelegation
 // already uses for the same reason).
+// Ever signed in: either date counts (2026-11-12). A row can have a Last
+// Login with a blank First Login; Eric Johnson showed ❌ right after signing in.
+function everLoggedIn(lm) { return !!(lm && (lm.firstLogin || lm.lastLogin)); }
+
 function phoneQuoLinkHtml(phone) {
   if (!phone) return "";
   return `<a href="openphone://message?number=${encodeURIComponent(phone)}" class="phone-quo-link">${escapeHtml(phone)}</a>`;
@@ -4956,7 +4960,7 @@ function renderBuyerDetail(buyer) {
   // to check First/Last login further down. Based on firstLogin (not
   // lastLogin, not isCurrentlyLoggedIn -- this is a lifetime "ever," not a
   // "currently online" signal, which the 🟢 on Last Login already covers).
-  const hasEverLoggedIn = !!(lm && lm.firstLogin);
+  const hasEverLoggedIn = everLoggedIn(lm);
   const loginStatusIconHtml = hasEverLoggedIn
     ? `<span class="login-status-icon login-status-yes" title="Has logged in at least once">✅</span>`
     : `<span class="login-status-icon login-status-no" title="Never logged in">❌</span>`;
@@ -7120,7 +7124,7 @@ function renderAppointmentsOverview() {
         address, ...a, row,
         quoName: buyer ? buyer.quoName : null,
         idName: buyer && buyer.loginsMatch ? buyer.loginsMatch.idName : null,
-        hasEverLoggedIn: !!(buyer && buyer.loginsMatch && buyer.loginsMatch.firstLogin),
+        hasEverLoggedIn: everLoggedIn(buyer && buyer.loginsMatch),
       };
       if (!appointmentMatchesSearch(entry, q)) continue;
       // Real bug fix, 2026-09-14 -- Aaron reported a TODAY'S appointment

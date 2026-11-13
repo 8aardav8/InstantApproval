@@ -24,4 +24,5 @@ node tests/browse-ids-test.mjs >/dev/null 2>&1 || { echo "REFUSING: browse-IDs t
 node tests/activity-stamp-test.mjs >/dev/null 2>&1 || { echo "REFUSING: activity-stamp test failed. Run: node tests/activity-stamp-test.mjs" >&2; exit 1; }
 node tests/id-filename-test.mjs >/dev/null 2>&1 || { echo "REFUSING: ID filename test failed. Run: node tests/id-filename-test.mjs" >&2; exit 1; }
 node tests/snippet-names-test.mjs >/dev/null 2>&1 || { echo "REFUSING: snippet-name test failed. Run: node tests/snippet-names-test.mjs" >&2; exit 1; }
+node tests/first-login-test.mjs >/dev/null 2>&1 || { echo "REFUSING: First Login test failed. Run: node tests/first-login-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml

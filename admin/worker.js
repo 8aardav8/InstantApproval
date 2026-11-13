@@ -372,6 +372,7 @@ async function findOrNextLoginsRow(accessToken, email, phone) {
     return {
       row: matchIndex + 1, // 1-indexed sheet row
       isNew: false,
+      existingFirstLogin: (existing[0] || "").trim(),
       existingEmail: (existing[1] || "").trim(),
       existingAgreed: (existing[2] || "").trim(),
       existingPhone: (existing[3] || "").trim(),
@@ -424,16 +425,34 @@ async function writeLoginsRow(accessToken, target, { name, email, phone, agreed 
     const finalPhone = target.existingPhone || phone || "";
     const finalName = target.existingName || name || "";
     const finalIdLink = target.existingIdLink || "";
-    const values = [[finalEmail, finalAgreed, finalPhone, finalName, finalIdLink, nowIso]];
-    const range = encodeURIComponent(`${LOGINS_TAB}!B${row}:G${row}`);
+    // First Login filled when blank (2026-11-12): a row made before the
+    // buyer's first sign-in (from Quo, or an ID link) used to keep a blank
+    // First Login forever, so the buyer page showed "never logged in" (❌)
+    // for Eric Johnson, who had signed in that day. An existing value wins.
+    const finalFirstLogin = target.existingFirstLogin || nowIso;
+    const values = [[finalFirstLogin, finalEmail, finalAgreed, finalPhone, finalName, finalIdLink, nowIso]];
+    const range = encodeURIComponent(`${LOGINS_TAB}!A${row}:G${row}`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
     const res = await fetch(url, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!B${row}:G${row}`, values }),
+      body: JSON.stringify({ range: `${LOGINS_TAB}!A${row}:G${row}`, values }),
     });
     if (!res.ok) throw new Error(`logins row update failed: ${await res.text()}`);
   }
+}
+
+async function fillFirstLoginIfBlank(accessToken, row, iso) {
+  const cell = `${LOGINS_TAB}!A${row}:A${row}`;
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cell)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) return;
+  const current = (((await res.json()).values || [])[0] || [])[0] || "";
+  if (String(current).trim()) return;
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cell)}?valueInputOption=RAW`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: cell, values: [[iso]] }),
+  });
 }
 
 // Writes just the Quo Link column (N) once a contact id is known -- kept
@@ -1848,6 +1867,10 @@ async function handleSyncVisitor(request, env) {
       body: JSON.stringify({ range: `${LOGINS_TAB}!G${row}:M${row}`, values }),
     });
     if (!res.ok) throw new Error(`sync write failed: ${await res.text()}`);
+    // Same First Login gap as writeLoginsRow (2026-11-12): this stamps Last
+    // Login on every visit, so fill First Login too if it's still blank.
+    // Best-effort; the sync itself already succeeded.
+    await fillFirstLoginIfBlank(accessToken, row, values[0][0]).catch(() => {});
 
     // Favorites, added 2026-08-29 per Aaron's direct request (admin
     // visibility into who's favorited a property) -- column Y, not
