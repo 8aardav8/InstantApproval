@@ -152,6 +152,48 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
   };
 }
 
+// ---------- deposit agreement drafts in eSignatures (2026-11-13) ----------
+// Aaron: "If a property gets reserved, let's have the automation create it
+// and fill in what it can, and include the square invoice link inside as an
+// option for payment, and I'll finish it and send to buyer and seller."
+// Three templates made from his "Filler - Deposit Receipt & Deposit
+// Agreement" (6850d6b6…): same wording, state law fixed, the pay-the-rest
+// link added, and East St. Louis applies the deposit to Closing Costs
+// (Aaron: "ESTL applies to closing costs").
+export const AGREEMENT_TEMPLATES = {
+  mo: { id: "f0914096-d69a-4f0a-8ba4-23b118892561", label: "St. Louis MO" },
+  estl: { id: "be461ec8-acc5-4c71-aca1-8894747f30ac", label: "East St. Louis IL" },
+  il: { id: "5e1dd9c7-0624-4c78-9922-b1ac72e6f761", label: "Illinois (not East St. Louis)" },
+};
+// East St. Louis proper is by the address's city; the Area "IL - East St
+// Louis" also covers Cahokia and other towns, which use the IL template.
+export function agreementTemplateFor(address, state) {
+  if (state === "MO") return "mo";
+  if (state !== "IL") return null;
+  return /\be(ast)?\.?\s+(st\.?|saint)\s+louis\b/i.test(address || "") ? "estl" : "il";
+}
+// YYYY-MM-DD + n weekdays (holidays not counted).
+export function addBusinessDays(ymd, n) {
+  const d = new Date(ymd + "T12:00:00Z");
+  while (n > 0) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) n--; }
+  return d.toISOString().slice(0, 10);
+}
+const mdy = (ymd) => (ymd ? `${ymd.slice(5, 7)}/${ymd.slice(8, 10)}/${ymd.slice(0, 4)}` : "");
+const plain = (cents) => fmtMoney(cents).slice(1); // the templates already print the "$"
+// Illinois agreements are dated 3 full business days after the deposit
+// (Aaron: "I just post date the deposit agreement date for three full
+// business days after the deposit was received").
+export function agreementPlaceholders({ kind, paidYmd, paidCents, downCents, dueYmd, sellerName, buyerName, address, payLink }) {
+  const agreementYmd = kind === "mo" ? paidYmd : addBusinessDays(paidYmd, 3);
+  const f = {
+    "TODAYS-DATE": mdy(agreementYmd), "SELLER-NAME": sellerName || "", "BUYER-NAME": buyerName || "", "PROPERTY-ADDRESS": address,
+    "first-deposit-paid-date": mdy(paidYmd), "first-DEPOSIT-AMOUNT": plain(paidCents),
+    "full-Deposit-Date": mdy(dueYmd), "second-DEPOSIT-AMOUNT": plain(Math.max(0, downCents - paidCents)),
+    "PAY-LINK": payLink || "(link not available)", "CLOSING-DATE": mdy(dueYmd),
+  };
+  return Object.entries(f).map(([placeholder_key, replace_with_text]) => ({ placeholder_key, replace_with_text }));
+}
+
 function colLetter(i) {
   let s = "";
   for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s;
@@ -527,9 +569,11 @@ export function createReserve(deps) {
       await putCell(token, tab, sheetRow, c("iah.dep.note"), "Second payer: refund per terms item 6(a)");
       return `⚠️ SECOND deposit paid on ${address}: ${who}, ${fmtMoney(paidCents)}. Another buyer paid first. Per terms item 6(a), refund this one in Square and cancel the rest of their invoice. Sheet not changed otherwise.`;
     }
+    const sellerName = pi > 0 ? (props[pi][layout.one("iah.prop.seller", P)] || "").trim() : "";
+    const agreementLine = await draftAgreementSafely(env, token, tab, sheetRow, c, rec, inv, paidCents, sellerName);
     // Fake (sandbox) money never changes the real listing or buyer.
     if (rec[c("iah.dep.env")] !== "production") {
-      return `💰 [SANDBOX TEST] Deposit paid: ${who}, ${address}, ${fmtMoney(paidCents)}. Real Sheet NOT changed; live it would set the home to Pending (now "${propStatus || "row not found"}") and the buyer to Deposit Received.`;
+      return `💰 [SANDBOX TEST] Deposit paid: ${who}, ${address}, ${fmtMoney(paidCents)}. Real Sheet NOT changed; live it would set the home to Pending (now "${propStatus || "row not found"}") and the buyer to Deposit Received.${agreementLine}`;
     }
     const done = [];
     if (pi > 0 && /^available$/i.test(propStatus.replace(/[\s-]/g, ""))) { await putCell(token, layout.tab(P), pi + 1, pStatusIdx, "Pending"); done.push("property set to Pending"); }
@@ -544,7 +588,42 @@ export function createReserve(deps) {
     } else done.push("buyer row not found, Stage not changed");
     const il = rec[c("iah.dep.state")] === "IL" ? "\nIL home: refundable if they ask in writing within 3 business days." : "";
     const head = fullyPaid ? `💰 PAID IN FULL (deposit + rest)` : `💰 DEPOSIT PAID`;
-    return `${head}: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.${fullyPaid ? "" : "\n7-day clock to pay the rest starts now."}${il}`;
+    return `${head}: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.${fullyPaid ? "" : "\n7-day clock to pay the rest starts now."}${il}${agreementLine}`;
+  }
+
+  // Best effort: never blocks recording the payment. Returns a Telegram line.
+  async function draftAgreementSafely(env, token, tab, sheetRow, c, rec, inv, paidCents, sellerName) {
+    if ((rec[c("iah.dep.agreement")] || "").trim()) return ""; // already made
+    if (!env.ESIGNATURES_TOKEN) return "\n⚠️ Deposit agreement not drafted: eSignatures isn't set up on the server.";
+    const address = rec[c("iah.dep.address")];
+    const kind = agreementTemplateFor(address, rec[c("iah.dep.state")]);
+    if (!kind) return `\n⚠️ No deposit agreement template for ${rec[c("iah.dep.state")] || "this state"}; make it by hand.`;
+    try {
+      const full = (await square(env, "GET", `/v2/invoices/${inv.id}`)).invoice;
+      const balance = (full.payment_requests || []).find((q) => q.request_type === "BALANCE") || {};
+      const paidYmd = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+      const t = AGREEMENT_TEMPLATES[kind];
+      const sandbox = rec[c("iah.dep.env")] !== "production";
+      const res = await fetch("https://esignatures.com/api/contracts", {
+        method: "POST",
+        headers: { Authorization: "Basic " + btoa(env.ESIGNATURES_TOKEN + ":"), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_id: t.id, save_as_draft: "yes", test: sandbox ? "yes" : "no",
+          title: `${paidYmd.replace(/-/g, "")} - ${address} - Deposit Receipt & Deposit Agreement - ${rec[c("iah.dep.name")] || "Buyer"}`.slice(0, 250),
+          metadata: `square:${inv.id}`,
+          signers: [{ name: rec[c("iah.dep.name")] || "Buyer", email: rec[c("iah.dep.email")] || undefined, mobile: rec[c("iah.dep.phone")] || undefined, signing_order: "2" }],
+          placeholder_fields: agreementPlaceholders({ kind, paidYmd, paidCents, downCents: parseMoneyCents(rec[c("iah.dep.down")]) || 0, dueYmd: balance.due_date || "", sellerName, buyerName: rec[c("iah.dep.name")], address, payLink: full.public_url }),
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      const contract = (j.data || {}).contract || {};
+      if (!res.ok || !contract.id) throw new Error(`eSignatures ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
+      const link = contract.draft_contract_url || `https://esignatures.com/draft_contracts/${contract.id}/edit`;
+      await putCell(token, tab, sheetRow, c("iah.dep.agreement"), `${link} (${t.label}${sandbox ? ", TEST" : ""})`);
+      return `\n📝 Deposit agreement drafted${sandbox ? " (eSignatures test mode)" : ""}, ${t.label} template: ${link}\nAdd the seller (${sellerName || "name not on the Sheet"}) with their email/phone, check it, then send to both.`;
+    } catch (e) {
+      return `\n⚠️ Deposit agreement draft FAILED: ${String(e).slice(0, 300)}`;
+    }
   }
 
   // Marking an appointment Completed also records the house as shown, so
