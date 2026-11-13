@@ -94,14 +94,14 @@ export function reserveTerms({ address, downCents, isIL }) {
   const deposit = Math.round(downCents / 2);
   const remaining = downCents - deposit;
   const items = [
-    `1. Amount. The reservation deposit is 50% of the down payment listed for this property on the day you request it: ${fmtMoney(deposit)} for ${address}.`,
+    `1. Amount. The reservation deposit is 50% of the upfront amount listed for this property on the day you request it: ${fmtMoney(deposit)} for ${address}.`,
     `2. Non-refundable. The deposit is non-refundable once paid, except as stated in item 6.`,
   ];
   if (isIL) items.push(`Illinois properties only: the deposit is fully refundable if you ask in writing within 3 business days of paying it. After that it is non-refundable, except as stated in item 6.`);
   items.push(
     `3. What it does. Once your deposit is received, we stop marketing the property and reserve it for you while we prepare your closing documents.`,
-    `4. Credited to your down payment. The deposit counts toward your down payment. Closing can be finalized after the full down payment is paid (the rest is ${fmtMoney(remaining)}).`,
-    `5. Deadline. You must pay the rest of the down payment within 7 days of paying the deposit. If you don't, the reservation ends, the property goes back on the market, and the deposit is kept.`,
+    `4. Credited at closing. The deposit and the rest of the upfront amount are credited to you at closing as provided in the purchase agreement. Closing can be finalized after the full upfront amount is paid (the rest is ${fmtMoney(remaining)}).`,
+    `5. Deadline. You must pay the rest of the upfront amount within 7 days of paying the deposit. If you don't, the reservation ends, the property goes back on the market, and the deposit is kept.`,
     `6. When you get it back. You get a full refund if (a) someone else already paid a deposit on this property before you did, or (b) we are unable to sell you the property.`,
     `7. As-is. All homes are sold as-is.`,
     `8. Who is buying. The deposit applies only to the buyer(s) named on the invoice and only to this property. It can't be moved to a different property.`,
@@ -124,13 +124,13 @@ export function invoiceDate(daysAhead, now = Date.now()) {
 export function buildInvoice({ locationId, orderId, customerId, buyer, listing, downCents, terms, now = Date.now() }) {
   const first = (buyer.name || "").trim().split(/\s+/)[0];
   const message = [
-    `Hi${first ? " " + first : ""}. Once you've decided to move forward with the purchase, you may pay this entire invoice, or just the 50% deposit. Once payment is received, your home is reserved for you and taken off the market.`,
+    `Hi${first ? " " + first : ""}. Once you've decided to move forward with the purchase, you may pay this entire invoice, or just the 50% reservation deposit. Once payment is received, your home is reserved for you and taken off the market.`,
     "",
     "The final closing packet with the specifics of your deal will be ready the next day after payment.",
     "",
-    "Once the full down payment is received, closing is finalized and the place is yours the same day!",
+    "Once the full upfront amount is received, closing is finalized and the place is yours the same day!",
     "",
-    `Down payment: ${fmtMoney(downCents)}. Deposit due now (50%): ${fmtMoney(terms.deposit)}. Rest due within 7 days: ${fmtMoney(terms.remaining)}.`,
+    `Upfront amount: ${fmtMoney(downCents)}. Reservation deposit due now (50%): ${fmtMoney(terms.deposit)}. Rest due within 7 days of the deposit: ${fmtMoney(terms.remaining)}.`,
     `You confirmed: "${terms.checkbox}"`,
     "",
     "Reservation Deposit Terms",
@@ -143,7 +143,7 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
     payment_requests: [
       { request_type: "DEPOSIT", fixed_amount_requested_money: { amount: terms.deposit, currency: "USD" }, due_date: invoiceDate(0, now), tipping_enabled: false },
       { request_type: "BALANCE", due_date: invoiceDate(7, now), tipping_enabled: false,
-        reminders: [-6, -3, 0, 1, 3].map((d) => ({ relative_scheduled_days: d, message: "Reminder: the rest of your down payment is due." })) },
+        reminders: [-6, -3, 0, 1, 3].map((d) => ({ relative_scheduled_days: d, message: "Reminder: the rest of your upfront amount is due." })) },
     ],
     delivery_method: "EMAIL",
     sale_or_service_date: invoiceDate(0, now),
@@ -183,13 +183,15 @@ export function addBusinessDays(ymd, n) {
 }
 const mdy = (ymd) => (ymd ? `${ymd.slice(5, 7)}/${ymd.slice(8, 10)}/${ymd.slice(0, 4)}` : "");
 const plain = (cents) => fmtMoney(cents).slice(1); // the templates already print the "$"
-// Illinois agreements are dated 3 full business days after the deposit
-// (Aaron: "I just post date the deposit agreement date for three full
-// business days after the deposit was received").
+// Dated the day the deposit is received; Illinois templates state the
+// 3-business-day refund window instead of post-dating (Aaron picked this
+// 2026-11-13, replacing "I just post date the deposit agreement date").
+// Wording never says "down payment" (East St. Louis can't): "Upfront
+// Amount" and "Reservation Deposit".
 export function agreementPlaceholders({ kind, paidYmd, paidCents, downCents, dueYmd, sellerName, buyerName, address, payLink }) {
-  const agreementYmd = kind === "mo" ? paidYmd : addBusinessDays(paidYmd, 3);
   const f = {
-    "TODAYS-DATE": mdy(agreementYmd), "SELLER-NAME": sellerName || "", "BUYER-NAME": buyerName || "", "PROPERTY-ADDRESS": address,
+    "TODAYS-DATE": mdy(paidYmd), "TOTAL-UPFRONT": plain(downCents),
+    ...(kind === "mo" ? {} : { "REFUND-BY-DATE": mdy(addBusinessDays(paidYmd, 3)) }), "SELLER-NAME": sellerName || "", "BUYER-NAME": buyerName || "", "PROPERTY-ADDRESS": address,
     "first-deposit-paid-date": mdy(paidYmd), "first-DEPOSIT-AMOUNT": plain(paidCents),
     "full-Deposit-Date": mdy(dueYmd), "second-DEPOSIT-AMOUNT": plain(Math.max(0, downCents - paidCents)),
     // Aaron 11/13: "always make the closing date 10 days after the deposit receipt date".
@@ -394,7 +396,7 @@ export function createReserve(deps) {
       const order = await square(env, "POST", "/v2/orders", {
         idempotency_key: crypto.randomUUID(),
         order: { location_id: env.SQUARE_LOCATION_ID, customer_id: customerId, reference_id: (r.listing.rowId || "").slice(0, 40),
-          line_items: [{ name: `Down payment: ${r.listing.address}`.slice(0, 512), quantity: "1", base_price_money: { amount: r.downCents, currency: "USD" } }] },
+          line_items: [{ name: `Upfront amount: ${r.listing.address}`.slice(0, 512), quantity: "1", base_price_money: { amount: r.downCents, currency: "USD" } }] },
       });
       invoice = (await square(env, "POST", "/v2/invoices", {
         idempotency_key: crypto.randomUUID(),
@@ -574,7 +576,8 @@ export function createReserve(deps) {
       return `⚠️ SECOND deposit paid on ${address}: ${who}, ${fmtMoney(paidCents)}. Another buyer paid first. Per terms item 6(a), refund this one in Square and cancel the rest of their invoice. Sheet not changed otherwise.`;
     }
     const sellerName = pi > 0 ? (props[pi][layout.one("iah.prop.seller", P)] || "").trim() : "";
-    const agreementLine = await draftAgreementSafely(env, token, tab, sheetRow, c, rec, inv, paidCents, sellerName);
+    const dueLine = fullyPaid ? "" : await moveBalanceDueSafely(env, inv.id);
+    const agreementLine = dueLine + await draftAgreementSafely(env, token, tab, sheetRow, c, rec, inv, paidCents, sellerName);
     // Fake (sandbox) money never changes the real listing or buyer.
     if (rec[c("iah.dep.env")] !== "production") {
       return `💰 [SANDBOX TEST] Deposit paid: ${who}, ${address}, ${fmtMoney(paidCents)}. Real Sheet NOT changed; live it would set the home to Pending (now "${propStatus || "row not found"}") and the buyer to Deposit Received.${agreementLine}`;
@@ -595,6 +598,22 @@ export function createReserve(deps) {
     return `${head}: ${who}, ${address}, ${fmtMoney(paidCents)}.\n${done.join("; ")}.${fullyPaid ? "" : "\n7-day clock to pay the rest starts now."}${il}${agreementLine}`;
   }
 
+  // The terms say the rest is due 7 days after the DEPOSIT is paid, but the
+  // invoice was made with "7 days after the request". Move it (Aaron picked
+  // this 2026-11-13). Reminders are relative, so they move with it.
+  async function moveBalanceDueSafely(env, invoiceId) {
+    try {
+      const cur = (await square(env, "GET", `/v2/invoices/${invoiceId}`)).invoice;
+      const bal = (cur.payment_requests || []).find((q) => q.request_type === "BALANCE");
+      const want = invoiceDate(7);
+      if (!bal || bal.due_date === want) return "";
+      await square(env, "PUT", `/v2/invoices/${invoiceId}`, { idempotency_key: crypto.randomUUID(), invoice: { version: cur.version, payment_requests: [{ uid: bal.uid, due_date: want }] } });
+      return `\nRest now due ${want} in Square (7 days after the deposit).`;
+    } catch (e) {
+      return `\n⚠️ Couldn't move the rest's due date in Square to 7 days after the deposit; change it by hand. ${String(e).slice(0, 200)}`;
+    }
+  }
+
   // Best effort: never blocks recording the payment. Returns a Telegram line.
   async function draftAgreementSafely(env, token, tab, sheetRow, c, rec, inv, paidCents, sellerName) {
     if ((rec[c("iah.dep.agreement")] || "").trim()) return ""; // already made
@@ -604,7 +623,6 @@ export function createReserve(deps) {
     if (!kind) return `\n⚠️ No deposit agreement template for ${rec[c("iah.dep.state")] || "this state"}; make it by hand.`;
     try {
       const full = (await square(env, "GET", `/v2/invoices/${inv.id}`)).invoice;
-      const balance = (full.payment_requests || []).find((q) => q.request_type === "BALANCE") || {};
       const paidYmd = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
       const t = AGREEMENT_TEMPLATES[kind];
       const sandbox = rec[c("iah.dep.env")] !== "production";
@@ -616,7 +634,7 @@ export function createReserve(deps) {
           title: `${paidYmd.replace(/-/g, "")} - ${address} - Deposit Receipt & Deposit Agreement - ${rec[c("iah.dep.name")] || "Buyer"}`.slice(0, 250),
           metadata: `square:${inv.id}`,
           signers: [{ name: rec[c("iah.dep.name")] || "Buyer", email: rec[c("iah.dep.email")] || undefined, mobile: rec[c("iah.dep.phone")] || undefined, signing_order: "2" }],
-          placeholder_fields: agreementPlaceholders({ kind, paidYmd, paidCents, downCents: parseMoneyCents(rec[c("iah.dep.down")]) || 0, dueYmd: balance.due_date || "", sellerName, buyerName: rec[c("iah.dep.name")], address, payLink: full.public_url }),
+          placeholder_fields: agreementPlaceholders({ kind, paidYmd, paidCents, downCents: parseMoneyCents(rec[c("iah.dep.down")]) || 0, dueYmd: invoiceDate(7) /* the rule: 7 days after the deposit, the date moveBalanceDueSafely sets in Square */, sellerName, buyerName: rec[c("iah.dep.name")], address, payLink: full.public_url }),
         }),
       });
       const j = await res.json().catch(() => ({}));

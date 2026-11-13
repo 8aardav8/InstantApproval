@@ -44,7 +44,9 @@ eq('template: other states -> none', agreementTemplateFor('1 Main St, Detroit, M
 eq('3 business days: Fri -> Wed', addBusinessDays('2026-11-13', 3), '2026-11-18');
 eq('3 business days: Mon -> Thu', addBusinessDays('2026-11-16', 3), '2026-11-19');
 { const ph = (k) => Object.fromEntries(agreementPlaceholders({ kind: k, paidYmd: '2026-11-13', paidCents: 150000, downCents: 300000, dueYmd: '2026-11-20', sellerName: 'S LLC', buyerName: 'Pat', address: A, payLink: 'https://pay' }).map((x) => [x.placeholder_key, x.replace_with_text]));
-  eq('agreement fields: IL dated 3 business days after the deposit', [ph('il')['TODAYS-DATE'], ph('estl')['TODAYS-DATE'], ph('mo')['TODAYS-DATE']], ['11/18/2026', '11/18/2026', '11/13/2026']);
+  eq('agreement: dated the deposit day everywhere (no post-dating)', [ph('il')['TODAYS-DATE'], ph('estl')['TODAYS-DATE'], ph('mo')['TODAYS-DATE']], ['11/13/2026', '11/13/2026', '11/13/2026']);
+  eq('agreement: IL refund-by date is 3 business days later; MO has none', [ph('il')['REFUND-BY-DATE'], ph('estl')['REFUND-BY-DATE'], 'REFUND-BY-DATE' in ph('mo')], ['11/18/2026', '11/18/2026', false]);
+  eq('agreement: total upfront amount', ph('mo')['TOTAL-UPFRONT'], '3,000');
   eq('agreement fields: amounts without $ (the template prints it), dates, link', [ph('il')['first-DEPOSIT-AMOUNT'], ph('il')['second-DEPOSIT-AMOUNT'], ph('il')['first-deposit-paid-date'], ph('il')['full-Deposit-Date'], ph('il')['PAY-LINK']], ['1,500', '1,500', '11/13/2026', '11/20/2026', 'https://pay']);
   eq('agreement: closing is 10 days after the deposit, every template', [ph('il')['CLOSING-DATE'], ph('estl')['CLOSING-DATE'], ph('mo')['CLOSING-DATE']], ['11/23/2026', '11/23/2026', '11/23/2026']); }
 
@@ -135,7 +137,8 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
       if (url.pathname === '/v2/invoices') { const id = `INV${++w.n}`; w.invoices[id] = body.invoice; return json({ invoice: { id, version: 0 } }); }
       if (/\/attachments$/.test(url.pathname)) return json({ attachment: { id: 'ATT' } });
       if (/\/publish$/.test(url.pathname)) return json({ invoice: { id: 'x', status: 'UNPAID', public_url: 'https://pay.example/inv' } });
-      if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname)) return json({ invoice: { version: 1, public_url: 'https://pay.example/inv', payment_requests: [{ request_type: 'DEPOSIT', due_date: '2026-11-13' }, { request_type: 'BALANCE', due_date: '2026-11-20' }] } });
+      if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname) && init.method === 'PUT') { w.dueMoves = (w.dueMoves || []).concat([body.invoice.payment_requests[0]]); return json({ invoice: {} }); }
+      if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname)) return json({ invoice: { version: 1, public_url: 'https://pay.example/inv', payment_requests: [{ uid: 'DEP', request_type: 'DEPOSIT', due_date: '2026-11-13' }, { uid: 'BAL', request_type: 'BALANCE', due_date: '2000-01-01' }] } });
     }
     throw new Error(`test: refused ${url.hostname}${url.pathname}`);
   };
@@ -235,15 +238,16 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
   eq('webhook: buyer Stage + Deposit Property set', [w.tabs['App: Logins'][1][LI.stage], w.tabs['App: Logins'][1][LI.dep]], ['Deposit Received', A]);
   { const e = w.esig[0] || {}; const f = Object.fromEntries((e.placeholder_fields || []).map((x) => [x.placeholder_key, x.replace_with_text]));
     eq('deposit paid: one draft agreement, IL template, live mode, Aaron finishes it', [w.esig.length, e.template_id, e.save_as_draft, e.test], [1, AGREEMENT_TEMPLATES.il.id, 'yes', 'no']);
-    eq('deposit paid: agreement filled from the Sheet + Square', [f['SELLER-NAME'], f['BUYER-NAME'], f['PROPERTY-ADDRESS'], f['first-DEPOSIT-AMOUNT'], f['second-DEPOSIT-AMOUNT'], f['full-Deposit-Date'], f['PAY-LINK']], ['Seller Example LLC', 'Pat Example', A, '1,500', '1,500', '11/20/2026', 'https://pay.example/inv']);
+    eq('deposit paid: agreement filled from the Sheet + Square', [f['SELLER-NAME'], f['BUYER-NAME'], f['PROPERTY-ADDRESS'], f['first-DEPOSIT-AMOUNT'], f['second-DEPOSIT-AMOUNT'], f['full-Deposit-Date'], f['PAY-LINK']], ['Seller Example LLC', 'Pat Example', A, '1,500', '1,500', `${invoiceDate(7).slice(5, 7)}/${invoiceDate(7).slice(8)}/${invoiceDate(7).slice(0, 4)}`, 'https://pay.example/inv']);
     eq('deposit paid: agreement link logged and sent to Aaron', [/draft_contracts\/C1\/edit/.test(depRow(w)[16] || ''), w.telegrams.at(-1).includes('📝 Deposit agreement drafted')], [true, true]); }
+  eq('deposit paid: Square rest moved to 7 days after the deposit', w.dueMoves, [{ uid: 'BAL', due_date: invoiceDate(7) }]);
   eq('webhook: Aaron told, with IL note', w.telegrams.some((x) => x.startsWith('💰 DEPOSIT PAID') && x.includes('3 business days')), true);
   const n = w.telegrams.length;
   await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
   eq('webhook: repeat delivery changes nothing, no second alert', w.telegrams.length, n);
   const full = payEvt('INV1', 300000, 'PAID');
   await call(w, '/square-webhook', null, { phone: null, raw: full, headers: { 'x-square-hmacsha256-signature': sign(full) } });
-  eq('rest paid: no second agreement', w.esig.length, 1);
+  eq('rest paid: no second agreement, due date not moved again', [w.esig.length, w.dueMoves.length], [1, 1]);
   eq('webhook: rest paid -> Paid in full, Stage left for Aaron', [depRow(w)[2], depRow(w)[13], w.tabs['App: Logins'][1][LI.stage], w.telegrams.at(-1).startsWith('💰 PAID IN FULL')], ['Paid in full', '$3,000', 'Deposit Received', true]);
   const n2 = w.telegrams.length;
   await call(w, '/square-webhook', null, { phone: null, raw: full, headers: { 'x-square-hmacsha256-signature': sign(full) } });
@@ -287,6 +291,14 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
 { const w = world({ shown: '' });
   await call(w, '/admin/update-appointment', { phone: PHONE, slot: 1, address: A, date: '2026-11-01', status: 'Canceled' }, { phone: null, admin: true });
   eq('Canceled -> Shown untouched', w.tabs['App: Logins'][1][LI.shown], ''); }
+
+// Buyer-facing reserve text never says "down payment" (East St. Louis can't; Aaron 2026-11-13).
+{ const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true }); const inv = w.invoices.INV1;
+  const chk = await call(world(), '/reserve-check', { listingId: LID });
+  const app = readFileSync(new URL('../docs/js/app.js', import.meta.url), 'utf8');
+  const popup = app.slice(app.indexOf('async function openReserve'), app.indexOf('function backToList'));
+  const texts = [inv.title, inv.description, w.lastOrder.line_items[0].name, JSON.stringify(inv.payment_requests), JSON.stringify(chk.data), popup.replace(/data\.down/g, '')];
+  eq('no "down payment" in terms, invoice, pop-up', texts.filter((x) => /down\s*payment/i.test(x)).length, 0); }
 
 // Pull-to-refresh must ignore touches inside pop-ups (Aaron 2026-11-13: scrolling
 // up in the Reserve pop-up refreshed the page). Source check on the gesture code.

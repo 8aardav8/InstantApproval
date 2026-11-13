@@ -882,8 +882,8 @@ async function openReserve(listingId) {
   }
   box.innerHTML = `
     <h3 class="reserve-title">Reserve ${escapeHtml(data.address)}</h3>
-    <div class="reserve-amounts"><span>Down payment</span><strong>${escapeHtml(data.down)}</strong><span>Deposit due now (50%)</span><strong>${escapeHtml(data.deposit)}</strong><span>Rest, due within 7 days</span><strong>${escapeHtml(data.remaining || "")}</strong></div>
-    <p class="reserve-note">You'll get one invoice for the full down payment. Pay the deposit, or all of it, by card or Cash App.</p>
+    <div class="reserve-amounts"><span>Upfront amount</span><strong>${escapeHtml(data.down)}</strong><span>Reservation deposit due now (50%)</span><strong>${escapeHtml(data.deposit)}</strong><span>Rest, due within 7 days</span><strong>${escapeHtml(data.remaining || "")}</strong></div>
+    <p class="reserve-note">You'll get one invoice for the full upfront amount. Pay the deposit, or all of it, by card or Cash App.</p>
     <div class="reserve-terms-title">Reservation Deposit Terms</div>
     <ul class="reserve-terms">${data.terms.map((t) => `<li${/^\d\./.test(t) ? "" : ' class="reserve-term-sub"'}>${escapeHtml(t)}</li>`).join("")}</ul>
     <label class="reserve-check"><input type="checkbox" id="reserve-inspected"> ${escapeHtml(data.checkbox)}</label>
