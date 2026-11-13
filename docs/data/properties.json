@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-13T23:35:50.013123+00:00",
+  "generatedAt": "2026-11-13T23:36:20.340307+00:00",
   "listings": [
+    {
+      "id": "1921-e-edwards-street-springfield-il-62-703",
+      "address": "1921 E Edwards Street Springfield IL 62,703",
+      "onMarketDate": "11/12",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1sLj_LAYLJusutdbFbXsscoLhWB1sff8w?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 39.7960404,
+      "lng": -89.6283356
+    },
     {
       "id": "7316-park-dr-saint-louis-mo-63-133",
       "address": "7316 Park Dr Saint Louis MO 63,133",
