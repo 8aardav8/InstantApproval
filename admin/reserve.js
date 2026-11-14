@@ -158,11 +158,10 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
       : `- The ${dep} deposit is not refundable, unless someone else paid for this home first or we can't sell it to you.`,
     `- If the rest isn't paid within 7 days, the home goes back on the market and the deposit is kept.`,
     "- The home is sold as-is.",
-    "",
-    "------------------------------",
-    "The terms you agreed to on our website:",
-    ...terms.items,
-    `You ticked: "${terms.checkbox}"`,
+    // No terms text here (Aaron 11/13: "remove all the terms wording… they've
+    // already seen it on the website and they're about to receive the deposit
+    // agreement through e-signatures"). The record of what they agreed to is
+    // the Square Deposits "Terms Agreed" column.
   ].join("\n");
   return {
     location_id: locationId, order_id: orderId, primary_recipient: { customer_id: customerId },

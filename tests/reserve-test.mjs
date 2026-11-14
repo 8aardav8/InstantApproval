@@ -198,7 +198,7 @@ let paidWorld;
   eq('request: IL home gets the 3-business-day refund line', [inv.description.includes('You can get the $1,500 deposit back if you ask in writing within 3 business days'), inv.description.includes('is not refundable, unless')], [true, false]);
   eq('request: dates use the Square location\'s time zone', [inv.payment_requests[0].due_date, inv.payment_requests[1].due_date], [invoiceDate(0, Date.now(), 'Pacific/Kiritimati'), invoiceDate(7, Date.now(), 'Pacific/Kiritimati')]);
   eq('request: before-deposit reminders', inv.payment_requests[1].reminders[0].message, `Your home at ${A} is not reserved yet. Pay the $1,500 deposit to hold it before someone else does.`);
-  eq('request: invoice carries the address and IL terms', [inv.title.includes(A), inv.description.includes('Illinois properties only'), inv.description.includes('3 business days')], [true, true, true]);
+  eq('request: invoice carries the address but no terms text (kept in Terms Agreed)', [inv.title.includes(A), /Illinois properties only|Reservation Deposit Terms|You ticked|1\. Amount\./.test(inv.description)], [true, false]);
   eq('request: draft only (no publish) while auto-send is off', w.square.some((x) => x.endsWith('/publish')), false);
   eq('request: photo attached', w.square.some((x) => x.endsWith('/attachments')), true);
   const d = depRow(w);
