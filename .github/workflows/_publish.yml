@@ -23,6 +23,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
 
+      # TASK-000844: PROPERTIES columns are found by tag, never by letter or
+      # header text; this proves moved/renamed columns still map correctly.
+      - name: Column-tag mapping test
+        run: python3 tests/generate-properties-test.py
+
       - name: Generate properties.json
         env:
           GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY_JSON }}

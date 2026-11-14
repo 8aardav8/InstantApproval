@@ -26,4 +26,5 @@ node tests/id-filename-test.mjs >/dev/null 2>&1 || { echo "REFUSING: ID filename
 node tests/snippet-names-test.mjs >/dev/null 2>&1 || { echo "REFUSING: snippet-name test failed. Run: node tests/snippet-names-test.mjs" >&2; exit 1; }
 node tests/first-login-test.mjs >/dev/null 2>&1 || { echo "REFUSING: First Login test failed. Run: node tests/first-login-test.mjs" >&2; exit 1; }
 node tests/reserve-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Reserve/deposit tests failed. Run: node tests/reserve-test.mjs" >&2; exit 1; }
+node tests/layout-test.mjs >/dev/null 2>&1 || { echo "REFUSING: column-tag layout test failed (TASK-000844). Run: node tests/layout-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml

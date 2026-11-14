@@ -1,4 +1,5 @@
 import { createReserve } from "./reserve.js";
+import { LC, LL, PC, PL, APPT, TABS, LAST, LOGINS_GID, refreshLayout, colLetter, loginsRowRange, loginsRowsRange, loginsCell, cellOf, loginsCellsData, propsRowsRange, propOf } from "./layout.js";
 // Instant-Approval Home Financing -- Admin API + Login-Gate Lead Capture
 // (Cloudflare Worker)
 //
@@ -136,8 +137,7 @@ const DROPBOX_IDS_FOLDER = "/**WORK BOX/**REAL ESTATE/*SLOW FLIPS/FILLING/Buyer 
 const DROPBOX_BUYER_IDS_FOLDER_LINK = "https://www.dropbox.com/home/**WORK%20BOX/**REAL%20ESTATE/*SLOW%20FLIPS/FILLING/Buyer%20IDs";
 
 const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
-const SHEET_TAB = "PROPERTIES";
-const LOGINS_TAB = "App: Logins";
+// Tab titles come from their gids via layout.js (TABS.props / TABS.logins), TASK-000844.
 // The Agent System Database (Nathan's own Sheet, a different one from the
 // Filling Sheet above) -- same shared GCP service account, confirmed
 // working against both. Used only by handleQuoTriageWebhook's "Pending
@@ -296,7 +296,7 @@ async function getSheetsAccessToken(env) {
 }
 
 async function fetchSheetRows(accessToken) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_TAB)}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(TABS.props)}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`sheets read failed: ${await res.text()}`);
   const data = await res.json();
@@ -343,7 +343,8 @@ async function fetchSheetRows(accessToken) {
 // fill those in too, same non-destructive "only fill a gap" stance already
 // applied to phone/name.
 async function findOrNextLoginsRow(accessToken, email, phone) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!A:F`);
+  // Whole rows; cells picked by column tag (TASK-000844).
+  const range = encodeURIComponent(loginsRowsRange(1));
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
@@ -355,10 +356,10 @@ async function findOrNextLoginsRow(accessToken, email, phone) {
   let phoneMatchIndex = -1;
   for (let i = 1; i < col.length; i++) {
     const existing = col[i] || [];
-    if (emailMatchIndex === -1 && (existing[1] || "").trim().toLowerCase() === targetEmail) {
+    if (emailMatchIndex === -1 && cellOf(existing, "email").trim().toLowerCase() === targetEmail) {
       emailMatchIndex = i;
     }
-    if (targetPhone && phoneMatchIndex === -1 && toE164((existing[3] || "").trim()) === targetPhone) {
+    if (targetPhone && phoneMatchIndex === -1 && toE164(cellOf(existing, "phone").trim()) === targetPhone) {
       phoneMatchIndex = i;
     }
     // Stop early once both are found (or phone doesn't apply) -- no point
@@ -373,12 +374,12 @@ async function findOrNextLoginsRow(accessToken, email, phone) {
     return {
       row: matchIndex + 1, // 1-indexed sheet row
       isNew: false,
-      existingFirstLogin: (existing[0] || "").trim(),
-      existingEmail: (existing[1] || "").trim(),
-      existingAgreed: (existing[2] || "").trim(),
-      existingPhone: (existing[3] || "").trim(),
-      existingName: (existing[4] || "").trim(),
-      existingIdLink: (existing[5] || "").trim(),
+      existingFirstLogin: cellOf(existing, "firstLogin").trim(),
+      existingEmail: cellOf(existing, "email").trim(),
+      existingAgreed: cellOf(existing, "agreed").trim(),
+      existingPhone: cellOf(existing, "phone").trim(),
+      existingName: cellOf(existing, "name").trim(),
+      existingIdLink: cellOf(existing, "idLink").trim(),
     };
   }
   return { row: col.length + 1, isNew: true };
@@ -411,13 +412,11 @@ async function writeLoginsRow(accessToken, target, { name, email, phone, agreed 
   const { row, isNew } = target;
   const nowIso = new Date().toISOString();
   if (isNew) {
-    const values = [[nowIso, email, agreed ? "TRUE" : "FALSE", phone, name, "", nowIso]];
-    const range = encodeURIComponent(`${LOGINS_TAB}!A${row}:G${row}`);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-    const res = await fetch(url, {
-      method: "PUT",
+    const data = loginsCellsData(row, [["firstLogin", nowIso], ["email", email], ["agreed", agreed ? "TRUE" : "FALSE"], ["phone", phone], ["name", name], ["idLink", ""], ["lastLogin", nowIso]]);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+      method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!A${row}:G${row}`, values }),
+      body: JSON.stringify({ valueInputOption: "RAW", data }),
     });
     if (!res.ok) throw new Error(`logins row create failed: ${await res.text()}`);
   } else {
@@ -431,20 +430,18 @@ async function writeLoginsRow(accessToken, target, { name, email, phone, agreed 
     // First Login forever, so the buyer page showed "never logged in" (❌)
     // for Eric Johnson, who had signed in that day. An existing value wins.
     const finalFirstLogin = target.existingFirstLogin || nowIso;
-    const values = [[finalFirstLogin, finalEmail, finalAgreed, finalPhone, finalName, finalIdLink, nowIso]];
-    const range = encodeURIComponent(`${LOGINS_TAB}!A${row}:G${row}`);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-    const res = await fetch(url, {
-      method: "PUT",
+    const data = loginsCellsData(row, [["firstLogin", finalFirstLogin], ["email", finalEmail], ["agreed", finalAgreed], ["phone", finalPhone], ["name", finalName], ["idLink", finalIdLink], ["lastLogin", nowIso]]);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+      method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!A${row}:G${row}`, values }),
+      body: JSON.stringify({ valueInputOption: "RAW", data }),
     });
     if (!res.ok) throw new Error(`logins row update failed: ${await res.text()}`);
   }
 }
 
 async function fillFirstLoginIfBlank(accessToken, row, iso) {
-  const cell = `${LOGINS_TAB}!A${row}:A${row}`;
+  const cell = `${TABS.logins}!${LL.firstLogin}${row}:${LL.firstLogin}${row}`;
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cell)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) return;
   const current = (((await res.json()).values || [])[0] || [])[0] || "";
@@ -460,12 +457,12 @@ async function fillFirstLoginIfBlank(accessToken, row, iso) {
 // separate from writeLoginsRow so a Quo hiccup (see handleGateLogin's try/
 // catch below) never blocks the core Sheet write that already succeeded.
 async function writeQuoLink(accessToken, row, quoLink) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!N${row}:N${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.quoLink}${row}:${LL.quoLink}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!N${row}:N${row}`, values: [[quoLink]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.quoLink}${row}:${LL.quoLink}${row}`, values: [[quoLink]] }),
   });
   if (!res.ok) throw new Error(`quo-link write failed: ${await res.text()}`);
 }
@@ -476,12 +473,12 @@ async function writeQuoLink(accessToken, row, quoLink) {
 // only ever PRESERVES an existing value, never accepts a new one) -- a
 // fresh upload should always win over whatever was there before.
 async function writeIdLink(accessToken, row, idLink) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!F${row}:F${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.idLink}${row}:${LL.idLink}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!F${row}:F${row}`, values: [[idLink]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.idLink}${row}:${LL.idLink}${row}`, values: [[idLink]] }),
   });
   if (!res.ok) throw new Error(`id-link write failed: ${await res.text()}`);
 }
@@ -490,12 +487,12 @@ async function writeIdLink(accessToken, row, idLink) {
 // own comment for why this is kept separate from the Name column (E,
 // which is the IAH login name) and the Quo contact's own name.
 async function writeIdName(accessToken, row, idName) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AG${row}:AG${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.idName}${row}:${LL.idName}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AG${row}:AG${row}`, values: [[idName]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.idName}${row}:${LL.idName}${row}`, values: [[idName]] }),
   });
   if (!res.ok) throw new Error(`id-name write failed: ${await res.text()}`);
 }
@@ -510,12 +507,12 @@ async function writeIdName(accessToken, row, idName) {
 // area search. iah-buyers' buyer-list builder needs one added line to
 // also read+merge THIS column -- see that Worker's own comment.
 async function writeManualAreaOverride(accessToken, row, areasCsv) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AD${row}:AD${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.manualAreaOverride}${row}:${LL.manualAreaOverride}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[areasCsv]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.manualAreaOverride}${row}:${LL.manualAreaOverride}${row}`, values: [[areasCsv]] }),
   });
   if (!res.ok) throw new Error(`area-override write failed: ${await res.text()}`);
 }
@@ -533,22 +530,22 @@ const STAGE_VALUES = [
   "Multiple Showings", "Deposit Received", "Full Down Received", "Buyer", "Multiple Buyer",
 ];
 async function writeSentiment(accessToken, row, sentiment) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AE${row}:AE${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.sentiment}${row}:${LL.sentiment}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AE${row}:AE${row}`, values: [[sentiment]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.sentiment}${row}:${LL.sentiment}${row}`, values: [[sentiment]] }),
   });
   if (!res.ok) throw new Error(`sentiment write failed: ${await res.text()}`);
 }
 async function writeStage(accessToken, row, stage) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AF${row}:AF${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.stage}${row}:${LL.stage}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AF${row}:AF${row}`, values: [[stage]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.stage}${row}:${LL.stage}${row}`, values: [[stage]] }),
   });
   if (!res.ok) throw new Error(`stage write failed: ${await res.text()}`);
 }
@@ -562,12 +559,12 @@ async function writeStage(accessToken, row, stage) {
 // this is the very next column -- see handleAdminSetHidden below for the
 // row-lookup/auto-create wrapper.
 async function writeHidden(accessToken, row, hidden) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AH${row}:AH${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.hidden}${row}:${LL.hidden}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AH${row}:AH${row}`, values: [[hidden ? "TRUE" : ""]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.hidden}${row}:${LL.hidden}${row}`, values: [[hidden ? "TRUE" : ""]] }),
   });
   if (!res.ok) throw new Error(`hidden write failed: ${await res.text()}`);
 }
@@ -590,12 +587,12 @@ async function writeHidden(accessToken, row, hidden) {
 // reader kept seeing -1/"" forever, since the header cell they search
 // for would never actually exist.
 async function ensureDncHeader(accessToken) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AI1:AI1`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.dnc}1:${LL.dnc}1`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AI1:AI1`, values: [["DNC"]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.dnc}1:${LL.dnc}1`, values: [["DNC"]] }),
   });
   // Best-effort -- if this one fails, the actual value write below still
   // throws its own clear error, and a missing header is easy to spot/fix
@@ -603,12 +600,12 @@ async function ensureDncHeader(accessToken) {
 }
 async function writeDnc(accessToken, row, dnc) {
   await ensureDncHeader(accessToken);
-  const range = encodeURIComponent(`${LOGINS_TAB}!AI${row}:AI${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.dnc}${row}:${LL.dnc}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!AI${row}:AI${row}`, values: [[dnc ? "TRUE" : ""]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${LL.dnc}${row}:${LL.dnc}${row}`, values: [[dnc ? "TRUE" : ""]] }),
   });
   if (!res.ok) throw new Error(`dnc write failed: ${await res.text()}`);
 }
@@ -1114,7 +1111,7 @@ async function handleAdminLookup(request, env, listingId) {
     const accessToken = await getSheetsAccessToken(env);
     const rows = await fetchSheetRows(accessToken);
     const headers = rows[0] || [];
-    const addressCol = headers.indexOf("Address");
+    const addressCol = PC.address; // by column tag, not header text (TASK-000844)
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -1172,21 +1169,19 @@ async function handleAdminActivity(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!B:Y`);
+    const range = encodeURIComponent(loginsRowsRange(1)); // whole rows, cells by tag (TASK-000844)
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!res.ok) throw new Error(`admin activity read failed: ${await res.text()}`);
     const data = await res.json();
     const rows = data.values || [];
 
-    // Range starts at column B, so index 0 here = column B.
-    // B=0(Email) C=1 D=2(Phone) E=3(Name) F=4 G=5 H=6 I=7 J=8 K=9 L=10 M=11
-    // N=12 -- Appointment slots (O-X) at indices 13-22, Favorites (Y) at 23.
+    // Whole rows from column A; every cell picked by its column tag (TASK-000844).
     const appointments = [];
     const favorites = [];
     for (let i = 1; i < rows.length; i++) { // row 0 is the header
       const row = rows[i];
-      const email = (row[0] || "").trim();
+      const email = cellOf(row, "email").trim();
       // Real bug found and fixed 2026-09-12: this used to be the RAW Sheet
       // cell, un-normalized -- most rows already have a leading "+1", but
       // at least one real row on file doesn't (a plain "3143498711"). The
@@ -1197,9 +1192,9 @@ async function handleAdminActivity(request, env) {
       // rendered for her, with no error anywhere to notice. toE164() is
       // the same normalizer every other phone comparison in this file
       // already uses.
-      const phone = toE164((row[2] || "").trim());
-      const name = (row[3] || "").trim();
-      const idLink = (row[4] || "").trim(); // added 2026-09-12, for the Appointments-tab card thumbnail
+      const phone = toE164(cellOf(row, "phone").trim());
+      const name = cellOf(row, "name").trim();
+      const idLink = cellOf(row, "idLink").trim(); // added 2026-09-12, for the Appointments-tab card thumbnail
       for (let slot = 0; slot < 10; slot++) {
         // Real bug fix, 2026-09-14 -- Aaron reported today-dated
         // appointments showing "NaNd ago" and landing under the wrong
@@ -1218,7 +1213,7 @@ async function handleAdminActivity(request, env) {
         // each SPLIT PART individually, so no outer trim is needed here
         // at all -- checking `raw.trim()` for blankness (not `raw`
         // itself) still correctly skips a genuinely empty slot.
-        const raw = row[13 + slot] || "";
+        const raw = row[APPT.cols[slot]] || "";
         if (!raw.trim()) continue;
         // parseAppointmentCell (defined below, near
         // readAppointmentRawCells) now also returns a third field,
@@ -1231,7 +1226,7 @@ async function handleAdminActivity(request, env) {
         const parsed = parseAppointmentCell(raw, slot + 1);
         if (parsed) appointments.push({ address: parsed.address, date: parsed.date, status: parsed.status, name, email, phone, idLink, row: i + 1, slot: slot + 1 });
       }
-      const favRaw = (row[23] || "").trim();
+      const favRaw = cellOf(row, "favorites").trim();
       if (favRaw) {
         for (const address of favRaw.split(" | ")) {
           const trimmed = address.trim();
@@ -1253,13 +1248,13 @@ async function handleAdminActivity(request, env) {
     // never the public site.
     const lockboxByAddress = {};
     try {
-      const lockboxRange = encodeURIComponent(`${SHEET_TAB}!D:G`);
+      const lockboxRange = encodeURIComponent(propsRowsRange(1)); // address + lockbox by tag (TASK-000844)
       const lockboxRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${lockboxRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
       if (lockboxRes.ok) {
         const lockboxData = await lockboxRes.json();
         for (const row of (lockboxData.values || []).slice(1)) {
-          const address = (row[0] || "").trim();
-          const code = (row[3] || "").trim();
+          const address = propOf(row, "address").trim();
+          const code = propOf(row, "lockbox").trim();
           if (address && code) lockboxByAddress[address] = code;
         }
       } // best-effort -- a failed read just means no codes show, appointments themselves still load fine
@@ -1286,7 +1281,7 @@ async function handleAdminActivity(request, env) {
 async function handleFavoriteCounts(request, env) {
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!Y2:Y`);
+    const range = encodeURIComponent(`${TABS.logins}!${LL.favorites}2:${LL.favorites}`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!res.ok) throw new Error(`favorite counts read failed: ${await res.text()}`);
@@ -1370,25 +1365,16 @@ async function handleMyInfo(request, env) {
     // email in the request at all): a phone-only request would report
     // email: "" even when the row genuinely has one on file. Now reads the
     // real on-file email (B) same as everything else here.
-    const range = encodeURIComponent(`${LOGINS_TAB}!B${row}:F${row}`);
+    // One whole-row read; every cell picked by its column tag (TASK-000844).
+    const range = encodeURIComponent(loginsRowRange(row));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) throw new Error(`my-info read failed: ${await res.text()}`);
     const data = await res.json();
-    const [onFileEmail, , phone, name, idLink] = (data.values || [[]])[0] || [];
-
-    // Separate read for the Co-Buyer columns (Z:AA) -- kept isolated from
-    // the D:F read above rather than widening it across 20+ intervening
-    // columns (appointments, filters, favorites) that have nothing to do
-    // with this response.
-    const coRange = encodeURIComponent(`${LOGINS_TAB}!Z${row}:AA${row}`);
-    const coRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${coRange}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!coRes.ok) throw new Error(`co-buyer read failed: ${await coRes.text()}`);
-    const coData = await coRes.json();
-    const [coBuyer1Raw, coBuyer2Raw] = (coData.values || [[]])[0] || [];
+    const rowArr = (data.values || [[]])[0] || [];
+    const onFileEmail = cellOf(rowArr, "email"), phone = cellOf(rowArr, "phone"), name = cellOf(rowArr, "name"), idLink = cellOf(rowArr, "idLink");
+    const coBuyer1Raw = cellOf(rowArr, "coBuyer1"), coBuyer2Raw = cellOf(rowArr, "coBuyer2");
     const coBuyers = [parseCoBuyerCell(coBuyer1Raw), parseCoBuyerCell(coBuyer2Raw)];
 
     return jsonResponse({ name: name || "", phone: phone || "", email: onFileEmail || email || "", idOnFile: !!idLink, coBuyers });
@@ -1433,7 +1419,7 @@ async function handleUpdateName(request, env) {
     const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
-    const range = encodeURIComponent(`${LOGINS_TAB}!E${row}:E${row}`);
+    const range = encodeURIComponent(`${TABS.logins}!${LL.name}${row}:${LL.name}${row}`);
     const oldRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1444,7 +1430,7 @@ async function handleUpdateName(request, env) {
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!E${row}:E${row}`, values: [[name]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${LL.name}${row}:${LL.name}${row}`, values: [[name]] }),
     });
     if (!res.ok) throw new Error(`name update failed: ${await res.text()}`);
 
@@ -1498,8 +1484,8 @@ async function handleUpdateCoBuyer(request, env) {
     const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
-    const col = slot === 1 ? "Z" : "AA";
-    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const col = slot === 1 ? LL.coBuyer1 : LL.coBuyer2;
+    const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
     const existingRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1511,7 +1497,7 @@ async function handleUpdateCoBuyer(request, env) {
     const writeRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cell]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[cell]] }),
     });
     if (!writeRes.ok) throw new Error(`co-buyer write failed: ${await writeRes.text()}`);
 
@@ -1551,8 +1537,8 @@ async function handleUploadCoBuyerId(request, env) {
     const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
-    const col = slot === 1 ? "Z" : "AA";
-    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const col = slot === 1 ? LL.coBuyer1 : LL.coBuyer2;
+    const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
     const cellRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1564,7 +1550,7 @@ async function handleUploadCoBuyerId(request, env) {
       return jsonResponse({ error: "co-buyer info missing", message: "Please save this co-buyer's name and phone first." }, 400);
     }
 
-    const primaryRange = encodeURIComponent(`${LOGINS_TAB}!E${row}:E${row}`);
+    const primaryRange = encodeURIComponent(`${TABS.logins}!${LL.name}${row}:${LL.name}${row}`);
     const primaryRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${primaryRange}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1606,7 +1592,7 @@ async function handleUploadCoBuyerId(request, env) {
     const writeRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cell]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[cell]] }),
     });
     if (!writeRes.ok) throw new Error(`co-buyer id-link write failed: ${await writeRes.text()}`);
 
@@ -1692,8 +1678,8 @@ async function handleIdPhoto(request, env) {
 
     let sharedLink;
     if (coBuyerSlot) {
-      const col = coBuyerSlot === "1" ? "Z" : "AA";
-      const coRange = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+      const col = coBuyerSlot === "1" ? LL.coBuyer1 : LL.coBuyer2;
+      const coRange = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
       const coRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${coRange}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -1701,7 +1687,7 @@ async function handleIdPhoto(request, env) {
       const coData = await coRes.json();
       sharedLink = extractCoBuyerIdLink(((coData.values || [[]])[0] || [])[0] || "");
     } else {
-      const linkRange = encodeURIComponent(`${LOGINS_TAB}!F${row}:F${row}`);
+      const linkRange = encodeURIComponent(`${TABS.logins}!${LL.idLink}${row}:${LL.idLink}${row}`);
       const linkRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${linkRange}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -1759,7 +1745,7 @@ async function handleIdPhoto(request, env) {
 // the gate always runs first), this silently no-ops -- creating a row is
 // exclusively the gate-login/approval path's job, never this one's.
 async function findLoginsRowByEmail(accessToken, email) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!A:B`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.email}:${LL.email}`); // Email column by tag (TASK-000844)
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
@@ -1767,7 +1753,7 @@ async function findLoginsRowByEmail(accessToken, email) {
   const col = data.values || [];
   const target = email.trim().toLowerCase();
   for (let i = 1; i < col.length; i++) {
-    if ((col[i][1] || "").trim().toLowerCase() === target) return i + 1; // 1-indexed sheet row
+    if (((col[i] || [])[0] || "").trim().toLowerCase() === target) return i + 1; // 1-indexed sheet row
   }
   return null;
 }
@@ -1777,7 +1763,7 @@ async function findLoginsRowByEmail(accessToken, email) {
 // (see computeSuggestedIdMatches' own comment). Reads D (Phone) directly
 // rather than A:B like findLoginsRowByEmail above.
 async function findLoginsRowByPhone(accessToken, phone) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!D:D`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.phone}:${LL.phone}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins phone read failed: ${await res.text()}`);
@@ -1814,14 +1800,19 @@ async function findLoginsRowByIdentity(accessToken, phone, email) {
 // wasn't a real site login. INSERT_ROWS via :append, not values.update
 // with a guessed row number -- avoids a race against a concurrent append.
 async function appendLoginsRow(accessToken, phone, name, idLink) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!A:F`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  // Full-width row with each value at its tagged column (TASK-000844).
+  const rowVals = Array(Math.max(...Object.values(LC), ...APPT.cols) + 1).fill("");
+  rowVals[LC.phone] = phone;
+  // A Quo name carries area tags ("Velvia Foree ESTL"); the Name column is
+  // the person's name (2026-11-08).
+  rowVals[LC.name] = personNameFromQuoName(name);
+  rowVals[LC.idLink] = idLink;
+  const span = `${TABS.logins}!A:${LAST.logins}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(span)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
   const res = await fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    // A Quo name carries area tags ("Velvia Foree ESTL"); the Name column is
-    // the person's name (2026-11-08).
-    body: JSON.stringify({ range: `${LOGINS_TAB}!A:F`, values: [["", "", "", phone, personNameFromQuoName(name), idLink]] }),
+    body: JSON.stringify({ range: span, values: [rowVals] }),
   });
   if (!res.ok) throw new Error(`logins row append failed: ${await res.text()}`);
 }
@@ -1851,27 +1842,27 @@ async function handleSyncVisitor(request, env) {
     // range + values.update (not :append) -- same deliberate choice as
     // the gate-login Task write, for the same reason: no auto-detection
     // ambiguity, writes land exactly where specified, every time.
-    const values = [[
-      new Date().toISOString(),
-      filters.sort ?? "",
-      filters.down ?? "",
-      filters.monthly ?? "",
-      filters.beds ?? "",
-      Array.isArray(filters.area) ? filters.area.join(", ") : "",
-      search,
-    ]];
-    const range = encodeURIComponent(`${LOGINS_TAB}!G${row}:M${row}`);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-    const res = await fetch(url, {
-      method: "PUT",
+    // Same seven cells as before, each found by its column tag (TASK-000844).
+    const nowIso = new Date().toISOString();
+    const data = loginsCellsData(row, [
+      ["lastLogin", nowIso],
+      ["filterSort", filters.sort ?? ""],
+      ["filterMaxDown", filters.down ?? ""],
+      ["filterMaxMonthly", filters.monthly ?? ""],
+      ["filterMinBeds", filters.beds ?? ""],
+      ["filterAreas", Array.isArray(filters.area) ? filters.area.join(", ") : ""],
+      ["lastSearch", search],
+    ]);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+      method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!G${row}:M${row}`, values }),
+      body: JSON.stringify({ valueInputOption: "RAW", data }),
     });
     if (!res.ok) throw new Error(`sync write failed: ${await res.text()}`);
     // Same First Login gap as writeLoginsRow (2026-11-12): this stamps Last
     // Login on every visit, so fill First Login too if it's still blank.
     // Best-effort; the sync itself already succeeded.
-    await fillFirstLoginIfBlank(accessToken, row, values[0][0]).catch(() => {});
+    await fillFirstLoginIfBlank(accessToken, row, nowIso).catch(() => {});
 
     // Favorites, added 2026-08-29 per Aaron's direct request (admin
     // visibility into who's favorited a property) -- column Y, not
@@ -1880,12 +1871,12 @@ async function handleSyncVisitor(request, env) {
     // front-end code that doesn't send `favorites` at all can't
     // accidentally wipe this column with an unconditional empty write.
     if (Array.isArray(body.favorites)) {
-      const favRange = encodeURIComponent(`${LOGINS_TAB}!Y${row}:Y${row}`);
+      const favRange = encodeURIComponent(`${TABS.logins}!${LL.favorites}${row}:${LL.favorites}${row}`);
       const favUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${favRange}?valueInputOption=RAW`;
       const favRes = await fetch(favUrl, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `${LOGINS_TAB}!Y${row}:Y${row}`, values: [[body.favorites.join(" | ")]] }),
+        body: JSON.stringify({ range: `${TABS.logins}!${LL.favorites}${row}:${LL.favorites}${row}`, values: [[body.favorites.join(" | ")]] }),
       });
       if (!favRes.ok) throw new Error(`favorites sync write failed: ${await favRes.text()}`);
     }
@@ -1897,12 +1888,12 @@ async function handleSyncVisitor(request, env) {
     // handleMarkShown below). Same guarded/full-list-every-time pattern
     // as favorites above.
     if (Array.isArray(body.viewed)) {
-      const viewedRange = encodeURIComponent(`${LOGINS_TAB}!AC${row}:AC${row}`);
+      const viewedRange = encodeURIComponent(`${TABS.logins}!${LL.viewed}${row}:${LL.viewed}${row}`);
       const viewedUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${viewedRange}?valueInputOption=RAW`;
       const viewedRes = await fetch(viewedUrl, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `${LOGINS_TAB}!AC${row}:AC${row}`, values: [[body.viewed.join(" | ")]] }),
+        body: JSON.stringify({ range: `${TABS.logins}!${LL.viewed}${row}:${LL.viewed}${row}`, values: [[body.viewed.join(" | ")]] }),
       });
       if (!viewedRes.ok) throw new Error(`viewed sync write failed: ${await viewedRes.text()}`);
     }
@@ -2333,14 +2324,14 @@ async function handleAdminUpdateAppointment(request, env) {
     const accessToken = await getSheetsAccessToken(env);
     const row = await findLoginsRowByPhone(accessToken, phone);
     if (!row) return jsonResponse({ error: "buyer not found" }, 404);
-    const col = APPOINTMENT_COLS[slot - 1];
-    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const col = colLetter(APPT.cols[slot - 1]);
+    const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
     const cellValue = buildAppointmentCell(address, date, status);
     const res = await fetch(url, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
     });
     if (!res.ok) return jsonResponse({ error: "appointment write failed", detail: await res.text() }, 500);
     // 2026-11-13: a Completed tour also goes into Shown Properties, because
@@ -2436,14 +2427,7 @@ async function handleAdminSetStage(request, env) {
 // Hidden/Sentiment/Stage lesson above): a missing header throws instead of
 // writing into the wrong column.
 async function writeDepositProperty(accessToken, row, address) {
-  const hdrRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!1:1`)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!hdrRes.ok) throw new Error(`deposit property header read failed: ${await hdrRes.text()}`);
-  const headers = ((await hdrRes.json()).values || [[]])[0] || [];
-  const ci = headers.indexOf("Deposit Property");
-  if (ci < 0) throw new Error("App: Logins has no 'Deposit Property' header");
-  let col = "", n = ci + 1;
-  while (n > 0) { const m = (n - 1) % 26; col = String.fromCharCode(65 + m) + col; n = Math.floor((n - 1) / 26); }
-  const cell = `${LOGINS_TAB}!${col}${row}:${col}${row}`;
+  const cell = loginsCell("depositProperty", row); // by column tag (TASK-000844)
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cell)}?valueInputOption=RAW`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -2656,8 +2640,8 @@ async function handleAdminSetTextTemplate(request, env) {
 async function backfillBlankStages(env) {
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const phoneRange = encodeURIComponent(`${LOGINS_TAB}!D:D`);
-    const stageRange = encodeURIComponent(`${LOGINS_TAB}!AF:AF`);
+    const phoneRange = encodeURIComponent(`${TABS.logins}!${LL.phone}:${LL.phone}`);
+    const stageRange = encodeURIComponent(`${TABS.logins}!${LL.stage}:${LL.stage}`);
     const batchGetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?ranges=${phoneRange}&ranges=${stageRange}`;
     const getRes = await fetch(batchGetUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!getRes.ok) throw new Error(`backfill-stage read failed: ${await getRes.text()}`);
@@ -2673,7 +2657,7 @@ async function backfillBlankStages(env) {
       const stage = ((stageCol[i] && stageCol[i][0]) || "").trim();
       if (!phone || stage) continue; // not a real row, or already has a stage
       const row = i + 1; // 1-indexed sheet row
-      updates.push({ range: `${LOGINS_TAB}!AF${row}:AF${row}`, values: [[firstStage]] });
+      updates.push({ range: `${TABS.logins}!${LL.stage}${row}:${LL.stage}${row}`, values: [[firstStage]] });
       affectedPhones.push(phone);
     }
     if (updates.length > 0) {
@@ -2809,13 +2793,13 @@ async function handleAdminSetDnc(request, env) {
 // phone -- Aaron is linking an EXISTING tracked buyer, not typing a new
 // person's details blind. coBuyerPhone: "" clears the slot.
 async function writeCoBuyerCell(accessToken, row, slot, cellValue) {
-  const col = slot === 1 ? "Z" : "AA";
-  const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+  const col = slot === 1 ? LL.coBuyer1 : LL.coBuyer2;
+  const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
+    body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[cellValue]] }),
   });
   if (!res.ok) throw new Error(`co-buyer write failed: ${await res.text()}`);
 }
@@ -2862,10 +2846,10 @@ async function handleAdminSetCoBuyer(request, env) {
     const coRow = await findLoginsRowByPhone(accessToken, normalizedCoPhone);
     if (!coRow) return jsonResponse({ error: "co-buyer not found in the current buyer list" }, 404);
     const coGetUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet`);
-    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!B${coRow}:B${coRow}`);
-    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!E${coRow}:E${coRow}`);
-    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!F${coRow}:F${coRow}`);
-    coGetUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AJ${coRow}:AJ${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.email}${coRow}:${LL.email}${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.name}${coRow}:${LL.name}${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.idLink}${coRow}:${LL.idLink}${coRow}`);
+    coGetUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.quoName}${coRow}:${LL.quoName}${coRow}`);
     const coGetRes = await fetch(coGetUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!coGetRes.ok) throw new Error(`co-buyer identity read failed: ${await coGetRes.text()}`);
     const coGetData = await coGetRes.json();
@@ -3029,30 +3013,25 @@ async function handleInternalResyncBuyer(request, env) {
     const row = await findLoginsRowByPhone(accessToken, e164Phone);
     if (!row) return jsonResponse({ error: "no Sheet row for this phone even after syncBuyerToSheet -- real bug, not a timing issue" }, 500);
 
-    const range = encodeURIComponent(`'${LOGINS_TAB}'!A1:AK1`);
-    const headerRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    const headerData = await headerRes.json();
-    const headers = (headerData.values && headerData.values[0]) || [];
-    const idx = (name) => headers.indexOf(name);
-    const rowRange = encodeURIComponent(`'${LOGINS_TAB}'!A${row}:AK${row}`);
-    const rowRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rowRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    // Whole row; cells by column tag, not header text (TASK-000844).
+    const rowRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(loginsRowRange(row))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
     const rowJson = await rowRes.json();
     const values = (rowJson.values && rowJson.values[0]) || [];
-    const get = (name) => { const i = idx(name); return i >= 0 ? (values[i] || "") : ""; };
+    const get = (key) => cellOf(values, key);
     const buyer = {
       row, phone: e164Phone,
-      name: get("Name"),
-      email: get("Email"),
-      idLink: get("ID Link"),
-      quoLink: get("Quo Link"),
-      quoName: get("Quo Name"),
-      lastActivity: get("Last Activity (Quo)"),
-      manualAreaOverride: get("Manual Area Override"),
-      sentiment: get("Sentiment"),
-      stage: get("Stage"),
-      idName: get("ID Name (OCR)"),
-      hidden: get("Hidden") === "TRUE",
-      dnc: get("DNC") === "TRUE",
+      name: get("name"),
+      email: get("email"),
+      idLink: get("idLink"),
+      quoLink: get("quoLink"),
+      quoName: get("quoName"),
+      lastActivity: get("lastActivity"),
+      manualAreaOverride: get("manualAreaOverride"),
+      sentiment: get("sentiment"),
+      stage: get("stage"),
+      idName: get("idName"),
+      hidden: get("hidden") === "TRUE",
+      dnc: get("dnc") === "TRUE",
     };
     return jsonResponse({ ok: true, buyer });
   } catch (e) {
@@ -3252,7 +3231,7 @@ async function handleInternalFindDuplicatePhones(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const range = encodeURIComponent(loginsRowsRange(1));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3261,11 +3240,11 @@ async function handleInternalFindDuplicatePhones(request, env) {
     const byNormalized = new Map();
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const rawPhone = (r[3] || "").trim();
+      const rawPhone = (cellOf(r, "phone") || "").trim();
       if (!rawPhone) continue;
       const normalized = toE164(rawPhone);
       if (!normalized) continue;
-      const entry = { row: i + 1, rawPhone, name: (r[4] || "").trim(), quoName: (r[35] || "").trim() };
+      const entry = { row: i + 1, rawPhone, name: (cellOf(r, "name") || "").trim(), quoName: (cellOf(r, "quoName") || "").trim() };
       if (!byNormalized.has(normalized)) byNormalized.set(normalized, []);
       byNormalized.get(normalized).push(entry);
     }
@@ -3280,7 +3259,7 @@ async function handleInternalQuoNameStats(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const range = encodeURIComponent(loginsRowsRange(1));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3290,9 +3269,9 @@ async function handleInternalQuoNameStats(request, env) {
     const sampleNoName = [];
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const phone = (r[3] || "").trim();
-      const quoLink = (r[13] || "").trim();
-      const quoName = (r[35] || "").trim();
+      const phone = (cellOf(r, "phone") || "").trim();
+      const quoLink = (cellOf(r, "quoLink") || "").trim();
+      const quoName = (cellOf(r, "quoName") || "").trim();
       if (!phone) continue;
       hasPhone++;
       if (quoLink) {
@@ -3355,7 +3334,7 @@ async function handleInternalRestoreActivity(request, env) {
   if (!entries.length) return jsonResponse({ error: "missing entries" }, 400);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!D:D`);
+    const range = encodeURIComponent(`${TABS.logins}!${LL.phone}:${LL.phone}`);
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3376,7 +3355,7 @@ async function handleInternalRestoreActivity(request, env) {
       if (!row) { notFound.push(entry.phone); continue; }
       // Empty string clears the cell -- used for the handful with no
       // recoverable real value, rather than leaving today's fabricated one.
-      data.push({ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[entry.lastActivityAt || ""]] });
+      data.push({ range: `${TABS.logins}!${LL.lastActivity}${row}:${LL.lastActivity}${row}`, values: [[entry.lastActivityAt || ""]] });
       restored++;
     }
     if (data.length > 0) {
@@ -3399,7 +3378,7 @@ async function handleInternalBackfillNamesFromQuo(request, env) {
   const apply = url.searchParams.get("apply") === "true";
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const range = encodeURIComponent(loginsRowsRange(1));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3409,9 +3388,9 @@ async function handleInternalBackfillNamesFromQuo(request, env) {
     const candidates = [];
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const phone = (r[3] || "").trim();
-      const name = (r[4] || "").trim();
-      const quoName = (r[35] || "").trim();
+      const phone = (cellOf(r, "phone") || "").trim();
+      const name = (cellOf(r, "name") || "").trim();
+      const quoName = (cellOf(r, "quoName") || "").trim();
       if (!phone || name || !quoName) continue;
       const cleaned = stripAreaTagsFromName(quoName);
       if (!cleaned) continue;
@@ -3423,7 +3402,7 @@ async function handleInternalBackfillNamesFromQuo(request, env) {
     }
 
     if (candidates.length === 0) return jsonResponse({ applied: 0 });
-    const data = candidates.map((c) => ({ range: `${LOGINS_TAB}!E${c.row}:E${c.row}`, values: [[c.cleanedName]] }));
+    const data = candidates.map((c) => ({ range: `${TABS.logins}!${LL.name}${c.row}:${LL.name}${c.row}`, values: [[c.cleanedName]] }));
     const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -3442,7 +3421,7 @@ async function handleInternalGlideMatch(request, env) {
   const apply = url.searchParams.get("apply") === "true";
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const range = encodeURIComponent(loginsRowsRange(1));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3453,12 +3432,12 @@ async function handleInternalGlideMatch(request, env) {
     const namedPhoneRows = []; // { row, phone, email, name, quoName, firstLogin, lastLogin }
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const firstLogin = (r[0] || "").trim();
-      const email = (r[1] || "").trim();
-      const phone = (r[3] || "").trim();
-      const name = (r[4] || "").trim();
-      const lastLogin = (r[6] || "").trim();
-      const quoName = (r[35] || "").trim();
+      const firstLogin = (cellOf(r, "firstLogin") || "").trim();
+      const email = (cellOf(r, "email") || "").trim();
+      const phone = (cellOf(r, "phone") || "").trim();
+      const name = (cellOf(r, "name") || "").trim();
+      const lastLogin = (cellOf(r, "lastLogin") || "").trim();
+      const quoName = (cellOf(r, "quoName") || "").trim();
       if (!phone && email && firstLogin) {
         glideOnly.push({ row: i + 1, email, name, firstLogin, lastLogin });
       } else if (phone && quoName) {
@@ -3512,10 +3491,10 @@ async function handleInternalGlideMatch(request, env) {
       // this a "match" would write an empty string over an already-blank
       // Name cell -- harmless but pointless, and wroteName below would
       // wrongly claim a write happened when nothing real was brought over.
-      if (!m.candidate.email && m.glide.email) data.push({ range: `${LOGINS_TAB}!B${m.candidate.row}:B${m.candidate.row}`, values: [[m.glide.email]] });
-      if (!m.candidate.name && m.glide.name) data.push({ range: `${LOGINS_TAB}!E${m.candidate.row}:E${m.candidate.row}`, values: [[m.glide.name]] });
-      if (!m.candidate.firstLogin && m.glide.firstLogin) data.push({ range: `${LOGINS_TAB}!A${m.candidate.row}:A${m.candidate.row}`, values: [[m.glide.firstLogin]] });
-      if (!m.candidate.lastLogin && m.glide.lastLogin) data.push({ range: `${LOGINS_TAB}!G${m.candidate.row}:G${m.candidate.row}`, values: [[m.glide.lastLogin]] });
+      if (!m.candidate.email && m.glide.email) data.push({ range: `${TABS.logins}!${LL.email}${m.candidate.row}:${LL.email}${m.candidate.row}`, values: [[m.glide.email]] });
+      if (!m.candidate.name && m.glide.name) data.push({ range: `${TABS.logins}!${LL.name}${m.candidate.row}:${LL.name}${m.candidate.row}`, values: [[m.glide.name]] });
+      if (!m.candidate.firstLogin && m.glide.firstLogin) data.push({ range: `${TABS.logins}!${LL.firstLogin}${m.candidate.row}:${LL.firstLogin}${m.candidate.row}`, values: [[m.glide.firstLogin]] });
+      if (!m.candidate.lastLogin && m.glide.lastLogin) data.push({ range: `${TABS.logins}!${LL.lastLogin}${m.candidate.row}:${LL.lastLogin}${m.candidate.row}`, values: [[m.glide.lastLogin]] });
       applied.push({
         glideRow: m.glide.row, matchedRow: m.candidate.row,
         wroteEmail: !m.candidate.email && !!m.glide.email,
@@ -3585,7 +3564,7 @@ async function handleInternalContacts(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const range = encodeURIComponent(loginsRowsRange(1));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3594,9 +3573,9 @@ async function handleInternalContacts(request, env) {
     const contacts = [];
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const phone = (r[3] || "").trim();
-      const name = (r[4] || "").trim() || (r[35] || "").trim(); // login Name, falling back to Quo Name
-      const idLink = (r[5] || "").trim();
+      const phone = (cellOf(r, "phone") || "").trim();
+      const name = (cellOf(r, "name") || "").trim() || (cellOf(r, "quoName") || "").trim(); // login Name, falling back to Quo Name
+      const idLink = (cellOf(r, "idLink") || "").trim();
       if (!phone || !name) continue;
       contacts.push({ phone, name, hasId: !!idLink });
     }
@@ -3622,15 +3601,17 @@ async function handleInternalSheetHeaders(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`'${LOGINS_TAB}'!A1:BZ1`);
+    const range = encodeURIComponent(`'${TABS.logins}'!A1:BZ1`);
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) throw new Error(`headers read failed: ${await res.text()}`);
     const data = await res.json();
     const headers = (data.values && data.values[0]) || [];
-    const colLetter = (i) => { let n = i, s = ""; while (n >= 0) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } return s; };
-    return jsonResponse({ headers: headers.map((h, i) => ({ col: colLetter(i), name: h })) });
+    // `key` = the column's tag (TASK-000844); use it, not the letter, in code.
+    const keyAt = Object.fromEntries(Object.entries(LC).map(([k, i]) => [i, k]));
+    APPT.cols.forEach((i, n) => { keyAt[i] = `appointment${n + 1}`; });
+    return jsonResponse({ headers: headers.map((h, i) => ({ col: colLetter(i), name: h, key: keyAt[i] || null })) });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -3658,8 +3639,8 @@ async function ensureSheetGridWidth(env, accessToken, minColumns) {
   });
   if (!metaRes.ok) throw new Error(`sheet metadata read failed: ${await metaRes.text()}`);
   const metaData = await metaRes.json();
-  const sheet = (metaData.sheets || []).find((s) => s.properties.title === LOGINS_TAB);
-  if (!sheet) throw new Error(`sheet tab not found: ${LOGINS_TAB}`);
+  const sheet = (metaData.sheets || []).find((s) => s.properties.sheetId === LOGINS_GID); // by gid, not title (TASK-000844)
+  if (!sheet) throw new Error(`sheet tab not found: gid ${LOGINS_GID}`);
   const current = sheet.properties.gridProperties.columnCount;
   if (current >= minColumns) return;
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
@@ -3686,7 +3667,11 @@ async function handleInternalWriteCell(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   let body;
   try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
-  const col = (body.col || "").trim();
+  // Prefer `key` (a column tag, e.g. "phone"; TASK-000844). `col` (a letter)
+  // still works for older callers but breaks if Aaron moves that column.
+  const key = (body.key || "").trim();
+  if (key && !(key in LL)) return jsonResponse({ error: `unknown column key ${key}` }, 400);
+  const col = key ? LL[key] : (body.col || "").trim();
   const row = Number(body.row);
   const value = body.value ?? "";
   if (!/^[A-Z]{1,3}$/.test(col) || !Number.isInteger(row) || row < 1) {
@@ -3695,7 +3680,7 @@ async function handleInternalWriteCell(request, env) {
   try {
     const accessToken = await getSheetsAccessToken(env);
     await ensureSheetGridWidth(env, accessToken, columnLetterToNumber(col));
-    const a1 = `'${LOGINS_TAB}'!${col}${row}:${col}${row}`;
+    const a1 = `'${TABS.logins}'!${col}${row}:${col}${row}`;
     const range = encodeURIComponent(a1);
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`, {
       method: "PUT",
@@ -3716,7 +3701,7 @@ async function handleInternalFindLoginsRow(request, env) {
   if (!nameQuery) return jsonResponse({ error: "missing name query param" }, 400);
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!A:AK`);
+    const range = encodeURIComponent(loginsRowsRange(1));
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -3726,7 +3711,7 @@ async function handleInternalFindLoginsRow(request, env) {
     const matches = [];
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const name = (r[4] || "").trim(); // column E
+      const name = (cellOf(r, "name") || "").trim(); // column E
       // Search every column, not just Name -- a blank Name cell (the exact
       // thing suspected of being stuck) would never match a name-only
       // search, but the row could still be findable by email or phone.
@@ -3734,15 +3719,15 @@ async function handleInternalFindLoginsRow(request, env) {
       if (rowMatches) {
         matches.push({
           row: i + 1,
-          email: r[1] || "",
-          phone: r[3] || "",
+          email: cellOf(r, "email") || "",
+          phone: cellOf(r, "phone") || "",
           name,
-          idLink: r[5] || "",
-          quoLink: r[13] || "", // column N
-          quoName: r[35] || "", // column AJ
-          lastActivity: r[36] || "", // column AK
-          stage: r[31] || "", // column AF
-          manualAreaOverride: r[29] || "", // column AD
+          idLink: cellOf(r, "idLink") || "",
+          quoLink: cellOf(r, "quoLink") || "", // column N
+          quoName: cellOf(r, "quoName") || "", // column AJ
+          lastActivity: cellOf(r, "lastActivity") || "", // column AK
+          stage: cellOf(r, "stage") || "", // column AF
+          manualAreaOverride: cellOf(r, "manualAreaOverride") || "", // column AD
         });
       }
     }
@@ -3817,16 +3802,17 @@ async function idRefKeysForFile(dropboxToken, dropboxPath, includeLegacy) {
 }
 
 async function findRowAlreadyLinkedToFile(dropboxToken, accessToken, dropboxPath) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!D:F`);
+  const range = encodeURIComponent(loginsRowsRange(1)); // cells by tag (TASK-000844)
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`id-link column read failed: ${await res.text()}`);
   const rows = (await res.json()).values || [];
-  const hasLegacy = rows.slice(1).some((r) => (r[2] || "").trim() && !isIdFileRef(r[2]));
+  const link = (r) => cellOf(r, "idLink");
+  const hasLegacy = rows.slice(1).some((r) => link(r).trim() && !isIdFileRef(link(r)));
   const keys = await idRefKeysForFile(dropboxToken, dropboxPath, hasLegacy);
   for (let i = 1; i < rows.length; i++) {
-    if ((rows[i][2] || "").trim() && keys.has(idRefKey(rows[i][2]))) return { row: i + 1, phone: rows[i][0] || "", name: rows[i][1] || "" };
+    if (link(rows[i]).trim() && keys.has(idRefKey(link(rows[i])))) return { row: i + 1, phone: cellOf(rows[i], "phone"), name: cellOf(rows[i], "name") };
   }
   return null;
 }
@@ -4067,7 +4053,7 @@ async function handleAdminBrowseIdPhotos(request, env) {
       getDropboxAccessToken(env),
       getSheetsAccessToken(env),
     ]);
-    const linksRange = encodeURIComponent(`${LOGINS_TAB}!F:F`);
+    const linksRange = encodeURIComponent(`${TABS.logins}!${LL.idLink}:${LL.idLink}`);
     const linksRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${linksRange}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -4173,7 +4159,7 @@ async function handleMarkShown(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`${LOGINS_TAB}!AB${row}:AB${row}`);
+    const range = encodeURIComponent(`${TABS.logins}!${LL.shown}${row}:${LL.shown}${row}`);
     const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -4188,7 +4174,7 @@ async function handleMarkShown(request, env) {
     const putRes = await fetch(putUrl, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!AB${row}:AB${row}`, values: [[next.join(" | ")]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${LL.shown}${row}:${LL.shown}${row}`, values: [[next.join(" | ")]] }),
     });
     if (!putRes.ok) throw new Error(`shown-properties write failed: ${await putRes.text()}`);
     return jsonResponse({ ok: true, shown: next });
@@ -4428,13 +4414,14 @@ async function handleUploadMyId(request, env) {
     const row = await findLoginsRowByIdentity(accessToken, identityPhone, email);
     if (!row) return jsonResponse({ error: "not found" }, 404);
 
-    const infoRange = encodeURIComponent(`${LOGINS_TAB}!D${row}:E${row}`);
+    const infoRange = encodeURIComponent(loginsRowRange(row)); // cells by tag (TASK-000844)
     const infoRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${infoRange}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!infoRes.ok) throw new Error(`name/phone read failed: ${await infoRes.text()}`);
     const infoData = await infoRes.json();
-    const [phone, name] = ((infoData.values || [[]])[0] || []);
+    const infoRow = (infoData.values || [[]])[0] || [];
+    const phone = cellOf(infoRow, "phone"), name = cellOf(infoRow, "name");
     if (!name || !phone) {
       return jsonResponse({ error: "missing name/phone", message: "Please save your name and phone number first." }, 400);
     }
@@ -4483,15 +4470,17 @@ async function handleUploadMyId(request, env) {
 // is the one source of truth here, same principle the rest of this build
 // already follows for anything Aaron/Nathan also needs to see.
 const APPOINTMENT_SLOT_COUNT = 10;
-const APPOINTMENT_COLS = ["O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"];
+// Appointment 1..10 columns come from their tags (layout.js APPT.cols), TASK-000844.
 
 async function readAppointmentRawCells(accessToken, row) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!O${row}:X${row}`);
+  // Whole row, then the 10 tagged appointment columns in order (TASK-000844).
+  const range = encodeURIComponent(loginsRowRange(row));
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`appointment slots read failed: ${await res.text()}`);
   const data = await res.json();
-  const cells = (data.values && data.values[0]) || [];
+  const rowArr = (data.values && data.values[0]) || [];
+  const cells = APPT.cols.map((i) => rowArr[i] || "");
   const out = [];
   // Deliberately NOT trimmed here -- see the matching fix/comment in
   // handleAdminActivity (job 6, above) for why trimming a whole
@@ -4547,12 +4536,10 @@ async function addAppointment(accessToken, row, address, date) {
   if (active.length > APPOINTMENT_SLOT_COUNT) active = active.slice(active.length - APPOINTMENT_SLOT_COUNT);
   while (active.length < APPOINTMENT_SLOT_COUNT) active.push("");
 
-  const range = encodeURIComponent(`${LOGINS_TAB}!O${row}:X${row}`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-  const res = await fetch(url, {
-    method: "PUT",
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+    method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${LOGINS_TAB}!O${row}:X${row}`, values: [active] }),
+    body: JSON.stringify({ valueInputOption: "RAW", data: loginsCellsData(row, APPT.cols.map((idx, i) => [idx, active[i]])) }),
   });
   if (!res.ok) throw new Error(`appointment slots write failed: ${await res.text()}`);
 
@@ -4577,7 +4564,7 @@ async function addAppointment(accessToken, row, address, date) {
 
 const SHOWING_SCHEDULED_STAGE_INDEX = STAGE_VALUES.indexOf("Showing Scheduled");
 async function maybeAdvanceStageOnFirstShowing(accessToken, row) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!AF${row}:AF${row}`);
+  const range = encodeURIComponent(`${TABS.logins}!${LL.stage}${row}:${LL.stage}${row}`);
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -4648,8 +4635,8 @@ async function handleCancelAppointment(request, env) {
     const accessToken = await getSheetsAccessToken(env);
     const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
-    const col = APPOINTMENT_COLS[slot - 1];
-    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const col = colLetter(APPT.cols[slot - 1]);
+    const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
     const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -4667,7 +4654,7 @@ async function handleCancelAppointment(request, env) {
     const res = await fetch(putUrl, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[buildAppointmentCell(existing.address, existing.date, "Canceled")]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[buildAppointmentCell(existing.address, existing.date, "Canceled")]] }),
     });
     if (!res.ok) throw new Error(`cancel write failed: ${await res.text()}`);
     return jsonResponse({ ok: true });
@@ -4696,8 +4683,8 @@ async function handleUpdateAppointmentDate(request, env) {
     const accessToken = await getSheetsAccessToken(env);
     const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ error: "no matching visitor row" }, 404);
-    const col = APPOINTMENT_COLS[slot - 1];
-    const range = encodeURIComponent(`${LOGINS_TAB}!${col}${row}:${col}${row}`);
+    const col = colLetter(APPT.cols[slot - 1]);
+    const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
     const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
     const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!getRes.ok) throw new Error(`slot read failed: ${await getRes.text()}`);
@@ -4714,7 +4701,7 @@ async function handleUpdateAppointmentDate(request, env) {
     const putRes = await fetch(putUrl, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!${col}${row}:${col}${row}`, values: [[`${existing.address} | ${newDate}`]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[`${existing.address} | ${newDate}`]] }),
     });
     if (!putRes.ok) throw new Error(`reschedule write failed: ${await putRes.text()}`);
     return jsonResponse({ ok: true });
@@ -4813,13 +4800,13 @@ async function writeLoginCodeRow(accessToken, row, values) {
 }
 
 async function findLoginsPhoneByEmail(accessToken, email) {
-  const range = encodeURIComponent(`${LOGINS_TAB}!B:E`);
+  const range = encodeURIComponent(loginsRowsRange(1)); // cells by tag (TASK-000844)
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins email read failed: ${await res.text()}`);
   const col = (await res.json()).values || [];
   const target = String(email).trim().toLowerCase();
   for (let i = 1; i < col.length; i++) {
-    if ((col[i][0] || "").trim().toLowerCase() === target) return { row: i + 1, phone: (col[i][2] || "").trim(), name: col[i][3] || "" };
+    if (cellOf(col[i], "email").trim().toLowerCase() === target) return { row: i + 1, phone: cellOf(col[i], "phone").trim(), name: cellOf(col[i], "name") };
   }
   return null;
 }
@@ -4836,7 +4823,7 @@ async function pingPhoneMismatch(env, { email, typed, onFile, row, name }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: AARON_TELEGRAM_CHAT_ID,
-        text: `⚠️ Site sign-in blocked: phone doesn't match the one on file.\nName: ${name}\nEmail: ${email}\nTyped: ${typed}\nOn file: ${onFile} (App: Logins row ${row})\nIf the typed number is really theirs, correct column D on that row and they can sign in.`,
+        text: `⚠️ Site sign-in blocked: phone doesn't match the one on file.\nName: ${name}\nEmail: ${email}\nTyped: ${typed}\nOn file: ${onFile} (App: Logins row ${row})\nIf the typed number is really theirs, correct the Phone column on that row and they can sign in.`,
       }),
     });
     if (env.BUYERS_KV) await env.BUYERS_KV.put(key, "1", { expirationTtl: 6 * 60 * 60 });
@@ -5109,7 +5096,7 @@ async function handleRequestPhoneChange(request, env) {
       return jsonResponse({ error: "not found", message: "We couldn't find an account with that email." }, 404);
     }
 
-    const existingRange = encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`);
+    const existingRange = encodeURIComponent(`${TABS.logins}!${LL.phone}${targetRow}:${LL.phone}${targetRow}`);
     const existingRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${existingRange}`,
       { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -5193,7 +5180,7 @@ async function handleRequestEmailChange(request, env) {
       return jsonResponse({ error: "in use", message: "That email is already associated with another account." }, 400);
     }
 
-    const phoneRange = encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`);
+    const phoneRange = encodeURIComponent(`${TABS.logins}!${LL.phone}${targetRow}:${LL.phone}${targetRow}`);
     const phoneRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${phoneRange}`,
       { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -5387,10 +5374,10 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = fa
   // actually still blank, then one write (batchUpdate) for whatever needs
   // it.
   const getUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet`);
-  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!N${row}:N${row}`);
-  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AJ${row}:AJ${row}`);
-  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AD${row}:AD${row}`);
-  getUrl.searchParams.append("ranges", `'${LOGINS_TAB}'!AF${row}:AF${row}`);
+  getUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.quoLink}${row}:${LL.quoLink}${row}`);
+  getUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.quoName}${row}:${LL.quoName}${row}`);
+  getUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.manualAreaOverride}${row}:${LL.manualAreaOverride}${row}`);
+  getUrl.searchParams.append("ranges", `'${TABS.logins}'!${LL.stage}${row}:${LL.stage}${row}`);
   const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!getRes.ok) throw new Error(`quo-name/link/area/stage read failed: ${await getRes.text()}`);
   const getData = await getRes.json();
@@ -5411,11 +5398,11 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = fa
   const derivedAreas = areasIfBlank !== undefined ? areasIfBlank : (nameForAreas ? deriveAreasFromQuoName(nameForAreas).join(", ") : "");
 
   const data = [];
-  if (touchActivity) data.push({ range: `${LOGINS_TAB}!AK${row}:AK${row}`, values: [[nowIso]] });
-  if (!existingQuoLink && quoLink) data.push({ range: `${LOGINS_TAB}!N${row}:N${row}`, values: [[quoLink]] });
-  if (!existingQuoName && quoName) data.push({ range: `${LOGINS_TAB}!AJ${row}:AJ${row}`, values: [[quoName]] });
-  if (!existingAreas && derivedAreas) data.push({ range: `${LOGINS_TAB}!AD${row}:AD${row}`, values: [[derivedAreas]] });
-  if (!existingStage) data.push({ range: `${LOGINS_TAB}!AF${row}:AF${row}`, values: [[STAGE_VALUES[0]]] });
+  if (touchActivity) data.push({ range: `${TABS.logins}!${LL.lastActivity}${row}:${LL.lastActivity}${row}`, values: [[nowIso]] });
+  if (!existingQuoLink && quoLink) data.push({ range: `${TABS.logins}!${LL.quoLink}${row}:${LL.quoLink}${row}`, values: [[quoLink]] });
+  if (!existingQuoName && quoName) data.push({ range: `${TABS.logins}!${LL.quoName}${row}:${LL.quoName}${row}`, values: [[quoName]] });
+  if (!existingAreas && derivedAreas) data.push({ range: `${TABS.logins}!${LL.manualAreaOverride}${row}:${LL.manualAreaOverride}${row}`, values: [[derivedAreas]] });
+  if (!existingStage) data.push({ range: `${TABS.logins}!${LL.stage}${row}:${LL.stage}${row}`, values: [[STAGE_VALUES[0]]] });
 
   if (data.length === 0) return; // nothing changed -- e.g. a backfill re-run (touchActivity: false) that found no new gaps to fill
 
@@ -5462,15 +5449,15 @@ async function handleAdminRefreshQuoName(request, env) {
     const row = await findLoginsRowByPhone(accessToken, e164Phone);
     if (!row) return jsonResponse({ ok: true, quoName: liveQuoName, changed: false }); // no Sheet row yet -- syncBuyerToSheet's own fill-path will create one and pick this up
 
-    const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!AJ${row}:AJ${row}`)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const getRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${TABS.logins}!${LL.quoName}${row}:${LL.quoName}${row}`)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!getRes.ok) throw new Error(`quo-name read failed: ${await getRes.text()}`);
     const existing = ((await getRes.json()).values || [[]])[0]?.[0] || "";
     if (existing === liveQuoName) return jsonResponse({ ok: true, quoName: liveQuoName, changed: false });
 
-    const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!AJ${row}:AJ${row}`)}?valueInputOption=RAW`, {
+    const putRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${TABS.logins}!${LL.quoName}${row}:${LL.quoName}${row}`)}?valueInputOption=RAW`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!AJ${row}:AJ${row}`, values: [[liveQuoName]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${LL.quoName}${row}:${LL.quoName}${row}`, values: [[liveQuoName]] }),
     });
     if (!putRes.ok) throw new Error(`quo-name refresh write failed: ${await putRes.text()}`);
     return jsonResponse({ ok: true, quoName: liveQuoName, changed: true });
@@ -5535,11 +5522,11 @@ async function handleQuoMessageWebhook(request, env) {
       const [email, oldPhone, newPhone, , , , targetRowStr] = pendingPhone.values;
       const targetRow = Number(targetRowStr);
 
-      const phoneUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!D${targetRow}:D${targetRow}`)}?valueInputOption=RAW`;
+      const phoneUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${TABS.logins}!${LL.phone}${targetRow}:${LL.phone}${targetRow}`)}?valueInputOption=RAW`;
       const writeRes = await fetch(phoneUrl, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `${LOGINS_TAB}!D${targetRow}:D${targetRow}`, values: [[newPhone]] }),
+        body: JSON.stringify({ range: `${TABS.logins}!${LL.phone}${targetRow}:${LL.phone}${targetRow}`, values: [[newPhone]] }),
       });
       if (!writeRes.ok) throw new Error(`phone overwrite failed: ${await writeRes.text()}`);
 
@@ -5582,11 +5569,11 @@ async function handleQuoMessageWebhook(request, env) {
     const [oldEmail, newEmail, onFilePhone, , , , targetRowStr2] = pendingEmail.values;
     const targetRow2 = Number(targetRowStr2);
 
-    const emailUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${LOGINS_TAB}!B${targetRow2}:B${targetRow2}`)}?valueInputOption=RAW`;
+    const emailUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${TABS.logins}!${LL.email}${targetRow2}:${LL.email}${targetRow2}`)}?valueInputOption=RAW`;
     const writeRes2 = await fetch(emailUrl, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ range: `${LOGINS_TAB}!B${targetRow2}:B${targetRow2}`, values: [[newEmail]] }),
+      body: JSON.stringify({ range: `${TABS.logins}!${LL.email}${targetRow2}:${LL.email}${targetRow2}`, values: [[newEmail]] }),
     });
     if (!writeRes2.ok) throw new Error(`email overwrite failed: ${await writeRes2.text()}`);
 
@@ -6045,17 +6032,33 @@ async function route(request, env, ctx) {
   return jsonResponse({ error: "not found" }, 404);
 }
 
+// TASK-000844: column positions and tab titles come from developer-metadata
+// tags and gids (layout.js). Refreshed at most once a minute per isolate,
+// before any route runs, so every function below reads current positions.
+async function ensureLayout(env) {
+  await refreshLayout({
+    sheetId: SHEET_ID,
+    getToken: () => getSheetsAccessToken(env),
+    alert: (text) => fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: `⚠️ IAH site: ${text}` }),
+    }),
+  });
+}
+
 export default {
   __reserveForTests: reserve,
   // Reserve health check, every hour (wrangler-admin.toml; Aaron 11/13 "Every hour"). The 15:00 UTC
   // run (9am Central) also sends the "all good" line and the daily-only checks.
   async scheduled(event, env, ctx) {
+    await ensureLayout(env);
     ctx.waitUntil(reserve.runHealthCheck(env, { daily: new Date(event.scheduledTime).getUTCHours() === 15 })
       .then((r) => ({ ok: true, ...r }), (e) => ({ ok: false, crash: String(e) }))
       // Last result kept for checking the checker (wrangler kv key get reserve_health_last).
       .then((r) => env.BUYERS_KV && env.BUYERS_KV.put("reserve_health_last", JSON.stringify({ at: new Date(event.scheduledTime).toISOString(), ...r }))));
   },
   async fetch(request, env, ctx) {
+    if (request.method !== "OPTIONS") await ensureLayout(env);
     const response = await route(request, env, ctx);
     const origin = request.headers.get("Origin");
     if (origin && ALLOWED_ORIGINS.includes(origin)) {

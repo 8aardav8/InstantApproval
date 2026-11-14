@@ -10,6 +10,8 @@ import { readFileSync } from 'node:fs';
 import { generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import worker from '../admin/worker.js';
+import { makeSheet, LOGINS_HEADERS, LOGINS_GID } from './iah-fixture.mjs';
+import { _resetLayoutForTest } from '../admin/layout.js';
 
 let pass = 0;
 let fail = 0;
@@ -40,6 +42,7 @@ function world({ logins, telegramDown = false, kvDown = false } = {}) {
     sheetWrites: [],
     kv: new Map(),
   };
+  w.sheet = makeSheet({ extraTabs: { 205900326: { title: 'Login Codes', rows: w.codes } } });
   w.env = {
     INTERNAL_TOOLS_SECRET: 'fake-secret-for-tests',
     GCP_SA_EMAIL: 'fake@example.com',
@@ -66,18 +69,17 @@ function world({ logins, telegramDown = false, kvDown = false } = {}) {
       return json({ data: { id: 'fake' } });
     }
     if (url.hostname === 'sheets.googleapis.com') {
-      const range = decodeURIComponent(url.pathname.split('/values/')[1] || '');
-      if ((init.method || 'GET') === 'PUT') {
-        w.sheetWrites.push(range);
-        const m = range.match(/^Login Codes!A(\d+):G\d+$/);
-        if (!m) throw new Error(`test: unexpected Sheet write to ${range}`);
-        w.codes[Number(m[1]) - 1] = JSON.parse(init.body).values[0];
-        return json({});
+      // Shared fake spreadsheet with real headers and column tags (TASK-000844).
+      // w.logins holds Email, (C), Phone, Name per row; w.codes is Login Codes.
+      w.sheet.tabs[LOGINS_GID].rows = [LOGINS_HEADERS.slice(), ...w.logins.map((r) => ['', r[0], r[1], r[2], r[3]])];
+      w.sheet.tabs[205900326].rows = w.codes;
+      const before = w.sheet.writes.length;
+      const res = await w.sheet.handle(url, init);
+      for (const x of w.sheet.writes.slice(before)) {
+        if (!/^Login Codes!/.test(x.range)) throw new Error(`test: unexpected Sheet write to ${x.range}`);
+        w.sheetWrites.push(x.range);
       }
-      if (range === 'App: Logins!D:D') return json({ values: [[HEADERS[3]], ...w.logins.map((r) => [r[2]])] });
-      if (range === 'App: Logins!B:E') return json({ values: [HEADERS.slice(1), ...w.logins] });
-      if (range === 'Login Codes!A:G') return json({ values: w.codes });
-      throw new Error(`test: unexpected Sheet read of ${range}`);
+      return res;
     }
     throw new Error(`test: refused network call to ${url.hostname}${url.pathname}`);
   };
@@ -85,7 +87,7 @@ function world({ logins, telegramDown = false, kvDown = false } = {}) {
 }
 
 async function post(w, path, body, headers = {}) {
-  globalThis.fetch = w.fetch;
+  globalThis.fetch = w.fetch; _resetLayoutForTest();
   const res = await worker.fetch(new Request(`https://worker.example.com${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },

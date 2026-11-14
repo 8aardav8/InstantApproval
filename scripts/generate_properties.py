@@ -41,7 +41,50 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk"
-TAB_NAME = "PROPERTIES"
+TAB_NAME = "PROPERTIES"  # display only; the tab is opened by gid (TASK-000844)
+PROPS_GID = 1440969658
+
+# TASK-000844 (RULE-000155): every PROPERTIES column carries developer
+# metadata "iah.prop.<key>". Positions come from those tags, so Aaron can move
+# or rename columns. The header row is relabelled with these canonical names
+# before anything reads it (here and in verify_no_sensitive_data.py via the
+# snapshot), so all the existing header-name checks keep working.
+CANONICAL_BY_TAG = {
+    "status": "Available?", "livability": "Livability", "photoError": "PHOTO Error", "address": "Address",
+    "quickSummary": "Quick Summary", "pics1": "Pics 1", "lockbox": "Lock box ", "onMarketDate": "On Market Date",
+    "lastUpdate": "Last Update", "area": "Area", "marketing": "We're Marketing", "notes": "Additional Notes",
+    "down": "Down", "monthly": "Monthly", "total": "Total Price", "seller": "Seller name and link",
+    "skool": "Skool Link", "ttOurLink": "TT Our Link", "ttBuyerLink": "TT Buyer Link", "zillow": "Zillow Link",
+    "years": "Years", "includesTaxes": "Includes Taxes", "includesInsurance": "Includes Insurance",
+    "shareLink": "Share Link", "pics2": "Pics 2", "pics3": "Pics 3", "beds": "Beds", "baths": "Baths",
+    "sqft": "Sq Ft", "type": "Type", "basement": "Basement", "garage": "Garage", "driveway": "Driveway",
+    "rowid": "🔒 Row ID",
+}
+
+
+def canonical_header_row(live_headers, matched_metadata):
+    """Header row relabelled from column tags. Fails loudly if a tag is
+    missing or found twice (a column was deleted or copied)."""
+    positions = {}
+    for m in matched_metadata:
+        d = m.get("developerMetadata", m)
+        r = d.get("location", {}).get("dimensionRange", {})
+        k = d.get("metadataKey", "")
+        if r.get("sheetId") != PROPS_GID or not k.startswith("iah.prop."):
+            continue
+        positions.setdefault(k[len("iah.prop."):], []).append(r["startIndex"])
+    bad = [k for k in CANONICAL_BY_TAG if len(positions.get(k, [])) != 1]
+    if bad:
+        raise SystemExit(f"FATAL: PROPERTIES column tag(s) missing or duplicated: {bad}. "
+                         "A tagged column was probably deleted or copied. Refusing to publish.")
+    width = max(len(live_headers), max(p[0] for p in positions.values()) + 1)
+    out = [(live_headers[i] if i < len(live_headers) else "") for i in range(width)]
+    canon = set(CANONICAL_BY_TAG.values())
+    out = [("" if h in canon else h) for h in out]  # a stale live name can't shadow a tagged one
+    for key, (idx,) in positions.items():
+        if key in CANONICAL_BY_TAG:
+            out[idx] = CANONICAL_BY_TAG[key]
+    return out
 
 # Real bug fixed here (2026-09-01): this script and verify_no_sensitive_data.py
 # used to each independently re-read the live Sheet. Both run in the same CI
@@ -124,7 +167,7 @@ def get_client():
             "FATAL: neither GCP_SA_KEY_JSON nor GCP_SA_KEY_FILE is set. "
             "Refusing to guess at credentials."
         )
-    return gspread.authorize(creds)
+    return gspread.authorize(creds), creds
 
 
 def livability_to_number(raw):
@@ -227,12 +270,29 @@ def pics_link_or_blank(value, listing_id):
 
 
 def main():
-    client = get_client()
+    client, creds = get_client()
     sh = client.open_by_key(SHEET_ID)
-    ws = sh.worksheet(TAB_NAME)
+    ws = sh.get_worksheet_by_id(PROPS_GID)  # by gid, so a renamed tab still works (TASK-000844)
     all_values = ws.get_all_values()
     if not all_values:
         raise SystemExit("FATAL: PROPERTIES tab returned no data at all.")
+    from google.auth.transport.requests import AuthorizedSession
+    # Column tags via a plain read (developerMetadata:search needs edit
+    # permission; this job stays read-only).
+    title = ws.title.replace("'", "''")
+    meta = AuthorizedSession(creds).get(
+        f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}",
+        params={"ranges": f"'{title}'!1:1",
+                "fields": "sheets(properties(sheetId),data(columnMetadata(developerMetadata(metadataKey,location))))"},
+    )
+    if meta.status_code != 200:
+        raise SystemExit(f"FATAL: column tag lookup failed ({meta.status_code}). Refusing to publish.")
+    tags = [{"developerMetadata": dm}
+            for sheet in meta.json().get("sheets", [])
+            for d in sheet.get("data", [])
+            for cm in d.get("columnMetadata", [])
+            for dm in cm.get("developerMetadata", [])]
+    all_values[0] = canonical_header_row(all_values[0], tags)
 
     # Shared snapshot for verify_no_sensitive_data.py -- see the comment by
     # RAW_SNAPSHOT_PATH_NAME above for why this exists. Written as early as
