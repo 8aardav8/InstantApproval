@@ -5800,6 +5800,14 @@ async function route(request, env, ctx) {
   if (url.pathname === "/reserve-request" && request.method === "POST") return reserve.handleRequest(request, env);
   // Server-to-server from Square; signature-checked inside.
   if (url.pathname === "/square-webhook" && request.method === "POST") return reserve.handleWebhook(request, env, ctx);
+  // The page reports a Reserve failure on a buyer's screen (Telegram to Aaron).
+  if (url.pathname === "/reserve-client-error" && request.method === "POST") return reserve.handleClientError(request, env);
+  // Aaron (admin sign-in) can run the Reserve health check on demand.
+  if (url.pathname === "/reserve-health" && request.method === "POST") {
+    const bearer = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    if (!bearer || !(await verifyIdToken(bearer)).ok) return jsonResponse({ error: "admin only" }, 403);
+    return jsonResponse(await reserve.runHealthCheck(env, { daily: true }));
+  }
 
   if (url.pathname === "/gate-login" && request.method === "POST") {
     return handleGateLogin(request, env);
@@ -6038,6 +6046,12 @@ async function route(request, env, ctx) {
 }
 
 export default {
+  __reserveForTests: reserve,
+  // Reserve health check, every 3 hours (wrangler-admin.toml). The 15:00 UTC
+  // run (9am Central) also sends the "all good" line and the daily-only checks.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(reserve.runHealthCheck(env, { daily: new Date(event.scheduledTime).getUTCHours() === 15 }));
+  },
   async fetch(request, env, ctx) {
     const response = await route(request, env, ctx);
     const origin = request.headers.get("Origin");

@@ -825,6 +825,18 @@ function showDetail(id) {
 // the terms text; this page only shows what it returns. Hidden from buyers
 // until the Worker's RESERVE_PUBLIC is on; Aaron (admin) always sees it.
 let reserveStatusPromise = null;
+// Tells Aaron (Telegram, via the Worker) when the Reserve button fails on a
+// buyer's screen, so a glitch never goes unnoticed (Aaron 2026-11-13). Once
+// per kind of failure per visit, so one bad connection can't flood him.
+const reserveErrorsSent = new Set();
+function reportReserveError(stage, listingId, err) {
+  if (reserveErrorsSent.has(stage)) return;
+  reserveErrorsSent.add(stage);
+  try {
+    fetch(`${ADMIN_API_URL}/reserve-client-error`, { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage, listingId: listingId || location.hash || "", detail: `${(err && err.message) || err} | ${navigator.userAgent}`.slice(0, 400) }) }).catch(() => {});
+  } catch (e) { /* nothing else to do */ }
+}
 async function showReserveButtonIfOpen() {
   const row = document.getElementById("reserve-row");
   if (!row) return;
@@ -832,7 +844,7 @@ async function showReserveButtonIfOpen() {
     if (!reserveStatusPromise) reserveStatusPromise = fetch(`${ADMIN_API_URL}/reserve-status`).then((r) => r.json());
     const status = await reserveStatusPromise;
     if (status.public || getStoredAdminToken()) row.classList.remove("hidden");
-  } catch (e) { /* stays hidden */ }
+  } catch (e) { reserveStatusPromise = null; reportReserveError("button-status", "", e); /* stays hidden */ }
 }
 
 function reserveAuthHeaders() {
@@ -874,6 +886,7 @@ async function openReserve(listingId) {
     const res = await fetch(`${ADMIN_API_URL}/reserve-check`, { method: "POST", headers: reserveAuthHeaders(), body: JSON.stringify(body) });
     data = await res.json();
   } catch (e) {
+    reportReserveError("check", listingId, e);
     data = { ok: false, message: "Couldn't reach the server. Please try again." };
   }
   if (!data.ok) {
@@ -909,6 +922,7 @@ async function openReserve(listingId) {
         submit.disabled = !check.checked;
       }
     } catch (e) {
+      reportReserveError("request", listingId, e);
       status.textContent = "Couldn't reach the server. Please try again.";
       submit.disabled = !check.checked;
     }

@@ -5,7 +5,7 @@
 import { generateKeyPairSync, createHmac } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import worker from '../admin/worker.js';
-import { street, parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, agreementTemplateFor, addBusinessDays, agreementPlaceholders, AGREEMENT_TEMPLATE, SELLER_EMAIL_PLACEHOLDER, MSG, RESERVE_GIDS } from '../admin/reserve.js';
+import { HEALTH_COLUMNS, street, parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, agreementTemplateFor, addBusinessDays, agreementPlaceholders, AGREEMENT_TEMPLATE, SELLER_EMAIL_PLACEHOLDER, MSG, RESERVE_GIDS } from '../admin/reserve.js';
 
 let fail = 0;
 const eq = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fail++; console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : `: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`}`); };
@@ -90,7 +90,7 @@ const META = [
 ];
 const TITLES = { [RESERVE_GIDS.props]: 'PROPERTIES', [RESERVE_GIDS.logins]: 'App: Logins', [RESERVE_GIDS.deposits]: 'Square Deposits' };
 
-function world({ shown = A, appts = [], status = 'Available', down = '$3,000', area = 'IL - Decatur', email = 'pat@example.com' } = {}) {
+function world({ shown = A, appts = [], status = 'Available', down = '$3,000', area = 'IL - Decatur', email = 'pat@example.com', metaDrop = '' } = {}) {
   const loginRow = (phone, name, sh) => { const r = Array(40).fill(''); Object.assign(r, { [LI.email]: email, [LI.phone]: phone, [LI.name]: name, [LI.shown]: sh, [LI.stage]: 'First Showing Done' }); appts.forEach((a, i) => { r[LI.appt + i] = a; }); return r; };
   const w = {
     tabs: {
@@ -98,7 +98,7 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
       'App: Logins': [L_H, loginRow(PHONE, 'Pat Example', shown), loginRow(PHONE2, 'Sam Second', A)],
       'Square Deposits': [D_H],
     },
-    square: [], telegrams: [], invoices: {}, n: 0, esig: [],
+    square: [], telegrams: [], invoices: {}, n: 0, esig: [], sqState: {}, subs: [{ enabled: true, notification_url: 'https://worker.example.com/square-webhook', event_types: ['invoice.payment_made'] }], siteJs: 'openReserve( ... /reserve-request', esigTplStatus: 200,
   };
   const grid = (title) => w.tabs[title];
   const colIdx = (letters) => [...letters].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
@@ -116,10 +116,12 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
     if (url.hostname === 'oauth2.googleapis.com' && url.pathname === '/token') return json({ access_token: 'fake' });
     if (url.hostname === 'oauth2.googleapis.com' && url.pathname === '/tokeninfo') return url.searchParams.get('id_token') === 'ADMIN' ? json({ aud: OAUTH_CLIENT_ID, email: AARON_EMAIL, email_verified: 'true' }) : json({}, 400);
     if (url.hostname === 'api.telegram.org') { w.telegrams.push(body.text); return json({ ok: true }); }
+    if (url.hostname === 'esignatures.com' && url.pathname.startsWith('/api/templates/')) return json({ data: {} }, w.esigTplStatus);
+    if (url.hostname === 'instantapprovalhomes.com') return new Response(w.siteJs);
     if (url.hostname === 'esignatures.com') { if (w.esigFail) return json({ error: 'boom' }, 500); w.esig.push(body); return json({ status: 'queued', data: { contract: { id: `C${w.esig.length}`, status: 'draft', draft_contract_url: `https://esignatures.com/draft_contracts/C${w.esig.length}/edit` } } }); }
     if (url.hostname === 'maps.googleapis.com') return new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } });
     if (url.hostname === 'sheets.googleapis.com') {
-      if (url.pathname.endsWith('/developerMetadata:search')) return json({ matchedDeveloperMetadata: META.map(([sheetId, index, key]) => ({ developerMetadata: { metadataKey: key, location: { dimensionRange: { sheetId, startIndex: index, endIndex: index + 1 } } } })) });
+      if (url.pathname.endsWith('/developerMetadata:search')) return json({ matchedDeveloperMetadata: META.filter((m) => m[2] !== metaDrop).map(([sheetId, index, key]) => ({ developerMetadata: { metadataKey: key, location: { dimensionRange: { sheetId, startIndex: index, endIndex: index + 1 } } } })) });
       if (url.searchParams.get('fields')) return json({ sheets: Object.entries(TITLES).map(([id, title]) => ({ properties: { sheetId: +id, title } })) });
       const range = decodeURIComponent(url.pathname.split('/values/')[1] || '');
       const p = parse(range); const g = grid(p.title); if (!g) throw new Error('test: unknown tab ' + p.title);
@@ -133,7 +135,8 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
     }
     if (url.hostname === 'connect.squareupsandbox.com' || url.hostname === 'connect.squareup.com') {
       w.square.push(`${init.method || 'GET'} ${url.pathname}`);
-      if (url.pathname === '/v2/locations/LOC1') return json({ location: { timezone: 'Pacific/Kiritimati' } });
+      if (url.pathname === '/v2/locations/LOC1') return json({ location: { status: 'ACTIVE', timezone: 'Pacific/Kiritimati' } });
+      if (url.pathname === '/v2/webhooks/subscriptions') return json({ subscriptions: w.subs });
       if (url.pathname === '/v2/customers/search') return json({ customers: [] });
       if (url.pathname === '/v2/customers') return json({ customer: { id: 'CUST1' } });
       if (url.pathname === '/v2/orders') { w.lastOrder = body.order; return json({ order: { id: 'ORD1' } }); }
@@ -141,6 +144,7 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
       if (/\/attachments$/.test(url.pathname)) return json({ attachment: { id: 'ATT' } });
       if (/\/publish$/.test(url.pathname)) return json({ invoice: { id: 'x', status: 'UNPAID', public_url: 'https://pay.example/inv' } });
       if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname) && init.method === 'PUT') { w.dueMoves = (w.dueMoves || []).concat([body.invoice.payment_requests[0]]); return json({ invoice: {} }); }
+      if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname) && w.sqState[url.pathname.split('/').pop()]) return json({ invoice: { id: url.pathname.split('/').pop(), version: 1, public_url: 'https://pay.example/inv', ...w.sqState[url.pathname.split('/').pop()] } });
       if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname)) return json({ invoice: { version: 1, public_url: 'https://pay.example/inv', payment_requests: [{ uid: 'DEP', request_type: 'DEPOSIT', due_date: '2026-11-13' }, { uid: 'BAL', request_type: 'BALANCE', due_date: '2000-01-01', reminders: [{ uid: 'R1', relative_scheduled_days: -6, status: 'SENT' }, { uid: 'R2', relative_scheduled_days: -3, status: 'PENDING' }] }] } });
     }
     throw new Error(`test: refused ${url.hostname}${url.pathname}`);
@@ -329,6 +333,68 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
 { const app = readFileSync(new URL('../docs/js/app.js', import.meta.url), 'utf8');
   const ptr = app.slice(app.indexOf('function initPullToRefresh'), app.indexOf('"touchmove"', app.indexOf('function initPullToRefresh')));
   eq('pull-to-refresh skips touches inside pop-ups', ptr.includes('closest(".id-lightbox-overlay")'), true); }
+
+
+// ---------- health check + failure alerts (Aaron 2026-11-13: "I don't want
+// there to be glitches and they go unnoticed") ----------
+const PROD = { ...baseEnv, SQUARE_ENV: 'production' };
+const health = async (w, env = PROD, opts = { daily: true }) => { globalThis.fetch = w.fetch; const out = await worker.__reserveForTests.runHealthCheck(env, opts); return out; };
+const balReq = (paid, due = '2099-01-01') => [{ uid: 'DEP', request_type: 'DEPOSIT', due_date: '2026-11-13', total_completed_amount_money: { amount: paid } }, { uid: 'BAL', request_type: 'BALANCE', due_date: due, reminders: [{ uid: 'R2', relative_scheduled_days: -3, status: 'PENDING' }], total_completed_amount_money: { amount: 0 } }];
+{ const src = readFileSync(new URL('../admin/reserve.js', import.meta.url), 'utf8');
+  const used = [...new Set([...src.matchAll(/"(iah\.(?:prop|login|dep)\.[A-Za-z]+)"/g)].map((m) => m[1]))].filter((k) => k !== 'iah.login.appointment').sort();
+  eq('health check covers every tagged column the code uses', HEALTH_COLUMNS.map((x) => x[0]).sort(), used); }
+{ const w = world(); const r = await health(w);
+  eq('health: all good -> one short morning line', [r.problems, w.telegrams.length, /all good/.test(w.telegrams[0] || '')], [[], 1, true]);
+  const w2 = world(); await health(w2, PROD, { daily: false });
+  eq('health: all good off the morning run -> silent', w2.telegrams.length, 0); }
+{ const w = world(); w.subs = []; w.siteJs = '<html>'; w.esigTplStatus = 401; const r = await health(w, { ...PROD, SQUARE_WEBHOOK_SIGNATURE_KEY: '' }, { daily: false });
+  eq('health: webhook gone, site lost the button, eSignatures token bad, key missing -> all reported', [r.problems.some((x) => x.includes('webhook')), r.problems.some((x) => x.includes('no longer has the Reserve button')), r.problems.some((x) => x.includes('eSignatures')), r.problems.some((x) => x.includes('SQUARE_WEBHOOK_SIGNATURE_KEY')), w.telegrams.length === 1 && w.telegrams[0].startsWith('🩺')], [true, true, true, true, true]); }
+{ const w = world(); w.subs[0].enabled = false; const r = await health(w, PROD, { daily: false });
+  eq('health: webhook switched off -> problem', r.problems.some((x) => x.includes('switched off')), true); }
+{ const w = world(); w.subs[0].event_types = ['invoice.created']; eq('health: webhook no longer sends payments -> problem', (await health(w, PROD, { daily: false })).problems.length, 1); }
+{ const w = world(); w.siteJs = 'fetch("/reserve-request")'; eq('health: site lost the button code -> problem', (await health(w, PROD, { daily: false })).problems.some((x) => x.includes('no longer has the Reserve button')), true); }
+{ const w = world(); w.siteJs = 'openReserve('; eq('health: site lost the request call -> problem', (await health(w, PROD, { daily: false })).problems.length, 1); }
+{ const w = world(); const r = await health(w, baseEnv, { daily: false });
+  eq('health: buttons public while Square is sandbox -> problem', r.problems.some((x) => x.includes('SANDBOX')), true); }
+{ const w = world({ metaDrop: 'iah.dep.agreement' }); const r = await health(w, PROD, { daily: false });
+  eq('health: a tagged column deleted from the Sheet -> problem', r.problems.some((x) => x.includes('iah.dep.agreement')), true); }
+{ // Square's notice never arrived: the check records the payment itself.
+  const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true }, { env: PROD });
+  w.sqState.INV1 = { status: 'PARTIALLY_PAID', payment_requests: balReq(150000) };
+  const r = await health(w, PROD, { daily: false });
+  eq('health: missed webhook -> payment recorded, home Pending, Aaron told', [r.fixed.length, depRow(w)[2], w.tabs.PROPERTIES[2][0], w.telegrams.some((x) => x.startsWith('💰 DEPOSIT PAID')), w.telegrams.some((x) => x.includes("Square's notice never arrived"))], [1, 'Deposit paid', 'Pending', true, true]);
+  const n = w.telegrams.length; const r2 = await health(w, PROD, { daily: false });
+  eq('health: next run finds nothing new', [r2.fixed.length, r2.problems.length, w.telegrams.length], [0, 0, n]);
+  w.sqState.INV1.payment_requests = balReq(150000, '2026-01-01'); w.tabs['Square Deposits'][1][16] = '';
+  const r3 = await health(w, PROD, { daily: true });
+  eq('health (morning): rest overdue + agreement missing reported', [r3.problems.some((x) => x.includes('was due 2026-01-01')), r3.problems.some((x) => x.includes('no deposit agreement'))], [true, true]); }
+{ const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true }, { env: PROD });
+  w.sqState.INV1 = { status: 'DRAFT', payment_requests: balReq(0) };
+  w.tabs['Square Deposits'][1][0] = new Date(Date.now() - 3 * 36e5).toISOString();
+  const r = await health(w, PROD, { daily: false });
+  eq('health: draft unsent 3 hours -> nag Aaron', r.problems.some((x) => x.includes('still a DRAFT 3 hours')), true);
+  w.tabs['Square Deposits'][1][0] = new Date(Date.now() - 1 * 36e5).toISOString();
+  eq('health: draft under 2 hours -> quiet', (await health(w, PROD, { daily: false })).problems.length, 0);
+  w.sqState.INV1 = { status: 'UNPAID', payment_requests: balReq(0) };
+  await health(w, PROD, { daily: false });
+  eq('health: Aaron sent it -> tab says Sent', depRow(w)[2], 'Sent'); }
+{ const w = world(); w.tabs['Square Deposits'].push(['t', 'INVX', 'Sent', 'production', PHONE, 'Pat', 'p@e.com', A, 'ROW-A', 'IL', '$3,000', '$1,500', '', '', '', '', '']);
+  w.sqState.INVX = { status: 'CANCELED', payment_requests: balReq(0) };
+  eq('health: canceled in Square but open in the tab -> reported', (await health(w, PROD, { daily: false })).problems.some((x) => x.includes('canceled')), true); }
+{ const w = world({ metaDrop: 'iah.prop.down' }); const r = await call(w, '/reserve-check', { listingId: LID });
+  eq('Sheet failure on a buyer\'s check -> call-us message AND Aaron told', [r.data.message, w.telegrams.some((x) => x.includes('Reserve button FAILED'))], [MSG.needsCall, true]); }
+{ const w = world(); const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1' } } } });
+  const r = await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': 'wrong' } });
+  eq('webhook with a wrong signature -> refused AND Aaron told', [r.status, w.telegrams.some((x) => x.includes('REJECTED'))], [401, true]); }
+{ const w = world(); const r = await call(w, '/reserve-client-error', { stage: 'check', listingId: LID, detail: 'TypeError: Failed to fetch' });
+  eq('buyer-screen failure -> Aaron told with their phone', [r.data.ok, w.telegrams.some((x) => x.includes('buyer\'s screen') && x.includes(PHONE) && x.includes('Failed to fetch'))], [true, true]); }
+{ const app = readFileSync(new URL('../docs/js/app.js', import.meta.url), 'utf8');
+  eq('page reports all three Reserve failures', ['"button-status"', '"check"', '"request"'].every((k) => app.includes(`reportReserveError(${k}`)), true); }
+{ const w = world(); globalThis.fetch = w.fetch; const pending = [];
+  await worker.scheduled({ scheduledTime: Date.parse('2026-11-14T15:00:00Z') }, PROD, { waitUntil: (p) => pending.push(p) }); await Promise.all(pending);
+  const w2 = world(); globalThis.fetch = w2.fetch; const p2 = [];
+  await worker.scheduled({ scheduledTime: Date.parse('2026-11-14T18:00:00Z') }, PROD, { waitUntil: (p) => p2.push(p) }); await Promise.all(p2);
+  eq('cron: 15:00 UTC run sends the morning line, others stay quiet', [w.telegrams.length, w2.telegrams.length], [1, 0]); }
 
 console.log(`\n${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -198,6 +198,14 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
 // state and the Illinois refund sentence are fill-in fields.
 export const AGREEMENT_TEMPLATE = { id: "3e245641-974d-4b73-be21-a172375bdd9d", label: "IAH Reserve" };
 const STATE_NAME = { MO: "Missouri", IL: "Illinois" };
+
+// Every tagged column the Reserve feature uses; the health check makes sure
+// each is still found exactly once (tests check this list against the code).
+export const HEALTH_COLUMNS = [
+  ...["status", "address", "area", "down", "rowid", "seller"].map((k) => [`iah.prop.${k}`, "props"]),
+  ...["email", "phone", "name", "shown", "stage", "depositProperty"].map((k) => [`iah.login.${k}`, "logins"]),
+  ...["requestedAt", "invoiceId", "status", "env", "phone", "name", "email", "address", "propRowId", "state", "down", "deposit", "paidAt", "amountPaid", "note", "termsAgreed", "agreement"].map((k) => [`iah.dep.${k}`, "deposits"]),
+];
 // "mo" / "il" (the refund rule differs), or null for a state with no
 // agreement wording yet.
 export function agreementTemplateFor(address, state) {
@@ -387,6 +395,7 @@ export function createReserve(deps) {
       if (!r.ok) return jsonResponse({ ok: false, code: r.code, message: r.message });
       return jsonResponse({ ok: true, address: r.listing.address, down: fmtMoney(r.downCents), deposit: fmtMoney(r.terms.deposit), remaining: fmtMoney(r.terms.remaining), isIL: r.isIL, terms: r.terms.items, checkbox: r.terms.checkbox });
     } catch (e) {
+      await telegram(env, `⚠️ Reserve button FAILED for a buyer (${who.phone}) on ${body.listingId}: they were told to call you. ${String(e).slice(0, 400)}`);
       return jsonResponse({ ok: false, message: MSG.needsCall, detail: String(e) }, 500);
     }
   }
@@ -398,7 +407,10 @@ export function createReserve(deps) {
     if (!who.phone) return jsonResponse({ error: "session required", message: "Please sign in again." }, 401);
     if (env.RESERVE_PUBLIC !== "true" && !who.isAdmin) return jsonResponse({ ok: false, message: MSG.notOpen }, 403);
     if (body.inspected !== true) return jsonResponse({ ok: false, message: MSG.mustAgree }, 400);
-    if (!env.SQUARE_TOKEN || !env.SQUARE_LOCATION_ID) return jsonResponse({ ok: false, message: MSG.needsCall, detail: "square not configured" }, 500);
+    if (!env.SQUARE_TOKEN || !env.SQUARE_LOCATION_ID) {
+      await telegram(env, `⚠️ Reserve request from ${who.phone} FAILED: Square isn't set up on the server.`);
+      return jsonResponse({ ok: false, message: MSG.needsCall, detail: "square not configured" }, 500);
+    }
 
     let token, layout, r;
     try {
@@ -406,6 +418,7 @@ export function createReserve(deps) {
       layout = await loadLayout(token);
       r = await evaluate(token, layout, who.phone, String(body.listingId || ""));
     } catch (e) {
+      await telegram(env, `⚠️ Reserve request FAILED reading the Sheet for a buyer (${who.phone}) on ${body.listingId}: they were told to call you. ${String(e).slice(0, 400)}`);
       return jsonResponse({ ok: false, message: MSG.needsCall, detail: String(e) }, 500);
     }
     if (!r.ok) {
@@ -564,7 +577,12 @@ export function createReserve(deps) {
   // nothing. Without ctx (tests) it runs inline.
   async function handleWebhook(request, env, ctx) {
     const raw = await request.text();
-    if (!(await verifySquareSignature(env, request, raw))) return jsonResponse({ error: "bad signature" }, 401);
+    if (!(await verifySquareSignature(env, request, raw))) {
+      // A real Square notice with a bad signature means the signature key on
+      // the server doesn't match Square's: payments would go unrecorded.
+      if (request.headers.get("x-square-hmacsha256-signature") && /"invoice\.payment_made"/.test(raw)) await telegram(env, "⚠️ A Square payment notice was REJECTED (signature didn't match). The webhook signature key on the server is probably wrong. The 3-hourly Reserve check will still record the payment.");
+      return jsonResponse({ error: "bad signature" }, 401);
+    }
     let evt; try { evt = JSON.parse(raw); } catch (e) { return jsonResponse({ error: "bad json" }, 400); }
     if (evt.type !== "invoice.payment_made") return jsonResponse({ ok: true, ignored: evt.type });
     const inv = (((evt.data || {}).object) || {}).invoice || {};
@@ -727,5 +745,112 @@ export function createReserve(deps) {
     return true;
   }
 
-  return { handleStatus, handleCheck, handleRequest, handleWebhook, addShownOnComplete };
+  // ---------- Health check (2026-11-13) ----------
+  // Aaron: "I don't want there to be glitches and they go unnoticed for me
+  // while potential buyers are having problems." Runs every 3 hours (cron in
+  // wrangler-admin.toml). Checks that every piece a buyer depends on still
+  // works, and compares each open reservation with Square: a payment the
+  // webhook missed is recorded here (recordPayment is safe to repeat).
+  // Telegram only when something is wrong, plus one "all good" line on the
+  // morning run so a checker that stopped running gets noticed.
+  async function runHealthCheck(env, { daily = false, now = Date.now() } = {}) {
+    const problems = [], fixed = [];
+    const envName = squareEnv(env);
+    const counts = { draft: 0, waiting: 0, deposit: 0 };
+    for (const k of ["SQUARE_TOKEN", "SQUARE_LOCATION_ID", "SQUARE_WEBHOOK_SIGNATURE_KEY", "ESIGNATURES_TOKEN", "TELEGRAM_BOT_TOKEN"]) if (!env[k]) problems.push(`Server setting ${k} is missing.`);
+    if (env.RESERVE_PUBLIC === "true" && envName !== "production") problems.push("Buyers can see the Reserve button but Square is in SANDBOX (test) mode: their invoices would be fake.");
+    let tz = "America/Los_Angeles";
+    try {
+      const loc = (await square(env, "GET", `/v2/locations/${env.SQUARE_LOCATION_ID}`)).location || {};
+      if (loc.status !== "ACTIVE") problems.push(`Square location is ${loc.status || "missing"}, not ACTIVE.`);
+      tz = loc.timezone || tz;
+    } catch (e) { problems.push(`Square isn't answering (token or location): ${String(e).slice(0, 160)}`); }
+    try {
+      const subs = (await square(env, "GET", "/v2/webhooks/subscriptions")).subscriptions || [];
+      const ok = subs.some((s) => s.enabled && /\/square-webhook$/.test(s.notification_url || "") && (s.event_types || []).includes("invoice.payment_made"));
+      if (!ok) problems.push("Square's payment notice (webhook) to the site is missing or switched off. Payments still get recorded by this check, up to 3 hours late.");
+    } catch (e) { problems.push(`Couldn't read Square's webhook settings: ${String(e).slice(0, 160)}`); }
+    if (env.ESIGNATURES_TOKEN) {
+      try {
+        const r = await fetch(`https://esignatures.com/api/templates/${AGREEMENT_TEMPLATE.id}`, { headers: { Authorization: "Basic " + btoa(env.ESIGNATURES_TOKEN + ":") } });
+        if (!r.ok) problems.push(`eSignatures can't open the deposit agreement template (${r.status}): agreements won't be drafted.`);
+      } catch (e) { problems.push(`eSignatures isn't answering: ${String(e).slice(0, 160)}`); }
+    }
+    try {
+      const js = await (await fetch(`${SITE_ORIGIN}/js/app.js?health=${now}`)).text();
+      if (!js.includes("openReserve(") || !js.includes("/reserve-request")) problems.push("The website's code no longer has the Reserve button.");
+    } catch (e) { problems.push(`The website didn't load: ${String(e).slice(0, 160)}`); }
+
+    let token, layout;
+    try {
+      token = await getSheetsAccessToken(env);
+      layout = await loadLayout(token);
+      for (const [key, gidName] of HEALTH_COLUMNS) layout.one(key, RESERVE_GIDS[gidName]);
+      for (const g of Object.values(RESERVE_GIDS)) layout.tab(g);
+      if (!layout.many("iah.login.appointment", RESERVE_GIDS.logins).length) throw new Error("column tag iah.login.appointment found 0 times");
+    } catch (e) {
+      problems.push(`The Filling Sheet can't be read the way the Reserve button needs (a tab or tagged column deleted?): ${String(e).slice(0, 200)}`);
+      layout = null;
+    }
+
+    if (layout) {
+      const D = RESERVE_GIDS.deposits, c = (k) => layout.one(k, D);
+      let rows = [];
+      try { rows = await readRows(token, layout.tab(D)); } catch (e) { problems.push(`Couldn't read the Square Deposits tab: ${String(e).slice(0, 160)}`); }
+      const today = invoiceDate(0, now, tz);
+      for (let i = 1; i < rows.length; i++) {
+        const rec = rows[i], id = rec[c("iah.dep.invoiceId")], st = rec[c("iah.dep.status")] || "";
+        if (!id || rec[c("iah.dep.env")] !== envName || !/^(Draft|Sent|Partly paid|Deposit paid)$/.test(st)) continue;
+        const who = `${rec[c("iah.dep.name")] || "(no name)"}, ${street(rec[c("iah.dep.address")] || "")}`;
+        let inv;
+        try { inv = (await square(env, "GET", `/v2/invoices/${id}`)).invoice; }
+        catch (e) { problems.push(`${who}: invoice not found in Square (${String(e).slice(0, 100)}).`); continue; }
+        const paidCents = (inv.payment_requests || []).reduce((s, q) => s + (((q.total_completed_amount_money || {}).amount) || 0), 0);
+        const sheetPaid = parseMoneyCents(rec[c("iah.dep.amountPaid")]) || 0;
+        if (paidCents > sheetPaid || (inv.status === "PAID" && st !== "Paid in full")) {
+          try {
+            const msg = await recordPayment(env, inv);
+            fixed.push(`${who}: a payment (${fmtMoney(paidCents)} total) hadn't been recorded because Square's notice never arrived. Recorded it now.`);
+            if (msg) await telegram(env, msg);
+          } catch (e) { problems.push(`${who}: paid ${fmtMoney(paidCents)} in Square, but recording it FAILED: ${String(e).slice(0, 160)}`); }
+          continue;
+        }
+        if (inv.status === "CANCELED" || inv.status === "REFUNDED") { problems.push(`${who}: ${inv.status.toLowerCase()} in Square, but the Square Deposits tab still says "${st}". Update the tab.`); continue; }
+        if (inv.status === "DRAFT") {
+          counts.draft++;
+          const hours = (now - Date.parse(rec[c("iah.dep.requestedAt")] || "")) / 36e5;
+          if (hours >= 2) problems.push(`${who}: invoice still a DRAFT ${Math.floor(hours)} hours after they asked. The buyer is waiting: switch on goods and services confirmation and send it (Square → Invoices → Drafts).`);
+          continue;
+        }
+        if (st === "Draft") { try { await putCell(token, layout.tab(D), i + 1, c("iah.dep.status"), "Sent"); } catch (e) { /* next run */ } }
+        if (st === "Deposit paid") {
+          counts.deposit++;
+          if (daily && !/^https?:\/\//.test((rec[c("iah.dep.agreement")] || "").trim())) problems.push(`${who}: deposit paid but no deposit agreement draft yet (Agreement column). Make it in eSignatures.`);
+          const bal = (inv.payment_requests || []).find((q) => q.request_type === "BALANCE");
+          if (daily && bal && bal.due_date && bal.due_date < today) problems.push(`${who}: the rest (${fmtMoney(Math.max(0, (parseMoneyCents(rec[c("iah.dep.down")]) || 0) - paidCents))}) was due ${bal.due_date} and isn't paid. Your call per the terms.`);
+        } else counts.waiting++;
+      }
+    }
+
+    const tag = envName === "production" ? "" : " [SANDBOX]";
+    if (problems.length || fixed.length) {
+      await telegram(env, [`🩺 Reserve check${tag}: ${problems.length} problem(s)${fixed.length ? `, ${fixed.length} fixed` : ""}`, ...fixed.map((x) => `✅ ${x}`), ...problems.map((x) => `⚠️ ${x}`)].join("\n"));
+    } else if (daily) {
+      await telegram(env, `🩺 Reserve check${tag}: all good. Button ${env.RESERVE_PUBLIC === "true" ? "on for buyers" : "admin-only"}; ${counts.draft} draft(s), ${counts.waiting} waiting for a deposit, ${counts.deposit} deposit(s) paid.`);
+    }
+    return { problems, fixed, counts };
+  }
+
+  // A buyer's screen couldn't reach the server, or the page broke. The page
+  // reports it here so Aaron hears about it even if the buyer never calls.
+  async function handleClientError(request, env) {
+    const body = await readBody(request);
+    let phone = null;
+    try { phone = await verifySessionToken(env, request.headers.get("X-IAH-Session")); } catch (e) { /* unknown */ }
+    const clean = (s, n) => String(s || "").replace(/[\u0000-\u001f]+/g, " ").slice(0, n);
+    await telegram(env, `⚠️ Reserve button problem on a buyer's screen (${phone || "not signed in"}): ${clean(body.stage, 40)} on ${clean(body.listingId, 120) || "?"}: ${clean(body.detail, 300)}`);
+    return jsonResponse({ ok: true });
+  }
+
+  return { handleStatus, handleCheck, handleRequest, handleWebhook, addShownOnComplete, runHealthCheck, handleClientError };
 }
