@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-14T16:28:30.388345+00:00",
+  "generatedAt": "2026-11-14T17:12:38.906546+00:00",
   "listings": [
+    {
+      "id": "204-s-5th-avenue-canton-il-61520",
+      "address": "204 S 5th Avenue Canton IL 61520",
+      "onMarketDate": "11/13",
+      "lastUpdate": "11/13",
+      "area": "IL - Rural",
+      "down": "$3,000",
+      "monthly": "$900",
+      "picsLink": "https://drive.google.com/drive/folders/1DIK-ZPb3byuHDZrZ8o3kaZZpUa0CYgRZ?usp=drive_link",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "976",
+      "status": "Available",
+      "livability": 0,
+      "lat": 40.5532517,
+      "lng": -90.0277256
+    },
     {
       "id": "1921-e-edwards-street-springfield-il-62-703",
       "address": "1921 E Edwards Street Springfield IL 62,703",
