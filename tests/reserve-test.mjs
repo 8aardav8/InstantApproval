@@ -5,7 +5,7 @@
 import { generateKeyPairSync, createHmac } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import worker from '../admin/worker.js';
-import { street, parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, agreementTemplateFor, addBusinessDays, agreementPlaceholders, AGREEMENT_TEMPLATES, MSG, RESERVE_GIDS } from '../admin/reserve.js';
+import { street, parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, agreementTemplateFor, addBusinessDays, agreementPlaceholders, AGREEMENT_TEMPLATE, SELLER_EMAIL_PLACEHOLDER, MSG, RESERVE_GIDS } from '../admin/reserve.js';
 
 let fail = 0;
 const eq = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fail++; console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : `: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`}`); };
@@ -44,9 +44,10 @@ eq('template: other states -> none', agreementTemplateFor('1 Main St, Detroit, M
 eq('street part: city comma splits, zip comma does not', [street('2525 Tyrell Dr, Saint Louis, MO 63136'), street('12 Fake St Decatur IL 62,521'), street(' 2002 Country Squire Dr Urbana IL 61,802')], ['2525 Tyrell Dr', '12 Fake St Decatur IL 62,521', '2002 Country Squire Dr Urbana IL 61,802']);
 eq('3 business days: Fri -> Wed', addBusinessDays('2026-11-13', 3), '2026-11-18');
 eq('3 business days: Mon -> Thu', addBusinessDays('2026-11-16', 3), '2026-11-19');
-{ const ph = (k) => Object.fromEntries(agreementPlaceholders({ kind: k, paidYmd: '2026-11-13', paidCents: 150000, downCents: 300000, dueYmd: '2026-11-20', sellerName: 'S LLC', buyerName: 'Pat', address: A, payLink: 'https://pay' }).map((x) => [x.placeholder_key, x.replace_with_text]));
+{ const ph = (k) => Object.fromEntries(agreementPlaceholders({ kind: k, paidYmd: '2026-11-13', paidCents: 150000, downCents: 300000, dueYmd: '2026-11-20', sellerName: 'S LLC', buyerName: 'Pat', address: A, payLink: 'https://pay' }).map((x) => [x.placeholder_key, x.replace_with_text ?? x.replace_with_markdown]));
   eq('agreement: dated the deposit day everywhere (no post-dating)', [ph('il')['TODAYS-DATE'], ph('mo')['TODAYS-DATE']], ['11/13/2026', '11/13/2026']);
-  eq('agreement: IL refund-by date is 3 business days later; MO has none', [ph('il')['REFUND-BY-DATE'], 'REFUND-BY-DATE' in ph('mo')], ['11/18/2026', false]);
+  eq('agreement: one template, state is a field', [ph('il')['PROPERTY-STATE'], ph('mo')['PROPERTY-STATE']], ['Illinois', 'Missouri']);
+  eq('agreement: IL refund sentence with the date 3 business days later; MO empty', [ph('il')['REFUND-TERMS'].includes('on or before **11/18/2026** (3 business days after it was received)'), ph('mo')['REFUND-TERMS']], [true, '']);
   eq('agreement: total upfront amount', ph('mo')['TOTAL-UPFRONT'], '3,000');
   eq('agreement fields: amounts without $ (the template prints it), dates, link', [ph('il')['first-DEPOSIT-AMOUNT'], ph('il')['second-DEPOSIT-AMOUNT'], ph('il')['first-deposit-paid-date'], ph('il')['full-Deposit-Date'], ph('il')['PAY-LINK']], ['1,500', '1,500', '11/13/2026', '11/20/2026', 'https://pay']);
   eq('agreement: closing is 10 days after the deposit, every template', [ph('il')['CLOSING-DATE'], ph('mo')['CLOSING-DATE']], ['11/23/2026', '11/23/2026']); }
@@ -249,7 +250,8 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
   eq('webhook: other property untouched', w.tabs.PROPERTIES[1][0], 'Available');
   eq('webhook: buyer Stage + Deposit Property set', [w.tabs['App: Logins'][1][LI.stage], w.tabs['App: Logins'][1][LI.dep]], ['Deposit Received', A]);
   { const e = w.esig[0] || {}; const f = Object.fromEntries((e.placeholder_fields || []).map((x) => [x.placeholder_key, x.replace_with_text]));
-    eq('deposit paid: one draft agreement, IL template, live mode, Aaron finishes it', [w.esig.length, e.template_id, e.save_as_draft, e.test], [1, AGREEMENT_TEMPLATES.il.id, 'yes', 'no']);
+    eq('deposit paid: one draft agreement, IL template, live mode, Aaron finishes it', [w.esig.length, e.template_id, e.save_as_draft, e.test], [1, AGREEMENT_TEMPLATE.id, 'yes', 'no']);
+    eq('deposit paid: buyer signs 1st, seller 2nd with a stand-in email; title has no date', [e.signers.map((x) => [x.name, x.signing_order]), e.signers[1].email, e.title], [[['Pat Example', '1'], ['Seller Example LLC', '2']], SELLER_EMAIL_PLACEHOLDER, `${A} - Deposit Receipt & Deposit Agreement - Pat Example`]);
     eq('deposit paid: agreement filled from the Sheet + Square', [f['SELLER-NAME'], f['BUYER-NAME'], f['PROPERTY-ADDRESS'], f['first-DEPOSIT-AMOUNT'], f['second-DEPOSIT-AMOUNT'], f['full-Deposit-Date'], f['PAY-LINK']], ['Seller Example LLC', 'Pat Example', A, '1,500', '1,500', `${invoiceDate(7, Date.now(), 'Pacific/Kiritimati').slice(5, 7)}/${invoiceDate(7, Date.now(), 'Pacific/Kiritimati').slice(8)}/${invoiceDate(7, Date.now(), 'Pacific/Kiritimati').slice(0, 4)}`, 'https://pay.example/inv']);
     eq('deposit paid: agreement link logged and sent to Aaron', [/draft_contracts\/C1\/edit/.test(depRow(w)[16] || ''), w.telegrams.at(-1).includes('📝 Deposit agreement drafted')], [true, true]); }
   { const want = invoiceDate(7, Date.now(), 'Pacific/Kiritimati'); const when = new Date(want + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });

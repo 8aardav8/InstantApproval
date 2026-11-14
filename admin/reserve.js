@@ -193,19 +193,22 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
 // Agreement" (6850d6b6…): same wording, state law fixed, the pay-the-rest
 // link added, and East St. Louis applies the deposit to Closing Costs
 // (Aaron: "ESTL applies to closing costs").
-export const AGREEMENT_TEMPLATES = {
-  mo: { id: "f0914096-d69a-4f0a-8ba4-23b118892561", label: "St. Louis MO" },
-  il: { id: "5e1dd9c7-0624-4c78-9922-b1ac72e6f761", label: "Illinois" },
-};
-// Two templates since 2026-11-13 (Aaron: "could we use just two templates
-// now? One for MO and one for IL"): once the "upfront amount" wording
-// replaced East St. Louis's "Closing Costs" line, its template was word for
-// word the Illinois one.
+// One template since 2026-11-13 (Aaron: "Can we work with just a single
+// template and have the name of the state be a placeholder field"): the
+// state and the Illinois refund sentence are fill-in fields.
+export const AGREEMENT_TEMPLATE = { id: "3e245641-974d-4b73-be21-a172375bdd9d", label: "IAH Reserve" };
+const STATE_NAME = { MO: "Missouri", IL: "Illinois" };
+// "mo" / "il" (the refund rule differs), or null for a state with no
+// agreement wording yet.
 export function agreementTemplateFor(address, state) {
   if (state === "MO") return "mo";
   if (state === "IL") return "il";
   return null;
 }
+// Stand-in second signer for Aaron to replace before sending (Aaron 11/13:
+// "add a second signer and I'll just review/edit their info before
+// sending"). His own domain, so a forgotten edit never reaches a stranger.
+export const SELLER_EMAIL_PLACEHOLDER = "seller-email-needed@instantapprovalhomes.com";
 export function addCalendarDays(ymd, n) {
   const d = new Date(ymd + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);
 }
@@ -224,14 +227,17 @@ const plain = (cents) => fmtMoney(cents).slice(1); // the templates already prin
 // Amount" and "Reservation Deposit".
 export function agreementPlaceholders({ kind, paidYmd, paidCents, downCents, dueYmd, sellerName, buyerName, address, payLink }) {
   const f = {
-    "TODAYS-DATE": mdy(paidYmd), "TOTAL-UPFRONT": plain(downCents),
-    ...(kind === "mo" ? {} : { "REFUND-BY-DATE": mdy(addBusinessDays(paidYmd, 3)) }), "SELLER-NAME": sellerName || "", "BUYER-NAME": buyerName || "", "PROPERTY-ADDRESS": address,
+    "TODAYS-DATE": mdy(paidYmd), "TOTAL-UPFRONT": plain(downCents), "PROPERTY-STATE": STATE_NAME[kind.toUpperCase()], "SELLER-NAME": sellerName || "", "BUYER-NAME": buyerName || "", "PROPERTY-ADDRESS": address,
     "first-deposit-paid-date": mdy(paidYmd), "first-DEPOSIT-AMOUNT": plain(paidCents),
     "full-Deposit-Date": mdy(dueYmd), "second-DEPOSIT-AMOUNT": plain(Math.max(0, downCents - paidCents)),
     // Aaron 11/13: "always make the closing date 10 days after the deposit receipt date".
     "PAY-LINK": payLink || "(link not available)", "CLOSING-DATE": mdy(addCalendarDays(paidYmd, 10)),
   };
-  return Object.entries(f).map(([placeholder_key, replace_with_text]) => ({ placeholder_key, replace_with_text }));
+  const out = Object.entries(f).map(([placeholder_key, replace_with_text]) => ({ placeholder_key, replace_with_text }));
+  out.push(kind === "il"
+    ? { placeholder_key: "REFUND-TERMS", replace_with_markdown: `The Deposit is fully refundable if Buyer requests a refund in writing on or before **${mdy(addBusinessDays(paidYmd, 3))}** (3 business days after it was received). After that date, it is non-refundable.` }
+    : { placeholder_key: "REFUND-TERMS", replace_with_text: "" });
+  return out;
 }
 
 function colLetter(i) {
@@ -675,16 +681,21 @@ export function createReserve(deps) {
     try {
       const full = (await square(env, "GET", `/v2/invoices/${inv.id}`)).invoice;
       const paidYmd = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-      const t = AGREEMENT_TEMPLATES[kind];
+      const t = AGREEMENT_TEMPLATE;
       const sandbox = rec[c("iah.dep.env")] !== "production";
       const res = await fetch("https://esignatures.com/api/contracts", {
         method: "POST",
         headers: { Authorization: "Basic " + btoa(env.ESIGNATURES_TOKEN + ":"), "Content-Type": "application/json" },
         body: JSON.stringify({
           template_id: t.id, save_as_draft: "yes", test: sandbox ? "yes" : "no",
-          title: `${paidYmd.replace(/-/g, "")} - ${address} - Deposit Receipt & Deposit Agreement - ${rec[c("iah.dep.name")] || "Buyer"}`.slice(0, 250),
+          // Title as Aaron edited it on the first draft (no date prefix).
+          title: `${street(address)} - Deposit Receipt & Deposit Agreement - ${rec[c("iah.dep.name")] || "Buyer"}`.slice(0, 250),
           metadata: `square:${inv.id}`,
-          signers: [{ name: rec[c("iah.dep.name")] || "Buyer", email: rec[c("iah.dep.email")] || undefined, mobile: rec[c("iah.dep.phone")] || undefined, signing_order: "2" }],
+          // Buyer signs first, then the seller (Aaron's edits on the first draft).
+          signers: [
+            { name: rec[c("iah.dep.name")] || "Buyer", email: rec[c("iah.dep.email")] || undefined, mobile: rec[c("iah.dep.phone")] || undefined, signing_order: "1" },
+            { name: sellerName || "Seller", email: SELLER_EMAIL_PLACEHOLDER, signing_order: "2" },
+          ],
           placeholder_fields: agreementPlaceholders({ kind, paidYmd, paidCents, downCents: parseMoneyCents(rec[c("iah.dep.down")]) || 0, dueYmd: dueYmd || invoiceDate(7) /* the same date moveBalanceDueSafely set in Square */, sellerName, buyerName: rec[c("iah.dep.name")], address, payLink: full.public_url }),
         }),
       });
@@ -692,8 +703,9 @@ export function createReserve(deps) {
       const contract = (j.data || {}).contract || {};
       if (!res.ok || !contract.id) throw new Error(`eSignatures ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
       const link = contract.draft_contract_url || `https://esignatures.com/draft_contracts/${contract.id}/edit`;
-      await putCell(token, tab, sheetRow, c("iah.dep.agreement"), `${link} (${t.label}${sandbox ? ", TEST" : ""})`);
-      return `\n📝 Deposit agreement drafted${sandbox ? " (eSignatures test mode)" : ""}, ${t.label} template: ${link}\nAdd the seller (${sellerName || "name not on the Sheet"}) with their email/phone, check it, then send to both.`;
+      const stateName = STATE_NAME[kind.toUpperCase()];
+      await putCell(token, tab, sheetRow, c("iah.dep.agreement"), `${link} (${stateName}${sandbox ? ", TEST" : ""})`);
+      return `\n📝 Deposit agreement drafted${sandbox ? " (eSignatures test mode)" : ""} (${stateName}): ${link}\nSeller signer: ${sellerName || "name not on the Sheet"}, email is a stand-in. Put in their real email/phone, check it, then send.`;
     } catch (e) {
       return `\n⚠️ Deposit agreement draft FAILED: ${String(e).slice(0, 300)}`;
     }
