@@ -147,16 +147,22 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
     "",
     `Here's how to reserve ${street(listing.address)}:`,
     "",
+    // Blank lines between steps and between bullets (Aaron 11/13).
     `1. Pay ${dep} now to hold the home. As soon as it's received, we take it off the market for you.`,
     "Your full closing packet will be ready to review the day after payment.",
+    "",
     `2. Pay the other ${rest} within 7 days. (Or the whole ${all} now.)`,
+    "",
     `3. Once the full ${all} is received, we can close and the home is yours.`,
     "",
     "Good to know:",
+    "",
     isIL
       ? `- You can get the ${dep} deposit back if you ask in writing within 3 business days after you pay it. After that, it's only refundable if someone else paid for this home first or we can't sell it to you.`
       : `- The ${dep} deposit is not refundable, unless someone else paid for this home first or we can't sell it to you.`,
+    "",
     `- If the rest isn't paid within 7 days, the home goes back on the market and the deposit is kept.`,
+    "",
     "- The home is sold as-is.",
     // No terms text here (Aaron 11/13: "remove all the terms wording… they've
     // already seen it on the website and they're about to receive the deposit
