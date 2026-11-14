@@ -834,7 +834,15 @@ export function createReserve(deps) {
 
     const tag = envName === "production" ? "" : " [SANDBOX]";
     if (problems.length || fixed.length) {
-      await telegram(env, [`🩺 Reserve check${tag}: ${problems.length} problem(s)${fixed.length ? `, ${fixed.length} fixed` : ""}`, ...fixed.map((x) => `✅ ${x}`), ...problems.map((x) => `⚠️ ${x}`)].join("\n"));
+      const text = [`🩺 Reserve check${tag}: ${problems.length} problem(s)${fixed.length ? `, ${fixed.length} fixed` : ""}`, ...fixed.map((x) => `✅ ${x}`), ...problems.map((x) => `⚠️ ${x}`)].join("\n");
+      // The same alert at most once per 3 hours, however often this runs
+      // (11/13: a one-minute test schedule repeated one alert every minute).
+      let last = null;
+      try { last = env.BUYERS_KV ? JSON.parse((await env.BUYERS_KV.get("reserve_health_sent")) || "null") : null; } catch (e) { /* send */ }
+      if (fixed.length || !last || last.text !== text || now - last.at >= 175 * 60e3) {
+        await telegram(env, text);
+        try { if (env.BUYERS_KV) await env.BUYERS_KV.put("reserve_health_sent", JSON.stringify({ text, at: now })); } catch (e) { /* best effort */ }
+      }
     } else if (daily) {
       await telegram(env, `🩺 Reserve check${tag}: all good. Button ${env.RESERVE_PUBLIC === "true" ? "on for buyers" : "admin-only"}; ${counts.draft} draft(s), ${counts.waiting} waiting for a deposit, ${counts.deposit} deposit(s) paid.`);
     }

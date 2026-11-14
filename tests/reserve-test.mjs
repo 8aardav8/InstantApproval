@@ -349,6 +349,16 @@ const balReq = (paid, due = '2099-01-01') => [{ uid: 'DEP', request_type: 'DEPOS
   eq('health: all good off the morning run -> silent', w2.telegrams.length, 0); }
 { const w = world(); w.subs = []; w.siteJs = '<html>'; w.esigTplStatus = 401; const r = await health(w, { ...PROD, SQUARE_WEBHOOK_SIGNATURE_KEY: '' }, { daily: false });
   eq('health: webhook gone, site lost the button, eSignatures token bad, key missing -> all reported', [r.problems.some((x) => x.includes('webhook')), r.problems.some((x) => x.includes('no longer has the Reserve button')), r.problems.some((x) => x.includes('eSignatures')), r.problems.some((x) => x.includes('SQUARE_WEBHOOK_SIGNATURE_KEY')), w.telegrams.length === 1 && w.telegrams[0].startsWith('🩺')], [true, true, true, true, true]); }
+{ // The same alert at most once per 3 hours (11/13: a test schedule repeated one every minute).
+  const kv = new Map(); const KV = { get: async (k) => kv.get(k) ?? null, put: async (k, v) => { kv.set(k, v); } };
+  const w = world(); w.subs = []; const env = { ...PROD, BUYERS_KV: KV }; const t0 = Date.parse('2026-11-14T05:00:00Z');
+  for (let m = 0; m < 10; m++) await health(w, env, { daily: false, now: t0 + m * 60e3 });
+  eq('health: same alert every minute -> sent once', w.telegrams.length, 1);
+  await health(w, env, { daily: false, now: t0 + 180 * 60e3 });
+  eq('health: still broken 3 hours later -> sent again', w.telegrams.length, 2);
+  w.subs = [{ enabled: false, notification_url: 'x/square-webhook', event_types: [] }]; w.siteJs = '';
+  await health(w, env, { daily: false, now: t0 + 181 * 60e3 });
+  eq('health: a different problem -> sent at once', w.telegrams.length, 3); }
 { const w = world(); w.subs[0].enabled = false; const r = await health(w, PROD, { daily: false });
   eq('health: webhook switched off -> problem', r.problems.some((x) => x.includes('switched off')), true); }
 { const w = world(); w.subs[0].event_types = ['invoice.created']; eq('health: webhook no longer sends payments -> problem', (await health(w, PROD, { daily: false })).problems.length, 1); }

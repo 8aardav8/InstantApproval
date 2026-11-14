@@ -6050,7 +6050,10 @@ export default {
   // Reserve health check, every 3 hours (wrangler-admin.toml). The 15:00 UTC
   // run (9am Central) also sends the "all good" line and the daily-only checks.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(reserve.runHealthCheck(env, { daily: new Date(event.scheduledTime).getUTCHours() === 15 }));
+    ctx.waitUntil(reserve.runHealthCheck(env, { daily: new Date(event.scheduledTime).getUTCHours() === 15 })
+      .then((r) => ({ ok: true, ...r }), (e) => ({ ok: false, crash: String(e) }))
+      // Last result kept for checking the checker (wrangler kv key get reserve_health_last).
+      .then((r) => env.BUYERS_KV && env.BUYERS_KV.put("reserve_health_last", JSON.stringify({ at: new Date(event.scheduledTime).toISOString(), ...r }))));
   },
   async fetch(request, env, ctx) {
     const response = await route(request, env, ctx);
