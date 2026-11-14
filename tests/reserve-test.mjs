@@ -5,7 +5,7 @@
 import { generateKeyPairSync, createHmac } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import worker from '../admin/worker.js';
-import { parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, agreementTemplateFor, addBusinessDays, agreementPlaceholders, AGREEMENT_TEMPLATES, MSG, RESERVE_GIDS } from '../admin/reserve.js';
+import { street, parseMoneyCents, listingState, hasToured, reserveTerms, buildInvoice, invoiceDate, agreementTemplateFor, addBusinessDays, agreementPlaceholders, AGREEMENT_TEMPLATES, MSG, RESERVE_GIDS } from '../admin/reserve.js';
 
 let fail = 0;
 const eq = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fail++; console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : `: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`}`); };
@@ -41,6 +41,7 @@ eq('template: East St. Louis uses the one Illinois template', [agreementTemplate
 eq('template: Cahokia is rest-of-IL', agreementTemplateFor('337 Range Ln, Cahokia, IL 62206', 'IL'), 'il');
 eq('template: Saint Louis MO is not ESTL', agreementTemplateFor('7316 Park Dr Saint Louis MO 63,133', 'MO'), 'mo');
 eq('template: other states -> none', agreementTemplateFor('1 Main St, Detroit, MI', 'MI'), null);
+eq('street part: city comma splits, zip comma does not', [street('2525 Tyrell Dr, Saint Louis, MO 63136'), street('12 Fake St Decatur IL 62,521'), street(' 2002 Country Squire Dr Urbana IL 61,802')], ['2525 Tyrell Dr', '12 Fake St Decatur IL 62,521', '2002 Country Squire Dr Urbana IL 61,802']);
 eq('3 business days: Fri -> Wed', addBusinessDays('2026-11-13', 3), '2026-11-18');
 eq('3 business days: Mon -> Thu', addBusinessDays('2026-11-16', 3), '2026-11-19');
 { const ph = (k) => Object.fromEntries(agreementPlaceholders({ kind: k, paidYmd: '2026-11-13', paidCents: 150000, downCents: 300000, dueYmd: '2026-11-20', sellerName: 'S LLC', buyerName: 'Pat', address: A, payLink: 'https://pay' }).map((x) => [x.placeholder_key, x.replace_with_text]));
@@ -131,6 +132,7 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
     }
     if (url.hostname === 'connect.squareupsandbox.com' || url.hostname === 'connect.squareup.com') {
       w.square.push(`${init.method || 'GET'} ${url.pathname}`);
+      if (url.pathname === '/v2/locations/LOC1') return json({ location: { timezone: 'Pacific/Kiritimati' } });
       if (url.pathname === '/v2/customers/search') return json({ customers: [] });
       if (url.pathname === '/v2/customers') return json({ customer: { id: 'CUST1' } });
       if (url.pathname === '/v2/orders') { w.lastOrder = body.order; return json({ order: { id: 'ORD1' } }); }
@@ -138,7 +140,7 @@ function world({ shown = A, appts = [], status = 'Available', down = '$3,000', a
       if (/\/attachments$/.test(url.pathname)) return json({ attachment: { id: 'ATT' } });
       if (/\/publish$/.test(url.pathname)) return json({ invoice: { id: 'x', status: 'UNPAID', public_url: 'https://pay.example/inv' } });
       if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname) && init.method === 'PUT') { w.dueMoves = (w.dueMoves || []).concat([body.invoice.payment_requests[0]]); return json({ invoice: {} }); }
-      if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname)) return json({ invoice: { version: 1, public_url: 'https://pay.example/inv', payment_requests: [{ uid: 'DEP', request_type: 'DEPOSIT', due_date: '2026-11-13' }, { uid: 'BAL', request_type: 'BALANCE', due_date: '2000-01-01' }] } });
+      if (/^\/v2\/invoices\/[^/]+$/.test(url.pathname)) return json({ invoice: { version: 1, public_url: 'https://pay.example/inv', payment_requests: [{ uid: 'DEP', request_type: 'DEPOSIT', due_date: '2026-11-13' }, { uid: 'BAL', request_type: 'BALANCE', due_date: '2000-01-01', reminders: [{ uid: 'R1', relative_scheduled_days: -6, status: 'SENT' }, { uid: 'R2', relative_scheduled_days: -3, status: 'PENDING' }] }] } });
     }
     throw new Error(`test: refused ${url.hostname}${url.pathname}`);
   };
@@ -188,9 +190,13 @@ let paidWorld;
   const inv = w.invoices.INV1;
   eq('request: ok', r.data.ok, true);
   eq('request: invoice total is the full down payment', w.lastOrder.line_items[0].base_price_money, { amount: 300000, currency: 'USD' });
-  eq('request: 50% deposit due today, rest due in 7 days', [inv.payment_requests[0].request_type, inv.payment_requests[0].fixed_amount_requested_money.amount, inv.payment_requests[0].due_date, inv.payment_requests[1].request_type, inv.payment_requests[1].due_date], ['DEPOSIT', 150000, invoiceDate(0), 'BALANCE', invoiceDate(7)]);
+  eq('request: 50% deposit due today, rest due in 7 days', [inv.payment_requests[0].request_type, inv.payment_requests[0].fixed_amount_requested_money.amount, inv.payment_requests[0].due_date, inv.payment_requests[1].request_type, inv.payment_requests[1].due_date], ['DEPOSIT', 150000, invoiceDate(0, Date.now(), 'Pacific/Kiritimati'), 'BALANCE', invoiceDate(7, Date.now(), 'Pacific/Kiritimati')]);
   eq('request: Earline settings (Cash App + card only, card on file, reminders, title)', [inv.accepted_payment_methods, inv.store_payment_method_enabled, inv.payment_requests[1].reminders.map((x) => x.relative_scheduled_days), inv.title], [{ card: true, cash_app_pay: true, bank_account: false, square_gift_card: false, buy_now_pay_later: false }, true, [-6, -3, 0, 1, 3], `Pat Example - ${A}`]);
-  eq('request: message is personal and never mentions the PDF', [inv.description.startsWith("Hi Pat. Once you've decided"), /attach|example agreement/i.test(inv.description)], [true, false]);
+  eq('request: message is personal and never mentions the PDF', [inv.description.startsWith(`Hi Pat,\n\nHere's how to reserve ${A}:`), /attach|example agreement/i.test(inv.description)], [true, false]);
+  eq('request: plain steps with Aaron\'s edits', ['1. Pay $1,500 now to hold the home. As soon as it\'s received, we take it off the market for you.', '2. Pay the other $1,500 within 7 days. Or all $3,000 now.', '3. When the full $3,000 is received, we can close and the home is yours.'].every((x) => inv.description.includes(x)), true);
+  eq('request: IL home gets the 3-business-day refund line', [inv.description.includes('You can get the $1,500 deposit back if you ask in writing within 3 business days'), inv.description.includes('is not refundable, unless')], [true, false]);
+  eq('request: dates use the Square location\'s time zone', [inv.payment_requests[0].due_date, inv.payment_requests[1].due_date], [invoiceDate(0, Date.now(), 'Pacific/Kiritimati'), invoiceDate(7, Date.now(), 'Pacific/Kiritimati')]);
+  eq('request: before-deposit reminders', inv.payment_requests[1].reminders[0].message, `Your home at ${A} is not reserved yet. Pay the $1,500 deposit to hold it before someone else does.`);
   eq('request: invoice carries the address and IL terms', [inv.title.includes(A), inv.description.includes('Illinois properties only'), inv.description.includes('3 business days')], [true, true, true]);
   eq('request: draft only (no publish) while auto-send is off', w.square.some((x) => x.endsWith('/publish')), false);
   eq('request: photo attached', w.square.some((x) => x.endsWith('/attachments')), true);
@@ -243,9 +249,10 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
   eq('webhook: buyer Stage + Deposit Property set', [w.tabs['App: Logins'][1][LI.stage], w.tabs['App: Logins'][1][LI.dep]], ['Deposit Received', A]);
   { const e = w.esig[0] || {}; const f = Object.fromEntries((e.placeholder_fields || []).map((x) => [x.placeholder_key, x.replace_with_text]));
     eq('deposit paid: one draft agreement, IL template, live mode, Aaron finishes it', [w.esig.length, e.template_id, e.save_as_draft, e.test], [1, AGREEMENT_TEMPLATES.il.id, 'yes', 'no']);
-    eq('deposit paid: agreement filled from the Sheet + Square', [f['SELLER-NAME'], f['BUYER-NAME'], f['PROPERTY-ADDRESS'], f['first-DEPOSIT-AMOUNT'], f['second-DEPOSIT-AMOUNT'], f['full-Deposit-Date'], f['PAY-LINK']], ['Seller Example LLC', 'Pat Example', A, '1,500', '1,500', `${invoiceDate(7).slice(5, 7)}/${invoiceDate(7).slice(8)}/${invoiceDate(7).slice(0, 4)}`, 'https://pay.example/inv']);
+    eq('deposit paid: agreement filled from the Sheet + Square', [f['SELLER-NAME'], f['BUYER-NAME'], f['PROPERTY-ADDRESS'], f['first-DEPOSIT-AMOUNT'], f['second-DEPOSIT-AMOUNT'], f['full-Deposit-Date'], f['PAY-LINK']], ['Seller Example LLC', 'Pat Example', A, '1,500', '1,500', `${invoiceDate(7, Date.now(), 'Pacific/Kiritimati').slice(5, 7)}/${invoiceDate(7, Date.now(), 'Pacific/Kiritimati').slice(8)}/${invoiceDate(7, Date.now(), 'Pacific/Kiritimati').slice(0, 4)}`, 'https://pay.example/inv']);
     eq('deposit paid: agreement link logged and sent to Aaron', [/draft_contracts\/C1\/edit/.test(depRow(w)[16] || ''), w.telegrams.at(-1).includes('📝 Deposit agreement drafted')], [true, true]); }
-  eq('deposit paid: Square rest moved to 7 days after the deposit', w.dueMoves, [{ uid: 'BAL', due_date: invoiceDate(7) }]);
+  { const want = invoiceDate(7, Date.now(), 'Pacific/Kiritimati'); const when = new Date(want + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    eq('deposit paid: Square rest moved to 7 days after the deposit, unsent reminders say reserved', w.dueMoves, [{ uid: 'BAL', due_date: want, reminders: [{ uid: 'R2', relative_scheduled_days: -3, message: `Your home at ${A} is reserved. Please pay the remaining $1,500 by ${when} to keep your reservation.` }] }]); }
   eq('webhook: Aaron told, with IL note', w.telegrams.some((x) => x.startsWith('💰 DEPOSIT PAID') && x.includes('3 business days')), true);
   const n = w.telegrams.length;
   await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': sign(raw) } });
