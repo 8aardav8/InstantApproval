@@ -5788,7 +5788,7 @@ async function handleQuoTriageWebhook(request, env) {
 // "Reserve this home" (2026-11-13): see admin/reserve.js.
 const reserve = createReserve({ SHEET_ID, getSheetsAccessToken, jsonResponse, verifySessionToken, verifyIdToken, slugify, toE164, AARON_TELEGRAM_CHAT_ID });
 
-async function route(request, env) {
+async function route(request, env, ctx) {
   if (request.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders() });
   }
@@ -5799,7 +5799,7 @@ async function route(request, env) {
   if (url.pathname === "/reserve-check" && request.method === "POST") return reserve.handleCheck(request, env);
   if (url.pathname === "/reserve-request" && request.method === "POST") return reserve.handleRequest(request, env);
   // Server-to-server from Square; signature-checked inside.
-  if (url.pathname === "/square-webhook" && request.method === "POST") return reserve.handleWebhook(request, env);
+  if (url.pathname === "/square-webhook" && request.method === "POST") return reserve.handleWebhook(request, env, ctx);
 
   if (url.pathname === "/gate-login" && request.method === "POST") {
     return handleGateLogin(request, env);
@@ -6038,8 +6038,8 @@ async function route(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
-    const response = await route(request, env);
+  async fetch(request, env, ctx) {
+    const response = await route(request, env, ctx);
     const origin = request.headers.get("Origin");
     if (origin && ALLOWED_ORIGINS.includes(origin)) {
       const headers = new Headers(response.headers);

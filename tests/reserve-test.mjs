@@ -295,6 +295,15 @@ const paidEvent = (id) => payEvt(id, 150000, 'PARTIALLY_PAID');
   const w2 = world({ shown: '' }); const r2 = await call(w2, '/reserve-check', { listingId: LID, phone: PHONE2 }, { phone: PHONE });
   eq('a buyer cannot act for someone else (body phone ignored)', r2.data.message, MSG.notToured); }
 
+{ // The webhook answers Square before doing the slow work (ctx.waitUntil).
+  const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true });
+  const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PARTIALLY_PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
+  globalThis.fetch = w.fetch; const pending = [];
+  const res = await worker.fetch(new Request('https://worker.example.com/square-webhook', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-square-hmacsha256-signature': createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64') }, body: raw }), baseEnv, { waitUntil: (p) => pending.push(p) });
+  const answeredFirst = res.status === 200 && pending.length === 1 && depRow(w)[2] !== 'Deposit paid';
+  await Promise.all(pending);
+  eq('webhook answers at once, then records the deposit in the background', [answeredFirst, depRow(w)[2], w.telegrams.some((x) => x.includes('📝 Deposit agreement drafted'))], [true, 'Deposit paid', true]); }
+
 // ---------- Completed appointment also marks the house shown ----------
 { const w = world({ shown: '' });
   const r = await call(w, '/admin/update-appointment', { phone: PHONE, slot: 1, address: A, date: '2026-11-01', status: 'Completed' }, { phone: null, admin: true });

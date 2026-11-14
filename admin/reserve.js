@@ -551,21 +551,28 @@ export function createReserve(deps) {
     return diff === 0;
   }
 
-  async function handleWebhook(request, env) {
+  // Answers Square at once and does the work afterwards (ctx.waitUntil).
+  // 11/13: Aaron's test deposit stopped half way with no Telegram: the
+  // Sheet + Square + eSignatures steps take longer than Square waits, so the
+  // request was cut off; Square's retry then looked like a repeat and did
+  // nothing. Without ctx (tests) it runs inline.
+  async function handleWebhook(request, env, ctx) {
     const raw = await request.text();
     if (!(await verifySquareSignature(env, request, raw))) return jsonResponse({ error: "bad signature" }, 401);
     let evt; try { evt = JSON.parse(raw); } catch (e) { return jsonResponse({ error: "bad json" }, 400); }
     if (evt.type !== "invoice.payment_made") return jsonResponse({ ok: true, ignored: evt.type });
     const inv = (((evt.data || {}).object) || {}).invoice || {};
     if (!inv.id) return jsonResponse({ ok: true, ignored: "no invoice" });
-    try {
-      const msg = await recordPayment(env, inv);
-      if (msg) await telegram(env, msg);
-      return jsonResponse({ ok: true });
-    } catch (e) {
-      await telegram(env, `⚠️ Square deposit paid but the Sheet update FAILED (invoice ${inv.id}). Check Square and the Square Deposits tab.\n${String(e).slice(0, 400)}`);
-      return jsonResponse({ error: "server error", detail: String(e) }, 500); // Square retries
-    }
+    const work = (async () => {
+      try {
+        const msg = await recordPayment(env, inv);
+        if (msg) await telegram(env, msg);
+      } catch (e) {
+        await telegram(env, `⚠️ Square payment received but recording it FAILED (invoice ${inv.id}). Check Square and the Square Deposits tab.\n${String(e).slice(0, 400)}`);
+      }
+    })();
+    if (ctx && ctx.waitUntil) ctx.waitUntil(work); else await work;
+    return jsonResponse({ ok: true });
   }
 
   // Returns the Telegram text, or "" for a repeat delivery.
