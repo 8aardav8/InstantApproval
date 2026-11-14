@@ -1412,3 +1412,8 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .btn-reserve { background: #00D632 !important; border-color: #00D632 !important; color: #fff !important; }
 .btn-reserve:hover { background: #00b82b !important; border-color: #00b82b !important; }
 .reserve-note { font-size: 12.5px; color: var(--gray-text); margin: 0 0 12px; }
+
+/* Combined Properties list on the buyer page (2026-11-13): the Deposit box
+   sits at the end of line 1; a past showing with no outcome is amber. */
+.buyer-property-item .buyer-list-item-line1 .deposit-property-check { margin-left: auto; }
+.needs-outcome { color: #b45309; font-weight: 600; }

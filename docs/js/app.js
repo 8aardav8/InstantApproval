@@ -5211,39 +5211,15 @@ function renderBuyerDetail(buyer) {
   // checking another moves it; unchecking clears it. The notifier worker
   // copies it onto the buyer's Trello card (SF - FILLING board).
   const depositProperty = (lm && lm.depositProperty) || "";
-  const shownListHtml = (lm && lm.shown ? lm.shown : []).map((address) => {
-    const dates = shownDatesByAddress.get(address) || [];
-    const datesHtml = dates.length
-      ? `<div class="shown-property-dates">${dates.map((d) => escapeHtml(formatApptDate(d))).join(", ")}</div>`
-      : "";
-    return `
-    <div class="buyer-list-item shown-property-item">
-      <div>
-        <span>${escapeHtml(address)}</span>
-        ${datesHtml}
-      </div>
-      <label class="deposit-property-check" title="The house this buyer's deposit is for (fills their Trello card)">
-        <input type="checkbox" class="deposit-property-cb" data-address="${escapeAttr(address)}"${depositProperty === address ? " checked" : ""}> Deposit
-      </label>
-      ${lm && lm.row ? `<button type="button" class="shown-remove-btn" data-row="${lm.row}" data-address="${escapeAttr(address)}">Remove</button>` : ""}
-    </div>
-  `;
-  }).join("");
-  // Deposit property set some other way (e.g. typed into the Sheet) and not
-  // in Shown -- still show it so the page never hides what the card uses.
-  const depositElsewhereHtml = depositProperty && !(lm && lm.shown || []).includes(depositProperty)
-    ? `<div class="buyer-list-item shown-property-item"><div><span>${escapeHtml(depositProperty)}</span><div class="shown-property-dates">Deposit property (not in Shown)</div></div><label class="deposit-property-check"><input type="checkbox" class="deposit-property-cb" data-address="${escapeAttr(depositProperty)}" checked> Deposit</label></div>`
-    : "";
   const shownAddHtml = lm && lm.row ? `
     <div class="shown-add-row">
       <div class="autocomplete-wrap">
         <input type="text" id="shown-property-input" placeholder="Type an address…" autocomplete="off">
         <div id="shown-property-suggestions" class="autocomplete-dropdown hidden"></div>
       </div>
-      <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark shown</button>
+      <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark toured</button>
     </div>
   ` : "";
-  const shownHtml = `<div class="buyer-section"><h3>Shown Properties${lm && lm.shown && lm.shown.length ? ` (${lm.shown.length})` : ""}</h3>${shownListHtml}${depositElsewhereHtml}${shownAddHtml}</div>`;
 
   // Split into Scheduled (today or later) vs Past, added 2026-09-11 per
   // Aaron's direct request -- previously one flat list with no distinction.
@@ -5280,7 +5256,7 @@ function renderBuyerDetail(buyer) {
   // appt-card) -- .buyer-list-item .appt-row-menu-btn in style.css
   // overrides that to sit inline at the end of this flat row instead;
   // same class, same delegation, same popup either way.
-  const apptItem = (a, showAvailability, linkToAppointment) => `<div class="buyer-list-item buyer-list-item-row${linkToAppointment ? " buyer-appt-item-clickable" : ""}"${linkToAppointment ? ` data-address="${escapeAttr(a.address)}" data-date="${escapeAttr(a.date)}" role="button" tabindex="0"` : ""}><span>📅 ${escapeHtml(a.address)} — ${escapeHtml(a.date)} ${showAvailability ? listingAvailabilityBadgeHtml(a.address) : ""}</span>${apptRowMenuBtnHtml({ ...a, phone: buyer.phone })}</div>`;
+  // (apptItem, the old Past Showings row, removed 2026-11-13: folded into the Properties list below.)
   // Schedule a showing, added 2026-09-12 per Aaron's direct request ("set
   // an appointment for a buyer for a property from their Buyer page
   // myself"). Same autocomplete pattern as Shown Properties above, but
@@ -5321,55 +5297,58 @@ function renderBuyerDetail(buyer) {
   // independently per property rather than a single type. Past Showings
   // stays its OWN separate list below, not folded in here -- a completed
   // viewing is a different fact than "still interested/booked."
-  const favScheduledMap = new Map();
-  if (lm && lm.favorites) for (const address of lm.favorites) favScheduledMap.set(address, { address, favorited: true, appt: null });
-  for (const a of scheduledAppts) {
-    const entry = favScheduledMap.get(a.address) || { address: a.address, favorited: false, appt: null };
-    entry.appt = a;
-    favScheduledMap.set(a.address, entry);
-  }
-  // Sorted so a scheduled viewing coming up soonest is always first --
-  // added 2026-09-14 per Aaron's direct request ("order them in the list
-  // by whichever one's coming up next"). Anything with no appt (favorited
-  // only) sorts after every scheduled one, alphabetically by address --
-  // he only asked about ordering the scheduled ones, so there's no real
-  // "right" order for the rest, alphabetical is just a stable default.
-  const favScheduledItems = [...favScheduledMap.values()].sort((x, y) => {
-    if (x.appt && y.appt) return x.appt.date.localeCompare(y.appt.date);
-    if (x.appt && !y.appt) return -1;
-    if (!x.appt && y.appt) return 1;
+  // ONE Properties list, 2026-11-13 (Aaron: "Combine them"). Replaces
+  // Favorited & Scheduled, Past Showings and Shown Properties. Each house
+  // shows once: heart if favorited, the availability check/X, the address,
+  // the Deposit box; then a line per fact: next showing (📅), a past
+  // showing with no outcome ("needs outcome", so it isn't lost when the
+  // slot is cleared by the next booking), and toured (👀; Aaron: "don't use
+  // the green check if viewed. Because checks and exes are used to show the
+  // houses current availability"). Toured = in Shown Properties or a
+  // Completed showing, the same rule the Reserve button uses.
+  const shownSet = new Set(lm && lm.shown ? lm.shown : []);
+  const propMap = new Map();
+  const prop = (address) => {
+    if (!propMap.has(address)) propMap.set(address, { address, favorited: false, next: null, needsOutcome: [], toured: false });
+    return propMap.get(address);
+  };
+  if (lm && lm.favorites) for (const address of lm.favorites) prop(address).favorited = true;
+  for (const a of scheduledAppts) { const p = prop(a.address); if (!p.next || a.date < p.next.date) p.next = a; }
+  for (const a of pastAppts) { if (!a.status) prop(a.address).needsOutcome.push(a); }
+  for (const address of shownSet) prop(address).toured = true;
+  for (const address of shownDatesByAddress.keys()) prop(address).toured = true;
+  if (depositProperty) prop(depositProperty);
+  const propRank = (p) => (p.next ? 0 : p.needsOutcome.length ? 1 : p.toured ? 2 : 3);
+  const propItems = [...propMap.values()].sort((x, y) => {
+    const r = propRank(x) - propRank(y);
+    if (r) return r;
+    if (x.next && y.next) return x.next.date.localeCompare(y.next.date);
     return x.address.localeCompare(y.address);
   });
-  const favScheduledItemHtml = (item) => {
-    // Address -> that property's own page (2026-11-12, Aaron: "In favorited
-    // and scheduled list, I'd like clicking on a name to visit that
-    // properties info page"). The rest of a scheduled row still opens its
-    // appointment card. Own attribute, not data-listing-id: that one is
-    // also used by syncFavoriteHearts.
+  const propItemHtml = (item) => {
+    // Address -> that property's own page (2026-11-12, Aaron). The rest of
+    // a row with a coming showing opens its appointment card.
     const listing = (ALL_LISTINGS || []).find((l) => l.address === item.address);
     const addressHtml = listing
       ? `<span class="buyer-property-link" data-open-listing="${escapeAttr(listing.id)}" role="link" tabindex="0" title="Open this property">${escapeHtml(item.address)}</span>`
       : escapeHtml(item.address);
-    const line1 = `${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${addressHtml}`;
-    // Relative-day label right after the date, added 2026-09-14 per
-    // Aaron's direct request ("today or in one day or in two days right
-    // after the date") -- see relativeDayLabel's own comment.
-    const line2 = item.appt
-      ? `<div class="buyer-list-item-line2">📅 ${escapeHtml(item.appt.date)} (${relativeDayLabel(item.appt.date)})${apptRowMenuBtnHtml({ ...item.appt, phone: buyer.phone })}</div>`
-      : "";
-    const clickable = item.appt ? ` data-address="${escapeAttr(item.address)}" data-date="${escapeAttr(item.appt.date)}" role="button" tabindex="0"` : "";
-    return `<div class="buyer-list-item buyer-property-item${item.appt ? " buyer-appt-item-clickable" : ""}"${clickable}>
-      <div class="buyer-list-item-line1">${line1}</div>
-      ${line2}
+    const depositBox = `<label class="deposit-property-check" title="The house this buyer's deposit is for (fills their Trello card)"><input type="checkbox" class="deposit-property-cb" data-address="${escapeAttr(item.address)}"${depositProperty === item.address ? " checked" : ""}> Deposit</label>`;
+    const lines = [];
+    if (item.next) lines.push(`📅 ${escapeHtml(formatApptDate(item.next.date))} (${relativeDayLabel(item.next.date)})${item.next.status === "Canceled" ? " · Canceled" : ""}${apptRowMenuBtnHtml({ ...item.next, phone: buyer.phone })}`);
+    for (const a of item.needsOutcome.sort((x, y) => y.date.localeCompare(x.date))) lines.push(`<span class="needs-outcome">📅 ${escapeHtml(formatApptDate(a.date))}, needs outcome</span>${apptRowMenuBtnHtml({ ...a, phone: buyer.phone })}`);
+    if (item.toured) {
+      const dates = shownDatesByAddress.get(item.address) || [];
+      const remove = shownSet.has(item.address) && lm && lm.row ? `<button type="button" class="shown-remove-btn" data-row="${lm.row}" data-address="${escapeAttr(item.address)}" title="Remove from toured (Shown Properties)">Remove</button>` : "";
+      lines.push(`<span>👀 Toured${dates.length ? ` ${dates.map((d) => escapeHtml(formatApptDate(d))).join(", ")}` : ""}</span>${remove}`);
+    }
+    if (!lines.length && depositProperty === item.address && !item.favorited) lines.push("Deposit property");
+    const clickable = item.next ? ` data-address="${escapeAttr(item.address)}" data-date="${escapeAttr(item.next.date)}" role="button" tabindex="0"` : "";
+    return `<div class="buyer-list-item buyer-property-item${item.next ? " buyer-appt-item-clickable" : ""}"${clickable}>
+      <div class="buyer-list-item-line1">${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${addressHtml}${depositBox}</div>
+      ${lines.map((l) => `<div class="buyer-list-item-line2">${l}</div>`).join("")}
     </div>`;
   };
-  const favScheduledHtml = favScheduledItems.length
-    ? `<div class="buyer-section"><h3>Favorited &amp; Scheduled (${favScheduledItems.length})</h3>${favScheduledItems.map(favScheduledItemHtml).join("")}</div>`
-    : "";
-
-  const pastHtml = pastAppts.length
-    ? `<div class="buyer-section"><h3>Past Showings (${pastAppts.length})</h3>${pastAppts.map((a) => apptItem(a, false, false)).join("")}</div>`
-    : "";
+  const propertiesHtml = `<div class="buyer-section"><h3>Properties${propItems.length ? ` (${propItems.length})` : ""}</h3>${propItems.map(propItemHtml).join("")}${shownAddHtml}</div>`;
 
   // Always 2 slots now (empty ones kept, not filtered out server-side --
   // see admin-buyers-worker.js's own comment), added 2026-09-15 per
@@ -5581,9 +5560,7 @@ function renderBuyerDetail(buyer) {
     ${messagesHtml}
     ${areasBlockHtml}
     ${factsHtml}
-    ${favScheduledHtml}
-    ${pastHtml}
-    ${shownHtml}
+    ${propertiesHtml}
     ${scheduleApptHtml}
     ${coBuyersHtml}
     ${filtersHtml}
@@ -5748,7 +5725,8 @@ function renderBuyerDetail(buyer) {
   });
   container.querySelectorAll(".buyer-appt-item-clickable").forEach((el) => {
     const go = () => goToAppointmentFromBuyer({ phone: buyer.phone, address: el.dataset.address, date: el.dataset.date });
-    el.addEventListener("click", go);
+    // The Deposit box and Remove sit inside the row (combined list, 11/13).
+    el.addEventListener("click", (e) => { if (e.target.closest(".deposit-property-check, .shown-remove-btn")) return; go(); });
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
 
