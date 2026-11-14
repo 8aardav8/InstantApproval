@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-14T20:53:19.097826+00:00",
+  "generatedAt": "2026-11-14T20:57:52.642807+00:00",
   "listings": [
+    {
+      "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
+      "address": "2112 Paden St Jackson, Ms 39204 Jackson MS 39204",
+      "onMarketDate": "11/13",
+      "lastUpdate": "11/13",
+      "area": "MS",
+      "down": "$1,499",
+      "monthly": "$825",
+      "picsLink": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1259",
+      "status": "Available",
+      "livability": 0,
+      "lat": 32.2786643,
+      "lng": -90.2255339
+    },
     {
       "id": "1042-n-pine-st-decatur-il-62522",
       "address": "1042 N Pine St Decatur IL 62522",
