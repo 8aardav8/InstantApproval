@@ -6047,7 +6047,7 @@ async function route(request, env, ctx) {
 
 export default {
   __reserveForTests: reserve,
-  // Reserve health check, every 3 hours (wrangler-admin.toml). The 15:00 UTC
+  // Reserve health check, every hour (wrangler-admin.toml; Aaron 11/13 "Every hour"). The 15:00 UTC
   // run (9am Central) also sends the "all good" line and the daily-only checks.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(reserve.runHealthCheck(env, { daily: new Date(event.scheduledTime).getUTCHours() === 15 })

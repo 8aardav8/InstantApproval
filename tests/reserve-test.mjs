@@ -63,6 +63,7 @@ if (existsSync(DOC)) {
   const ilLine = doc.split('\n').find((l) => l.includes('Illinois properties only'));
   eq('doc IL line == code IL line', clean(ilLine.replace(/^\s*-\s*/, '')), til.items.find((x) => x.startsWith('Illinois')));
   eq('doc checkbox == code checkbox', doc.includes(`"☐ ${t.checkbox}"`), true);
+  eq('doc rejection message == site message', doc.includes(`Rejection message (Aaron 2026-11-13, "Push to book a tour"): "${MSG.notToured.replace('(618) 418-4180', "[Aaron's number]")}"`), true);
 } else console.log('SKIP terms-doc comparison (OS folder not on this machine)');
 
 // ---------- handler flows against a fake world ----------

@@ -34,7 +34,8 @@ const SITE_ORIGIN = "https://instantapprovalhomes.com";
 export const AARON_PHONE_DISPLAY = "(618) 418-4180";
 
 export const MSG = {
-  notToured: `You can reserve a home after you've toured it. If this is a mistake, call us at ${AARON_PHONE_DISPLAY} and we'll fix it.`,
+  // Aaron 11/13 picked "Push to book a tour" (the Schedule a Viewing button sits right above Reserve).
+  notToured: `To reserve this home, you'll need to tour it first. Book a showing on this page, or call us at ${AARON_PHONE_DISPLAY} if you've already seen it.`,
   notAvailable: "This home is no longer available to reserve.",
   noEmail: "We need your email address to send the deposit invoice. Add it under My Info, then try again.",
   needsCall: `We couldn't set up this reservation online. Please call us at ${AARON_PHONE_DISPLAY}.`,
@@ -580,7 +581,7 @@ export function createReserve(deps) {
     if (!(await verifySquareSignature(env, request, raw))) {
       // A real Square notice with a bad signature means the signature key on
       // the server doesn't match Square's: payments would go unrecorded.
-      if (request.headers.get("x-square-hmacsha256-signature") && /"invoice\.payment_made"/.test(raw)) await telegram(env, "⚠️ A Square payment notice was REJECTED (signature didn't match). The webhook signature key on the server is probably wrong. The 3-hourly Reserve check will still record the payment.");
+      if (request.headers.get("x-square-hmacsha256-signature") && /"invoice\.payment_made"/.test(raw)) await telegram(env, "⚠️ A Square payment notice was REJECTED (signature didn't match). The webhook signature key on the server is probably wrong. The hourly Reserve check will still record the payment.");
       return jsonResponse({ error: "bad signature" }, 401);
     }
     let evt; try { evt = JSON.parse(raw); } catch (e) { return jsonResponse({ error: "bad json" }, 400); }
@@ -747,7 +748,7 @@ export function createReserve(deps) {
 
   // ---------- Health check (2026-11-13) ----------
   // Aaron: "I don't want there to be glitches and they go unnoticed for me
-  // while potential buyers are having problems." Runs every 3 hours (cron in
+  // while potential buyers are having problems." Runs every hour (cron in
   // wrangler-admin.toml). Checks that every piece a buyer depends on still
   // works, and compares each open reservation with Square: a payment the
   // webhook missed is recorded here (recordPayment is safe to repeat).
@@ -768,7 +769,7 @@ export function createReserve(deps) {
     try {
       const subs = (await square(env, "GET", "/v2/webhooks/subscriptions")).subscriptions || [];
       const ok = subs.some((s) => s.enabled && /\/square-webhook$/.test(s.notification_url || "") && (s.event_types || []).includes("invoice.payment_made"));
-      if (!ok) problems.push("Square's payment notice (webhook) to the site is missing or switched off. Payments still get recorded by this check, up to 3 hours late.");
+      if (!ok) problems.push("Square's payment notice (webhook) to the site is missing or switched off. Payments still get recorded by this check, up to an hour late.");
     } catch (e) { problems.push(`Couldn't read Square's webhook settings: ${String(e).slice(0, 160)}`); }
     if (env.ESIGNATURES_TOKEN) {
       try {
