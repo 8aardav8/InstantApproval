@@ -137,7 +137,7 @@ export function reminderAfter(address, restCents, dueYmd) {
   return `Your home at ${street(address)} is reserved. Please pay the remaining ${fmtMoney(restCents)} by ${shortDate(dueYmd)} to keep your reservation.`;
 }
 // Invoice message: plain-language version 2, approved 2026-11-13 with
-// Aaron's edits ("As soon as it's received…", "(Or the whole $3,000 now.)", "When the full $3,000 is received,", "Your full closing packet will be ready to review the day after payment."). Full
+// Aaron's edits ("As soon as it's received…", "(Or the whole $3,000 now.)", "Once the full $3,000 is received,", "packet line between steps 1 and 2", "Your full closing packet will be ready to review the day after payment."). Full
 // agreed terms stay underneath for the record.
 export function buildInvoice({ locationId, orderId, customerId, buyer, listing, downCents, terms, isIL = false, now = Date.now(), timeZone }) {
   const first = (buyer.name || "").trim().split(/\s+/)[0];
@@ -148,10 +148,9 @@ export function buildInvoice({ locationId, orderId, customerId, buyer, listing, 
     `Here's how to reserve ${street(listing.address)}:`,
     "",
     `1. Pay ${dep} now to hold the home. As soon as it's received, we take it off the market for you.`,
-    `2. Pay the other ${rest} within 7 days. (Or the whole ${all} now.)`,
-    `3. When the full ${all} is received, we can close and the home is yours.`,
-    "",
     "Your full closing packet will be ready to review the day after payment.",
+    `2. Pay the other ${rest} within 7 days. (Or the whole ${all} now.)`,
+    `3. Once the full ${all} is received, we can close and the home is yours.`,
     "",
     "Good to know:",
     isIL
