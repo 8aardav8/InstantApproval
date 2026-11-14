@@ -219,6 +219,11 @@ const sign = (raw) => createHmac('sha256', 'whkey').update('https://worker.examp
   const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PARTIALLY_PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
   await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64') } });
   eq('existing agreement: not drafted again', [w.esig.length, depRow(w)[16]], [0, 'https://esignatures.com/draft_contracts/OLD/edit (made by hand)']); }
+{ // A note in the Agreement column is not an agreement (11/13: a backfill note blocked Earline's test).
+  const w = world(); await call(w, '/reserve-request', { listingId: LID, inspected: true }); w.tabs['Square Deposits'][1][16] = 'None: sandbox test made before this column existed';
+  const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PARTIALLY_PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });
+  await call(w, '/square-webhook', null, { phone: null, raw, headers: { 'x-square-hmacsha256-signature': createHmac('sha256', 'whkey').update('https://worker.example.com/square-webhook' + raw).digest('base64') } });
+  eq('a note in the Agreement cell does not block drafting', w.esig.length, 1); }
 { // An eSignatures failure never blocks recording the deposit.
   const w = world(); w.esigFail = true; await call(w, '/reserve-request', { listingId: LID, inspected: true }); w.tabs['Square Deposits'][1][3] = 'production';
   const raw = JSON.stringify({ type: 'invoice.payment_made', data: { object: { invoice: { id: 'INV1', status: 'PARTIALLY_PAID', payment_requests: [{ total_completed_amount_money: { amount: 150000 } }] } } } });

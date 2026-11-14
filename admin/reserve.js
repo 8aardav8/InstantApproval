@@ -617,7 +617,7 @@ export function createReserve(deps) {
 
   // Best effort: never blocks recording the payment. Returns a Telegram line.
   async function draftAgreementSafely(env, token, tab, sheetRow, c, rec, inv, paidCents, sellerName) {
-    if ((rec[c("iah.dep.agreement")] || "").trim()) return ""; // already made
+    if (/^https?:\/\//.test((rec[c("iah.dep.agreement")] || "").trim())) return ""; // already made (a link); a note or blank never blocks
     if (!env.ESIGNATURES_TOKEN) return "\n⚠️ Deposit agreement not drafted: eSignatures isn't set up on the server.";
     const address = rec[c("iah.dep.address")];
     const kind = agreementTemplateFor(address, rec[c("iah.dep.state")]);
