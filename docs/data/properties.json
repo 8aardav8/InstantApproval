@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-14T17:15:44.839508+00:00",
+  "generatedAt": "2026-11-14T17:40:25.727175+00:00",
   "listings": [
     {
       "id": "1042-n-pine-st-decatur-il-62522",
@@ -2096,7 +2096,7 @@
       "id": "523-grace-st-flint-mi-48503",
       "address": "523 Grace St. Flint MI 48503",
       "onMarketDate": "9/21",
-      "lastUpdate": "11/7",
+      "lastUpdate": "11/13",
       "area": "MI",
       "down": "$2,000",
       "monthly": "$799",
@@ -2104,7 +2104,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1144",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.0322871,
       "lng": -83.7118149
