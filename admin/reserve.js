@@ -235,7 +235,7 @@ export function agreementPlaceholders({ kind, paidYmd, paidCents, downCents, due
   };
   const out = Object.entries(f).map(([placeholder_key, replace_with_text]) => ({ placeholder_key, replace_with_text }));
   out.push(kind === "il"
-    ? { placeholder_key: "REFUND-TERMS", replace_with_markdown: `The Deposit is fully refundable if Buyer requests a refund in writing on or before **${mdy(addBusinessDays(paidYmd, 3))}** (3 business days after it was received). After that date, it is non-refundable.` }
+    ? { placeholder_key: "REFUND-TERMS", replace_with_markdown: `The Deposit is fully refundable if Buyer requests a refund in writing within 3 business days (before **${mdy(addBusinessDays(paidYmd, 4))}**). After that, it is non-refundable.` /* Aaron 11/13: the date is the 4th business day after receipt */ }
     : { placeholder_key: "REFUND-TERMS", replace_with_text: "" });
   return out;
 }
