@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-15T23:37:59.623509+00:00",
+  "generatedAt": "2026-11-15T23:38:58.001252+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -498,7 +498,7 @@
       "id": "5420-queens-ave-saint-louis-mo-63-115",
       "address": "5420 Queens Ave Saint Louis MO 63,115",
       "onMarketDate": "11/2",
-      "lastUpdate": "11/7",
+      "lastUpdate": "11/14",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$1,250",
@@ -506,7 +506,7 @@
       "beds": "4",
       "baths": "1.5",
       "sqft": "1248",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6912202,
       "lng": -90.2389408
