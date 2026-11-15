@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-15T16:26:23.884204+00:00",
+  "generatedAt": "2026-11-15T18:03:05.826656+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -2929,7 +2929,7 @@
       "id": "707-n-madison-st-litchfield-il-62056",
       "address": "707 N Madison St, Litchfield, IL 62056",
       "onMarketDate": "8/28",
-      "lastUpdate": "10/16",
+      "lastUpdate": "11/14",
       "area": "IL - Rural",
       "down": "$1,000",
       "monthly": "$700",
@@ -2937,7 +2937,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.1797643,
       "lng": -89.6568448
