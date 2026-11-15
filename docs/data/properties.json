@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-15T23:43:06.110700+00:00",
+  "generatedAt": "2026-11-15T23:44:18.699350+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -28871,7 +28871,7 @@
       "id": "2964-iowa-st-granite-city-il-62040",
       "address": "2964 Iowa St, Granite City, IL 62040",
       "onMarketDate": "9/25/2026",
-      "lastUpdate": "9/25/2026",
+      "lastUpdate": "11/14/2026",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$950",
@@ -28879,7 +28879,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1176",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.7150437,
       "lng": -90.12507579999999
