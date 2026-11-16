@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-16T22:23:58.600754+00:00",
+  "generatedAt": "2026-11-16T22:24:46.115492+00:00",
   "listings": [
+    {
+      "id": "2832-clement-st-flint-mi-48-504",
+      "address": "2832 Clement St. Flint MI 48,504",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 43.03069929999999,
+      "lng": -83.72667919999999
+    },
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
       "address": "2112 Paden St Jackson, Ms 39204 Jackson MS 39204",
