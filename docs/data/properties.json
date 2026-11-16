@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-16T22:43:49.962078+00:00",
+  "generatedAt": "2026-11-16T22:44:05.535758+00:00",
   "listings": [
+    {
+      "id": "210-w-park-st-harrisburg-il-62-946",
+      "address": "210 W Park St Harrisburg IL 62,946",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 37.7295585,
+      "lng": -88.5437366
+    },
     {
       "id": "2832-clement-st-flint-mi-48-504",
       "address": "2832 Clement St. Flint MI 48,504",
