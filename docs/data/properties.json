@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:47:17.774460+00:00",
+  "generatedAt": "2026-11-16T22:47:44.831730+00:00",
   "listings": [
     {
       "id": "6-drexel-drive-cahokia-heights-il-62-206",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$925",
       "picsLink": "https://photos.app.goo.gl/1G11jSCRF8xn9vJx9",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "925",
       "status": "Available",
       "livability": 0,
       "lat": 38.5490926,
