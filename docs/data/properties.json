@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:31:49.275421+00:00",
+  "generatedAt": "2026-11-16T22:42:46.930424+00:00",
   "listings": [
     {
       "id": "2832-clement-st-flint-mi-48-504",
@@ -26448,7 +26448,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 5,
       "lat": 38.6802299,
       "lng": -90.2755741
