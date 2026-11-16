@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:55:31.328130+00:00",
+  "generatedAt": "2026-11-16T22:56:14.891506+00:00",
   "listings": [
     {
       "id": "249-north-61st-street-east-saint-louis-il-62-203",
@@ -600,7 +600,7 @@
       "id": "2539-e-28th-st-granite-city-il-62-040",
       "address": "2539 E. 28th St. Granite City IL 62,040",
       "onMarketDate": "10/30",
-      "lastUpdate": "10/30",
+      "lastUpdate": "11/16",
       "area": "IL - Rural",
       "down": "$2,000",
       "monthly": "$997",
@@ -608,7 +608,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "720",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.7110829,
       "lng": -90.1260121
