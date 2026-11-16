@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:08:03.542734+00:00",
+  "generatedAt": "2026-11-16T22:20:14.035787+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -2878,7 +2878,7 @@
       "id": "712-w-waggoner-st-decatur-il-62526",
       "address": "712 W Waggoner St Decatur IL 62526",
       "onMarketDate": "8/29",
-      "lastUpdate": "10/8",
+      "lastUpdate": "11/13",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$850",
@@ -2886,7 +2886,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8559323,
       "lng": -88.9654707
