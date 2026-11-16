@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:25:14.341886+00:00",
+  "generatedAt": "2026-11-16T22:25:48.722921+00:00",
   "listings": [
     {
       "id": "2832-clement-st-flint-mi-48-504",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$1,000",
       "picsLink": "https://photos.icloud.com/shared/album/007LZSDq4J7vzHGVTdw_JPTWw",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "930",
       "status": "Available",
       "livability": 0,
       "lat": 43.03069929999999,
