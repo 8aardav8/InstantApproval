@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-16T22:45:48.906054+00:00",
+  "generatedAt": "2026-11-16T22:46:43.737182+00:00",
   "listings": [
+    {
+      "id": "6-drexel-drive-cahokia-heights-il-62-206",
+      "address": "6 Drexel Drive Cahokia Heights IL 62,206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/1G11jSCRF8xn9vJx9",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5490926,
+      "lng": -90.14570379999999
+    },
     {
       "id": "210-w-park-st-harrisburg-il-62-946",
       "address": "210 W Park St Harrisburg IL 62,946",
