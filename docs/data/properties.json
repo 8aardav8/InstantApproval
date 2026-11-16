@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-16T22:50:56.507884+00:00",
+  "generatedAt": "2026-11-16T22:51:30.175309+00:00",
   "listings": [
     {
       "id": "249-north-61st-street-east-saint-louis-il-62-203",
       "address": "249 North 61st Street East Saint Louis IL 62,203",
       "onMarketDate": "11/16",
       "lastUpdate": "11/16",
-      "area": "",
-      "down": "",
-      "monthly": "",
+      "area": "IL - East St Louis",
+      "down": "$2,500",
+      "monthly": "$875",
       "picsLink": "https://photos.app.goo.gl/TP2MuMrd4hBPtRin7",
       "beds": "",
       "baths": "",
