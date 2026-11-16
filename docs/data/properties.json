@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T21:40:24.561525+00:00",
+  "generatedAt": "2026-11-16T21:40:48.954364+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -132,7 +132,7 @@
       "beds": "2",
       "baths": "2",
       "sqft": "7167",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.7241687,
       "lng": -90.23016489999999
