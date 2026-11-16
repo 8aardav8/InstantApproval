@@ -4331,10 +4331,11 @@ async function handleUploadId(request, env) {
     // created from here, since reaching this form at all required already
     // passing the site-wide consent gate.
     let appointmentSaved = false;
+    let repeatBooking = false;
     try {
       await writeLoginsRow(accessToken, target, { name, email, phone, agreed: true });
       if (idLink) await writeIdLink(accessToken, target.row, idLink);
-      await addAppointment(accessToken, target.row, property, inspectionDate);
+      repeatBooking = (await addAppointment(accessToken, target.row, property, inspectionDate)).duplicate;
       appointmentSaved = true;
     } catch (e) {
       // Best-effort -- the ID/Dropbox upload (the actually-required part of
@@ -4354,7 +4355,7 @@ async function handleUploadId(request, env) {
     // response returns). Wording now distinguishes a fresh upload from a
     // booking that reused an already-on-file ID, so Aaron isn't confused
     // about which case happened.
-    if (env.TELEGRAM_BOT_TOKEN) {
+    if (env.TELEGRAM_BOT_TOKEN && !repeatBooking) {
       const text = hasIdPhoto
         ? `ID uploaded — ${name}, ${phone}, ${email}.\n` +
           `Property: ${property}\n` +
@@ -4528,11 +4529,17 @@ async function addAppointment(accessToken, row, address, date) {
   // <date>", silently dropping its status -- so scheduling any new
   // showing would reset every OTHER still-active appointment's Canceled/
   // Completed status back to blank. buildAppointmentCell preserves it now.
-  let active = cells
+  const parsed = cells
     .map((raw, i) => parseAppointmentCell(raw, i + 1))
-    .filter((a) => a && a.date >= todayUtc)
-    .map((a) => buildAppointmentCell(a.address, a.date, a.status));
-  active.push(buildAppointmentCell(address, date, ""));
+    .filter((a) => a && a.date >= todayUtc);
+  // Same address + date already booked = a repeat submit (Torey Taylor,
+  // 2026-11-15: one booking landed in three slots). Never add a second
+  // copy; a matching Canceled one is booked again instead.
+  const same = parsed.find((a) => a.address === address && a.date === date);
+  if (same && same.status !== "Canceled") return { duplicate: true };
+  if (same) same.status = "";
+  let active = parsed.map((a) => buildAppointmentCell(a.address, a.date, a.status));
+  if (!same) active.push(buildAppointmentCell(address, date, ""));
   if (active.length > APPOINTMENT_SLOT_COUNT) active = active.slice(active.length - APPOINTMENT_SLOT_COUNT);
   while (active.length < APPOINTMENT_SLOT_COUNT) active.push("");
 
@@ -4560,6 +4567,7 @@ async function addAppointment(accessToken, row, address, date) {
   } catch (e) {
     // swallow -- see comment above
   }
+  return { duplicate: false };
 }
 
 const SHOWING_SCHEDULED_STAGE_INDEX = STAGE_VALUES.indexOf("Showing Scheduled");

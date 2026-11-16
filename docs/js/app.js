@@ -1979,6 +1979,13 @@ function initGetStartedForm() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    // One booking per tap: the button stays off until this upload finishes
+    // (Torey Taylor, 2026-11-15: a slow ID upload + extra taps booked the
+    // same showing three times).
+    if (form.dataset.busy) return;
+    form.dataset.busy = "1";
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
     status.textContent = "Uploading...";
     try {
       const res = await fetch(UPLOAD_ID_ENDPOINT, { method: "POST", body: new FormData(form) });
@@ -1998,6 +2005,9 @@ function initGetStartedForm() {
       refreshAndRerenderAppointments(); // show the just-created appointment immediately, on this card and everywhere else it appears
     } catch (err) {
       status.textContent = "Something went wrong -- please try again, or call/text us at 618-418-4180.";
+    } finally {
+      delete form.dataset.busy;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
