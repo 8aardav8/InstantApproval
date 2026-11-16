@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:21:08.041989+00:00",
+  "generatedAt": "2026-11-16T22:21:42.460108+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -1450,7 +1450,7 @@
       "id": "1744-n-monroe-street-decatur-il-62526",
       "address": "1744 N Monroe Street Decatur IL 62526",
       "onMarketDate": "10/6",
-      "lastUpdate": "11/11",
+      "lastUpdate": "11/13",
       "area": "IL - Decatur",
       "down": "$4,000",
       "monthly": "$1,500",
@@ -1458,7 +1458,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1456",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8602364,
       "lng": -88.96354869999999
@@ -4357,7 +4357,7 @@
       "id": "2317-grand-ave-granite-city-il-62040",
       "address": "2317 Grand Ave, Granite City, IL 62040",
       "onMarketDate": "4/8/2026",
-      "lastUpdate": "11/12/2026",
+      "lastUpdate": "11/13/2026",
       "area": "IL - East St Louis",
       "down": "$1,800",
       "monthly": "$730",
