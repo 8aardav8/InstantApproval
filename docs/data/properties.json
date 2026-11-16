@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T22:21:42.460108+00:00",
+  "generatedAt": "2026-11-16T22:22:56.990092+00:00",
   "listings": [
     {
       "id": "2112-paden-st-jackson-ms-39204-jackson-ms-39204",
@@ -396,7 +396,7 @@
       "id": "10122-cedarlawn-street-detroit-mi-48-204",
       "address": "10122 Cedarlawn Street Detroit MI 48,204",
       "onMarketDate": "11/3",
-      "lastUpdate": "11/3",
+      "lastUpdate": "11/13",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$1,179",
@@ -404,7 +404,7 @@
       "beds": "4",
       "baths": "1",
       "sqft": "1512",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 42.3728822,
       "lng": -83.1608266
