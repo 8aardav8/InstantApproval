@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-17T22:26:02.723632+00:00",
+  "generatedAt": "2026-11-17T22:26:47.254743+00:00",
   "listings": [
+    {
+      "id": "2-riverside-ct-toledo-oh-43-611",
+      "address": "2 Riverside Ct Toledo OH 43,611",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 41.6710119,
+      "lng": -83.5070854
+    },
     {
       "id": "746-w-division-street-decatur-il-62525",
       "address": "746 W Division Street Decatur IL 62525",
