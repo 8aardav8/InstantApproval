@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T22:27:19.003677+00:00",
+  "generatedAt": "2026-11-17T22:27:39.562217+00:00",
   "listings": [
     {
       "id": "2-riverside-ct-toledo-oh-43-611",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$949",
       "picsLink": "https://drive.google.com/drive/folders/1ESqnLjOKJwi_gG3ep9RbLVIpgHonv_1t?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "574",
       "status": "Available",
       "livability": 0,
       "lat": 41.6710119,
