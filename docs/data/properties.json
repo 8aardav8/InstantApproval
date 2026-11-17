@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T22:24:40.859048+00:00",
+  "generatedAt": "2026-11-17T22:25:27.489953+00:00",
   "listings": [
     {
       "id": "746-w-division-street-decatur-il-62525",
@@ -4561,15 +4561,15 @@
       "id": "1811-n-morgan-st-decatur-il-62526",
       "address": "1811 N Morgan St Decatur, IL 62526",
       "onMarketDate": "7/21/2026",
-      "lastUpdate": "11/9/2026",
+      "lastUpdate": "11/16/2026",
       "area": "IL - Decatur",
-      "down": "$1,500",
-      "monthly": "$775",
+      "down": "$2,000",
+      "monthly": "$750",
       "picsLink": "https://drive.google.com/drive/folders/1Hxf0E4sPLNYEAsbjcMz1OXh-H0Ff6pMM?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "882",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8605123,
       "lng": -88.94880239999999
