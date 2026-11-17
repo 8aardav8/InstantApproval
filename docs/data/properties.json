@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T22:25:27.489953+00:00",
+  "generatedAt": "2026-11-17T22:26:02.723632+00:00",
   "listings": [
     {
       "id": "746-w-division-street-decatur-il-62525",
@@ -362,7 +362,7 @@
       "id": "1432-richard-dr-cahokia-il-62206",
       "address": "1432 Richard Dr Cahokia IL 62206",
       "onMarketDate": "11/6",
-      "lastUpdate": "11/8",
+      "lastUpdate": "11/16",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$895",
@@ -370,7 +370,7 @@
       "beds": "4",
       "baths": "1",
       "sqft": "988",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.5578051,
       "lng": -90.1635895
