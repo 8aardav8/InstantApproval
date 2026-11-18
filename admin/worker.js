@@ -3663,6 +3663,43 @@ async function ensureSheetGridWidth(env, accessToken, minColumns) {
 // (same tier: read the layout, write one cell by col+row) rather than a
 // one-off throwaway, since "add/fix one Sheet cell by hand" is a recurring
 // need for this kind of incident work.
+// Trello buyer card "Shown in person" checklist -> App: Logins Shown
+// Properties (Aaron, 2026-11-18: "Both, and add from Trello"). Called only by
+// the notifier worker over its service binding. Narrow on purpose: its own
+// secret (TRELLO_WRITEBACK_SECRET, not the broad internal-tools one), adds ONE
+// address that is exactly a PROPERTIES address to ONE row whose phone matches
+// (rows shift; the phone check stops a write to the wrong buyer). Never removes.
+async function handleTrelloAddShown(request, env) {
+  const got = request.headers.get("X-Trello-Writeback") || "";
+  if (!env.TRELLO_WRITEBACK_SECRET || !timingSafeEqualStr(got, env.TRELLO_WRITEBACK_SECRET)) return jsonResponse({ error: "not authorized" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const row = Number(body.row), phone = toE164(String(body.phone || "")), address = String(body.address || "").trim();
+  if (!Number.isInteger(row) || row < 2 || !phone || !address) return jsonResponse({ error: "missing row, phone or address" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const H = { Authorization: `Bearer ${accessToken}` };
+    const phoneA1 = `'${TABS.logins}'!${LL.phone}${row}`, shownA1 = `'${TABS.logins}'!${LL.shown}${row}`, addrA1 = `'${TABS.props}'!${PL.address}2:${PL.address}`;
+    const q = [phoneA1, shownA1, addrA1].map((r) => `ranges=${encodeURIComponent(r)}`).join("&");
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?${q}`, { headers: H });
+    if (!res.ok) throw new Error(`read failed: ${await res.text()}`);
+    const [pv, sv, av] = ((await res.json()).valueRanges || []).map((v) => v.values || []);
+    if (toE164(((pv[0] || [])[0]) || "") !== phone) return jsonResponse({ error: "row phone does not match" }, 409);
+    if (!av.some((r) => (r[0] || "").trim() === address)) return jsonResponse({ error: "not a PROPERTIES address" }, 422);
+    const current = ((sv[0] || [])[0]) || "";
+    const list = current ? current.split(" | ").map((x) => x.trim()).filter(Boolean) : [];
+    if (list.includes(address)) return jsonResponse({ ok: true, shown: list, already: true });
+    const next = [...list, address];
+    const put = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(shownA1)}?valueInputOption=RAW`, {
+      method: "PUT", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ range: shownA1, values: [[next.join(" | ")]] }),
+    });
+    if (!put.ok) throw new Error(`write failed: ${await put.text()}`);
+    return jsonResponse({ ok: true, shown: next });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleInternalWriteCell(request, env) {
   if (!checkInternalToolsSecret(request, env)) return jsonResponse({ error: "not authorized" }, 403);
   let body;
@@ -5910,6 +5947,9 @@ async function route(request, env, ctx) {
   }
   if (url.pathname === "/internal/sheet-headers" && request.method === "GET") {
     return handleInternalSheetHeaders(request, env);
+  }
+  if (url.pathname === "/internal/trello-add-shown" && request.method === "POST") {
+    return handleTrelloAddShown(request, env);
   }
   if (url.pathname === "/internal/write-cell" && request.method === "POST") {
     return handleInternalWriteCell(request, env);
