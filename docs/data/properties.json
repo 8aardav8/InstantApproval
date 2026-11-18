@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T21:13:31.044215+00:00",
+  "generatedAt": "2026-11-18T22:23:24.126585+00:00",
   "listings": [
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
@@ -30724,7 +30724,7 @@
       "id": "1027-garth-ave-saint-louis-mo-63147",
       "address": "1027 Garth Ave, Saint Louis, MO 63147",
       "onMarketDate": "9/24/2026",
-      "lastUpdate": "11/13/2026",
+      "lastUpdate": "11/17/2026",
       "area": "MO - St. Louis",
       "down": "$1,200",
       "monthly": "$700",
@@ -30732,7 +30732,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1440",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.7126123,
       "lng": -90.23376859999999
