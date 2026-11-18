@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T22:23:24.126585+00:00",
+  "generatedAt": "2026-11-18T22:24:06.474760+00:00",
   "listings": [
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
@@ -1552,11 +1552,11 @@
       "id": "2015-n-union-st-decatur-il-62526",
       "address": "2015 N Union St Decatur IL 62526",
       "onMarketDate": "10/7",
-      "lastUpdate": "10/7",
+      "lastUpdate": "11/17",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$1,095",
-      "picsLink": "https://photos.app.goo.gl/qFnuRDLNwRnzP4iT8",
+      "picsLink": "https://photos.app.goo.gl/zMddvLk8yW3yxvgj9",
       "beds": "4",
       "baths": "1",
       "sqft": "1042",
@@ -31217,7 +31217,7 @@
       "id": "6580-saint-louis-ave-saint-louis-mo-63121",
       "address": "6580 Saint Louis Ave, Saint Louis, MO 63121",
       "onMarketDate": "9/22/2026",
-      "lastUpdate": "10/5/2026",
+      "lastUpdate": "11/17/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$625",
@@ -31225,7 +31225,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 2,
       "lat": 38.6864949,
       "lng": -90.2905564
