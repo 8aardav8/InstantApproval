@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T22:24:06.474760+00:00",
+  "generatedAt": "2026-11-18T22:25:03.560775+00:00",
   "listings": [
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
@@ -23635,7 +23635,7 @@
       "id": "2125-68th-st-saint-louis-mo-63121",
       "address": "2125 68th St, Saint Louis, MO 63121",
       "onMarketDate": "10/1/2026",
-      "lastUpdate": "10/1/2026",
+      "lastUpdate": "11/17/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$800",
@@ -28046,7 +28046,7 @@
       "beds": "4",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8314063,
       "lng": -88.9429737
