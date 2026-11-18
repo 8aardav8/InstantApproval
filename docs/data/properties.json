@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T22:27:03.197406+00:00",
+  "generatedAt": "2026-11-18T22:27:33.902037+00:00",
   "listings": [
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
@@ -14293,7 +14293,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "890",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
       "lat": 38.68797,
       "lng": -90.3043279
