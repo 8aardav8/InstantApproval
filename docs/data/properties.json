@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T22:25:45.052185+00:00",
+  "generatedAt": "2026-11-18T22:27:03.197406+00:00",
   "listings": [
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
@@ -1127,10 +1127,10 @@
       "id": "1428-south-ave-toledo-oh-43609",
       "address": "1428 South Ave. Toledo OH 43609",
       "onMarketDate": "10/18",
-      "lastUpdate": "11/16",
+      "lastUpdate": "11/17",
       "area": "OH",
-      "down": "$5,000",
-      "monthly": "$1,195",
+      "down": "$4,000",
+      "monthly": "$1,249",
       "picsLink": "https://photos.app.goo.gl/MduTEoGyiiJJqiR69",
       "beds": "3",
       "baths": "1",
