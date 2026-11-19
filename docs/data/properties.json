@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T22:37:59.757330+00:00",
+  "generatedAt": "2026-11-19T22:38:48.955559+00:00",
   "listings": [
     {
       "id": "5-denovion-ct-cahokia-il-62-206",
@@ -3123,7 +3123,7 @@
       "picsLink": "https://drive.google.com/drive/folders/1ocHnI-DnOXGU0b0dTXIYcCx3jB5hKc5y?usp=drive_link",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
+      "sqft": "728",
       "status": "Available",
       "livability": 0,
       "lat": 39.8579398,
@@ -18637,7 +18637,7 @@
       "id": "1521-s-westmoreland-peoria-61605",
       "address": "1521 S Westmoreland, Peoria 61605",
       "onMarketDate": "8/19/2026",
-      "lastUpdate": "11/5/2026",
+      "lastUpdate": "11/18/2026",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$500",
@@ -18645,7 +18645,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "968",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.6713065,
       "lng": -89.6294824
