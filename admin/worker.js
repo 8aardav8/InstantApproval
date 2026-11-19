@@ -1800,7 +1800,7 @@ async function findLoginsRowByIdentity(accessToken, phone, email) {
 // and ID Link (F) populated, everything else left blank since this
 // wasn't a real site login. Written to an explicit row (see below).
 async function appendLoginsRow(accessToken, phone, name, idLink) {
-  // Explicit row, never :append (2026-11-19, lesson L125). :append makes
+  // Explicit row, never :append (2026-11-19, lesson L127). :append makes
   // Google guess where the table starts; on 11/19 it put 3 buyers' phones in
   // 14 junk rows, each 3 columns further right, so they never showed on the
   // Buyers page. Same fix the sign-in write got in August (writeLoginsRow).
@@ -5381,7 +5381,7 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = fa
   if (!row) {
     await appendLoginsRow(accessToken, e164Phone, "", "");
     row = await findLoginsRowByPhone(accessToken, e164Phone);
-    if (!row) throw new Error(`new App: Logins row for ${e164Phone} not found after adding it`); // never report success for a row that isn't there (L125)
+    if (!row) throw new Error(`new App: Logins row for ${e164Phone} not found after adding it`); // never report success for a row that isn't there (L127)
   }
 
   // One read (N, AJ, AD, AF together, via batchGet) to decide what's

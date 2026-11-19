@@ -29,5 +29,5 @@ node tests/reserve-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Reserve/deposit
 node tests/layout-test.mjs >/dev/null 2>&1 || { echo "REFUSING: column-tag layout test failed (TASK-000844). Run: node tests/layout-test.mjs" >&2; exit 1; }
 node tests/repeat-booking-test.mjs >/dev/null 2>&1 || { echo "REFUSING: repeat-booking test failed. Run: node tests/repeat-booking-test.mjs" >&2; exit 1; }
 node tests/trello-shown-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Trello shown write-back test failed. Run: node tests/trello-shown-test.mjs" >&2; exit 1; }
-node tests/no-append-logins-test.mjs >/dev/null 2>&1 || { echo "REFUSING: App: Logins append guard failed (L125). Run: node tests/no-append-logins-test.mjs" >&2; exit 1; }
+node tests/no-append-logins-test.mjs >/dev/null 2>&1 || { echo "REFUSING: App: Logins append guard failed (L127). Run: node tests/no-append-logins-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml

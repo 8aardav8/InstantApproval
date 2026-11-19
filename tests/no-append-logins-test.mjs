@@ -1,4 +1,4 @@
-// Guard (2026-11-19, lesson L125): App: Logins and other tagged tabs are never
+// Guard (2026-11-19, lesson L127): App: Logins and other tagged tabs are never
 // written with values:append. Google guesses where an appended row starts, and
 // on 11/19 it put three buyers' phones 3 columns further right each time, so
 // they never reached the Buyers page. New rows go to an explicit row instead.
