@@ -678,7 +678,12 @@ function toE164(phone) {
 // a 40-page walk plus its ~12 Dropbox/Sheets calls blew the 50 cap for real
 // ("lockett, Malik - 5500.jpeg", Too many subrequests). Callers that do
 // meaningful other work in the same invocation pass a smaller cap.
-async function quoFindContactByPhone(env, e164Phone, maxPages = 40) {
+// 2026-11-19 (Workers Paid, 10,000 subrequests per run): every walk may now cover the whole
+// contact list. Quo had 2,919 contacts (59 pages, ~10 s for a full walk), so the old 40-page
+// stop left ~900 contacts unfindable, and quoUpsertContact would make a duplicate for them.
+// 200 pages = 10,000 contacts.
+const QUO_CONTACT_MAX_PAGES = 200;
+async function quoFindContactByPhone(env, e164Phone, maxPages = QUO_CONTACT_MAX_PAGES) {
   let pageToken;
   for (let page = 0; page < maxPages; page++) {
     const resp = await quoCall(env, "/contacts", { maxResults: "50", pageToken });
@@ -3526,7 +3531,7 @@ async function handleInternalFindQuoContact(request, env) {
     const matches = [];
     let pageToken = url.searchParams.get("pageToken") || undefined;
     let pages = 0;
-    const MAX_PAGES_PER_CALL = 40;
+    const MAX_PAGES_PER_CALL = QUO_CONTACT_MAX_PAGES; // was 40 on the free plan
     do {
       const resp = await quoCall(env, "/contacts", { maxResults: "50", pageToken });
       for (const c of resp.data || []) {
@@ -3882,7 +3887,7 @@ async function cachedOcrIdName(accessToken, fileId) {
   return hit ? (hit[3] || "").trim() : "";
 }
 
-async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename, refuseIfLinkedElsewhere = false, quoMaxPages = 20 }) {
+async function linkIdToBuyer(env, { dropboxPath, buyerPhone, buyerName, idName, autorename, refuseIfLinkedElsewhere = false, quoMaxPages = QUO_CONTACT_MAX_PAGES }) {
   const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
 
   if (refuseIfLinkedElsewhere) {
@@ -5373,7 +5378,7 @@ function deriveAreasFromQuoName(name) {
 // Quo message (handleQuoMessageWebhook) may pass true: admin edits used to
 // stamp it, so the Buyers list showed "last contact by text" at whatever
 // time Aaron last clicked something (2026-11-08, tests/activity-stamp-test.mjs).
-async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = false, quoMaxPages = 40) {
+async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = false, quoMaxPages = QUO_CONTACT_MAX_PAGES) {
   const accessToken = await getSheetsAccessToken(env);
   const nowIso = new Date().toISOString();
 
