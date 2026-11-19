@@ -1,5 +1,5 @@
 import { createReserve } from "./reserve.js";
-import { LC, LL, PC, PL, APPT, TABS, LAST, LOGINS_GID, refreshLayout, colLetter, loginsRowRange, loginsRowsRange, loginsCell, cellOf, loginsCellsData, propsRowsRange, propOf, sysRowsRange, sysColRange, sysCell, sysRow, sysCellsData, sysAppendRow } from "./layout.js";
+import { LC, LL, PC, PL, APPT, TABS, LAST, LOGINS_GID, refreshLayout, colLetter, loginsRowRange, loginsRowsRange, loginsFullWidthRange, loginsCell, cellOf, loginsCellsData, propsRowsRange, propOf, sysRowsRange, sysColRange, sysCell, sysRow, sysCellsData, sysAppendRow } from "./layout.js";
 // Instant-Approval Home Financing -- Admin API + Login-Gate Lead Capture
 // (Cloudflare Worker)
 //
@@ -344,7 +344,7 @@ async function fetchSheetRows(accessToken) {
 // applied to phone/name.
 async function findOrNextLoginsRow(accessToken, email, phone) {
   // Whole rows; cells picked by column tag (TASK-000844).
-  const range = encodeURIComponent(loginsRowsRange(1));
+  const range = encodeURIComponent(loginsFullWidthRange());
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`logins read failed: ${await res.text()}`);
@@ -1805,7 +1805,7 @@ async function appendLoginsRow(accessToken, phone, name, idLink) {
   // 14 junk rows, each 3 columns further right, so they never showed on the
   // Buyers page. Same fix the sign-in write got in August (writeLoginsRow).
   const H = { Authorization: `Bearer ${accessToken}` };
-  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(loginsRowsRange(1))}`, { headers: H });
+  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(loginsFullWidthRange())}`, { headers: H });
   if (!readRes.ok) throw new Error(`logins read before add failed: ${await readRes.text()}`);
   const row = ((await readRes.json()).values || []).length + 1;
   // A Quo name carries area tags ("Velvia Foree ESTL"); the Name column is

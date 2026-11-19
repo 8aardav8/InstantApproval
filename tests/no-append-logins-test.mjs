@@ -17,4 +17,7 @@ const src = readFileSync(new URL('../admin/worker.js', import.meta.url), 'utf8')
 const fn = src.slice(src.indexOf('async function appendLoginsRow'), src.indexOf('async function handleSyncVisitor'));
 if (/:append/.test(fn.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n'))) { fail++; console.log('FAIL appendLoginsRow still uses :append'); } else console.log('PASS appendLoginsRow writes an explicit row');
 if (/if \(!row\) return;\s*\/\/ shouldn't happen/.test(src)) { fail++; console.log('FAIL syncBuyerToSheet still reports success when the new row is missing'); } else console.log('PASS a missing new row is an error');
+if (!/loginsFullWidthRange\(\)/.test(fn)) { fail++; console.log('FAIL appendLoginsRow must find the next row across every column'); } else console.log('PASS appendLoginsRow reads every column for the next row');
+const nx = src.slice(src.indexOf('async function findOrNextLoginsRow'), src.indexOf('isNew: true };'));
+if (!/loginsFullWidthRange\(\)/.test(nx)) { fail++; console.log('FAIL sign-in next row must read every column'); } else console.log('PASS sign-in next row reads every column');
 console.log(fail ? `${fail} FAILED` : 'all passed'); process.exit(fail ? 1 : 0);

@@ -164,6 +164,9 @@ export function _resetLayoutForTest() {
 export const loginsRowRange = (row) => `${TABS.logins}!A${row}:${LAST.logins}${row}`;
 // A1 range for whole App: Logins rows from `fromRow` down (e.g. 1 or 2).
 export const loginsRowsRange = (fromRow = 1) => `${TABS.logins}!A${fromRow}:${LAST.logins}`;
+// Every column, for finding the next empty row: data past the last tagged
+// column still counts as a used row (2026-11-19, lesson L125).
+export const loginsFullWidthRange = () => `${TABS.logins}!A1:ZZ`;
 // One cell's A1 range on App: Logins by tag key (or a raw 0-based index).
 export const loginsCell = (keyOrIdx, row) => {
   const c = typeof keyOrIdx === "number" ? colLetter(keyOrIdx) : LL[keyOrIdx];
