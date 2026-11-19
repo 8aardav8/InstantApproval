@@ -4059,6 +4059,108 @@ async function handleConfirmIdMatch(request, env) {
   }
 }
 
+// Edit an ID file's name and expiration from the ID search panel (Aaron,
+// 2026-11-19: "have a way that I can edit the name and expiration date right
+// from there. If a name or date is updated by me on that id search page, make
+// any resulting updates needed afterwords"). What an edit updates:
+//   1. The Dropbox filename, in the house format "Last, First - 1234 - exp
+//      YYYY-MM-DD.jpg" (the filename is the record for the expiry, id-exp.ts).
+//      The " - 1234" phone part is kept; the file id never changes, so any
+//      ID Link pointing at it stays valid.
+//   2. The ID OCR Cache row's name, so search finds it and linking the file to
+//      a buyer later fills ID Name from it (cachedOcrIdName).
+//   3. If a buyer's ID Link already points at the file: that row's ID Name
+//      and ID Exp, right away (the Mac's ID Exp sync would catch up anyway).
+function parseIdEditName(input) {
+  const raw = String(input || "").replace(/\s+/g, " ").trim();
+  if (!raw || raw.length > 80 || /[\/\\:*?"<>|]/.test(raw)) return null;
+  if (raw.includes(",")) {
+    const [last, ...rest] = raw.split(",");
+    const first = rest.join(" ").trim();
+    return last.trim() ? (first ? `${last.trim()}, ${first}` : last.trim()) : null;
+  }
+  const parts = raw.split(" ");
+  const suffix = parts.length > 2 && /^(?:jr|sr|ii|iii|iv|\d+(?:st|nd|rd|th))\.?$/i.test(parts[parts.length - 1]) ? parts.pop() : "";
+  if (parts.length === 1) return parts[0];
+  const last = parts.pop();
+  return `${last}, ${[...parts, suffix].filter(Boolean).join(" ")}`;
+}
+function editedIdFilename(currentName, nameLastFirst, exp) {
+  const ext = (/\.([A-Za-z0-9]+)$/.exec(currentName) || [, "jpg"])[1];
+  const last4 = (/ - (\d{4})(?= - | ?\.|$)/.exec(currentName) || [])[1];
+  return `${nameLastFirst}${last4 ? ` - ${last4}` : ""}${exp ? ` - exp ${exp}` : ""}.${ext}`;
+}
+async function handleAdminEditIdFile(request, env) {
+  const idToken = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const path = String(body.path || "").trim();
+  const name = parseIdEditName(body.name);
+  const exp = String(body.exp || "").trim().toLowerCase();
+  if (!path.startsWith(`${DROPBOX_IDS_FOLDER}/`) || path.slice(DROPBOX_IDS_FOLDER.length + 1).includes("/")) return jsonResponse({ error: "not a file in the Buyer IDs folder" }, 400);
+  if (!name) return jsonResponse({ error: "enter a name, like \"Jane Smith\" or \"Smith, Jane\"" }, 400);
+  if (exp && exp !== "lifetime" && !/^\d{4}-\d{2}-\d{2}$/.test(exp)) return jsonResponse({ error: "expiration must be a date" }, 400);
+  try {
+    const [dropboxToken, accessToken] = await Promise.all([getDropboxAccessToken(env), getSheetsAccessToken(env)]);
+    const fileId = await getIdFileRef(dropboxToken, path);
+    const currentName = path.split("/").pop();
+    const newName = editedIdFilename(currentName, name, exp);
+    let finalPath = path;
+    if (newName !== currentName) {
+      const moveRes = await fetch("https://api.dropboxapi.com/2/files/move_v2", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${dropboxToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from_path: fileId, to_path: `${DROPBOX_IDS_FOLDER}/${newName}`, autorename: false }),
+      });
+      if (moveRes.status === 409) return jsonResponse({ error: `another file is already named "${newName}"` }, 409);
+      if (!moveRes.ok) throw new Error(`rename failed: ${await moveRes.text()}`);
+      finalPath = (await moveRes.json()).metadata.path_display;
+      const check = await getIdFileRef(dropboxToken, finalPath); // read back
+      if (check !== fileId) throw new Error("renamed file not found afterwards");
+    }
+    // "Last, First" -> "First Last" for the name fields.
+    const personName = name.includes(",") ? `${name.split(",").slice(1).join(",").trim()} ${name.split(",")[0].trim()}`.trim() : name;
+    await setOcrCacheIdName(accessToken, fileId, finalPath.split("/").pop(), personName);
+    // A buyer already linked to this file gets the new name and date too.
+    const linkRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${TABS.logins}!${LL.idLink}:${LL.idLink}`)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!linkRes.ok) throw new Error(`id-link column read failed: ${await linkRes.text()}`);
+    const links = (await linkRes.json()).values || [];
+    const linkedRows = [];
+    for (let i = 1; i < links.length; i++) if (((links[i] || [])[0] || "").trim() === fileId) linkedRows.push(i + 1);
+    if (linkedRows.length) {
+      const data = linkedRows.flatMap((r) => loginsCellsData(r, [["idName", personName], ["idExp", exp]]));
+      const put = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+        method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ valueInputOption: "RAW", data }),
+      });
+      if (!put.ok) throw new Error(`linked buyer update failed: ${await put.text()}`);
+    }
+    return jsonResponse({ ok: true, path: finalPath, name: finalPath.split("/").pop(), idName: personName, exp, linkedRows });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// ID OCR Cache: set one file's name (B) and ID name (D), keeping its OCR text.
+async function setOcrCacheIdName(accessToken, fileId, fileName, idName) {
+  const TAB = "'ID OCR Cache'";
+  const H = { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" };
+  const idRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`${TAB}!A:A`)}`, { headers: H });
+  if (!idRes.ok) throw new Error(`ocr-cache read failed: ${await idRes.text()}`);
+  const col = (await idRes.json()).values || [];
+  let row = 0;
+  for (let i = 1; i < col.length; i++) if (((col[i] || [])[0] || "").trim() === fileId) { row = i + 1; break; }
+  const nowIso = new Date().toISOString();
+  const data = row
+    ? [{ range: `${TAB}!B${row}:B${row}`, values: [[fileName]] }, { range: `${TAB}!D${row}:E${row}`, values: [[idName, nowIso]] }]
+    : [{ range: `${TAB}!A${col.length + 1}:E${col.length + 1}`, values: [[fileId, fileName, "", idName, nowIso]] }];
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, { method: "POST", headers: H, body: JSON.stringify({ valueInputOption: "RAW", data }) });
+  if (!res.ok) throw new Error(`ocr-cache write failed: ${await res.text()}`);
+}
+
 // "Browse existing, unassociated ID photos," added 2026-09-15 per Aaron's
 // direct request -- the buyer detail page's ID lightbox now offers this
 // alongside "Upload new ID," for files already sitting in the Buyer IDs
@@ -4142,8 +4244,10 @@ async function handleAdminBrowseIdPhotos(request, env) {
         if (existingUrl && linkedKeys.has(sharedLinkKey(existingUrl))) continue;
       }
       const cached = ocrByFileId.get(file.id);
-      unassociated.push({ path: file.path_display, name: file.name, ocrText: cached ? cached.ocrText : "", idName: cached ? cached.idName : "" });
+      unassociated.push({ id: file.id, path: file.path_display, name: file.name, date: file.server_modified || file.client_modified || "", ocrText: cached ? cached.ocrText : "", idName: cached ? cached.idName : "" });
     }
+    // Newest first (Aaron, 2026-11-19: "Sort that search page by date most recent first").
+    unassociated.sort((a, b) => String(b.date).localeCompare(String(a.date)));
     return jsonResponse({ files: unassociated });
   } catch (e) {
     console.error("browse-id-photos failed:", String(e));
@@ -5848,6 +5952,9 @@ async function route(request, env, ctx) {
 
   if (url.pathname === "/admin/upload-id" && request.method === "POST") {
     return handleAdminUploadId(request, env);
+  }
+  if (url.pathname === "/admin/edit-id-file" && request.method === "POST") {
+    return handleAdminEditIdFile(request, env);
   }
   if (url.pathname === "/admin/browse-id-photos" && request.method === "GET") {
     return handleAdminBrowseIdPhotos(request, env);

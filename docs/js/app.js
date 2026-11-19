@@ -6454,6 +6454,17 @@ function openIdLightbox(phone, dropboxLink) {
 // request. Thumbnails are lazy -- one /admin/id-photo-preview-link call
 // per row actually rendered, not fetched all up front for the whole
 // folder (see handleAdminBrowseIdPhotos's own comment server-side for why).
+// "Last, First - 1234 - exp 2030-01-02.jpg" -> "2030-01-02" (or "lifetime").
+function idExpOf(fileName) {
+  const m = /[\s_-]exp[\s_-]+(\d{4}-\d{2}-\d{2}|lifetime)/i.exec(fileName || "");
+  return m ? m[1].toLowerCase() : "";
+}
+// Name to pre-fill the edit box: the OCR'd name if any, else the filename's name part.
+function idEditNameOf(f) {
+  if (f.idName) return f.idName;
+  const base = (f.name || "").replace(/\.[A-Za-z0-9]+$/, "").split(" - ")[0];
+  return /^IMG|^\d|^JPEG|^Screenshot/i.test(base) ? "" : base;
+}
 async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) {
   const panel = overlay.querySelector(".id-lightbox-browse-panel");
   const statusEl = overlay.querySelector(".id-lightbox-status");
@@ -6491,6 +6502,15 @@ async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) 
           <img class="id-browse-thumb" alt="${escapeAttr(f.name)}">
           <span class="id-browse-name">${escapeHtml(f.name)}</span>
           ${f.idName ? `<span class="id-browse-ocr-name">OCR: ${escapeHtml(f.idName)}</span>` : ""}
+          ${f.date ? `<span class="id-browse-date">Added ${escapeHtml(formatDateWithYear(f.date))}</span>` : ""}
+          <button type="button" class="id-browse-edit-btn">Edit name / exp</button>
+          <form class="id-browse-edit hidden">
+            <input type="text" class="id-browse-edit-name" placeholder="First Last" value="${escapeAttr(idEditNameOf(f))}" autocomplete="off">
+            <input type="date" class="id-browse-edit-exp" value="${escapeAttr(/^\d{4}-\d{2}-\d{2}$/.test(idExpOf(f.name)) ? idExpOf(f.name) : "")}">
+            <label class="id-browse-edit-life"><input type="checkbox" class="id-browse-edit-lifetime"${idExpOf(f.name) === "lifetime" ? " checked" : ""}> Lifetime</label>
+            <button type="submit" class="btn-outline">Save</button>
+            <span class="id-browse-edit-status"></span>
+          </form>
         </div>
       `).join("") : `<p>No ID photos match "${escapeHtml(searchInput.value)}".</p>`;
       // Lazy per-thumbnail load -- one preview-link request per item
@@ -6510,6 +6530,34 @@ async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) 
         } catch (e) {
           // Best-effort -- a thumbnail that fails to load just stays blank; the filename label is still there to pick by.
         }
+        // Edit name / expiration in place (Aaron, 2026-11-19). The server
+        // renames the Dropbox file, updates the OCR record that search and
+        // linking read, and any buyer already linked to the file.
+        const editBtn = item.querySelector(".id-browse-edit-btn");
+        const form = item.querySelector(".id-browse-edit");
+        editBtn.addEventListener("click", (e) => { e.stopPropagation(); form.classList.toggle("hidden"); item.classList.toggle("editing", !form.classList.contains("hidden")); });
+        form.addEventListener("click", (e) => e.stopPropagation());
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const st = form.querySelector(".id-browse-edit-status");
+          const name = form.querySelector(".id-browse-edit-name").value.trim();
+          const exp = form.querySelector(".id-browse-edit-lifetime").checked ? "lifetime" : form.querySelector(".id-browse-edit-exp").value;
+          st.textContent = "Saving…";
+          try {
+            const r = await fetch(`${ADMIN_API_URL}/admin/edit-id-file`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ path: item.dataset.path, name, exp }),
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) { st.textContent = `Couldn't save: ${(d && (d.error || d.detail)) || r.status}`; return; }
+            const f = files.find((x) => x.path === item.dataset.path);
+            if (f) { f.path = d.path; f.name = d.name; f.idName = d.idName; }
+            renderGrid(currentList());
+          } catch (err) {
+            st.textContent = `Couldn't save: ${err}`;
+          }
+        });
         item.addEventListener("click", async () => {
           if (!confirm(`Link "${item.querySelector(".id-browse-name").textContent}" as ${fullName || phone}'s ID?`)) return;
           statusEl.textContent = "Linking…";
@@ -6533,16 +6581,19 @@ async function loadBrowseIdPhotosPanel(overlay, phone, fullName, closeLightbox) 
       });
     }
 
-    renderGrid(files);
-    searchInput.addEventListener("input", () => {
+    // Newest first (Aaron, 2026-11-19); the server sorts too.
+    files.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    function currentList() {
       const q = searchInput.value.trim().toLowerCase();
-      if (!q) { renderGrid(files); return; }
-      renderGrid(files.filter((f) =>
+      if (!q) return files;
+      return files.filter((f) =>
         (f.name || "").toLowerCase().includes(q) ||
         (f.idName || "").toLowerCase().includes(q) ||
         (f.ocrText || "").toLowerCase().includes(q)
-      ));
-    });
+      );
+    }
+    renderGrid(files);
+    searchInput.addEventListener("input", () => renderGrid(currentList()));
   } catch (err) {
     panel.innerHTML = `<p>Couldn't load: ${err}</p>`;
   }

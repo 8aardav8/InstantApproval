@@ -1067,6 +1067,14 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .id-browse-item:hover .id-browse-thumb { border-color: var(--blue); }
 .id-browse-name { display: block; font-size: 11px; color: var(--gray-text, #6b7280); margin-top: 4px; word-break: break-word; }
 .id-browse-ocr-name { display: block; font-size: 10px; color: var(--blue); margin-top: 2px; word-break: break-word; }
+.id-browse-date { display: block; font-size: 10px; color: var(--gray-text, #6b7280); margin-top: 2px; }
+.id-browse-edit-btn { margin-top: 4px; font-size: 11px; background: none; border: none; color: var(--blue); text-decoration: underline; cursor: pointer; padding: 2px; }
+.id-browse-edit { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; text-align: left; cursor: default; }
+.id-browse-edit.hidden { display: none; }
+.id-browse-item.editing { grid-column: 1 / -1; max-width: 320px; }
+.id-browse-edit input[type="text"], .id-browse-edit input[type="date"] { width: 100%; box-sizing: border-box; font-size: 16px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px; }
+.id-browse-edit-life { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+.id-browse-edit-status { font-size: 11px; color: var(--gray-text, #6b7280); word-break: break-word; }
 /* Side by side, added 2026-09-12 per Aaron's direct request (were stacked
    above/below each other before). */
 .buyer-quo-links { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }

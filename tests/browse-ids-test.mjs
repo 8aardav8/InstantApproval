@@ -27,7 +27,7 @@ const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });
 const CAP = 50; // Workers free plan: subrequests per invocation
 
 function world({ linked = 55, total = 120, legacyRefs = 0 } = {}) {
-  const files = Array.from({ length: total }, (_, i) => ({ '.tag': 'file', id: `id:file${i}`, name: `Example, Pat${i} - 0101.jpg`, path_display: `/ids/Example, Pat${i} - 0101.jpg` }));
+  const files = Array.from({ length: total }, (_, i) => ({ '.tag': 'file', id: `id:file${i}`, name: `Example, Pat${i} - 0101.jpg`, path_display: `/ids/Example, Pat${i} - 0101.jpg`, server_modified: new Date(Date.UTC(2026, 0, 1) + ((i * 37) % total) * 86400000).toISOString() }));
   const refs = files.slice(0, linked).map((f) => [f.id]);
   for (let i = 0; i < legacyRefs; i++) refs.push([`https://links.example.com/scl/fi/legacy${i}/x.jpg?rlkey=fake`]);
   const w = { calls: 0, sharedLinkCalls: 0 };
@@ -68,6 +68,8 @@ async function browse(w) {
   check('lists exactly the 65 unlinked files', (r.body.files || []).length === 65, `got ${(r.body.files || []).length}`);
   check('header cell is not mistaken for an old share link', w.sharedLinkCalls === 0, `${w.sharedLinkCalls} share-link calls`);
   check(`stays under the ${CAP}-call cap`, w.calls < CAP, `${w.calls} calls`);
+  const dates = (r.body.files || []).map((f) => f.date);
+  check('newest first (2026-11-19)', dates.length > 1 && dates.every((d, i) => i === 0 || dates[i - 1] >= d), dates.slice(0, 4).join(', '));
 }
 {
   const w = world({ total: 300, linked: 100 });
@@ -103,6 +105,60 @@ async function browse(w) {
   check('manual link succeeds', res.status === 200 && body.ok, `status ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
   check('manual link fills ID Name from the OCR cache', writes.some((x) => x.includes('Pat Example') && /AG|ID Name/.test(x)), writes.join(' || ').slice(0, 300));
   check('renamed without the area tag', (body.renamedTo || '').endsWith('/Example, Pat - 0123.jpg'), body.renamedTo);
+}
+
+// Edit name / expiration from the ID panel (2026-11-19).
+const IDS = /const DROPBOX_IDS_FOLDER = "([^"]+)"/.exec(src)[1];
+function editWorld({ linkedTo = null, conflict = false } = {}) {
+  const w = world(); const base = w.fetch; w.moves = []; w.writes = [];
+  w.fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    if (url.hostname === 'api.dropboxapi.com' && url.pathname === '/2/files/get_metadata') return json({ id: 'id:file9' });
+    if (url.hostname === 'api.dropboxapi.com' && url.pathname === '/2/files/move_v2') {
+      if (conflict) return json({ error_summary: 'to/conflict/file/' }, 409);
+      const b = JSON.parse(init.body); w.moves.push(b); return json({ metadata: { path_display: b.to_path } });
+    }
+    if (url.hostname === 'sheets.googleapis.com') {
+      const range = decodeURIComponent(url.pathname.split('/values/')[1] || '');
+      if (range === "'ID OCR Cache'!A:A") return json({ values: [['File ID'], ['id:file3'], ['id:file9']] });
+      if (range === 'App: Logins!F:F') return json({ values: [['ID Link'], ['id:x'], [linkedTo || 'id:y']] });
+      if (url.pathname.endsWith('/values:batchUpdate')) { w.writes.push(JSON.parse(init.body).data); return json({}); }
+    }
+    return base(input, init);
+  };
+  return w;
+}
+async function edit(w, body) {
+  globalThis.fetch = w.fetch;
+  const res = await worker.fetch(new Request('https://worker.example.com/admin/edit-id-file', { method: 'POST', headers: { Authorization: 'Bearer fake', 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), w.env);
+  return { status: res.status, body: await res.json().catch(() => ({})) };
+}
+{
+  const w = editWorld();
+  const r = await edit(w, { path: `${IDS}/IMG_4411 - 0123.jpg`, name: 'Pat Q Example', exp: '2030-05-07' });
+  check('edit succeeds', r.status === 200 && r.body.ok, JSON.stringify(r.body).slice(0, 200));
+  check('file renamed to "Last, First - 1234 - exp date"', w.moves[0] && w.moves[0].to_path === `${IDS}/Example, Pat Q - 0123 - exp 2030-05-07.jpg`, JSON.stringify(w.moves[0]));
+  check('renamed by file id (stable)', w.moves[0] && w.moves[0].from_path === 'id:file9');
+  const ocr = (w.writes[0] || []).map((d) => `${d.range}=${JSON.stringify(d.values)}`).join(' ');
+  check('OCR record name updated in its own row', /'ID OCR Cache'!D3:E3=\[\["Pat Q Example"/.test(ocr), ocr);
+  check('no buyer linked: no buyer row written', w.writes.length === 1 && r.body.linkedRows.length === 0, JSON.stringify(w.writes).slice(0, 200));
+}
+{
+  const w = editWorld({ linkedTo: 'id:file9' });
+  const r = await edit(w, { path: `${IDS}/Example, P - 0123.jpg`, name: 'Example, Pat', exp: 'lifetime' });
+  const buyer = JSON.stringify(w.writes[1] || []);
+  check('linked buyer gets the new ID Name and ID Exp', r.body.linkedRows?.[0] === 3 && buyer.includes('"Pat Example"') && buyer.includes('"lifetime"'), buyer.slice(0, 300));
+}
+{
+  const r1 = await edit(editWorld(), { path: '/Other/folder/x.jpg', name: 'Pat Example', exp: '' });
+  check('refuses a file outside Buyer IDs', r1.status === 400);
+  const r2 = await edit(editWorld(), { path: `${IDS}/x.jpg`, name: 'a/b', exp: '' });
+  check('refuses a name with a slash', r2.status === 400);
+  const r3 = await edit(editWorld(), { path: `${IDS}/x.jpg`, name: 'Pat Example', exp: '05/07/2030' });
+  check('refuses a non-date expiry', r3.status === 400);
+  const r4 = await edit(editWorld({ conflict: true }), { path: `${IDS}/x.jpg`, name: 'Pat Example', exp: '' });
+  check('name already taken: clear message, nothing else written', r4.status === 409 && /already named/.test(r4.body.error));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
