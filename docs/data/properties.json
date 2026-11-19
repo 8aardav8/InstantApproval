@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T22:42:16.957850+00:00",
+  "generatedAt": "2026-11-19T22:43:03.933896+00:00",
   "listings": [
     {
       "id": "5-denovion-ct-cahokia-il-62-206",
@@ -30214,7 +30214,7 @@
       "id": "2113-w-howett-st-peoria-il-61605",
       "address": "2113 W Howett St, Peoria, IL 61605",
       "onMarketDate": "9/24/2026",
-      "lastUpdate": "11/4/2026",
+      "lastUpdate": "11/18/2026",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$395",
@@ -30222,7 +30222,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "793",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 40.6824629,
       "lng": -89.6267154
