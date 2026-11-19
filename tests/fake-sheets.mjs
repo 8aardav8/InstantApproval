@@ -61,7 +61,7 @@ export function createFakeSheets(tabs) {
     const vi = path.indexOf("/values/");
     if (vi >= 0) {
       let a1 = decodeURIComponent(path.slice(vi + 8));
-      if (a1.endsWith(":append")) { append(a1.slice(0, -7), JSON.parse(init.body).values); return json({}); }
+      if (a1.endsWith(":append")) { append(a1.slice(0, -7), JSON.parse(init.body).values); const w = writes[writes.length - 1]; return json({ updates: { updatedRange: w.range } }); }
       if (init.method === "PUT") { write(a1, JSON.parse(init.body).values); return json({}); }
       return json({ values: read(a1) });
     }

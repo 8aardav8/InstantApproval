@@ -946,6 +946,22 @@ async function withRetry(fn, attempts = 3, delaysMs = [300, 900]) {
 // the real "App: Logins" periodically (daily-health-check.ts's own
 // reconciliation pass, see agent-system SESSION_LOG.md) rather than this
 // endpoint trying to be clever about matching/deduping itself.
+// Did a Gate Capture Log append land where it should? null = fine.
+function gateAppendProblem(ok, body, status) {
+  if (!ok) return `Google answered ${status}`;
+  const where = body && body.updates && body.updates.updatedRange;
+  if (!where) return "Google didn't say where it wrote the row";
+  const col = (/!([A-Z]+)\d+/.exec(where) || [])[1];
+  return col === "A" ? null : `the row landed at ${where}, not in column A`;
+}
+async function alertGateCaptureProblem(env, problem, { name, email, phone }) {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  const text = `⚠️ A site sign-up may not have saved to the Gate Capture Log (${problem}).\nName: ${name || "-"}\nPhone: ${phone || "-"}\nEmail: ${email || "-"}\nCheck the bottom of that tab and add it by hand if it's missing.`;
+  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
+  }).catch(() => {});
+}
 async function handleGateCapture(request, env) {
   let body;
   try {
@@ -970,16 +986,22 @@ async function handleGateCapture(request, env) {
       "",
     ];
     // Found by gid, columns by tag (TASK-000867); the row is laid out at the tagged positions.
+    // :append stays here on purpose: it's atomic, so two sign-ups at the same
+    // moment can't overwrite each other. Its risk is Google guessing the wrong
+    // start column (L127), so the response's own updatedRange is checked
+    // (no extra read): it must start in column A.
     const range = encodeURIComponent(sysRowsRange("gateLog"));
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({ values: [sysAppendRow("gateLog", row)] }),
     });
+    const problem = gateAppendProblem(res.ok, res.ok ? await res.json().catch(() => null) : null, res.status);
+    if (problem) await alertGateCaptureProblem(env, problem, { name, email, phone });
   } catch (e) {
-    // Swallowed deliberately -- a beacon caller never reads the response,
-    // and this is itself the last-resort safety net; there's nothing
-    // further downstream to hand a failure to.
+    // The beacon caller never reads the response; tell Aaron instead, so a
+    // lead is never lost silently (principle 74).
+    await alertGateCaptureProblem(env, String(e).slice(0, 200), { name, email, phone }).catch(() => {});
   }
   // 204, not jsonResponse() -- sendBeacon discards the response body/status
   // either way, and this deliberately skips the CORS-rewrite wrapper

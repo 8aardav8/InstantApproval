@@ -30,5 +30,6 @@ node tests/layout-test.mjs >/dev/null 2>&1 || { echo "REFUSING: column-tag layou
 node tests/repeat-booking-test.mjs >/dev/null 2>&1 || { echo "REFUSING: repeat-booking test failed. Run: node tests/repeat-booking-test.mjs" >&2; exit 1; }
 node tests/trello-shown-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Trello shown write-back test failed. Run: node tests/trello-shown-test.mjs" >&2; exit 1; }
 node tests/no-append-logins-test.mjs >/dev/null 2>&1 || { echo "REFUSING: App: Logins append guard failed (L127). Run: node tests/no-append-logins-test.mjs" >&2; exit 1; }
+node tests/gate-capture-test.mjs >/dev/null 2>&1 || { echo "REFUSING: gate capture landing check failed (L127). Run: node tests/gate-capture-test.mjs" >&2; exit 1; }
 node tests/quo-lookup-cap-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Quo lookup cap test failed (lookups must reach every contact). Run: node tests/quo-lookup-cap-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml
