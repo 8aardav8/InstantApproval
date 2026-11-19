@@ -1798,24 +1798,25 @@ async function findLoginsRowByIdentity(accessToken, phone, email) {
 // (the common case now that suggested-ID-matches is scoped to the full
 // buyer list, not just existing Sheet rows) -- only Phone (D), Name (E),
 // and ID Link (F) populated, everything else left blank since this
-// wasn't a real site login. INSERT_ROWS via :append, not values.update
-// with a guessed row number -- avoids a race against a concurrent append.
+// wasn't a real site login. Written to an explicit row (see below).
 async function appendLoginsRow(accessToken, phone, name, idLink) {
-  // Full-width row with each value at its tagged column (TASK-000844).
-  const rowVals = Array(Math.max(...Object.values(LC), ...APPT.cols) + 1).fill("");
-  rowVals[LC.phone] = phone;
+  // Explicit row, never :append (2026-11-19, lesson L125). :append makes
+  // Google guess where the table starts; on 11/19 it put 3 buyers' phones in
+  // 14 junk rows, each 3 columns further right, so they never showed on the
+  // Buyers page. Same fix the sign-in write got in August (writeLoginsRow).
+  const H = { Authorization: `Bearer ${accessToken}` };
+  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(loginsRowsRange(1))}`, { headers: H });
+  if (!readRes.ok) throw new Error(`logins read before add failed: ${await readRes.text()}`);
+  const row = ((await readRes.json()).values || []).length + 1;
   // A Quo name carries area tags ("Velvia Foree ESTL"); the Name column is
   // the person's name (2026-11-08).
-  rowVals[LC.name] = personNameFromQuoName(name);
-  rowVals[LC.idLink] = idLink;
-  const span = `${TABS.logins}!A:${LAST.logins}`;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(span)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
-  const res = await fetch(url, {
+  const data = loginsCellsData(row, [["phone", phone], ["name", personNameFromQuoName(name)], ["idLink", idLink]]);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: span, values: [rowVals] }),
+    headers: { ...H, "Content-Type": "application/json" },
+    body: JSON.stringify({ valueInputOption: "RAW", data }),
   });
-  if (!res.ok) throw new Error(`logins row append failed: ${await res.text()}`);
+  if (!res.ok) throw new Error(`logins row add failed: ${await res.text()}`);
 }
 
 async function handleSyncVisitor(request, env) {
@@ -5380,7 +5381,7 @@ async function syncBuyerToSheet(env, e164Phone, areasIfBlank, touchActivity = fa
   if (!row) {
     await appendLoginsRow(accessToken, e164Phone, "", "");
     row = await findLoginsRowByPhone(accessToken, e164Phone);
-    if (!row) return; // shouldn't happen -- just appended it moments ago
+    if (!row) throw new Error(`new App: Logins row for ${e164Phone} not found after adding it`); // never report success for a row that isn't there (L125)
   }
 
   // One read (N, AJ, AD, AF together, via batchGet) to decide what's
