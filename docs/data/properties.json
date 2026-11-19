@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-19T22:35:38.043369+00:00",
+  "generatedAt": "2026-11-19T22:35:56.792318+00:00",
   "listings": [
+    {
+      "id": "5-denovion-ct-cahokia-il-62-206",
+      "address": "5 Denovion Ct. Cahokia IL 62,206",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1MMl-R3lbpEqcL-kDd4Oz_oOzj2bT3EYS?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": 0,
+      "lat": 38.5670718,
+      "lng": -90.1973506
+    },
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
       "address": "1613 Parklane Dr Cahokia IL 62,206",
