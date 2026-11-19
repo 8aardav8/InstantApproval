@@ -76,7 +76,7 @@ function world({ logins, telegramDown = false, kvDown = false } = {}) {
       const before = w.sheet.writes.length;
       const res = await w.sheet.handle(url, init);
       for (const x of w.sheet.writes.slice(before)) {
-        if (!/^Login Codes!/.test(x.range)) throw new Error(`test: unexpected Sheet write to ${x.range}`);
+        if (!/^'?Login Codes'?!/.test(x.range)) throw new Error(`test: unexpected Sheet write to ${x.range}`);
         w.sheetWrites.push(x.range);
       }
       return res;

@@ -114,6 +114,9 @@ export async function refreshLayout({ sheetId, getToken, alert }, now = Date.now
     for (const s of info.sheets || []) titles[s.properties.sheetId] = s.properties.title;
     const res = resolveLayout(meta.matchedDeveloperMetadata || [], titles);
     apply(res, titles);
+    const sys = resolveSys(meta.matchedDeveloperMetadata || [], titles); // TASK-000867
+    applySys(sys);
+    res.problems.push(...sys.problems);
     lastOk = now;
     if (res.problems.length) await maybeAlert(alert, now, `Sheet column tags need attention (site still running on last known positions for these): ${res.problems.join("; ")}. Usually a tagged column was deleted or copied. Tell Claude Code (TASK-000844).`);
   } catch (e) {
@@ -133,6 +136,7 @@ export function _resetLayoutForTest() {
   Object.assign(LC, LOGINS_DEFAULT); Object.assign(LL, letters(LOGINS_DEFAULT));
   Object.assign(PC, PROPS_DEFAULT); Object.assign(PL, letters(PROPS_DEFAULT));
   APPT.cols = [...APPOINTMENTS_DEFAULT]; TABS.logins = "App: Logins"; TABS.props = "PROPERTIES";
+  if (typeof _resetSysForTest === "function") _resetSysForTest();
   LAST.logins = colLetter(Math.max(...Object.values(LC), ...APPT.cols)); LAST.props = colLetter(Math.max(...Object.values(PC)));
 }
 
@@ -154,3 +158,63 @@ export const loginsCellsData = (row, pairs) => pairs.map(([k, v]) => ({ range: l
 // Whole PROPERTIES rows from `fromRow` down, A through the rightmost tagged column.
 export const propsRowsRange = (fromRow = 1) => `${TABS.props}!A${fromRow}:${LAST.props}`;
 export const propOf = (rowArr, key) => ((rowArr || [])[PC[key]] ?? "");
+
+// ---- system-written tabs (TASK-000867, RULE-000155) ----
+// Only the system writes these, but they get the same protection: found by
+// gid, columns by tag (iah.code.* / iah.pphone.* / iah.pemail.* / iah.gate.*
+// tagged 2026-11-19; iah.tpl.* since 2026-11-13). Code keeps working with
+// rows in the canonical key order below; sysRow() / sysCellsData() /
+// sysAppendRow() translate to wherever each tagged column sits now.
+export const SYS = {
+  loginCodes: { gid: 205900326, prefix: "iah.code.", title: "Login Codes", keys: ["phone", "codeHash", "expiresAt", "attempts", "lastSentAt", "sendsInWindow", "windowStart"] },
+  pendingPhone: { gid: 572834982, prefix: "iah.pphone.", title: "Pending Phone Changes", keys: ["email", "oldPhone", "newPhone", "requestedAt", "expiresAt", "status", "targetRow"] },
+  pendingEmail: { gid: 726319051, prefix: "iah.pemail.", title: "Pending Email Changes", keys: ["oldEmail", "newEmail", "phone", "requestedAt", "expiresAt", "status", "targetRow"] },
+  gateLog: { gid: 1768423850, prefix: "iah.gate.", title: "Gate Capture Log", keys: ["timestamp", "name", "email", "phone", "agreed", "userAgent", "reconciled"] },
+  templates: { gid: 870288652, prefix: "iah.tpl.", title: "Text Templates", keys: ["key", "label", "text", "mergeFields", "lastUpdated"] },
+};
+const SYS_DEFAULT_TITLES = Object.fromEntries(Object.entries(SYS).map(([t, d]) => [t, d.title]));
+for (const d of Object.values(SYS)) d.pos = Object.fromEntries(d.keys.map((k, i) => [k, i]));
+
+// Pure: positions for each system tab from the metadata; missing or doubled
+// tags keep the previous position and are reported.
+export function resolveSys(matched, titlesByGid) {
+  const problems = []; const out = {};
+  for (const [t, d] of Object.entries(SYS)) {
+    const hits = {};
+    for (const m of matched) {
+      const md = m.developerMetadata || m; const r = md.location && md.location.dimensionRange;
+      if (!r || r.sheetId !== d.gid || !md.metadataKey || !md.metadataKey.startsWith(d.prefix)) continue;
+      (hits[md.metadataKey.slice(d.prefix.length)] = hits[md.metadataKey.slice(d.prefix.length)] || []).push(r.startIndex);
+    }
+    const pos = {};
+    for (const k of d.keys) {
+      const h = hits[k] || [];
+      if (h.length === 1) pos[k] = h[0]; else { pos[k] = d.pos[k]; problems.push(`${t}.${k} tag found ${h.length} times`); }
+    }
+    out[t] = { pos, title: titlesByGid[d.gid] || null };
+    if (!titlesByGid[d.gid]) problems.push(`${d.title} tab (gid ${d.gid}) not found`);
+  }
+  return { sys: out, problems };
+}
+export function applySys(res) {
+  for (const [t, v] of Object.entries(res.sys)) { Object.assign(SYS[t].pos, v.pos); if (v.title) SYS[t].title = v.title; }
+}
+export function _resetSysForTest() {
+  for (const [t, d] of Object.entries(SYS)) { d.title = SYS_DEFAULT_TITLES[t]; d.pos = Object.fromEntries(d.keys.map((k, i) => [k, i])); }
+}
+
+const sysQ = (t) => `'${SYS[t].title.replace(/'/g, "''")}'`;
+const sysLastIdx = (t) => Math.max(...Object.values(SYS[t].pos));
+// Whole rows from `fromRow` down, column A through the rightmost tagged column.
+export const sysRowsRange = (t, fromRow = 1) => `${sysQ(t)}!A${fromRow}:${colLetter(sysLastIdx(t))}`;
+// One whole column by key (e.g. the Key column of Text Templates).
+export const sysColRange = (t, key) => { const c = colLetter(SYS[t].pos[key]); return `${sysQ(t)}!${c}:${c}`; };
+// One cell by key.
+export const sysCell = (t, key, row) => { const c = colLetter(SYS[t].pos[key]); return `${sysQ(t)}!${c}${row}:${c}${row}`; };
+// A row read from column A, as values in the canonical key order.
+export const sysRow = (t, arr) => SYS[t].keys.map((k) => ((arr || [])[SYS[t].pos[k]] ?? ""));
+// values:batchUpdate data writing canonical-order values into a row. Only the
+// slots given are written, like the old A:G PUT with a shorter array.
+export const sysCellsData = (t, row, values) => values.map((v, i) => ({ range: sysCell(t, SYS[t].keys[i], row), values: [[v ?? ""]] }));
+// A canonical-order row laid out at the tagged positions, for :append.
+export const sysAppendRow = (t, values) => { const out = Array(sysLastIdx(t) + 1).fill(""); SYS[t].keys.forEach((k, i) => { out[SYS[t].pos[k]] = values[i] ?? ""; }); return out; };

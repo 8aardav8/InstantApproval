@@ -1,5 +1,5 @@
 import { createReserve } from "./reserve.js";
-import { LC, LL, PC, PL, APPT, TABS, LAST, LOGINS_GID, refreshLayout, colLetter, loginsRowRange, loginsRowsRange, loginsCell, cellOf, loginsCellsData, propsRowsRange, propOf } from "./layout.js";
+import { LC, LL, PC, PL, APPT, TABS, LAST, LOGINS_GID, refreshLayout, colLetter, loginsRowRange, loginsRowsRange, loginsCell, cellOf, loginsCellsData, propsRowsRange, propOf, sysRowsRange, sysColRange, sysCell, sysRow, sysCellsData, sysAppendRow } from "./layout.js";
 // Instant-Approval Home Financing -- Admin API + Login-Gate Lead Capture
 // (Cloudflare Worker)
 //
@@ -143,7 +143,7 @@ const SHEET_ID = "1qDdTcKg2-myJVZkazVOneAAjMlFlMaGKKXlRK518WMk";
 // working against both. Used only by handleQuoTriageWebhook's "Pending
 // Follow-ups" tab.
 const DB_SHEET_ID = "1iFhl222SMp9S2tBuFzroLJWK7z5KU21kpjKbtjU3RJo";
-const PENDING_PHONE_TAB = "Pending Phone Changes";
+// Pending Phone Changes: found by gid, columns by tag (layout.js SYS.pendingPhone, TASK-000867).
 
 // Added 2026-09-02, Aaron's direct request, closing a real gap: there was no
 // way for a visitor to ever correct their own phone number (writeLoginsRow's
@@ -165,7 +165,7 @@ const PHONE_CHANGE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour, Aaron's explicit choi
 // visitor's device-local `iah_gate_email` no longer resolves via /my-info
 // (a 404), which the frontend treats as "re-pass the gate," self-healing
 // without any cross-device state sync.
-const PENDING_EMAIL_TAB = "Pending Email Changes";
+// Pending Email Changes: found by gid, columns by tag (layout.js SYS.pendingEmail, TASK-000867).
 const EMAIL_CHANGE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour, same window as phone changes
 
 // Quo (OpenPhone) -- same base URL/auth shape as tools/quo.mjs on the
@@ -964,11 +964,12 @@ async function handleGateCapture(request, env) {
       request.headers.get("User-Agent") || "",
       "",
     ];
-    const range = encodeURIComponent("Gate Capture Log!A:G");
+    // Found by gid, columns by tag (TASK-000867); the row is laid out at the tagged positions.
+    const range = encodeURIComponent(sysRowsRange("gateLog"));
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ values: [row] }),
+      body: JSON.stringify({ values: [sysAppendRow("gateLog", row)] }),
     });
   } catch (e) {
     // Swallowed deliberately -- a beacon caller never reads the response,
@@ -2519,7 +2520,7 @@ async function handleAdminSetIdName(request, env) {
 // comment for the merge step). Columns: Key (stable id, not editable
 // here), Label, Template Text (the editable field), Available Merge
 // Fields (documentation only, not enforced), Last Updated.
-const TEXT_TEMPLATES_TAB = "Text Templates";
+// Text Templates: found by gid, columns by tag (layout.js SYS.templates, TASK-000867).
 
 async function handleAdminGetTextTemplates(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
@@ -2530,11 +2531,7 @@ async function handleAdminGetTextTemplates(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const range = encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!A:E`);
-    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!res.ok) throw new Error(`text-templates read failed: ${await res.text()}`);
-    const data = await res.json();
-    const rows = (data.values || []).slice(1); // skip header row
+    const rows = (await readSysRows(accessToken, "templates", "text-templates")).slice(1); // skip header row; canonical order (TASK-000867)
     const templates = rows
       .filter((row) => (row[0] || "").trim())
       .map((row) => ({
@@ -2574,7 +2571,7 @@ async function handleAdminSetTextTemplate(request, env) {
 
   try {
     const accessToken = await getSheetsAccessToken(env);
-    const keyRange = encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!A:A`);
+    const keyRange = encodeURIComponent(sysColRange("templates", "key"));
     const keyRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${keyRange}`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!keyRes.ok) throw new Error(`text-templates key read failed: ${await keyRes.text()}`);
     const keyCol = (await keyRes.json()).values || [];
@@ -2592,25 +2589,27 @@ async function handleAdminSetTextTemplate(request, env) {
     // which JSON.stringify turns into `null`) -- would have silently
     // wiped that documentation column on every save.
     const nowIso = new Date().toISOString();
+    const tText = sysCell("templates", "text", row), tUpdated = sysCell("templates", "lastUpdated", row); // by tag (TASK-000867)
     const [textRes, updatedRes] = await Promise.all([
-      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!C${row}:C${row}`)}?valueInputOption=RAW`, {
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tText)}?valueInputOption=RAW`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `'${TEXT_TEMPLATES_TAB}'!C${row}:C${row}`, values: [[text]] }),
+        body: JSON.stringify({ range: tText, values: [[text]] }),
       }),
-      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!E${row}:E${row}`)}?valueInputOption=RAW`, {
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tUpdated)}?valueInputOption=RAW`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `'${TEXT_TEMPLATES_TAB}'!E${row}:E${row}`, values: [[nowIso]] }),
+        body: JSON.stringify({ range: tUpdated, values: [[nowIso]] }),
       }),
     ]);
     if (!textRes.ok) throw new Error(`text-templates write failed: ${await textRes.text()}`);
     if (!updatedRes.ok) throw new Error(`text-templates timestamp write failed: ${await updatedRes.text()}`);
     if (label !== null) {
-      const labelRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(`'${TEXT_TEMPLATES_TAB}'!B${row}:B${row}`)}?valueInputOption=RAW`, {
+      const tLabel = sysCell("templates", "label", row);
+      const labelRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tLabel)}?valueInputOption=RAW`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `'${TEXT_TEMPLATES_TAB}'!B${row}:B${row}`, values: [[label]] }),
+        body: JSON.stringify({ range: tLabel, values: [[label]] }),
       });
       if (!labelRes.ok) throw new Error(`text-templates name write failed: ${await labelRes.text()}`);
     }
@@ -4769,7 +4768,8 @@ async function handleUpdateAppointmentDate(request, env) {
 // OVERWRITES the request's phone with the verified one -- so the handlers
 // stay unchanged and phone-first lookup (findLoginsRowByIdentity /
 // findOrNextLoginsRow) can only ever land on the caller's own row.
-const LOGIN_CODES_TAB = "Login Codes"; // Phone | Code Hash | Expires At | Attempts | Last Sent At | Sends In Window | Window Start
+// Login Codes tab (found by gid, columns by tag: layout.js SYS.loginCodes, TASK-000867):
+// Phone | Code Hash | Expires At | Attempts | Last Sent At | Sends In Window | Window Start
 const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
 const LOGIN_CODE_MAX_ATTEMPTS = 5;
 const LOGIN_CODE_RESEND_GAP_MS = 30 * 1000;
@@ -4823,11 +4823,29 @@ async function verifySessionToken(env, token) {
   }
 }
 
+// TASK-000867: system tabs are read by tag (sysRow puts each row in the
+// canonical column order) and written cell by cell to the tagged columns.
+async function writeSysCells(accessToken, tab, row, values, what) {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ valueInputOption: "RAW", data: sysCellsData(tab, row, values) }),
+  });
+  if (!res.ok) throw new Error(`${what} write failed: ${await res.text()}`);
+}
+async function readSysRows(accessToken, tab, what) {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sysRowsRange(tab))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`${what} read failed: ${await res.text()}`);
+  return ((await res.json()).values || []).map((r) => sysRow(tab, r));
+}
+async function nextSysRow(accessToken, tab, key, what) {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sysColRange(tab, key))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`${what} read failed: ${await res.text()}`);
+  return ((await res.json()).values || []).length + 1;
+}
+
 async function readLoginCodeRow(accessToken, e164) {
-  const range = encodeURIComponent(`${LOGIN_CODES_TAB}!A:G`);
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`login-codes read failed: ${await res.text()}`);
-  const rows = (await res.json()).values || [];
+  const rows = await readSysRows(accessToken, "loginCodes", "login-codes");
   for (let i = 1; i < rows.length; i++) {
     if ((rows[i][0] || "").trim() === e164) return { row: i + 1, values: rows[i], nextRow: rows.length + 1 };
   }
@@ -4835,13 +4853,7 @@ async function readLoginCodeRow(accessToken, e164) {
 }
 
 async function writeLoginCodeRow(accessToken, row, values) {
-  const a1 = `${LOGIN_CODES_TAB}!A${row}:G${row}`;
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(a1)}?valueInputOption=RAW`, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: a1, values: [values] }),
-  });
-  if (!res.ok) throw new Error(`login-codes write failed: ${await res.text()}`);
+  await writeSysCells(accessToken, "loginCodes", row, values, "login-codes");
 }
 
 async function findLoginsPhoneByEmail(accessToken, email) {
@@ -4990,12 +5002,7 @@ async function requireVisitorSession(request, env) {
 // Reads/writes the Pending Phone Changes tab. Row shape: Email, Old Phone,
 // New Phone, Requested At, Expires At, Status, Target Row.
 async function findPendingPhoneChangeByEmail(accessToken, email) {
-  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A:G`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`pending-phone read failed: ${await res.text()}`);
-  const data = await res.json();
-  const rows = data.values || [];
+  const rows = await readSysRows(accessToken, "pendingPhone", "pending-phone");
   const target = email.trim().toLowerCase();
   // Last match wins if somehow more than one exists for the same email --
   // shouldn't happen given the upsert-in-place logic below, but don't crash
@@ -5008,12 +5015,7 @@ async function findPendingPhoneChangeByEmail(accessToken, email) {
 }
 
 async function findPendingPhoneChangeByNewPhone(accessToken, e164Phone) {
-  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A:G`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`pending-phone read failed: ${await res.text()}`);
-  const data = await res.json();
-  const rows = data.values || [];
+  const rows = await readSysRows(accessToken, "pendingPhone", "pending-phone");
   for (let i = rows.length - 1; i >= 1; i--) {
     const [, , newPhone, , expiresAt, status] = rows[i];
     if ((newPhone || "").trim() === e164Phone && status === "Pending" && expiresAt && Date.parse(expiresAt) > Date.now()) {
@@ -5024,23 +5026,11 @@ async function findPendingPhoneChangeByNewPhone(accessToken, e164Phone) {
 }
 
 async function writePendingPhoneChangeRow(accessToken, row, values) {
-  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A${row}:G${row}`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${PENDING_PHONE_TAB}!A${row}:G${row}`, values: [values] }),
-  });
-  if (!res.ok) throw new Error(`pending-phone write failed: ${await res.text()}`);
+  await writeSysCells(accessToken, "pendingPhone", row, values, "pending-phone");
 }
 
 async function nextPendingPhoneChangeRow(accessToken) {
-  const range = encodeURIComponent(`${PENDING_PHONE_TAB}!A:A`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`pending-phone read failed: ${await res.text()}`);
-  const data = await res.json();
-  return (data.values || []).length + 1;
+  return nextSysRow(accessToken, "pendingPhone", "email", "pending-phone");
 }
 
 // ---------- Pending Email Changes -- mirrors the 4 helpers above exactly,
@@ -5050,12 +5040,7 @@ async function nextPendingPhoneChangeRow(accessToken) {
 // new email itself can't receive a text). Columns: Old Email | New Email |
 // Phone | Requested At | Expires At | Status | Target Row.
 async function findPendingEmailChangeByOldEmail(accessToken, email) {
-  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A:G`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`pending-email read failed: ${await res.text()}`);
-  const data = await res.json();
-  const rows = data.values || [];
+  const rows = await readSysRows(accessToken, "pendingEmail", "pending-email");
   const target = email.trim().toLowerCase();
   let found = null;
   for (let i = 1; i < rows.length; i++) {
@@ -5065,12 +5050,7 @@ async function findPendingEmailChangeByOldEmail(accessToken, email) {
 }
 
 async function findPendingEmailChangeByPhone(accessToken, e164Phone) {
-  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A:G`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`pending-email read failed: ${await res.text()}`);
-  const data = await res.json();
-  const rows = data.values || [];
+  const rows = await readSysRows(accessToken, "pendingEmail", "pending-email");
   for (let i = rows.length - 1; i >= 1; i--) {
     const [, , phone, , expiresAt, status] = rows[i];
     if ((phone || "").trim() === e164Phone && status === "Pending" && expiresAt && Date.parse(expiresAt) > Date.now()) {
@@ -5081,23 +5061,11 @@ async function findPendingEmailChangeByPhone(accessToken, e164Phone) {
 }
 
 async function writePendingEmailChangeRow(accessToken, row, values) {
-  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A${row}:G${row}`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ range: `${PENDING_EMAIL_TAB}!A${row}:G${row}`, values: [values] }),
-  });
-  if (!res.ok) throw new Error(`pending-email write failed: ${await res.text()}`);
+  await writeSysCells(accessToken, "pendingEmail", row, values, "pending-email");
 }
 
 async function nextPendingEmailChangeRow(accessToken) {
-  const range = encodeURIComponent(`${PENDING_EMAIL_TAB}!A:A`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`pending-email read failed: ${await res.text()}`);
-  const data = await res.json();
-  return (data.values || []).length + 1;
+  return nextSysRow(accessToken, "pendingEmail", "oldEmail", "pending-email");
 }
 
 async function sendQuoText(env, e164To, content) {
