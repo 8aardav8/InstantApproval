@@ -6055,6 +6055,7 @@ async function ensureLayout(env) {
   await refreshLayout({
     sheetId: SHEET_ID,
     getToken: () => getSheetsAccessToken(env),
+    kv: env.BUYERS_KV, // shared layout cache (2026-11-19, 429 fix)
     alert: (text) => fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: `⚠️ IAH site: ${text}` }),

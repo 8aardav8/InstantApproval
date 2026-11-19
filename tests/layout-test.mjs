@@ -58,6 +58,25 @@ _resetLayoutForTest();
 { const s = makeSheet(); delete s.tabs[SYS.pendingPhone.gid].tags[2]; const allTitles = Object.fromEntries(Object.entries(s.tabs).map(([g, t]) => [g, t.title]));
   eq('deleted New Phone column: reported', resolveSys(metaOf(s), allTitles).problems.some((p) => p.includes('pendingPhone.newPhone')), true); }
 
+// 2026-11-19 "layout lookup failed: 429/429": shared KV copy, quiet short failures.
+{ _resetLayoutForTest(); const s = makeSheet(); moveColumn(s.tabs[LOGINS_GID], 3, 10);
+  const store = new Map(); const kv = { get: async (k) => store.get(k) ?? null, put: async (k, v) => { store.set(k, v); } };
+  let sheetCalls = 0; globalThis.fetch = async (u, init) => { sheetCalls++; return s.handle(new URL(u), init); };
+  const alerts = []; const deps = { sheetId: 'x', getToken: async () => 't', alert: async (t) => alerts.push(t), kv };
+  const T0 = 1_800_000_000_000;
+  await refreshLayout(deps, T0); const first = sheetCalls;
+  eq('first lookup asks Sheets and fills the shared copy', [first > 0, store.has('layout-cache-v1'), LC.phone], [true, true, 10]);
+  _resetLayoutForTest();
+  await refreshLayout(deps, T0 + 2 * 60_000);
+  eq('another copy of the site uses the shared copy, no Sheets call', [sheetCalls, LC.phone], [first, 10]);
+  _resetLayoutForTest(); globalThis.fetch = async () => new Response('{}', { status: 429 });
+  await refreshLayout(deps, T0 + 12 * 60_000);
+  eq('429 soon after a success: no alert, shared positions kept', [alerts.length, LC.phone], [0, 10]);
+  _resetLayoutForTest();
+  await refreshLayout(deps, T0 + 45 * 60_000);
+  eq('still failing after 30+ minutes: one alert, positions kept', [alerts.length, LC.phone], [1, 10]); }
+_resetLayoutForTest();
+
 // Static scan: no fixed letters or header-text lookups for the two tabs.
 const src = readFileSync(new URL('../admin/worker.js', import.meta.url), 'utf8').split('\n');
 const bad = src.map((l, i) => [i + 1, l]).filter(([, l]) =>

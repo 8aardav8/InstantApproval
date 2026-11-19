@@ -97,9 +97,27 @@ function apply(res, titles) {
   LAST.props = colLetter(Math.max(...Object.values(PC)));
 }
 
-// deps: { sheetId, getToken: () => Promise<string>, alert: (text) => Promise<void> }
-export async function refreshLayout({ sheetId, getToken, alert }, now = Date.now()) {
+// deps: { sheetId, getToken: () => Promise<string>, alert: (text) => Promise<void>, kv? }
+// Shared cache (2026-11-19, after "layout lookup failed: 429/429"): every
+// isolate used to ask Sheets twice a minute, which could exhaust the
+// per-minute read quota the sign-in path shares. Now one lookup per
+// KV_TTL is stored in KV and every isolate reads that. A failed lookup only
+// alerts once nothing has succeeded for STALE_ALERT (a short 429 is normal).
+const KV_KEY = "layout-cache-v1";
+const KV_TTL = 10 * 60_000;
+const STALE_ALERT = 30 * 60_000;
+function applyMeta(matched, titles) {
+  const res = resolveLayout(matched, titles);
+  apply(res, titles);
+  const sys = resolveSys(matched, titles); // TASK-000867
+  applySys(sys);
+  return [...res.problems, ...sys.problems];
+}
+export async function refreshLayout({ sheetId, getToken, alert, kv }, now = Date.now()) {
   if (now - lastOk < 60_000) return;
+  let cached = null;
+  if (kv) { try { cached = JSON.parse((await kv.get(KV_KEY)) || "null"); } catch { cached = null; } }
+  if (cached && now - cached.at < KV_TTL) { applyMeta(cached.matched, cached.titles); lastOk = now; return; }
   try {
     const token = await getToken();
     const H = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -112,15 +130,16 @@ export async function refreshLayout({ sheetId, getToken, alert }, now = Date.now
     const meta = await mr.json(); const info = await ir.json();
     const titles = {};
     for (const s of info.sheets || []) titles[s.properties.sheetId] = s.properties.title;
-    const res = resolveLayout(meta.matchedDeveloperMetadata || [], titles);
-    apply(res, titles);
-    const sys = resolveSys(meta.matchedDeveloperMetadata || [], titles); // TASK-000867
-    applySys(sys);
-    res.problems.push(...sys.problems);
+    const matched = (meta.matchedDeveloperMetadata || []).map((m) => { const d = m.developerMetadata || m; const r = d.location && d.location.dimensionRange; return r ? { metadataKey: d.metadataKey, location: { dimensionRange: { sheetId: r.sheetId, startIndex: r.startIndex } } } : null; }).filter(Boolean);
+    const problems = applyMeta(matched, titles);
     lastOk = now;
-    if (res.problems.length) await maybeAlert(alert, now, `Sheet column tags need attention (site still running on last known positions for these): ${res.problems.join("; ")}. Usually a tagged column was deleted or copied. Tell Claude Code (TASK-000844).`);
+    if (kv) { try { await kv.put(KV_KEY, JSON.stringify({ at: now, matched, titles })); } catch { /* cache is best-effort */ } }
+    if (problems.length) await maybeAlert(alert, now, `Sheet column tags need attention (site still running on last known positions for these): ${problems.join("; ")}. Usually a tagged column was deleted or copied. Tell Claude Code (TASK-000844).`);
   } catch (e) {
-    await maybeAlert(alert, now, `Site couldn't read the Sheet's column tags, so it is using the last known column positions: ${String(e).slice(0, 200)}`);
+    // Fall back to the last shared copy, however old, before the built-in defaults.
+    if (cached) { applyMeta(cached.matched, cached.titles); }
+    const lastGood = Math.max(lastOk, cached ? cached.at : 0);
+    if (now - lastGood > STALE_ALERT) await maybeAlert(alert, now, `Site hasn't been able to read the Sheet's column tags for over 30 minutes, so it is using the last known column positions: ${String(e).slice(0, 200)}`);
   }
 }
 
