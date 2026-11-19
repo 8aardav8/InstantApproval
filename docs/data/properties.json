@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T22:41:02.993117+00:00",
+  "generatedAt": "2026-11-19T22:42:16.957850+00:00",
   "listings": [
     {
       "id": "5-denovion-ct-cahokia-il-62-206",
@@ -7433,8 +7433,8 @@
     {
       "id": "305-s-maffit-st-decatur-il-62521",
       "address": "305 S Maffit St Decatur IL 62521",
-      "onMarketDate": "7/2",
-      "lastUpdate": "7/26/2026",
+      "onMarketDate": "11/18",
+      "lastUpdate": "11/18/2026",
       "area": "IL - Decatur",
       "down": "$3,500",
       "monthly": "$1,295",
@@ -7442,7 +7442,7 @@
       "beds": "4",
       "baths": "3",
       "sqft": "2020",
-      "status": "Pending",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8391159,
       "lng": -88.94517789999999
