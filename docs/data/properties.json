@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T22:31:49.802882+00:00",
+  "generatedAt": "2026-11-19T22:32:28.176007+00:00",
   "listings": [
     {
       "id": "1613-parklane-dr-cahokia-il-62-206",
@@ -1280,7 +1280,7 @@
       "id": "4121-clara-place-saint-louis-mo-63115",
       "address": "4121 Clara Place Saint Louis MO 63115",
       "onMarketDate": "10/13",
-      "lastUpdate": "11/15",
+      "lastUpdate": "11/18",
       "area": "MO - St. Louis",
       "down": "$2,000",
       "monthly": "$775",
@@ -1288,7 +1288,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "789",
-      "status": "Available",
+      "status": "Pending",
       "livability": 3,
       "lat": 38.6798101,
       "lng": -90.24821399999999
@@ -7995,7 +7995,7 @@
       "id": "1073-w-packard-st-decatur-il-62522",
       "address": "1073 W Packard St Decatur IL 62522",
       "onMarketDate": "6/27",
-      "lastUpdate": "11/7/2026",
+      "lastUpdate": "11/18/2026",
       "area": "IL - Decatur",
       "down": "$2,200",
       "monthly": "$950",
@@ -8003,7 +8003,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "804",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.852049,
       "lng": -88.9722736
