@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T22:43:03.933896+00:00",
+  "generatedAt": "2026-11-19T22:44:12.184064+00:00",
   "listings": [
     {
       "id": "5-denovion-ct-cahokia-il-62-206",
@@ -9117,7 +9117,7 @@
       "id": "5341-goodfellow-blvd-st-louis-mo-63136",
       "address": "5341 Goodfellow Blvd, St. Louis, MO 63136",
       "onMarketDate": "6/3/2026",
-      "lastUpdate": "10/12/2026",
+      "lastUpdate": "11/19/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
       "monthly": "$1,650",
@@ -9125,7 +9125,7 @@
       "beds": "6",
       "baths": "3",
       "sqft": "3000",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.7065206,
       "lng": -90.2601427
