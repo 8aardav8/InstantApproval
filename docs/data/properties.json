@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T22:20:40.891716+00:00",
+  "generatedAt": "2026-11-20T22:21:14.654074+00:00",
   "listings": [
     {
       "id": "1140-saint-margaret-dr-cahokia-il-62206",
@@ -28718,14 +28718,14 @@
       "id": "1926-n-monroe-st-decatur-il-62526",
       "address": "1926 N Monroe St, Decatur, IL 62526",
       "onMarketDate": "11/19/2026",
-      "lastUpdate": "",
+      "lastUpdate": "11/19/2026",
       "area": "IL - Decatur",
-      "down": "$2,000",
-      "monthly": "$700",
+      "down": "$2,500",
+      "monthly": "$750",
       "picsLink": "https://drive.google.com/drive/folders/1fUKQQ4vZzLSWlvk8dEK5tcuQPJO4ZKyh",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
+      "sqft": "816",
       "status": "Sold",
       "livability": 0,
       "lat": 39.8619454,
