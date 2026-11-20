@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T00:04:15.079341+00:00",
+  "generatedAt": "2026-11-20T00:06:21.758763+00:00",
   "listings": [
     {
       "id": "5-denovion-ct-cahokia-il-62-206",
@@ -906,7 +906,7 @@
       "id": "1929-e-prairie-st-decatur-il-decatur-il-62521",
       "address": "1929 E Prairie St, Decatur, Il Decatur IL 62521",
       "onMarketDate": "10/25",
-      "lastUpdate": "10/25",
+      "lastUpdate": "11/19",
       "area": "IL - Decatur",
       "down": "$2,500",
       "monthly": "$875",
@@ -914,7 +914,7 @@
       "beds": "2",
       "baths": "2.5",
       "sqft": "1364",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.84291820000001,
       "lng": -88.9305737
