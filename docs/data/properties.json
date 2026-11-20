@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T22:19:03.828020+00:00",
+  "generatedAt": "2026-11-20T22:19:52.048698+00:00",
   "listings": [
     {
       "id": "1140-saint-margaret-dr-cahokia-il-62206",
@@ -3558,7 +3558,7 @@
       "id": "905-n-wesley-st-springfield-il-62702",
       "address": "905 N Wesley St Springfield IL 62702",
       "onMarketDate": "10/6",
-      "lastUpdate": "11/9",
+      "lastUpdate": "11/19",
       "area": "IL - Rural",
       "down": "$2,500",
       "monthly": "$925",
@@ -3566,7 +3566,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "700",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8111481,
       "lng": -89.61504579999999
