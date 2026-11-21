@@ -1,23 +1,6 @@
 {
-  "generatedAt": "2026-11-21T20:14:26.590261+00:00",
+  "generatedAt": "2026-11-21T20:33:25.889357+00:00",
   "listings": [
-    {
-      "id": "308-revere-drive-belleville-il",
-      "address": "308 Revere Drive, Belleville, IL",
-      "onMarketDate": "11/21",
-      "lastUpdate": "11/21",
-      "area": "IL - East St Louis",
-      "down": "",
-      "monthly": "",
-      "picsLink": "",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
-      "status": "Available",
-      "livability": 0,
-      "lat": 38.53842789999999,
-      "lng": -90.07303209999999
-    },
     {
       "id": "69-saint-ambrose-dr-cahokia-il-62-206",
       "address": "69 Saint Ambrose Dr Cahokia IL 62,206",
