@@ -238,9 +238,11 @@ function renderStatsStrip() {
   // display text only, the underlying `area` field/variable name is left
   // as-is (matches the real Sheet column name), still just a distinct-
   // value count.
+  // Order changed 2026-11-20 (Aaron: "Change order to be available states
+  // families banks"), and all four now fit on screen (CSS .stats-strip grid).
   el.innerHTML = `
-    <div class="stat-pill"><strong>${areas.size || "—"}</strong>States</div>
     <div class="stat-pill"><strong>${available.length}</strong>Homes available</div>
+    <div class="stat-pill"><strong>${areas.size || "—"}</strong>States</div>
     <div class="stat-pill"><strong>${sold.length}</strong>Families housed</div>
     <div class="stat-pill"><strong>No</strong>Bank or credit check</div>
   `;
