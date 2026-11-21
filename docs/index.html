@@ -241,6 +241,15 @@
 
       <div id="stats-strip" class="stats-strip"><!-- populated live from real data --></div>
 
+      <!-- Featured Deals, 2026-11-20 (Aaron: "a featured deals section at the
+           top of the site so that I can feature my own vacancies"). Homes with
+           the Featured box ticked on PROPERTIES and still Available; hidden when
+           there are none. Filled by renderFeaturedDeals() in app.js. -->
+      <section id="featured-deals" class="featured-deals hidden" aria-label="Featured deals">
+        <h2 class="featured-title">Featured Deals</h2>
+        <div id="featured-row" class="featured-row"></div>
+      </section>
+
       <h1 class="page-title">Home Search</h1>
 
       <div class="search-row">

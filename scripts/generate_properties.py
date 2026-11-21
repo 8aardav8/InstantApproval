@@ -62,6 +62,28 @@ CANONICAL_BY_TAG = {
 }
 
 
+# Optional tagged columns (2026-11-20): read when present, never required, so a
+# missing tag can't block a publish. "Featured" is Aaron's checkbox for the
+# Featured Deals strip ("I'd like to build a featured deals section at the top
+# of the site so that I can feature my own vacancies").
+OPTIONAL_TAGS = {"featured"}
+
+
+def optional_tag_positions(matched_metadata):
+    out = {}
+    for m in matched_metadata:
+        d = m.get("developerMetadata", m)
+        r = d.get("location", {}).get("dimensionRange", {})
+        k = d.get("metadataKey", "")
+        if r.get("sheetId") == PROPS_GID and k.startswith("iah.prop.") and k[len("iah.prop."):] in OPTIONAL_TAGS:
+            out.setdefault(k[len("iah.prop."):], []).append(r["startIndex"])
+    return {k: v[0] for k, v in out.items() if len(v) == 1}
+
+
+def is_checked(value):
+    return str(value).strip().upper() == "TRUE"
+
+
 def canonical_header_row(live_headers, matched_metadata):
     """Header row relabelled from column tags. Fails loudly if a tag is
     missing or found twice (a column was deleted or copied)."""
@@ -293,6 +315,7 @@ def main():
             for cm in d.get("columnMetadata", [])
             for dm in cm.get("developerMetadata", [])]
     all_values[0] = canonical_header_row(all_values[0], tags)
+    featured_idx = optional_tag_positions(tags).get("featured")
 
     # Shared snapshot for verify_no_sensitive_data.py -- see the comment by
     # RAW_SNAPSHOT_PATH_NAME above for why this exists. Written as early as
@@ -372,6 +395,8 @@ def main():
             "status": status,  # canonical, e.g. "Available" or "Off Market" -- see normalize_status()
             "livability": livability_to_number(cell("Livability")),
         }
+        if featured_idx is not None and featured_idx < len(row) and is_checked(row[featured_idx]):
+            listing["featured"] = True
 
         # Geocode every included listing (Available/Pending/Sold/Off Market),
         # not just Available -- fixed 2026-08-22. The map used to hard-code

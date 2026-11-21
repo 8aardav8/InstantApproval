@@ -24,4 +24,10 @@ try:
     g.canonical_header_row(live, meta([k for k in keys if k != "seller"])); eq("missing tag refuses", "no exit", "SystemExit")
 except SystemExit as e:
     eq("missing tag refuses to publish", "seller" in str(e), True)
+# Featured (2026-11-20): optional, by tag, anywhere in the row.
+fm = meta(keys) + [{"developerMetadata": {"metadataKey": "iah.prop.featured", "location": {"dimensionRange": {"sheetId": g.PROPS_GID, "startIndex": 34}}}}]
+eq("featured tag found", g.optional_tag_positions(fm), {"featured": 34})
+eq("no featured tag: nothing, no error", g.optional_tag_positions(meta(keys)), {})
+eq("featured tag doesn't disturb the required header check", g.canonical_header_row(live, fm)[:34], live)
+eq("checkbox TRUE counts", [g.is_checked("TRUE"), g.is_checked("FALSE"), g.is_checked(""), g.is_checked(" true ")], [True, False, False, True])
 print(f"\n{fails} failed"); sys.exit(1 if fails else 0)

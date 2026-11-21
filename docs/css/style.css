@@ -1435,3 +1435,18 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* Company name footer, 2026-11-20 */
 .site-footer { text-align: center; font-size: 13px; color: var(--gray-text, #6b7280); padding: 20px 16px 24px; border-top: 1px solid var(--border, #e5e7eb); margin-top: 8px; }
 .login-gate-legal { margin-top: 28px; font-size: 12px; color: rgba(255,255,255,0.55); text-align: center; }
+
+/* ---------- Featured Deals strip (2026-11-20) ---------- */
+.featured-deals { margin: 4px 0 18px; }
+.featured-title { font-size: 18px; font-weight: 800; margin: 0 0 10px; }
+.featured-row { display: grid; grid-auto-flow: column; grid-auto-columns: 72%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 8px; -webkit-overflow-scrolling: touch; }
+.featured-row > .card { scroll-snap-align: start; }
+@media (orientation: landscape) and (min-width: 640px) {
+  .featured-row { grid-auto-columns: calc((100% - 24px) / 3); }
+}
+/* Same green as the Reserve button (Aaron 2026-11-20). */
+.card-featured { border: 2px solid #00D632; }
+.featured-badge { position: absolute; top: 10px; left: 10px; z-index: 5; background: #00D632; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; }
+.admin-featured-row { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 6px 0 10px; }
+.admin-featured-row input { width: 20px; height: 20px; }
+.admin-featured-status { font-weight: 400; font-size: 12px; color: var(--gray-text); }

@@ -1159,9 +1159,51 @@ async function handleAdminLookup(request, env, listingId) {
       // redeploy needed.
       const fields = {};
       headers.forEach((h, idx) => { fields[h] = row[idx] || ""; });
-      return jsonResponse({ fields });
+      // The live Featured checkbox (2026-11-20), for the admin tick box.
+      return jsonResponse({ fields, featured: String(row[PC.featured] || "").trim().toUpperCase() === "TRUE" });
     }
     return jsonResponse({ error: "listing not found" }, 404);
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Featured Deals tick box on the listing page (Aaron, 2026-11-20: "add the
+// featured checkbox able to be ticked inside the admin panel of the site").
+// Google-auth like every admin route. The listing is found by its public id
+// (the same slug the site uses); exactly one PROPERTIES row must match, or
+// nothing is written. Writes TRUE/FALSE to the tagged Featured column and
+// reads it back. The Sheet edit triggers the normal listings publish, so the
+// public strip updates a few minutes later.
+async function handleAdminSetFeatured(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const listingId = String(body.id || "").trim();
+  if (!listingId || typeof body.featured !== "boolean") return jsonResponse({ error: "missing id or featured" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const rowsRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(propsRowsRange(1))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!rowsRes.ok) throw new Error(`PROPERTIES read failed: ${await rowsRes.text()}`);
+    const rows = (await rowsRes.json()).values || [];
+    const hits = [];
+    for (let i = 1; i < rows.length; i++) if (slugify(rows[i][PC.address] || "") === listingId && (rows[i][PC.address] || "").trim()) hits.push(i + 1);
+    if (hits.length === 0) return jsonResponse({ error: "listing not found" }, 404);
+    if (hits.length > 1) return jsonResponse({ error: "more than one PROPERTIES row has this address; tick it in the Sheet" }, 409);
+    const a1 = `'${TABS.props}'!${PL.featured}${hits[0]}`;
+    const put = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(a1)}?valueInputOption=USER_ENTERED`, {
+      method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ range: a1, values: [[body.featured ? "TRUE" : "FALSE"]] }),
+    });
+    if (!put.ok) throw new Error(`featured write failed: ${await put.text()}`);
+    const back = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(a1)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const saved = back.ok ? String(((((await back.json()).values || [[]])[0] || [])[0]) || "").toUpperCase() === "TRUE" : null;
+    if (saved !== body.featured) throw new Error("featured read-back did not match");
+    return jsonResponse({ ok: true, featured: saved });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -6301,6 +6343,9 @@ async function route(request, env, ctx) {
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
     return handleMarkShown(request, env);
+  }
+  if (url.pathname === "/admin/set-featured" && request.method === "POST") {
+    return handleAdminSetFeatured(request, env);
   }
   if (url.pathname === "/admin-favorite" && request.method === "POST") {
     return handleAdminFavorite(request, env);

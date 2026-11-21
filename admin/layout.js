@@ -32,7 +32,7 @@ const PROPS_DEFAULT = {
   status: 0, livability: 1, photoError: 2, address: 3, quickSummary: 4, pics1: 5, lockbox: 6, onMarketDate: 7, lastUpdate: 8,
   area: 9, marketing: 10, notes: 11, down: 12, monthly: 13, total: 14, seller: 15, skool: 16, ttOurLink: 17, ttBuyerLink: 18,
   zillow: 19, years: 20, includesTaxes: 21, includesInsurance: 22, shareLink: 23, pics2: 24, pics3: 25, beds: 26, baths: 27,
-  sqft: 28, type: 29, basement: 30, garage: 31, driveway: 32, rowid: 33,
+  sqft: 28, type: 29, basement: 30, garage: 31, driveway: 32, rowid: 33, featured: 34,
 };
 
 export function colLetter(i) {

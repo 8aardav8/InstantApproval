@@ -509,7 +509,35 @@ function buildListingCard(listing) {
   return card;
 }
 
+// Featured Deals strip (2026-11-20). Every featured home that's Available,
+// whatever the visitor's filters say. Its own try/catch: a problem here must
+// never stop the regular homes from showing (RULE-000072). The homes also stay
+// in the regular grid, so search and filters still find them.
+function renderFeaturedDeals() {
+  const section = document.getElementById("featured-deals");
+  const row = document.getElementById("featured-row");
+  if (!section || !row) return;
+  try {
+    const featured = (ALL_LISTINGS || []).filter((l) => l.featured && l.status === "Available");
+    row.innerHTML = "";
+    for (const listing of featured) {
+      const card = buildListingCard(listing);
+      card.classList.add("card-featured");
+      const tag = document.createElement("span");
+      tag.className = "featured-badge";
+      tag.textContent = "Featured";
+      const wrap = card.querySelector(".card-photo-wrap");
+      (wrap || card).appendChild(tag);
+      row.appendChild(card);
+    }
+    section.classList.toggle("hidden", featured.length === 0);
+  } catch (e) {
+    section.classList.add("hidden");
+  }
+}
+
 function renderCardGrid() {
+  renderFeaturedDeals();
   const grid = document.getElementById("card-grid");
   const empty = document.getElementById("empty-state");
   const filtered = sortListings(ALL_LISTINGS.filter(matchesFilters));
@@ -3073,6 +3101,29 @@ function copyPhotoLinkAndOpenSheet(btn) {
   window.open(SHEET_BASE_URL, "_blank", "noopener");
 }
 
+async function setFeatured(listing, cb) {
+  const want = cb.checked;
+  const status = cb.parentElement.querySelector(".admin-featured-status");
+  cb.disabled = true; status.textContent = "Saving…";
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-featured`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${getStoredAdminToken()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ id: listing.id, featured: want }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok || data.featured !== want) throw new Error((data && (data.error || data.detail)) || res.status);
+    listing.featured = want; // this page shows it now; everyone else in a few minutes
+    renderFeaturedDeals();
+    status.textContent = want ? "Saved. Shows for everyone in a few minutes." : "Removed. Gone for everyone in a few minutes.";
+  } catch (err) {
+    cb.checked = !want;
+    status.textContent = `Couldn't save: ${err.message || err}`;
+  } finally {
+    cb.disabled = false;
+  }
+}
+
 async function renderAdminSection(listing) {
   const container = document.getElementById("admin-info-section");
   const token = getStoredAdminToken();
@@ -3096,6 +3147,9 @@ async function renderAdminSection(listing) {
     const fields = data.fields || {};
 
     let html = `<div class="admin-info-title">Admin Info (only visible to you)</div>`;
+    // Featured Deals tick box (2026-11-20). Saves on tap; the public strip
+    // follows within a few minutes (the Sheet edit republishes listings).
+    html += `<label class="admin-featured-row"><input type="checkbox" id="admin-featured-cb"${data.featured ? " checked" : ""}> Featured Deal <span class="admin-featured-status">${listing.status === "Available" ? "" : "(shows only while Available)"}</span></label>`;
     for (const [header, label] of ADMIN_HEADLINE_FIELDS) {
       html += detailField(label, fields[header]);
     }
@@ -3149,6 +3203,8 @@ async function renderAdminSection(listing) {
     }
 
     container.innerHTML = html;
+    const featuredCb = document.getElementById("admin-featured-cb");
+    if (featuredCb) featuredCb.addEventListener("change", () => setFeatured(listing, featuredCb));
     container.querySelectorAll(".admin-activity-name-link").forEach((el) => {
       el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
     });
