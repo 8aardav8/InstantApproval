@@ -1320,6 +1320,12 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .template-save-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .template-save-status { font-size: 12px; color: var(--gray-text, #6b7280); }
 .template-last-updated { font-size: 11px; color: var(--gray-text, #6b7280); margin-top: 8px; }
+.template-auto-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 14px; margin: 4px 0 8px; }
+.template-auto-opt { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
+.template-auto-row input { width: 18px; height: 18px; }
+.template-auto-help { flex-basis: 100%; font-size: 12px; color: var(--gray-text, #6b7280); }
+.template-auto-none { color: var(--gray-text, #6b7280); font-size: 12px; }
+.template-auto-status { font-size: 12px; color: var(--gray-text, #6b7280); }
 
 /* Appointment-card options (⋮) button + popup menu, added 2026-09-14 per
    Aaron's direct request ("the reschedule cancel and Mark completed will

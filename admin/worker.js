@@ -2585,6 +2585,26 @@ async function handleAdminSetIdName(request, env) {
 // Fields (documentation only, not enforced), Last Updated.
 // Text Templates: found by gid, columns by tag (layout.js SYS.templates, TASK-000867).
 
+// The templates the notifier sends by itself, and a three-way setting for
+// each (Aaron, 2026-11-20: "On the templates page, each template should have a
+// toggle", then "Can we do threeway toggles to set auto/off/check?"):
+//   Auto  = texts the buyer;
+//   Check = comes to Aaron on Telegram to review and send by hand;
+//   Off   = nothing at all.
+// Blank = how each behaved before the setting existed. "On" (the first,
+// two-way version) reads as Auto. Keep in step with AUTO_TEXT_DEFAULTS in
+// appointment-notifier-worker.js.
+const AUTO_TEXT_DEFAULTS = { status_change: "Auto", day_of_reminder: "Auto", price_drop: "Check" };
+const AUTO_TEXT_KEYS = new Set(Object.keys(AUTO_TEXT_DEFAULTS));
+const AUTO_SEND_MODES = new Set(["Auto", "Check", "Off"]);
+export function autoSendValue(key, cell) {
+  const v = String(cell || "").trim().toLowerCase();
+  if (v === "auto" || v === "on") return "Auto";
+  if (v === "check") return "Check";
+  if (v === "off") return "Off";
+  return AUTO_TEXT_DEFAULTS[key] || "Check";
+}
+
 async function handleAdminGetTextTemplates(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -2603,6 +2623,9 @@ async function handleAdminGetTextTemplates(request, env) {
         text: row[2] || "",
         mergeFields: (row[3] || "").trim(),
         lastUpdated: (row[4] || "").trim(),
+        // Auto/Check/Off for the texts that send by themselves (2026-11-20);
+        // null for templates nothing sends automatically.
+        autoSend: AUTO_TEXT_KEYS.has((row[0] || "").trim()) ? autoSendValue((row[0] || "").trim(), row[5]) : null,
       }));
     return jsonResponse({ templates });
   } catch (e) {
@@ -2622,6 +2645,30 @@ async function handleAdminSetTextTemplate(request, env) {
   const key = (body.key || "").trim();
   const text = body.text || "";
   if (!key) return jsonResponse({ error: "missing key" }, 400);
+  // The On/Off switch alone (no wording change), 2026-11-20.
+  if (body.autoSend !== undefined) {
+    if (!AUTO_TEXT_KEYS.has(key)) return jsonResponse({ error: "this template isn't sent automatically" }, 400);
+    if (!AUTO_SEND_MODES.has(body.autoSend)) return jsonResponse({ error: "autoSend must be Auto, Check or Off" }, 400);
+    try {
+      const accessToken = await getSheetsAccessToken(env);
+      const keyRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sysColRange("templates", "key"))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (!keyRes.ok) throw new Error(`text-templates key read failed: ${await keyRes.text()}`);
+      const keyCol = (await keyRes.json()).values || [];
+      const idx = keyCol.findIndex((r, i) => i > 0 && (r[0] || "").trim() === key);
+      if (idx < 1) return jsonResponse({ error: "unknown template key" }, 404);
+      const cellA1 = sysCell("templates", "autoSend", idx + 1);
+      const put = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cellA1)}?valueInputOption=RAW`, {
+        method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ range: cellA1, values: [[body.autoSend]] }),
+      });
+      if (!put.ok) throw new Error(`auto-send write failed: ${await put.text()}`);
+      const back = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(cellA1)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const saved = back.ok ? ((((await back.json()).values || [[]])[0] || [])[0] || "") : "";
+      if (saved !== body.autoSend) throw new Error(`auto-send read-back was "${saved}"`);
+      return jsonResponse({ ok: true, autoSend: saved });
+    } catch (e) {
+      return jsonResponse({ error: "server error", detail: String(e) }, 500);
+    }
+  }
   // Snippet names are editable (2026-11-08, Aaron: "I also wanted to be able
   // to update the names of the snippets"). Only snippet_ rows: the
   // appointment templates' labels stay fixed. Column B, "Snippet: <name>".

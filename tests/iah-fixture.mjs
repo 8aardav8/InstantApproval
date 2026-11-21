@@ -11,7 +11,7 @@ export const SYS_TABS = [
   { gid: 572834982, title: 'Pending Phone Changes', prefix: 'iah.pphone.', keys: ['email','oldPhone','newPhone','requestedAt','expiresAt','status','targetRow'], headers: ['Email','Old Phone','New Phone','Requested At','Expires At','Status','Target Row'] },
   { gid: 726319051, title: 'Pending Email Changes', prefix: 'iah.pemail.', keys: ['oldEmail','newEmail','phone','requestedAt','expiresAt','status','targetRow'], headers: ['Old Email','New Email','Phone','Requested At','Expires At','Status','Target Row'] },
   { gid: 1768423850, title: 'Gate Capture Log', prefix: 'iah.gate.', keys: ['timestamp','name','email','phone','agreed','userAgent','reconciled'], headers: ['Timestamp','Name','Email','Phone','Agreed','User Agent','Reconciled?'] },
-  { gid: 870288652, title: 'Text Templates', prefix: 'iah.tpl.', keys: ['key','label','text','mergeFields','lastUpdated'], headers: ['Key','Label','Template Text','Available Merge Fields','Last Updated'] },
+  { gid: 870288652, title: 'Text Templates', prefix: 'iah.tpl.', keys: ['key','label','text','mergeFields','lastUpdated','autoSend'], headers: ['Key','Label','Template Text','Available Merge Fields','Last Updated','Auto Send'] },
 ];
 // loginRows: array of { key: value } objects (row 2 onward).
 export function makeSheet({ loginRows = [], propRows = [], extraTabs = {} } = {}) {

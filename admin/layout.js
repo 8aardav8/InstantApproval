@@ -192,7 +192,7 @@ export const SYS = {
   pendingPhone: { gid: 572834982, prefix: "iah.pphone.", title: "Pending Phone Changes", keys: ["email", "oldPhone", "newPhone", "requestedAt", "expiresAt", "status", "targetRow"] },
   pendingEmail: { gid: 726319051, prefix: "iah.pemail.", title: "Pending Email Changes", keys: ["oldEmail", "newEmail", "phone", "requestedAt", "expiresAt", "status", "targetRow"] },
   gateLog: { gid: 1768423850, prefix: "iah.gate.", title: "Gate Capture Log", keys: ["timestamp", "name", "email", "phone", "agreed", "userAgent", "reconciled"] },
-  templates: { gid: 870288652, prefix: "iah.tpl.", title: "Text Templates", keys: ["key", "label", "text", "mergeFields", "lastUpdated"] },
+  templates: { gid: 870288652, prefix: "iah.tpl.", title: "Text Templates", keys: ["key", "label", "text", "mergeFields", "lastUpdated", "autoSend"] },
 };
 const SYS_DEFAULT_TITLES = Object.fromEntries(Object.entries(SYS).map(([t, d]) => [t, d.title]));
 for (const d of Object.values(SYS)) d.pos = Object.fromEntries(d.keys.map((k, i) => [k, i]));

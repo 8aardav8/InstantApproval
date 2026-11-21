@@ -7620,6 +7620,11 @@ async function loadTextTemplates() {
   }
 }
 
+const AUTO_MODE_HELP = {
+  Auto: "Texts the buyer automatically.",
+  Check: "Comes to you on Telegram to review; you send it by hand.",
+  Off: "Nothing is sent, and nothing comes to you.",
+};
 function renderTextTemplates(templates) {
   const list = document.getElementById("templates-list");
   if (templates.length === 0) { list.innerHTML = "<p>No templates found.</p>"; return; }
@@ -7628,6 +7633,13 @@ function renderTextTemplates(templates) {
       ${t.key.startsWith("snippet_")
         ? `<label class="template-name-row">Snippet name <input type="text" class="template-name-input" maxlength="40" value="${escapeAttr(snippetLabelFromSheet(t.label))}"></label>`
         : `<h3 class="template-label">${escapeHtml(t.label || t.key)}</h3>`}
+      ${t.autoSend
+        ? `<div class="template-auto-row" role="radiogroup" aria-label="When this text is due">
+            ${["Auto", "Check", "Off"].map((m) => `<label class="template-auto-opt"><input type="radio" name="auto-${escapeAttr(t.key)}" class="template-auto-radio" data-key="${escapeAttr(t.key)}" value="${m}"${t.autoSend === m ? " checked" : ""}> ${m}</label>`).join("")}
+            <span class="template-auto-status"></span>
+            <div class="template-auto-help">${escapeHtml(AUTO_MODE_HELP[t.autoSend] || "")}</div>
+          </div>`
+        : `<div class="template-auto-row template-auto-none">Not sent automatically</div>`}
       <textarea class="template-textarea" rows="5">${escapeHtml(t.text)}</textarea>
       ${t.mergeFields ? `<div class="template-merge-fields">Merge fields: <code>${escapeHtml(t.mergeFields)}</code></div>` : ""}
       <div class="template-save-row">
@@ -7637,6 +7649,40 @@ function renderTextTemplates(templates) {
       ${t.lastUpdated ? `<div class="template-last-updated">Last updated: ${escapeHtml(formatDateTimeWithYearAndSince(t.lastUpdated))}</div>` : ""}
     </div>
   `).join("");
+  // Auto / Check / Off for each automatic text (2026-11-20, Aaron: "Can we do
+  // threeway toggles to set auto/off/check?"). Saves on tap; on failure the
+  // choice goes back to what's really saved.
+  list.querySelectorAll(".template-auto-row[role=radiogroup]").forEach((group) => {
+    let saved = (group.querySelector(".template-auto-radio:checked") || {}).value;
+    const status = group.querySelector(".template-auto-status"), help = group.querySelector(".template-auto-help");
+    group.querySelectorAll(".template-auto-radio").forEach((radio) => {
+      radio.addEventListener("change", async () => {
+        const want = radio.value;
+        const putBack = () => { const r = group.querySelector(`.template-auto-radio[value="${saved}"]`); if (r) r.checked = true; };
+        if (want === "Auto" && !confirm("Set this text to Auto? Buyers will start getting it with no review from you.")) { putBack(); return; }
+        group.querySelectorAll("input").forEach((i) => { i.disabled = true; });
+        status.textContent = "Saving…";
+        try {
+          const res = await fetch(`${ADMIN_API_URL}/admin/set-text-template`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${getStoredAdminToken()}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ key: radio.dataset.key, autoSend: want }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok || data.autoSend !== want) throw new Error((data && (data.error || data.detail)) || res.status);
+          saved = want;
+          help.textContent = AUTO_MODE_HELP[want];
+          status.textContent = "Saved.";
+          setTimeout(() => { if (status.isConnected) status.textContent = ""; }, 2500);
+        } catch (err) {
+          putBack();
+          status.textContent = `Couldn't save: ${err.message || err}`;
+        } finally {
+          group.querySelectorAll("input").forEach((i) => { i.disabled = false; });
+        }
+      });
+    });
+  });
   list.querySelectorAll(".template-save-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const card = btn.closest(".template-card");
