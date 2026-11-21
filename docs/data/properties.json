@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T19:59:20.065501+00:00",
+  "generatedAt": "2026-11-21T20:09:09.237809+00:00",
   "listings": [
     {
       "id": "69-saint-ambrose-dr-cahokia-il-62-206",
@@ -12848,7 +12848,7 @@
       "id": "5152-maffitt-ave-saint-louis-mo-63113",
       "address": "5152 Maffitt Ave, Saint Louis, MO 63113",
       "onMarketDate": "10/13/2026",
-      "lastUpdate": "10/13/2026",
+      "lastUpdate": "11/21/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$695",
@@ -12856,7 +12856,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1218",
-      "status": "Available",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.6712509,
       "lng": -90.2604148
