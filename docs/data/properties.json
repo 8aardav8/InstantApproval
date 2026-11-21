@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T09:28:53.086143+00:00",
+  "generatedAt": "2026-11-21T09:29:14.250233+00:00",
   "listings": [
     {
       "id": "69-saint-ambrose-dr-cahokia-il-62-206",
@@ -8608,7 +8608,6 @@
       "sqft": "1297",
       "status": "Available",
       "livability": 2,
-      "featured": true,
       "banner": "Cleanout Completed",
       "lat": 38.6726451,
       "lng": -90.211823
