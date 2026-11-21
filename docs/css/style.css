@@ -223,7 +223,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px;
 }
 .stat-pill {
-  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  background: #fff; border: 1.5px solid var(--blue); border-radius: 10px; /* blue, Aaron 2026-11-20 */
   padding: 8px 8px; font-size: 11.5px; line-height: 1.25; color: var(--gray-text);
   text-align: center; overflow-wrap: anywhere;
 }
