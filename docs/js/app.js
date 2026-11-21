@@ -563,6 +563,7 @@ function buildListingCard(listing) {
 
   const img = document.createElement("img");
   img.loading = "lazy";
+  guardPhoto(img);
   img.src = streetViewUrl(listing.address, 400, 300);
   img.alt = listing.address;
   photoWrap.appendChild(img);
@@ -908,8 +909,33 @@ function renderFavoritesGrid() {
   for (const listing of favListings) grid.appendChild(buildListingCard(listing));
 }
 
+// Street photos never go blank (2026-11-21, Aaron: "Some properties'
+// thumbnails go blank on their info pages"). Found: Google rejects the whole
+// request when an address has a "|" (1237 E Johns Ave | Decatur), so photo
+// lookups use a cleaned copy of the address. Any photo that still fails gets
+// one retry, then a "No street photo" picture instead of an empty box.
+const NO_PHOTO_IMG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#e5e7eb"/><path d="M200 92l-62 52v64h44v-38h36v38h44v-64z" fill="#9ca3af"/><text x="200" y="250" font-family="Arial, sans-serif" font-size="20" fill="#6b7280" text-anchor="middle">No street photo</text></svg>');
+function photoAddress(address) {
+  return String(address || "").replace(/[|\r\n\t]+/g, ", ").replace(/\s*,\s*(,\s*)+/g, ", ").replace(/\s+/g, " ").trim();
+}
+function guardPhoto(img) {
+  if (!img || img.dataset.photoGuard) return img;
+  img.dataset.photoGuard = "1";
+  img.addEventListener("error", () => {
+    if (img.dataset.fallbackSrc && img.src !== img.dataset.fallbackSrc) { img.src = img.dataset.fallbackSrc; return; }
+    if (!img.dataset.retried && img.src.startsWith("https://")) {
+      img.dataset.retried = "1";
+      const again = img.src;
+      setTimeout(() => { img.src = again + (again.includes("?") ? "&" : "?") + "r=1"; }, 1500);
+      return;
+    }
+    if (img.src !== NO_PHOTO_IMG) img.src = NO_PHOTO_IMG;
+  });
+  return img;
+}
 function streetViewUrl(address, w, h) {
-  if (!GOOGLE_MAPS_API_KEY) return "assets/placeholder-streetview.png";
+  if (!GOOGLE_MAPS_API_KEY) return NO_PHOTO_IMG;
+  address = photoAddress(address);
   // fov (field of view, degrees) defaults to 90 if unset -- a fairly wide,
   // zoomed-out shot. Tightened 90 -> 60 -> 50 (2026-08-22, second request)
   // to better showcase the house itself.
@@ -1066,7 +1092,7 @@ function showDetail(id) {
 
   detail.innerHTML = `
     <div class="detail-photo-wrap">
-      <img class="detail-photo" src="${streetViewUrl(listing.address, 800, 500)}" alt="${escapeHtml(listing.address)}">
+      <img class="detail-photo" src="${streetViewUrl(listing.address, 400, 300)}" data-large-src="${escapeAttr(streetViewUrl(listing.address, 640, 400))}" alt="${escapeHtml(listing.address)}">
       <!-- Moved INSIDE .detail-photo-wrap 2026-08-29, real reported bug:
            this used to be a SIBLING of .detail-photo-wrap, so its
            "position: absolute; top: 0; left: 0" never actually anchored
@@ -1111,6 +1137,14 @@ function showDetail(id) {
       <div id="admin-info-section" class="admin-info-section hidden"></div>
     </div>
   `;
+  // The card-size photo first (usually already loaded, so it shows at once),
+  // then the sharper one if it arrives; a failure keeps what's showing.
+  const detailPhoto = guardPhoto(detail.querySelector(".detail-photo"));
+  if (detailPhoto && detailPhoto.dataset.largeSrc) {
+    const big = new Image();
+    big.onload = () => { if (detailPhoto.isConnected) detailPhoto.src = big.src; };
+    big.src = detailPhoto.dataset.largeSrc;
+  }
 
   renderAdminSection(listing);
   if (availableOnly) showReserveButtonIfOpen();
@@ -1404,7 +1438,7 @@ function mapPopupContent(listing) {
   const livabilitySuffix = listing.livability ? ` (${listing.livability})` : "";
   return `
     <div class="map-popup">
-      <img class="map-popup-photo" src="${streetViewUrl(listing.address, 168, 96)}" alt="${escapeHtml(listing.address)}">
+      <img class="map-popup-photo" src="${streetViewUrl(listing.address, 168, 96)}" onerror="this.onerror=null;this.src=NO_PHOTO_IMG" alt="${escapeHtml(listing.address)}">
       <div class="map-popup-body">
         <div class="map-popup-status ${statusClass(listing.status)}">${listing.status.toUpperCase()}${escapeHtml(livabilitySuffix)}</div>
         <div class="map-popup-address">${escapeHtml(listing.address)}</div>

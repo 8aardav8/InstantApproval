@@ -13,7 +13,7 @@
 // request actually fails. This means updates show immediately whenever
 // there's a connection, with offline support as a bonus, not the
 // original tradeoff (offline support at the cost of never seeing updates).
-const CACHE = "iah-shell-v2"; // bumped so every existing installation's stale v1 cache gets cleared out, not just left behind
+const CACHE = "iah-shell-v3"; // v3 2026-11-21: clears the stored street photos (old caches are deleted on activate) // bumped so every existing installation's stale v1 cache gets cleared out, not just left behind
 const SHELL = ["./", "index.html", "css/style.css", "js/app.js", "manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -35,6 +35,11 @@ self.addEventListener("fetch", (event) => {
   // must always hit the network fresh, unaffected by this cache at all.
   const url = event.request.url;
   if (url.includes("/data/properties.json") || url.includes("workers.dev")) return;
+  // Only this site's own files (2026-11-21). It used to copy every Google
+  // street photo too: thousands of copies filling phone storage, and a failed
+  // fetch with nothing stored came back as an empty image (Aaron: "Some
+  // properties' thumbnails go blank"). Other sites' files now load normally.
+  if (new URL(url).origin !== self.location.origin) return;
 
   event.respondWith(
     fetch(event.request)
