@@ -1431,3 +1431,7 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
    sits at the end of line 1; a past showing with no outcome is amber. */
 .buyer-property-item .buyer-list-item-line1 .deposit-property-check { margin-left: auto; }
 .needs-outcome { color: #b45309; font-weight: 600; }
+
+/* Company name footer, 2026-11-20 */
+.site-footer { text-align: center; font-size: 13px; color: var(--gray-text, #6b7280); padding: 20px 16px 24px; border-top: 1px solid var(--border, #e5e7eb); margin-top: 8px; }
+.login-gate-legal { margin-top: 28px; font-size: 12px; color: rgba(255,255,255,0.55); text-align: center; }
