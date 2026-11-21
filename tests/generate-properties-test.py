@@ -33,6 +33,7 @@ eq("checkbox TRUE counts", [g.is_checked("TRUE"), g.is_checked("FALSE"), g.is_ch
 # Card banner + price reduced (2026-11-21)
 eq("banner trimmed and capped", g.clean_banner("  New   roof!  " + "x" * 80)[:12], "New roof! xx")
 eq("banner cap is 60", len(g.clean_banner("y" * 100)), 60)
+eq("a checkbox value is never a banner", [g.clean_banner("FALSE"), g.clean_banner(" true ")], ["", ""])
 P = lambda d, m, on=None: {"down": d, "monthly": m, **({"priceReducedOn": on} if on else {})}
 eq("new listing: no banner", g.price_reduced_on(None, "$2,000", "$800", "2026-11-21"), None)
 eq("upfront drops: today", g.price_reduced_on(P("$2,000", "$800"), "$1,500", "$800", "2026-11-21"), "2026-11-21")

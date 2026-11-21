@@ -90,7 +90,11 @@ BANNER_MAX = 60
 
 
 def clean_banner(value):
-    return " ".join(str(value or "").split())[:BANNER_MAX]
+    text = " ".join(str(value or "").split())[:BANNER_MAX]
+    # A checkbox value is never a message: on 2026-11-21 Google copied the
+    # Featured checkboxes into the new Card Banner column and every home got
+    # "FALSE" (the publish check blocked it; lesson L140).
+    return "" if text.upper() in ("TRUE", "FALSE") else text
 
 
 # "Price reduced [date]" (Aaron 2026-11-21: "Put a 'price reduced' [date] banner
