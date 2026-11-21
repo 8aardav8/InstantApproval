@@ -318,7 +318,9 @@ function matchesFilters(listing) {
   if (filterState.beds && (parseInt(listing.beds, 10) || 0) < filterState.beds) return false;
   if (filterState.area.length > 0 && !filterState.area.includes(listing.area)) return false;
   const q = document.getElementById("search-box").value.trim().toLowerCase();
-  if (q && !listing.address.toLowerCase().includes(q)) return false;
+  // Signed in as admin, the search also looks through every Sheet cell of the
+  // row (2026-11-21, see refreshAdminSearchIndex).
+  if (q && !listing.address.toLowerCase().includes(q) && !(ADMIN_SEARCH_INDEX && (ADMIN_SEARCH_INDEX[listing.id] || "").includes(q))) return false;
   return true;
 }
 
@@ -1915,7 +1917,33 @@ function buildAppointmentBanner(appt, phone, email) {
 // all-visitors view, only ever fetched once a verified admin token exists,
 // never for a regular visitor. One request covers both datasets (see
 // admin/worker.js job 6) since they come from the same underlying rows.
+// Admin search (Aaron 2026-11-21: "When in admin mode, have the search bar
+// search anything on the sheet row"). The worker sends each listing's whole
+// Sheet row as one lowercased string, private columns included, so it is
+// fetched only with Aaron's sign-in and kept in memory only (never stored).
+let ADMIN_SEARCH_INDEX = null;
+async function refreshAdminSearchIndex() {
+  const box = document.getElementById("search-box");
+  const token = getStoredAdminToken();
+  if (!token) {
+    ADMIN_SEARCH_INDEX = null;
+    if (box) box.placeholder = "Search";
+    return;
+  }
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/search-index`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const data = await res.json();
+    ADMIN_SEARCH_INDEX = data.index || null;
+    if (box) box.placeholder = "Search anything in the Sheet (admin)";
+    if (box && box.value.trim()) refreshCardGridAndMap();
+  } catch (e) {
+    // plain address search still works
+  }
+}
+
 async function refreshAdminActivity() {
+  refreshAdminSearchIndex();
   const token = getStoredAdminToken();
   if (!token) {
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
@@ -3290,6 +3318,8 @@ function initAdminUI() {
     // Clear the bulk admin view and re-render immediately, added
     // 2026-08-29 -- the badges/detail-page info shouldn't linger visible
     // for even one more render after signing out.
+    ADMIN_SEARCH_INDEX = null; // private row text never outlives the sign-in
+    document.getElementById("search-box").placeholder = "Search";
     ADMIN_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_ALL_APPOINTMENTS_BY_ADDRESS = {};
     ADMIN_FAVORITES_BY_ADDRESS = {};

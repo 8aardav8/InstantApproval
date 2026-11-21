@@ -1196,6 +1196,44 @@ async function setListingCell(accessToken, listingId, key, value, inputOption = 
   return { saved: back.ok ? String(((((await back.json()).values || [[]])[0] || [])[0]) ?? "") : null };
 }
 
+// Admin search (Aaron 2026-11-21: "When in admin mode, have the search bar
+// search anything on the sheet row"). Every PROPERTIES cell of each listing,
+// lowercased and joined, keyed by the same public id the site uses (same
+// status rule and duplicate numbering as generate_properties.py). Google-auth
+// only: this includes private columns (lockbox, seller), so it never leaves
+// Aaron's signed-in browser and is never stored.
+const LISTING_STATUSES = new Set(["available", "pending", "sold", "offmarket"]);
+export function adminSearchIndex(rows, addressCol, statusCol) {
+  const index = {}; const seen = new Set(); let dupes = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i] || [];
+    const status = String(row[statusCol] || "").trim().toLowerCase().replace(/[\s-]/g, "");
+    const address = String(row[addressCol] || "").trim();
+    if (!LISTING_STATUSES.has(status) || !address) continue;
+    let id = slugify(address);
+    if (seen.has(id)) { dupes += 1; id = `${id}-${dupes}`; }
+    seen.add(id);
+    index[id] = row.map((c) => String(c ?? "").trim()).filter(Boolean).join(" | ").toLowerCase();
+  }
+  return index;
+}
+async function handleAdminSearchIndex(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const rows = await fetchSheetRows(accessToken); // the whole tab, every column
+    const out = jsonResponse({ index: adminSearchIndex(rows, PC.address, PC.status) });
+    out.headers.set("Cache-Control", "no-store");
+    return out;
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Card Banner (Aaron 2026-11-21: "have a text field for adding a banner
 // message to the properties card face"). Up to 60 characters; blank clears it.
 // Same rules as the Featured tick box. The public card follows after the
@@ -6391,6 +6429,9 @@ async function route(request, env, ctx) {
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
     return handleMarkShown(request, env);
+  }
+  if (url.pathname === "/admin/search-index" && request.method === "GET") {
+    return handleAdminSearchIndex(request, env);
   }
   if (url.pathname === "/admin/set-banner" && request.method === "POST") {
     return handleAdminSetBanner(request, env);

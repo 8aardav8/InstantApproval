@@ -9,6 +9,8 @@ export function colIndex(letters) { let n = 0; for (const ch of letters) n = n *
 export function colLetter(i) { let s = ""; for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s; return s; }
 
 function parseA1(a1) {
+  // A bare tab name means the whole tab (2026-11-21, for fetchSheetRows).
+  if (!a1.includes("!")) return { tab: a1.replace(/^'|'$/g, "").replace(/''/g, "'"), c1: 0, r1: 1, c2: null, r2: null };
   const m = a1.match(/^(?:'((?:[^']|'')+)'|([^!]+))!([A-Z]*)(\d*)(?::([A-Z]*)(\d*))?$/);
   if (!m) throw new Error(`fake-sheets: bad range ${a1}`);
   const tab = (m[1] !== undefined ? m[1].replace(/''/g, "'") : m[2]);
