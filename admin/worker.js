@@ -4662,13 +4662,13 @@ async function handleUploadId(request, env) {
       const text = hasIdPhoto
         ? `ID uploaded — ${name}, ${phone}, ${email}.\n` +
           `Property: ${property}\n` +
-          `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)\n` +
+          `Wants to inspect: ${inspectionDate} (tours 9 AM to dark; they call 1 hr ahead to confirm, from 8 AM)\n` +
           `Filed as: ${filename}\n` +
           `${DROPBOX_BUYER_IDS_FOLDER_LINK}` +
           (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)")
         : `Viewing booked (reused ID already on file) — ${name}, ${phone}, ${email}.\n` +
           `Property: ${property}\n` +
-          `Wants to inspect: ${inspectionDate} (9 AM–8 PM, confirm 1 hr ahead)` +
+          `Wants to inspect: ${inspectionDate} (tours 9 AM to dark; they call 1 hr ahead to confirm, from 8 AM)` +
           (appointmentSaved ? "" : "\n(Note: could not save this appointment to App: Logins -- check manually.)");
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
