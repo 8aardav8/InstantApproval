@@ -1481,3 +1481,11 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .view-as-option:hover { border-color: var(--blue); }
 .view-as-empty { color: var(--gray-text); font-size: 13px; padding: 6px 2px; }
 .viewing-as .admin-login-btn, .viewing-as #admin-login-popover { display: none !important; } /* no admin sign-in while viewing as a buyer */
+/* Featured Deals scroll hint (2026-11-21): count by the title, arrows on the row's edges. */
+.featured-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.featured-count { font-size: 13px; color: var(--gray-text); font-weight: 600; }
+.featured-wrap { position: relative; }
+.featured-arrow { position: absolute; top: 38%; z-index: 6; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: rgba(255,255,255,0.95); box-shadow: 0 2px 8px rgba(0,0,0,0.18); font-size: 24px; line-height: 1; color: var(--navy); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 0 3px; }
+.featured-prev { left: -6px; }
+.featured-next { right: -6px; }
+.featured-arrow.hidden { display: none; }

@@ -247,8 +247,12 @@
            the Featured box ticked on PROPERTIES and still Available; hidden when
            there are none. Filled by renderFeaturedDeals() in app.js. -->
       <section id="featured-deals" class="featured-deals hidden" aria-label="Featured deals">
-        <h2 class="featured-title">Featured Deals</h2>
-        <div id="featured-row" class="featured-row"></div>
+        <div class="featured-head"><h2 class="featured-title">Featured Deals</h2><span id="featured-count" class="featured-count"></span></div>
+        <div class="featured-wrap">
+          <button type="button" class="featured-arrow featured-prev hidden" aria-label="Previous featured homes">‹</button>
+          <div id="featured-row" class="featured-row"></div>
+          <button type="button" class="featured-arrow featured-next hidden" aria-label="More featured homes">›</button>
+        </div>
       </section>
 
       <h1 class="page-title">Home Search</h1>

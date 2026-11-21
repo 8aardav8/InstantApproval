@@ -1249,7 +1249,8 @@ async function handleAdminSetBanner(request, env) {
   const listingId = String(body.id || "").trim();
   if (!listingId || typeof body.text !== "string") return jsonResponse({ error: "missing id or text" }, 400);
   const text = body.text.replace(/\s+/g, " ").trim();
-  if (text.length > 60) return jsonResponse({ error: "keep it to 60 characters" }, 400);
+  // 22 = one line on a phone card (Aaron 2026-11-21: "Max 22, one line").
+  if (text.length > 22) return jsonResponse({ error: "keep it to 22 characters" }, 400);
   try {
     const accessToken = await getSheetsAccessToken(env);
     const r = await setListingCell(accessToken, listingId, "banner", text);

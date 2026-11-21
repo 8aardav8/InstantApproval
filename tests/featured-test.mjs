@@ -62,8 +62,8 @@ eq('follows the column tag when the column moves', [r.status, feat(3)], [200, 'T
 const ban = (row) => cell(sheet, PROPS_GID, row, 'Card Banner');
 r = await call('POST', '/admin/set-banner', { id: ID, text: '  Move-in   ready!  ' });
 eq('banner saved, spaces tidied, read back', [r.status, r.body.banner, ban(2)], [200, 'Move-in ready!', 'Move-in ready!']);
-r = await call('POST', '/admin/set-banner', { id: ID, text: 'x'.repeat(61) });
-eq('over 60 characters refused', [r.status, ban(2)], [400, 'Move-in ready!']);
+r = await call('POST', '/admin/set-banner', { id: ID, text: 'x'.repeat(23) });
+eq('over 22 characters refused', [r.status, ban(2)], [400, 'Move-in ready!']);
 r = await call('POST', '/admin/set-banner', { id: ID, text: '' });
 eq('blank clears it', [r.status, ban(2)], [200, '']);
 r = await call('POST', '/admin/set-banner', { id: ID, text: 'Hi' }, 'bad');

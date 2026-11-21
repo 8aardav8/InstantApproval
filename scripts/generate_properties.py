@@ -86,7 +86,7 @@ def is_checked(value):
 
 # Card Banner (2026-11-21): Aaron's own short message on the card's photo
 # ("have a text field for adding a banner message to the properties card face").
-BANNER_MAX = 60
+BANNER_MAX = 22  # one line on a phone card (Aaron 2026-11-21: "Max 22, one line")
 
 
 def clean_banner(value):

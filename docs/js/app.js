@@ -714,6 +714,41 @@ function decorateListingCard(card, photoWrap, listing) {
   }
 }
 
+// Scroll hint for the Featured Deals row (Aaron 2026-11-21: "It's not obvious
+// that the featured deals can be scrolled"; arrows + a count, peek may come
+// later). Arrows and "1–2 of 5" show only when the row is wider than the
+// screen; each arrow tap moves one card.
+function featuredCardStep(row) {
+  const card = row.querySelector(".card");
+  return card ? card.getBoundingClientRect().width + 12 : row.clientWidth;
+}
+function updateFeaturedArrows() {
+  const row = document.getElementById("featured-row");
+  const section = document.getElementById("featured-deals");
+  if (!row || !section) return;
+  const prev = section.querySelector(".featured-prev"), next = section.querySelector(".featured-next"), count = document.getElementById("featured-count");
+  const total = row.querySelectorAll(".card").length;
+  const overflow = row.scrollWidth > row.clientWidth + 2;
+  if (!overflow) { prev.classList.add("hidden"); next.classList.add("hidden"); count.textContent = ""; return; }
+  const step = featuredCardStep(row);
+  const first = Math.round(row.scrollLeft / step) + 1;
+  const shown = Math.max(1, Math.round((row.clientWidth + 12) / step));
+  const last = Math.min(total, first + shown - 1);
+  count.textContent = `${first}${last > first ? `–${last}` : ""} of ${total}`;
+  prev.classList.toggle("hidden", row.scrollLeft <= 2);
+  next.classList.toggle("hidden", row.scrollLeft + row.clientWidth >= row.scrollWidth - 2);
+}
+function initFeaturedArrows() {
+  const section = document.getElementById("featured-deals");
+  const row = document.getElementById("featured-row");
+  if (!section || !row || section.dataset.arrowsReady) return;
+  section.dataset.arrowsReady = "1";
+  section.querySelector(".featured-prev").addEventListener("click", () => row.scrollBy({ left: -featuredCardStep(row), behavior: "smooth" }));
+  section.querySelector(".featured-next").addEventListener("click", () => row.scrollBy({ left: featuredCardStep(row), behavior: "smooth" }));
+  row.addEventListener("scroll", () => requestAnimationFrame(updateFeaturedArrows), { passive: true });
+  window.addEventListener("resize", updateFeaturedArrows);
+}
+
 // Featured Deals strip (2026-11-20). Every featured home that's Available,
 // whatever the visitor's filters say. Its own try/catch: a problem here must
 // never stop the regular homes from showing (RULE-000072). The homes also stay
@@ -727,6 +762,8 @@ function renderFeaturedDeals() {
     row.innerHTML = "";
     for (const listing of featured) row.appendChild(buildListingCard(listing)); // pill and border come from decorateListingCard
     section.classList.toggle("hidden", featured.length === 0);
+    initFeaturedArrows();
+    requestAnimationFrame(updateFeaturedArrows);
   } catch (e) {
     section.classList.add("hidden");
   }
@@ -3401,7 +3438,7 @@ async function renderAdminSection(listing) {
     // follows within a few minutes (the Sheet edit republishes listings).
     html += `<label class="admin-featured-row"><input type="checkbox" id="admin-featured-cb"${data.featured ? " checked" : ""}> Featured Deal <span class="admin-featured-status">${listing.status === "Available" ? "" : "(shows only while Available)"}</span></label>`;
     // Card Banner (2026-11-21): Aaron's own message on the card's photo.
-    html += `<div class="admin-banner-row"><label for="admin-banner-input">Card banner</label><div class="admin-banner-edit"><input type="text" id="admin-banner-input" maxlength="60" placeholder="e.g. Move-in ready" value="${escapeAttr(data.banner || "")}"><button type="button" id="admin-banner-save" class="btn-outline">Save</button></div><span class="admin-banner-status">Up to 60 characters. Leave blank and save to remove.</span></div>`;
+    html += `<div class="admin-banner-row"><label for="admin-banner-input">Card banner</label><div class="admin-banner-edit"><input type="text" id="admin-banner-input" maxlength="22" placeholder="e.g. Move-in ready" value="${escapeAttr(data.banner || "")}"><button type="button" id="admin-banner-save" class="btn-outline">Save</button></div><span class="admin-banner-status">Up to 22 characters (one line on a phone). Leave blank and save to remove.</span></div>`;
     for (const [header, label] of ADMIN_HEADLINE_FIELDS) {
       html += detailField(label, fields[header]);
     }

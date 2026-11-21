@@ -31,8 +31,8 @@ eq("no featured tag: nothing, no error", g.optional_tag_positions(meta(keys)), {
 eq("featured tag doesn't disturb the required header check", g.canonical_header_row(live, fm)[:34], live)
 eq("checkbox TRUE counts", [g.is_checked("TRUE"), g.is_checked("FALSE"), g.is_checked(""), g.is_checked(" true ")], [True, False, False, True])
 # Card banner + price reduced (2026-11-21)
-eq("banner trimmed and capped", g.clean_banner("  New   roof!  " + "x" * 80)[:12], "New roof! xx")
-eq("banner cap is 60", len(g.clean_banner("y" * 100)), 60)
+eq("banner trimmed and capped", g.clean_banner("  New   roof!  " + "x" * 80), "New roof! " + "x" * 12)
+eq("banner cap is 22", len(g.clean_banner("y" * 100)), 22)
 eq("a checkbox value is never a banner", [g.clean_banner("FALSE"), g.clean_banner(" true ")], ["", ""])
 P = lambda d, m, on=None: {"down": d, "monthly": m, **({"priceReducedOn": on} if on else {})}
 eq("new listing: no banner", g.price_reduced_on(None, "$2,000", "$800", "2026-11-21"), None)
