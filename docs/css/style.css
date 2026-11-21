@@ -1458,3 +1458,13 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 .admin-featured-row { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 6px 0 10px; }
 .admin-featured-row input { width: 20px; height: 20px; }
 .admin-featured-status { font-weight: 400; font-size: 12px; color: var(--gray-text); }
+/* Card ribbons along the photo's bottom (2026-11-21): Aaron's banner first, then Price reduced. */
+.card-ribbons { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; flex-direction: column; }
+.card-ribbon { color: #fff; font-size: 12px; font-weight: 800; padding: 4px 10px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-ribbon-custom { background: rgba(26, 86, 219, 0.92); }
+.card-ribbon-reduced { background: rgba(220, 38, 38, 0.92); }
+.admin-banner-row { margin: 4px 0 12px; }
+.admin-banner-row label { font-weight: 700; display: block; margin-bottom: 4px; }
+.admin-banner-edit { display: flex; gap: 8px; }
+.admin-banner-edit input { flex: 1; min-width: 0; }
+.admin-banner-status { display: block; font-size: 12px; color: var(--gray-text); margin-top: 4px; }

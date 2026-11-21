@@ -1160,7 +1160,7 @@ async function handleAdminLookup(request, env, listingId) {
       const fields = {};
       headers.forEach((h, idx) => { fields[h] = row[idx] || ""; });
       // The live Featured checkbox (2026-11-20), for the admin tick box.
-      return jsonResponse({ fields, featured: String(row[PC.featured] || "").trim().toUpperCase() === "TRUE" });
+      return jsonResponse({ fields, featured: String(row[PC.featured] || "").trim().toUpperCase() === "TRUE", banner: String(row[PC.banner] || "") });
     }
     return jsonResponse({ error: "listing not found" }, 404);
   } catch (e) {
@@ -1175,6 +1175,54 @@ async function handleAdminLookup(request, env, listingId) {
 // nothing is written. Writes TRUE/FALSE to the tagged Featured column and
 // reads it back. The Sheet edit triggers the normal listings publish, so the
 // public strip updates a few minutes later.
+// Writes one PROPERTIES cell for the listing with this public id: exactly one
+// row must match, then read back. Shared by the Featured tick box and the Card
+// Banner field (2026-11-21).
+async function setListingCell(accessToken, listingId, key, value, inputOption = "RAW") {
+  const rowsRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(propsRowsRange(1))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!rowsRes.ok) throw new Error(`PROPERTIES read failed: ${await rowsRes.text()}`);
+  const rows = (await rowsRes.json()).values || [];
+  const hits = [];
+  for (let i = 1; i < rows.length; i++) if ((rows[i][PC.address] || "").trim() && slugify(rows[i][PC.address]) === listingId) hits.push(i + 1);
+  if (hits.length === 0) return { status: 404, error: "listing not found" };
+  if (hits.length > 1) return { status: 409, error: "more than one PROPERTIES row has this address; change it in the Sheet" };
+  const a1 = `'${TABS.props}'!${PL[key]}${hits[0]}`;
+  const put = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(a1)}?valueInputOption=${inputOption}`, {
+    method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ range: a1, values: [[value]] }),
+  });
+  if (!put.ok) throw new Error(`${key} write failed: ${await put.text()}`);
+  const back = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(a1)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  return { saved: back.ok ? String(((((await back.json()).values || [[]])[0] || [])[0]) ?? "") : null };
+}
+
+// Card Banner (Aaron 2026-11-21: "have a text field for adding a banner
+// message to the properties card face"). Up to 60 characters; blank clears it.
+// Same rules as the Featured tick box. The public card follows after the
+// normal listings refresh.
+async function handleAdminSetBanner(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const listingId = String(body.id || "").trim();
+  if (!listingId || typeof body.text !== "string") return jsonResponse({ error: "missing id or text" }, 400);
+  const text = body.text.replace(/\s+/g, " ").trim();
+  if (text.length > 60) return jsonResponse({ error: "keep it to 60 characters" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const r = await setListingCell(accessToken, listingId, "banner", text);
+    if (r.error) return jsonResponse({ error: r.error }, r.status);
+    if (r.saved !== text) throw new Error("banner read-back did not match");
+    return jsonResponse({ ok: true, banner: r.saved });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 async function handleAdminSetFeatured(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const idToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -6343,6 +6391,9 @@ async function route(request, env, ctx) {
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
     return handleMarkShown(request, env);
+  }
+  if (url.pathname === "/admin/set-banner" && request.method === "POST") {
+    return handleAdminSetBanner(request, env);
   }
   if (url.pathname === "/admin/set-featured" && request.method === "POST") {
     return handleAdminSetFeatured(request, env);

@@ -66,7 +66,7 @@ CANONICAL_BY_TAG = {
 # missing tag can't block a publish. "Featured" is Aaron's checkbox for the
 # Featured Deals strip ("I'd like to build a featured deals section at the top
 # of the site so that I can feature my own vacancies").
-OPTIONAL_TAGS = {"featured"}
+OPTIONAL_TAGS = {"featured", "banner"}
 
 
 def optional_tag_positions(matched_metadata):
@@ -82,6 +82,48 @@ def optional_tag_positions(matched_metadata):
 
 def is_checked(value):
     return str(value).strip().upper() == "TRUE"
+
+
+# Card Banner (2026-11-21): Aaron's own short message on the card's photo
+# ("have a text field for adding a banner message to the properties card face").
+BANNER_MAX = 60
+
+
+def clean_banner(value):
+    return " ".join(str(value or "").split())[:BANNER_MAX]
+
+
+# "Price reduced [date]" (Aaron 2026-11-21: "Put a 'price reduced' [date] banner
+# automatically on cards after price reductions"; "14 days"). Compared with the
+# last published file: a drop is the upfront or monthly going down while
+# neither goes up. The date carries forward until 14 days pass or the price
+# rises again. Dates are Central (YYYY-MM-DD).
+PRICE_REDUCED_DAYS = 14
+
+
+def money(v):
+    m = re.search(r"\d+(?:\.\d+)?", str(v or "").replace(",", ""))
+    return float(m.group(0)) if m else None
+
+
+def price_reduced_on(prev, cur_down, cur_monthly, today):
+    """prev: last published listing (or None). Returns a YYYY-MM-DD or None."""
+    if not prev:
+        return None
+    od, om, cd, cm = money(prev.get("down")), money(prev.get("monthly")), money(cur_down), money(cur_monthly)
+    if None not in (od, om, cd, cm):
+        if cd > od or cm > om:
+            return None  # went up: the old reduction no longer applies
+        if cd < od or cm < om:
+            return today
+    since = prev.get("priceReducedOn")
+    if since:
+        try:
+            age = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(since, "%Y-%m-%d")).days
+        except ValueError:
+            return None
+        return since if 0 <= age < PRICE_REDUCED_DAYS else None
+    return None
 
 
 def canonical_header_row(live_headers, matched_metadata):
@@ -315,7 +357,9 @@ def main():
             for cm in d.get("columnMetadata", [])
             for dm in cm.get("developerMetadata", [])]
     all_values[0] = canonical_header_row(all_values[0], tags)
-    featured_idx = optional_tag_positions(tags).get("featured")
+    optional_idx = optional_tag_positions(tags)
+    featured_idx = optional_idx.get("featured")
+    banner_idx = optional_idx.get("banner")
 
     # Shared snapshot for verify_no_sensitive_data.py -- see the comment by
     # RAW_SNAPSHOT_PATH_NAME above for why this exists. Written as early as
@@ -348,6 +392,10 @@ def main():
 
     previous = load_previous_output()
     geocode_cache = load_geocode_cache_from_previous(previous)
+
+    previous_by_id = {l.get("id"): l for l in (previous or {}).get("listings", [])}
+    from zoneinfo import ZoneInfo
+    today_central = datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d")
 
     status_idx = header_idx["Available?"]
     seen_ids = set()
@@ -397,6 +445,11 @@ def main():
         }
         if featured_idx is not None and featured_idx < len(row) and is_checked(row[featured_idx]):
             listing["featured"] = True
+        if banner_idx is not None and banner_idx < len(row) and clean_banner(row[banner_idx]):
+            listing["banner"] = clean_banner(row[banner_idx])
+        reduced = price_reduced_on(previous_by_id.get(listing_id), listing["down"], listing["monthly"], today_central)
+        if reduced:
+            listing["priceReducedOn"] = reduced
 
         # Geocode every included listing (Available/Pending/Sold/Off Market),
         # not just Available -- fixed 2026-08-22. The map used to hard-code

@@ -406,6 +406,7 @@ function buildListingCard(listing) {
   img.src = streetViewUrl(listing.address, 400, 300);
   img.alt = listing.address;
   photoWrap.appendChild(img);
+  decorateListingCard(card, photoWrap, listing);
 
   // Heart/favorite toggle, added 2026-08-29. stopPropagation so tapping the
   // heart doesn't also trigger the card's own click-to-detail handler above.
@@ -511,6 +512,48 @@ function buildListingCard(listing) {
   return card;
 }
 
+// Card extras (2026-11-21), on every card in every list: the Featured border
+// and pill (Aaron: "Put the border and pill on the property in the full list
+// as well"), Aaron's own Card Banner, then "Price reduced [date]" for 14 days
+// after a drop ("Both, yours first"; ribbons along the photo's bottom).
+const PRICE_REDUCED_DAYS = 14;
+function priceReducedLabel(listing) {
+  const on = listing.priceReducedOn;
+  if (!on || !/^\d{4}-\d{2}-\d{2}$/.test(on)) return "";
+  const [y, m, d] = on.split("-").map(Number);
+  const ageDays = (Date.now() - new Date(y, m - 1, d).getTime()) / 864e5;
+  if (ageDays < 0 || ageDays >= PRICE_REDUCED_DAYS) return "";
+  return `Price reduced ${m}/${d}`;
+}
+function decorateListingCard(card, photoWrap, listing) {
+  try {
+    if (listing.featured && listing.status === "Available") {
+      card.classList.add("card-featured");
+      const tag = document.createElement("span");
+      tag.className = "featured-badge";
+      tag.textContent = "Featured";
+      photoWrap.appendChild(tag);
+    }
+    const ribbons = [];
+    if (listing.banner) ribbons.push(["card-ribbon-custom", listing.banner]);
+    const reduced = priceReducedLabel(listing);
+    if (reduced) ribbons.push(["card-ribbon-reduced", reduced]);
+    if (ribbons.length) {
+      const box = document.createElement("div");
+      box.className = "card-ribbons";
+      for (const [cls, text] of ribbons) {
+        const r = document.createElement("div");
+        r.className = `card-ribbon ${cls}`;
+        r.textContent = text;
+        box.appendChild(r);
+      }
+      photoWrap.appendChild(box);
+    }
+  } catch (e) {
+    // decoration only; never stop a card from showing
+  }
+}
+
 // Featured Deals strip (2026-11-20). Every featured home that's Available,
 // whatever the visitor's filters say. Its own try/catch: a problem here must
 // never stop the regular homes from showing (RULE-000072). The homes also stay
@@ -522,16 +565,7 @@ function renderFeaturedDeals() {
   try {
     const featured = (ALL_LISTINGS || []).filter((l) => l.featured && l.status === "Available");
     row.innerHTML = "";
-    for (const listing of featured) {
-      const card = buildListingCard(listing);
-      card.classList.add("card-featured");
-      const tag = document.createElement("span");
-      tag.className = "featured-badge";
-      tag.textContent = "Featured";
-      const wrap = card.querySelector(".card-photo-wrap");
-      (wrap || card).appendChild(tag);
-      row.appendChild(card);
-    }
+    for (const listing of featured) row.appendChild(buildListingCard(listing)); // pill and border come from decorateListingCard
     section.classList.toggle("hidden", featured.length === 0);
   } catch (e) {
     section.classList.add("hidden");
@@ -3103,6 +3137,31 @@ function copyPhotoLinkAndOpenSheet(btn) {
   window.open(SHEET_BASE_URL, "_blank", "noopener");
 }
 
+async function saveCardBanner(listing) {
+  const input = document.getElementById("admin-banner-input");
+  const btn = document.getElementById("admin-banner-save");
+  const status = document.querySelector(".admin-banner-status");
+  const text = input.value.replace(/\s+/g, " ").trim();
+  btn.disabled = true; status.textContent = "Saving…";
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/set-banner`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${getStoredAdminToken()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ id: listing.id, text }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error((data && (data.error || data.detail)) || res.status);
+    listing.banner = data.banner || "";
+    input.value = listing.banner;
+    renderCardGrid();
+    status.textContent = listing.banner ? "Saved. Shows for everyone in a few minutes." : "Removed. Gone for everyone in a few minutes.";
+  } catch (err) {
+    status.textContent = `Couldn't save: ${err.message || err}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 async function setFeatured(listing, cb) {
   const want = cb.checked;
   const status = cb.parentElement.querySelector(".admin-featured-status");
@@ -3152,6 +3211,8 @@ async function renderAdminSection(listing) {
     // Featured Deals tick box (2026-11-20). Saves on tap; the public strip
     // follows within a few minutes (the Sheet edit republishes listings).
     html += `<label class="admin-featured-row"><input type="checkbox" id="admin-featured-cb"${data.featured ? " checked" : ""}> Featured Deal <span class="admin-featured-status">${listing.status === "Available" ? "" : "(shows only while Available)"}</span></label>`;
+    // Card Banner (2026-11-21): Aaron's own message on the card's photo.
+    html += `<div class="admin-banner-row"><label for="admin-banner-input">Card banner</label><div class="admin-banner-edit"><input type="text" id="admin-banner-input" maxlength="60" placeholder="e.g. Move-in ready" value="${escapeAttr(data.banner || "")}"><button type="button" id="admin-banner-save" class="btn-outline">Save</button></div><span class="admin-banner-status">Up to 60 characters. Leave blank and save to remove.</span></div>`;
     for (const [header, label] of ADMIN_HEADLINE_FIELDS) {
       html += detailField(label, fields[header]);
     }
@@ -3207,6 +3268,8 @@ async function renderAdminSection(listing) {
     container.innerHTML = html;
     const featuredCb = document.getElementById("admin-featured-cb");
     if (featuredCb) featuredCb.addEventListener("change", () => setFeatured(listing, featuredCb));
+    const bannerSave = document.getElementById("admin-banner-save");
+    if (bannerSave) bannerSave.addEventListener("click", () => saveCardBanner(listing));
     container.querySelectorAll(".admin-activity-name-link").forEach((el) => {
       el.addEventListener("click", () => goToBuyerFromAppointment(el.dataset.phone));
     });

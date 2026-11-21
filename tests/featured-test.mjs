@@ -58,5 +58,17 @@ eq('featured must be true or false', r.status, 400);
 moveColumn(sheet.tabs[PROPS_GID], sheet.tabs[PROPS_GID].rows[0].indexOf('Featured'), 1);
 r = await call('POST', '/admin/set-featured', { id: '9-y-ave-peoria-il', featured: true });
 eq('follows the column tag when the column moves', [r.status, feat(3)], [200, 'TRUE']);
+// Card Banner (2026-11-21)
+const ban = (row) => cell(sheet, PROPS_GID, row, 'Card Banner');
+r = await call('POST', '/admin/set-banner', { id: ID, text: '  Move-in   ready!  ' });
+eq('banner saved, spaces tidied, read back', [r.status, r.body.banner, ban(2)], [200, 'Move-in ready!', 'Move-in ready!']);
+r = await call('POST', '/admin/set-banner', { id: ID, text: 'x'.repeat(61) });
+eq('over 60 characters refused', [r.status, ban(2)], [400, 'Move-in ready!']);
+r = await call('POST', '/admin/set-banner', { id: ID, text: '' });
+eq('blank clears it', [r.status, ban(2)], [200, '']);
+r = await call('POST', '/admin/set-banner', { id: ID, text: 'Hi' }, 'bad');
+eq('banner needs Aaron\'s sign-in', [r.status, ban(2)], [403, '']);
+r = await call('POST', '/admin/set-banner', { id: '5-twin-rd', text: 'Hi' });
+eq('banner: two rows with one address refused', r.status, 409);
 console.log(fail ? `\n${fail} failed` : '\nall passed');
 process.exit(fail ? 1 : 0);
