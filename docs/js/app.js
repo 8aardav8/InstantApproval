@@ -172,7 +172,7 @@ async function openViewAsPicker() {
   if (!BUYERS_CACHE) { try { await loadBuyers(); } catch (e) { /* list shows empty */ } }
   const overlay = document.createElement("div");
   overlay.className = "id-lightbox view-as-picker";
-  overlay.innerHTML = `<div class="id-lightbox-content"><h3 style="margin:0 0 10px">See site as…</h3><input type="text" class="view-as-search" placeholder="Buyer name or phone" autocomplete="off"><div class="view-as-results"></div><div class="id-lightbox-actions"><button type="button" class="btn-outline view-as-cancel">Cancel</button></div></div>`;
+  overlay.innerHTML = `<div class="id-lightbox-content"><h3 style="margin:0 0 10px">See site as…</h3><input type="text" class="view-as-search" placeholder="Name, phone or email" autocomplete="off"><div class="view-as-results"></div><div class="id-lightbox-actions"><button type="button" class="btn-outline view-as-cancel">Cancel</button></div></div>`;
   document.body.appendChild(overlay);
   const input = overlay.querySelector(".view-as-search"), results = overlay.querySelector(".view-as-results");
   const close = () => overlay.remove();
@@ -180,14 +180,18 @@ async function openViewAsPicker() {
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
   const draw = () => {
     const q = input.value.trim().toLowerCase(), qd = q.replace(/\D/g, "");
-    const list = (BUYERS_CACHE || []).filter((b) => b.phone && b.loginsMatch && b.loginsMatch.row)
-      .filter((b) => !q || (b.name || "").toLowerCase().includes(q) || (qd && String(b.phone).replace(/\D/g, "").includes(qd)))
+    // Anyone who has ever logged in to the site (Aaron 2026-11-21: "any buyer
+    // who has ever logged in"): a First or Last Login on their row. Names come
+    // from Quo, then the login name, then the ID name (the list has no "name").
+    const nameOf = (b) => b.quoName || (b.loginsMatch && (b.loginsMatch.name || b.loginsMatch.idName)) || "";
+    const list = (BUYERS_CACHE || []).filter((b) => b.phone && b.loginsMatch && b.loginsMatch.row && (b.loginsMatch.firstLogin || b.loginsMatch.lastLogin))
+      .filter((b) => !q || nameOf(b).toLowerCase().includes(q) || (b.loginsMatch.email || "").toLowerCase().includes(q) || (qd && String(b.phone).replace(/\D/g, "").includes(qd)))
       .slice(0, 12);
-    results.innerHTML = list.length ? "" : `<div class="view-as-empty">${q ? "No signed-in buyer matches." : "Type a name or phone."}</div>`;
+    results.innerHTML = list.length ? "" : `<div class="view-as-empty">${q ? "No one who has logged in matches." : "Type a name, phone or email."}</div>`;
     for (const b of list) {
       const btn = document.createElement("button");
       btn.type = "button"; btn.className = "view-as-option";
-      btn.textContent = `${b.name || "(no name)"} · ${b.phone}`;
+      btn.textContent = `${nameOf(b) || "(no name)"} · ${b.phone}`;
       btn.addEventListener("click", () => startViewAs(b.phone));
       results.appendChild(btn);
     }
