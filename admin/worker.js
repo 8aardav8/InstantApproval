@@ -2346,8 +2346,9 @@ async function handleAdminAddAppointment(request, env) {
       row = await findLoginsRowByPhone(accessToken, phone);
       if (!row) throw new Error("could not find or create a row for this buyer");
     }
-    await addAppointment(accessToken, row, address, date);
-    return jsonResponse({ ok: true });
+    const added = await addAppointment(accessToken, row, address, date);
+    const buyerText = added.duplicate ? null : await sendAppointmentText(env, accessToken, { kind: "booked", row, address, date });
+    return jsonResponse({ ok: true, buyerText });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2392,6 +2393,10 @@ async function handleAdminUpdateAppointment(request, env) {
     const range = encodeURIComponent(`${TABS.logins}!${col}${row}:${col}${row}`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
     const cellValue = buildAppointmentCell(address, date, status);
+    // What the slot held before, to tell a real cancel or reschedule from a
+    // re-save (2026-11-20, for the buyer texts below).
+    const beforeRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const before = beforeRes.ok ? parseAppointmentCell(((((await beforeRes.json()).values || [[]])[0] || [])[0]) || "", slot) : null;
     const res = await fetch(url, {
       method: "PUT",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -2401,12 +2406,17 @@ async function handleAdminUpdateAppointment(request, env) {
     // 2026-11-13: a Completed tour also goes into Shown Properties, because
     // addAppointment drops past cells and the Reserve button needs proof of
     // the tour. The appointment write above already succeeded either way.
+    // Buyer text: canceled now (it wasn't before), or booked again / moved to
+    // a new date or home. Completed and unchanged re-saves text nobody.
+    let buyerText = null;
+    if (status === "Canceled" && (!before || before.status !== "Canceled")) buyerText = await sendAppointmentText(env, accessToken, { kind: "canceled", row, address, date });
+    else if (!status && (!before || before.status === "Canceled" || before.date !== date || before.address !== address)) buyerText = await sendAppointmentText(env, accessToken, { kind: "booked", row, address, date });
     let shownAdded = null;
     if (status === "Completed") {
       try { shownAdded = await reserve.addShownOnComplete(env, phone, address); }
       catch (e) { return jsonResponse({ ok: true, shownError: String(e) }); }
     }
-    return jsonResponse({ ok: true, shownAdded });
+    return jsonResponse({ ok: true, shownAdded, buyerText });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -2596,7 +2606,7 @@ async function handleAdminSetIdName(request, env) {
 // Blank = how each behaved before the setting existed. "On" (the first,
 // two-way version) reads as Auto. Keep in step with AUTO_TEXT_DEFAULTS in
 // appointment-notifier-worker.js.
-const AUTO_TEXT_DEFAULTS = { status_change: "Auto", day_of_reminder: "Auto", price_drop: "Approve" };
+const AUTO_TEXT_DEFAULTS = { status_change: "Auto", day_of_reminder: "Auto", price_drop: "Approve", appointment_booked: "Approve", appointment_canceled: "Approve" };
 const AUTO_TEXT_KEYS = new Set(Object.keys(AUTO_TEXT_DEFAULTS));
 const AUTO_SEND_MODES = new Set(["Auto", "Approve", "Off"]);
 export function autoSendValue(key, cell) {
@@ -4629,6 +4639,7 @@ async function handleUploadId(request, env) {
       if (idLink) await writeIdLink(accessToken, target.row, idLink);
       repeatBooking = (await addAppointment(accessToken, target.row, property, inspectionDate)).duplicate;
       appointmentSaved = true;
+      if (!repeatBooking) await sendAppointmentText(env, accessToken, { kind: "booked", row: target.row, address: property, date: inspectionDate });
     } catch (e) {
       // Best-effort -- the ID/Dropbox upload (the actually-required part of
       // this submission) already succeeded by this point; a Sheet hiccup
@@ -4957,6 +4968,7 @@ async function handleCancelAppointment(request, env) {
       body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[buildAppointmentCell(existing.address, existing.date, "Canceled")]] }),
     });
     if (!res.ok) throw new Error(`cancel write failed: ${await res.text()}`);
+    if (existing.status !== "Canceled") await sendAppointmentText(env, accessToken, { kind: "canceled", row, address: existing.address, date: existing.date });
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -5004,6 +5016,7 @@ async function handleUpdateAppointmentDate(request, env) {
       body: JSON.stringify({ range: `${TABS.logins}!${col}${row}:${col}${row}`, values: [[`${existing.address} | ${newDate}`]] }),
     });
     if (!putRes.ok) throw new Error(`reschedule write failed: ${await putRes.text()}`);
+    if (newDate !== existing.date || existing.status === "Canceled") await sendAppointmentText(env, accessToken, { kind: "booked", row, address: existing.address, date: newDate });
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
@@ -5322,6 +5335,68 @@ async function writePendingEmailChangeRow(accessToken, row, values) {
 
 async function nextPendingEmailChangeRow(accessToken) {
   return nextSysRow(accessToken, "pendingEmail", "oldEmail", "pending-email");
+}
+
+// Showing booked / canceled texts to the buyer (Aaron, 2026-11-20: "Appointment
+// set and appointment cancelled should have the toggle and send
+// automatically", and "Theirs and mine"). First built 9/21-22 but never
+// deployed, so nothing sent them until now. Follows the Templates page
+// setting: Auto = texts the buyer, Approve = Telegram proposal to Aaron,
+// Off = nothing. Skips DNC buyers and past dates. A KV mark, saved BEFORE the
+// Quo call, stops the same text for the same buyer + home + date from ever
+// going twice (a double tap, a retry). Best-effort: never throws, because the
+// appointment write has already succeeded by the time this runs.
+export function prettyApptDate(ymd) {
+  const d = new Date(`${ymd}T12:00:00Z`);
+  return isNaN(d) ? ymd : d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+}
+async function telegramToAaron(env, text) {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text }),
+  }).catch(() => {});
+}
+async function sendAppointmentText(env, accessToken, { kind, row, address, date }) {
+  try {
+    const key = kind === "canceled" ? "appointment_canceled" : "appointment_booked";
+    const todayLA = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+    if (!date || date < todayLA) return { skipped: "past date" };
+    const tpl = (await readSysRows(accessToken, "templates", "text-templates")).slice(1).find((r) => (r[0] || "").trim() === key);
+    const mode = autoSendValue(key, tpl ? tpl[5] : "");
+    if (mode === "Off") return { skipped: "Off" };
+    const rowRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(loginsRowRange(row))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!rowRes.ok) throw new Error(`buyer row read failed: ${rowRes.status}`);
+    const rowArr = ((await rowRes.json()).values || [[]])[0] || [];
+    const phone = toE164(cellOf(rowArr, "phone"));
+    const name = (cellOf(rowArr, "name") || "").trim();
+    if (!phone) return { skipped: "no phone" };
+    if (/^(true|yes|1|x|dnc)$/i.test(String(cellOf(rowArr, "dnc") || "").trim())) return { skipped: "DNC" };
+    const template = (tpl && tpl[2]) || (kind === "canceled"
+      ? "Your appointment to see {{address}} on {{date}} has been canceled. Text us if you'd like to reschedule.\n-Aaron\n{{site_url}}"
+      : "You're all set! Your appointment to see {{address}} is scheduled for {{date}}. Call/text us with any questions.\n-Aaron\n{{site_url}}");
+    const fields = { address, date: prettyApptDate(date), name, first_name: name.split(/\s+/)[0] || "", site_url: "www.InstantApprovalHomes.com" };
+    const text = template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => (k in fields ? fields[k] : ""));
+    const who = `${name || phone} (${phone}), ${address} on ${fields.date}`;
+    const label = kind === "canceled" ? "showing canceled" : "showing booked";
+    if (mode !== "Auto") {
+      await telegramToAaron(env, `🟢 Approval — ${label} text for ${who}. Proposed text:\n\n${text}\n\nNOT sent automatically: set to Approve on the Templates page. Send manually via Quo if wanted.`);
+      return { proposed: true, text };
+    }
+    const markKey = `appt-text:${key}:${phone}:${address}:${date}`;
+    if (env.BUYERS_KV && (await env.BUYERS_KV.get(markKey))) return { skipped: "already sent" };
+    if (env.BUYERS_KV) await env.BUYERS_KV.put(markKey, "1", { expirationTtl: 60 * 24 * 3600 });
+    try {
+      await sendQuoText(env, phone, text);
+      await telegramToAaron(env, `📱 Sent — ${label} text to ${who}.\n\n${text}`);
+      return { sent: true, text };
+    } catch (e) {
+      await telegramToAaron(env, `🚩 Flag — ${label} text to ${who} FAILED and will not be retried (${String(e).slice(0, 200)}). Send manually via Quo if wanted:\n\n${text}`);
+      return { failed: true };
+    }
+  } catch (e) {
+    await telegramToAaron(env, `🚩 Flag — couldn't prepare the ${kind} showing text for ${address} on ${date} (${String(e).slice(0, 200)}). Nothing was sent.`);
+    return { error: String(e) };
+  }
 }
 
 async function sendQuoText(env, e164To, content) {

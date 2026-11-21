@@ -34,4 +34,5 @@ node tests/gate-capture-test.mjs >/dev/null 2>&1 || { echo "REFUSING: gate captu
 node tests/quo-lookup-cap-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Quo lookup cap test failed (lookups must reach every contact). Run: node tests/quo-lookup-cap-test.mjs" >&2; exit 1; }
 node tests/favorites-sheet-first-test.mjs >/dev/null 2>&1 || { echo "REFUSING: favorites test failed (a buyer visit must never wipe a favorite). Run: node tests/favorites-sheet-first-test.mjs" >&2; exit 1; }
 node tests/template-autosend-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Templates On/Off switch test failed. Run: node tests/template-autosend-test.mjs" >&2; exit 1; }
+node tests/appointment-texts-test.mjs >/dev/null 2>&1 || { echo "REFUSING: showing booked/canceled text test failed. Run: node tests/appointment-texts-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml

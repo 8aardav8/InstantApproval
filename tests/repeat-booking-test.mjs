@@ -28,7 +28,8 @@ function world(appts = []) {
     const url = new URL(typeof input === 'string' ? input : input.url);
     const json = (b) => new Response(JSON.stringify(b), { headers: { 'Content-Type': 'application/json' } });
     if (url.hostname === 'oauth2.googleapis.com') return json({ access_token: 'fake' });
-    if (url.hostname === 'api.telegram.org') { w.telegrams++; return json({ ok: true }); }
+    // Count only the booking ping to Aaron, not the buyer-text proposal (2026-11-20).
+    if (url.hostname === 'api.telegram.org') { if (!/showing booked text/.test(String(init.body))) w.telegrams++; else w.proposals = (w.proposals || 0) + 1; return json({ ok: true }); }
     if (url.hostname === 'api.quo.com' || url.hostname === 'api.openphone.com') throw new Error('quo unavailable in test');
     if (url.hostname === 'sheets.googleapis.com') return sheet.handle(url, init);
     throw new Error(`test: refused ${url.hostname}${url.pathname}`);
@@ -46,7 +47,8 @@ async function book(w, address = ADDR, date = D) {
 { const w = world(); const s = [await book(w), await book(w), await book(w)];
   eq('three submits of the same showing all answer OK', s, [200, 200, 200]);
   eq('…but the showing is saved once', w.slots(), [`${ADDR} | ${D} | `]);
-  eq('…and Aaron is told once', w.telegrams, 1); }
+  eq('…and Aaron is told once', w.telegrams, 1);
+  eq('…and the buyer text is proposed once', w.proposals, 1); }
 { const w = world(); await book(w); await book(w, ADDR, day(3)); await book(w, '2 Other St', D);
   eq('a different date or a different house is still a new showing', w.slots().length, 3); }
 { const w = world([`${ADDR} | ${D} | Canceled`]); await book(w);
