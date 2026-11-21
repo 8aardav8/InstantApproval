@@ -539,6 +539,16 @@ function toggleFavorite(id) {
   const i = favs.indexOf(id);
   if (i === -1) favs.push(id); else favs.splice(i, 1);
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favs));
+  // Since 2026-11-20 the Sheet holds the main list (Aaron can add favorites
+  // for a buyer from the admin Buyer page), so only this tap is sent, not
+  // the whole device list. Queued until a sync succeeds (also covers taps
+  // made before signing in).
+  const listing = ALL_LISTINGS.find((l) => l.id === id);
+  if (listing) {
+    const pending = getFavoritePending();
+    pending.push({ address: listing.address, action: i === -1 ? "add" : "remove" });
+    localStorage.setItem(FAVORITES_PENDING_KEY, JSON.stringify(pending));
+  }
   // Sync to the Sheet, added 2026-08-29 per Aaron's direct request (admin
   // visibility into who's favorited a property, with contact info) --
   // immediate, not debounced like the filter/search sync, since toggling a
@@ -548,6 +558,32 @@ function toggleFavorite(id) {
   // a no-op if this browser never passed the gate, same as the filter sync.
   if (typeof syncVisitorNow === "function") syncVisitorNow();
 }
+const FAVORITES_PENDING_KEY = "iah_favorites_pending";
+const FAVORITES_MIGRATED_KEY = "iah_favorites_sheet_first"; // set once this device's old list has been merged into the Sheet
+function getFavoritePending() {
+  try { return JSON.parse(localStorage.getItem(FAVORITES_PENDING_KEY) || "[]"); } catch (e) { return []; }
+}
+// The Sheet's saved list (addresses) came back from /sync-visitor: adopt it,
+// replay any taps still waiting, and refresh every heart that changed.
+function adoptServerFavorites(addresses) {
+  const byAddress = new Map(ALL_LISTINGS.map((l) => [l.address, l.id]));
+  const ids = [];
+  for (const a of addresses) { const id = byAddress.get(a); if (id && !ids.includes(id)) ids.push(id); }
+  for (const c of getFavoritePending()) {
+    const id = byAddress.get(c.address);
+    if (!id) continue;
+    const k = ids.indexOf(id);
+    if (c.action === "remove") { if (k !== -1) ids.splice(k, 1); } else if (k === -1) ids.push(id);
+  }
+  const before = getFavorites();
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(ids));
+  const changed = [...new Set([...before, ...ids])].filter((id) => before.includes(id) !== ids.includes(id));
+  if (!changed.length) return;
+  changed.forEach((id) => syncFavoriteHearts(id));
+  const favTab = document.getElementById("tab-favorites");
+  if (favTab && !favTab.classList.contains("hidden")) renderFavoritesGrid();
+}
+
 // Converts this device's favorited listing IDs into real addresses for the
 // Sheet sync -- IDs are a client-side slug (see slugify()), meaningless to
 // Aaron/Nathan reading the Sheet directly; the address is what the
@@ -2823,25 +2859,49 @@ function currentFilterSyncPayload() {
       area: filterState.area,
     },
     search: document.getElementById("search-box").value.trim(),
-    // Added 2026-08-29 -- always the FULL current list, same "resend
-    // everything, not a diff" approach already used for filters above.
-    favorites: getFavoriteAddresses(),
+    // Favorites: only this device's taps since the last good sync (the
+    // Sheet holds the main list since 2026-11-20). The very first sync on
+    // this code also sends the old device list once, which the Worker only
+    // adds from, so nothing a buyer saved earlier is lost.
+    favoriteChanges: getFavoritePending(),
+    ...(localStorage.getItem(FAVORITES_MIGRATED_KEY) ? {} : { favorites: getFavoriteAddresses() }),
     // Added 2026-09-11, same "full list every time" convention.
     viewed: getViewedAddresses(),
   };
 }
 
+// One sync at a time (2026-11-20): favorite taps now go as a queue, and two
+// overlapping requests could reach the Worker out of order. A sync asked for
+// while one is running waits and then runs once with the latest state.
+let visitorSyncInFlight = false;
+let visitorSyncAgain = false;
 function syncVisitorNow() {
+  if (visitorSyncInFlight) { visitorSyncAgain = true; return; }
   const payload = currentFilterSyncPayload();
   if (!payload.phone && !payload.email) return; // never passed the gate in this browser -- nothing to attribute this to
+  visitorSyncInFlight = true;
   // Best-effort, fire-and-forget -- a missed sync just means slightly
   // stale filter columns until the next one, never a broken page. Never
   // surfaced to the visitor either way.
+  const sentChanges = payload.favoriteChanges.length;
+  const sentMigration = !!payload.favorites; // the Worker merges this list first, then applies the taps
   fetch(SYNC_VISITOR_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  }).catch(() => {});
+  })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data || !data.ok || !Array.isArray(data.favorites)) return;
+      if (sentMigration) localStorage.setItem(FAVORITES_MIGRATED_KEY, "1");
+      if (sentChanges) localStorage.setItem(FAVORITES_PENDING_KEY, JSON.stringify(getFavoritePending().slice(sentChanges)));
+      adoptServerFavorites(data.favorites);
+    })
+    .catch(() => {})
+    .finally(() => {
+      visitorSyncInFlight = false;
+      if (visitorSyncAgain) { visitorSyncAgain = false; syncVisitorNow(); }
+    });
 }
 
 function initVisitorSync() {
@@ -5195,8 +5255,11 @@ function renderBuyerDetail(buyer) {
   // Available-only (reasonable for scheduling a NEW showing, wrong for
   // logging a past one) -- reverted here; Schedule a Showing below keeps
   // its own Available-only filter, that one's correct as-is.
+  // The same box also feeds "♥ Favorite" (2026-11-20), so a toured home
+  // stays suggested until it's both toured and favorited.
+  const alreadyFav = new Set(lm && lm.favorites ? lm.favorites : []);
   SHOWN_AVAILABLE_ADDRESSES = (ALL_LISTINGS || [])
-    .filter((l) => !alreadyShown.has(l.address))
+    .filter((l) => !(alreadyShown.has(l.address) && alreadyFav.has(l.address)))
     .map((l) => l.address);
   // Date(s) shown, added 2026-09-14 per Aaron's direct request ("I would
   // like to have the dates that it was shown displayed on the Buyer page
@@ -5228,6 +5291,7 @@ function renderBuyerDetail(buyer) {
         <div id="shown-property-suggestions" class="autocomplete-dropdown hidden"></div>
       </div>
       <button type="button" id="shown-add-btn" data-row="${lm.row}" class="btn-outline">Mark toured</button>
+      <button type="button" id="fav-add-btn" data-row="${lm.row}" class="btn-outline" title="Favorite this home for the buyer. They'll see the heart on their phone and get its status texts.">♥ Favorite</button>
     </div>
   ` : "";
 
@@ -5354,7 +5418,7 @@ function renderBuyerDetail(buyer) {
     if (!lines.length && depositProperty === item.address && !item.favorited) lines.push("Deposit property");
     const clickable = item.next ? ` data-address="${escapeAttr(item.address)}" data-date="${escapeAttr(item.next.date)}" role="button" tabindex="0"` : "";
     return `<div class="buyer-list-item buyer-property-item${item.next ? " buyer-appt-item-clickable" : ""}"${clickable}>
-      <div class="buyer-list-item-line1">${item.favorited ? "❤️ " : ""}${listingAvailabilityBadgeHtml(item.address)} ${addressHtml}${depositBox}</div>
+      <div class="buyer-list-item-line1">${item.favorited ? (lm && lm.row ? `<span class="fav-remove-btn" data-row="${lm.row}" data-address="${escapeAttr(item.address)}" role="button" tabindex="0" title="Remove this favorite">❤️</span> ` : "❤️ ") : ""}${listingAvailabilityBadgeHtml(item.address)} ${addressHtml}${depositBox}</div>
       ${lines.map((l) => `<div class="buyer-list-item-line2">${l}</div>`).join("")}
     </div>`;
   };
@@ -5814,6 +5878,21 @@ function renderBuyerDetail(buyer) {
   // opens it, same data-phone the old inline button carried.
   const scheduleApptOpenBtn = container.querySelector(".schedule-appt-open-btn");
   if (scheduleApptOpenBtn) scheduleApptOpenBtn.addEventListener("click", () => openScheduleApptLightbox(scheduleApptOpenBtn.dataset.phone));
+  const favAddBtn = document.getElementById("fav-add-btn");
+  if (favAddBtn) favAddBtn.addEventListener("click", () => {
+    const typed = document.getElementById("shown-property-input").value.trim().toLowerCase();
+    if (!typed) return;
+    const listing = (ALL_LISTINGS || []).find((l) => l.address.toLowerCase() === typed);
+    if (!listing) { alert("Pick the address from the list so it matches the listing exactly."); return; }
+    adminSetFavorite(Number(favAddBtn.dataset.row), listing.address, "add", buyer.phone);
+  });
+  container.querySelectorAll(".fav-remove-btn").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation(); // the row itself may open an appointment card
+      if (!confirm(`Remove ${el.dataset.address} from this buyer's favorites?`)) return;
+      adminSetFavorite(Number(el.dataset.row), el.dataset.address, "remove", buyer.phone);
+    });
+  });
   container.querySelectorAll(".shown-remove-btn").forEach((btn) => {
     btn.addEventListener("click", () => markShown(Number(btn.dataset.row), btn.dataset.address, "remove", buyer.phone));
   });  container.querySelectorAll(".deposit-property-cb").forEach((cb) => {
@@ -6263,6 +6342,25 @@ function openScheduleApptLightbox(phone) {
 // Appointments overview (marking an appointment "shown" from there should
 // re-render THAT list, not the buyer detail page underneath it). Defaults
 // to the original buyer-detail-page behavior when omitted.
+// Admin "♥ Favorite" for a buyer (2026-11-20). Same refresh as markShown.
+async function adminSetFavorite(row, address, action, phone) {
+  const token = getStoredAdminToken();
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin-favorite`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ buyerRow: row, phone, address, action }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't update favorites: ${(data && data.error) || res.status}`); return; }
+    await loadBuyers();
+    const refreshed = findBuyer(phone);
+    if (refreshed) renderBuyerDetail(refreshed);
+  } catch (err) {
+    alert(`Couldn't update favorites: ${err}`);
+  }
+}
+
 async function markShown(row, address, action, phone, onDone) {
   const token = getStoredAdminToken();
   try {

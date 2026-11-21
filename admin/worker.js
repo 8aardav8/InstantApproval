@@ -1846,6 +1846,28 @@ async function appendLoginsRow(accessToken, phone, name, idLink) {
   if (!res.ok) throw new Error(`logins row add failed: ${await res.text()}`);
 }
 
+// Favorites list helpers (2026-11-20). A cell is addresses joined by " | ".
+export function splitPipeList(cell) {
+  return String(cell || "").split(" | ").map((x) => x.trim()).filter(Boolean);
+}
+// Applies a device's taps in order: {address, action: "add"|"remove"}.
+export function applyFavoriteChanges(list, changes) {
+  let next = [...list];
+  for (const c of changes || []) {
+    const address = String((c && c.address) || "").trim();
+    if (!address) continue;
+    if (c.action === "remove") next = next.filter((a) => a !== address);
+    else if (!next.includes(address)) next.push(address);
+  }
+  return next;
+}
+// An older cached page sends its whole list: add what's missing, remove nothing.
+export function mergeFavoritesUnion(list, incoming) {
+  const next = [...list];
+  for (const a of incoming || []) { const t = String(a || "").trim(); if (t && !next.includes(t)) next.push(t); }
+  return next;
+}
+
 async function handleSyncVisitor(request, env) {
   let body;
   try {
@@ -1893,21 +1915,34 @@ async function handleSyncVisitor(request, env) {
     // Best-effort; the sync itself already succeeded.
     await fillFirstLoginIfBlank(accessToken, row, nowIso).catch(() => {});
 
-    // Favorites, added 2026-08-29 per Aaron's direct request (admin
-    // visibility into who's favorited a property) -- column Y, not
-    // adjacent to G:M (N through X sit in between, untouched), so this is
-    // a separate write. Guarded on Array.isArray so older cached
-    // front-end code that doesn't send `favorites` at all can't
-    // accidentally wipe this column with an unconditional empty write.
-    if (Array.isArray(body.favorites)) {
-      const favRange = encodeURIComponent(`${TABS.logins}!${LL.favorites}${row}:${LL.favorites}${row}`);
-      const favUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${favRange}?valueInputOption=RAW`;
-      const favRes = await fetch(favUrl, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ range: `${TABS.logins}!${LL.favorites}${row}:${LL.favorites}${row}`, values: [[body.favorites.join(" | ")]] }),
-      });
-      if (!favRes.ok) throw new Error(`favorites sync write failed: ${await favRes.text()}`);
+    // Favorites. Since 2026-11-20 the Sheet is the main copy, not the
+    // buyer's device: Aaron can favorite a home for a buyer from the admin
+    // Buyer page (Aaron: "I'd like a way to favorite properties for a buyer
+    // from my end of the site"), and the old full-list overwrite here would
+    // have wiped those on the buyer's next visit. New clients send only their
+    // own taps (favoriteChanges, applied in order to a fresh read of the
+    // cell); older cached clients still send a full list, which now only
+    // ADDS (never removes). The response returns the saved list so the
+    // device adopts it.
+    let favoritesOut;
+    {
+      const favA1 = `${TABS.logins}!${LL.favorites}${row}:${LL.favorites}${row}`;
+      const favGet = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(favA1)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (!favGet.ok) throw new Error(`favorites read failed: ${await favGet.text()}`);
+      const current = splitPipeList((((await favGet.json()).values || [[]])[0] || [])[0] || "");
+      let next = current;
+      // Full list first (old pages, or a device's one-time hand-over), then taps.
+      if (Array.isArray(body.favorites)) next = mergeFavoritesUnion(next, body.favorites);
+      if (Array.isArray(body.favoriteChanges)) next = applyFavoriteChanges(next, body.favoriteChanges);
+      if (next.join(" | ") !== current.join(" | ")) {
+        const favRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(favA1)}?valueInputOption=RAW`, {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ range: favA1, values: [[next.join(" | ")]] }),
+        });
+        if (!favRes.ok) throw new Error(`favorites sync write failed: ${await favRes.text()}`);
+      }
+      favoritesOut = next;
     }
 
     // Viewed Properties (column AC), added 2026-09-11 per Aaron's direct
@@ -1927,7 +1962,7 @@ async function handleSyncVisitor(request, env) {
       if (!viewedRes.ok) throw new Error(`viewed sync write failed: ${await viewedRes.text()}`);
     }
 
-    return jsonResponse({ ok: true, action: "updated", row });
+    return jsonResponse({ ok: true, action: "updated", row, favorites: favoritesOut });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -3722,6 +3757,46 @@ async function handleTrelloAddShown(request, env) {
     });
     if (!put.ok) throw new Error(`write failed: ${await put.text()}`);
     return jsonResponse({ ok: true, shown: next });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
+// Admin Buyer page "♥ for buyer" (2026-11-20, Aaron: "I'd like a way to
+// favorite properties for a buyer from my end of the site"). Google-auth like
+// /mark-shown. Read-then-write of one row's Favorites cell; the phone must
+// match the row (rows shift), and an add must be exactly a PROPERTIES address
+// so the buyer's own page and the notifier both recognize it. A favorite added
+// here also gets the buyer the status-change (and later price-drop) texts.
+async function handleAdminFavorite(request, env) {
+  const authHeader = request.headers.get("Authorization") || "";
+  const idToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!idToken) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(idToken);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const row = Number(body.buyerRow), phone = toE164(String(body.phone || "")), address = String(body.address || "").trim();
+  const action = body.action === "remove" ? "remove" : "add";
+  if (!Number.isInteger(row) || row < 2 || !phone || !address) return jsonResponse({ error: "missing buyerRow, phone or address" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const H = { Authorization: `Bearer ${accessToken}` };
+    const phoneA1 = `'${TABS.logins}'!${LL.phone}${row}`, favA1 = `'${TABS.logins}'!${LL.favorites}${row}`, addrA1 = `'${TABS.props}'!${PL.address}2:${PL.address}`;
+    const q = [phoneA1, favA1, addrA1].map((r) => `ranges=${encodeURIComponent(r)}`).join("&");
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?${q}`, { headers: H });
+    if (!res.ok) throw new Error(`read failed: ${await res.text()}`);
+    const [pv, fv, av] = ((await res.json()).valueRanges || []).map((v) => v.values || []);
+    if (toE164(((pv[0] || [])[0]) || "") !== phone) return jsonResponse({ error: "row phone does not match" }, 409);
+    if (action === "add" && !av.some((r) => (r[0] || "").trim() === address)) return jsonResponse({ error: "not a PROPERTIES address" }, 422);
+    const current = splitPipeList(((fv[0] || [])[0]) || "");
+    const next = applyFavoriteChanges(current, [{ address, action }]);
+    if (next.join(" | ") === current.join(" | ")) return jsonResponse({ ok: true, favorites: next, unchanged: true });
+    const put = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(favA1)}?valueInputOption=RAW`, {
+      method: "PUT", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ range: favA1, values: [[next.join(" | ")]] }),
+    });
+    if (!put.ok) throw new Error(`write failed: ${await put.text()}`);
+    return jsonResponse({ ok: true, favorites: next });
   } catch (e) {
     return jsonResponse({ error: "server error", detail: String(e) }, 500);
   }
@@ -6102,6 +6177,9 @@ async function route(request, env, ctx) {
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
     return handleMarkShown(request, env);
+  }
+  if (url.pathname === "/admin-favorite" && request.method === "POST") {
+    return handleAdminFavorite(request, env);
   }
 
   if (url.pathname === "/admin-id-photo" && request.method === "POST") {
