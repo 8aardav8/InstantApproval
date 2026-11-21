@@ -1447,7 +1447,8 @@ main { padding: 16px; max-width: 640px; margin: 0 auto; }
 /* ---------- Featured Deals strip (2026-11-20) ---------- */
 .featured-deals { margin: 4px 0 18px; }
 .featured-title { font-size: 18px; font-weight: 800; margin: 0 0 10px; }
-.featured-row { display: grid; grid-auto-flow: column; grid-auto-columns: 72%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 8px; -webkit-overflow-scrolling: touch; }
+/* Same width as the regular two-column grid (Aaron 2026-11-21: "the same size as the others in portrait mode"); more than two scroll sideways. */
+.featured-row { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 12px) / 2); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 0 8px; -webkit-overflow-scrolling: touch; }
 .featured-row > .card { scroll-snap-align: start; }
 @media (orientation: landscape) and (min-width: 640px) {
   .featured-row { grid-auto-columns: calc((100% - 24px) / 3); }
