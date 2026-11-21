@@ -2587,22 +2587,24 @@ async function handleAdminSetIdName(request, env) {
 
 // The templates the notifier sends by itself, and a three-way setting for
 // each (Aaron, 2026-11-20: "On the templates page, each template should have a
-// toggle", then "Can we do threeway toggles to set auto/off/check?"):
+// toggle", then "Can we do threeway toggles to set auto/off/check?", renamed:
+// "Maybe auto/off/approve"):
 //   Auto  = texts the buyer;
-//   Check = comes to Aaron on Telegram to review and send by hand;
+//   Approve = comes to Aaron on Telegram to approve and send by hand
+//             (Aaron: "if its set to approve, it goes through telegram");
 //   Off   = nothing at all.
 // Blank = how each behaved before the setting existed. "On" (the first,
 // two-way version) reads as Auto. Keep in step with AUTO_TEXT_DEFAULTS in
 // appointment-notifier-worker.js.
-const AUTO_TEXT_DEFAULTS = { status_change: "Auto", day_of_reminder: "Auto", price_drop: "Check" };
+const AUTO_TEXT_DEFAULTS = { status_change: "Auto", day_of_reminder: "Auto", price_drop: "Approve" };
 const AUTO_TEXT_KEYS = new Set(Object.keys(AUTO_TEXT_DEFAULTS));
-const AUTO_SEND_MODES = new Set(["Auto", "Check", "Off"]);
+const AUTO_SEND_MODES = new Set(["Auto", "Approve", "Off"]);
 export function autoSendValue(key, cell) {
   const v = String(cell || "").trim().toLowerCase();
   if (v === "auto" || v === "on") return "Auto";
-  if (v === "check") return "Check";
+  if (v === "approve" || v === "check") return "Approve"; // "Check" = the name for a few minutes on 11/20
   if (v === "off") return "Off";
-  return AUTO_TEXT_DEFAULTS[key] || "Check";
+  return AUTO_TEXT_DEFAULTS[key] || "Approve";
 }
 
 async function handleAdminGetTextTemplates(request, env) {
@@ -2623,7 +2625,7 @@ async function handleAdminGetTextTemplates(request, env) {
         text: row[2] || "",
         mergeFields: (row[3] || "").trim(),
         lastUpdated: (row[4] || "").trim(),
-        // Auto/Check/Off for the texts that send by themselves (2026-11-20);
+        // Auto/Approve/Off for the texts that send by themselves (2026-11-20);
         // null for templates nothing sends automatically.
         autoSend: AUTO_TEXT_KEYS.has((row[0] || "").trim()) ? autoSendValue((row[0] || "").trim(), row[5]) : null,
       }));
@@ -2648,7 +2650,7 @@ async function handleAdminSetTextTemplate(request, env) {
   // The On/Off switch alone (no wording change), 2026-11-20.
   if (body.autoSend !== undefined) {
     if (!AUTO_TEXT_KEYS.has(key)) return jsonResponse({ error: "this template isn't sent automatically" }, 400);
-    if (!AUTO_SEND_MODES.has(body.autoSend)) return jsonResponse({ error: "autoSend must be Auto, Check or Off" }, 400);
+    if (!AUTO_SEND_MODES.has(body.autoSend)) return jsonResponse({ error: "autoSend must be Auto, Approve or Off" }, 400);
     try {
       const accessToken = await getSheetsAccessToken(env);
       const keyRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sysColRange("templates", "key"))}`, { headers: { Authorization: `Bearer ${accessToken}` } });

@@ -7622,7 +7622,7 @@ async function loadTextTemplates() {
 
 const AUTO_MODE_HELP = {
   Auto: "Texts the buyer automatically.",
-  Check: "Comes to you on Telegram to review; you send it by hand.",
+  Approve: "Comes to you on Telegram to approve; you send it by hand.",
   Off: "Nothing is sent, and nothing comes to you.",
 };
 function renderTextTemplates(templates) {
@@ -7635,7 +7635,7 @@ function renderTextTemplates(templates) {
         : `<h3 class="template-label">${escapeHtml(t.label || t.key)}</h3>`}
       ${t.autoSend
         ? `<div class="template-auto-row" role="radiogroup" aria-label="When this text is due">
-            ${["Auto", "Check", "Off"].map((m) => `<label class="template-auto-opt"><input type="radio" name="auto-${escapeAttr(t.key)}" class="template-auto-radio" data-key="${escapeAttr(t.key)}" value="${m}"${t.autoSend === m ? " checked" : ""}> ${m}</label>`).join("")}
+            ${["Auto", "Approve", "Off"].map((m) => `<label class="template-auto-opt"><input type="radio" name="auto-${escapeAttr(t.key)}" class="template-auto-radio" data-key="${escapeAttr(t.key)}" value="${m}"${t.autoSend === m ? " checked" : ""}> ${m}</label>`).join("")}
             <span class="template-auto-status"></span>
             <div class="template-auto-help">${escapeHtml(AUTO_MODE_HELP[t.autoSend] || "")}</div>
           </div>`
@@ -7649,7 +7649,7 @@ function renderTextTemplates(templates) {
       ${t.lastUpdated ? `<div class="template-last-updated">Last updated: ${escapeHtml(formatDateTimeWithYearAndSince(t.lastUpdated))}</div>` : ""}
     </div>
   `).join("");
-  // Auto / Check / Off for each automatic text (2026-11-20, Aaron: "Can we do
+  // Auto / Approve / Off for each automatic text (2026-11-20, Aaron: "Can we do
   // threeway toggles to set auto/off/check?"). Saves on tap; on failure the
   // choice goes back to what's really saved.
   list.querySelectorAll(".template-auto-row[role=radiogroup]").forEach((group) => {
