@@ -2016,6 +2016,15 @@ async function handleSyncVisitor(request, env) {
     const row = await findLoginsRowByIdentity(accessToken, phone, email);
     if (!row) return jsonResponse({ ok: true, action: "skipped", reason: "no matching row -- sync never creates one" });
 
+    // "See site as" (2026-11-21): view-only, so read the saved favorites and
+    // write nothing at all (no Last Login, filters, taps or viewed homes).
+    if (request.headers.get(VIEW_ONLY_HEADER) === "1") {
+      const favA1 = `${TABS.logins}!${LL.favorites}${row}:${LL.favorites}${row}`;
+      const favGet = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(favA1)}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (!favGet.ok) throw new Error(`favorites read failed: ${await favGet.text()}`);
+      return jsonResponse({ ok: true, action: "view-only", row, favorites: splitPipeList((((await favGet.json()).values || [[]])[0] || [])[0] || "") });
+    }
+
     // G:M only -- Last Login, Filter: Sort, Filter: Max Down, Filter: Max
     // Monthly, Filter: Min Beds, Filter: Area(s), Last Search. Explicit
     // range + values.update (not :append) -- same deliberate choice as
@@ -5206,6 +5215,55 @@ async function createSessionToken(env, e164) {
   return { token: `${payload}.${await hmacB64url(env, "session-v1", payload)}`, exp };
 }
 
+// "See site as" a buyer (Aaron 2026-11-21: "I'd like to be able to 'see site
+// as:' and choose a buyer... see what they see, but make no changes while
+// browsing as them"). A view-only pass, signed with its OWN key ("viewas-v1"),
+// so verifySessionToken below never accepts it: Reserve and every other
+// session check treat it as signed out. Only requireVisitorSession knows it,
+// and only for the read-only paths in VIEW_AS_OK_PATHS. 4 hours.
+const VIEW_AS_TTL_MS = 4 * 60 * 60 * 1000;
+const VIEW_AS_OK_PATHS = new Set(["/sync-visitor", "/my-appointments", "/my-info", "/id-photo"]);
+const VIEW_ONLY_HEADER = "X-IAH-View-Only";
+async function createViewAsToken(env, e164) {
+  const exp = Date.now() + VIEW_AS_TTL_MS;
+  const payload = bytesToB64url(new TextEncoder().encode(JSON.stringify({ p: e164, exp, ro: 1 })));
+  return { token: `${payload}.${await hmacB64url(env, "viewas-v1", payload)}`, exp };
+}
+async function verifyViewAsToken(env, token) {
+  const [payload, sig] = (token || "").split(".");
+  if (!payload || !sig) return null;
+  if (!timingSafeEqualStr(sig, await hmacB64url(env, "viewas-v1", payload))) return null;
+  try {
+    const { p, exp, ro } = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    if (!p || !exp || exp < Date.now() || ro !== 1) return null;
+    return p;
+  } catch (e) {
+    return null;
+  }
+}
+async function handleAdminViewAs(request, env) {
+  const bearer = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!bearer) return jsonResponse({ error: "not authenticated" }, 401);
+  const verified = await verifyIdToken(bearer);
+  if (!verified.ok) return jsonResponse({ error: "not authorized", reason: verified.reason }, 403);
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid JSON body" }, 400); }
+  const e164 = toE164(String(body.phone || ""));
+  if (!e164) return jsonResponse({ error: "missing phone" }, 400);
+  try {
+    const accessToken = await getSheetsAccessToken(env);
+    const row = await findLoginsRowByPhone(accessToken, e164);
+    if (!row) return jsonResponse({ error: "this buyer hasn't signed in to the site yet, so there's nothing to see as them" }, 404);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(loginsRowRange(row))}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`row read failed: ${await res.text()}`);
+    const rowArr = ((await res.json()).values || [[]])[0] || [];
+    const { token, exp } = await createViewAsToken(env, e164);
+    return jsonResponse({ ok: true, token, expiresAt: new Date(exp).toISOString(), phone: e164, email: cellOf(rowArr, "email") || "", name: cellOf(rowArr, "name") || "" });
+  } catch (e) {
+    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+  }
+}
+
 // Returns the verified E.164 phone, or null.
 async function verifySessionToken(env, token) {
   const [payload, sig] = (token || "").split(".");
@@ -5363,9 +5421,25 @@ async function handleVerifyLoginCode(request, env) {
 // stop. Aaron's own admin Google token also passes, unchanged -- he uses
 // the site as himself.
 async function requireVisitorSession(request, env) {
+  // Only this gate may set the view-only marker; drop any copy a caller sent.
+  if (request.headers.has(VIEW_ONLY_HEADER)) {
+    const h = new Headers(request.headers); h.delete(VIEW_ONLY_HEADER);
+    request = new Request(request, { headers: h });
+  }
   const bearer = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (bearer && (await verifyIdToken(bearer)).ok) return { request };
-  const e164 = await verifySessionToken(env, request.headers.get(SESSION_HEADER));
+  let e164 = await verifySessionToken(env, request.headers.get(SESSION_HEADER));
+  let viewOnly = false;
+  if (!e164) {
+    const viewer = await verifyViewAsToken(env, request.headers.get(SESSION_HEADER));
+    if (viewer) {
+      const path = new URL(request.url).pathname;
+      if (!VIEW_AS_OK_PATHS.has(path)) return { response: jsonResponse({ error: "view-only", message: "You're viewing the site as this buyer, so nothing can be changed." }, 403) };
+      e164 = viewer; viewOnly = true;
+      const h = new Headers(request.headers); h.set(VIEW_ONLY_HEADER, "1");
+      request = new Request(request, { headers: h });
+    }
+  }
   const unauthorized = { response: jsonResponse({ error: "session required", message: "Please sign in again." }, 401) };
   if (!e164) return unauthorized;
   try {
@@ -6429,6 +6503,9 @@ async function route(request, env, ctx) {
 
   if (url.pathname === "/mark-shown" && request.method === "POST") {
     return handleMarkShown(request, env);
+  }
+  if (url.pathname === "/admin/view-as" && request.method === "POST") {
+    return handleAdminViewAs(request, env);
   }
   if (url.pathname === "/admin/search-index" && request.method === "GET") {
     return handleAdminSearchIndex(request, env);

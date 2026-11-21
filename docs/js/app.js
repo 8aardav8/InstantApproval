@@ -11,6 +11,48 @@
 // Geocoding-only key (never embedded here) is used server-side in
 // .github/workflows/_publish.yml, since a referrer-restricted key can't be
 // used from a server-to-server call (no browser, no Referer header).
+// ---------- "See site as" a buyer (2026-11-21) ----------
+// Aaron: "I'd like to be able to 'see site as:' and choose a buyer. Then I'd
+// be able to browse the site and see what they see, but make no changes while
+// browsing as them." Started from the admin menu or a Buyer page; lives only
+// in this tab (sessionStorage). While it's on:
+//   - every localStorage write goes to memory and is thrown away, and reads
+//     see the buyer's identity, so nothing on this device changes;
+//   - Aaron's admin sign-in is hidden, so the page looks like the buyer's;
+//   - the Worker gets a view-only pass that can only read (see
+//     requireVisitorSession), and any other call is stopped right here too.
+const VIEW_AS_STORAGE_KEY = "iah_view_as";
+const VIEW_AS = (function installViewAs() {
+  let v = null;
+  try { v = JSON.parse(sessionStorage.getItem(VIEW_AS_STORAGE_KEY) || "null"); } catch (e) { v = null; }
+  if (!v || !v.token || !(Date.parse(v.expiresAt) > Date.now())) {
+    try { sessionStorage.removeItem(VIEW_AS_STORAGE_KEY); } catch (e) { /* ignore */ }
+    return null;
+  }
+  const mem = new Map(Object.entries({
+    iah_gate_passed: "1", iah_gate_phone: v.phone || "", iah_gate_email: v.email || "", iah_gate_name: v.name || "",
+    iah_session_token: v.token, iah_session_exp: v.expiresAt,
+    iah_favorites: "[]", iah_favorites_pending: "[]", iah_favorites_sheet_first: "1", iah_viewed: "[]",
+  }));
+  const gone = new Set(["admin_id_token"]);
+  const proto = Storage.prototype;
+  const realGet = proto.getItem, realSet = proto.setItem, realRemove = proto.removeItem;
+  const isLocal = (store) => { try { return store === window.localStorage; } catch (e) { return false; } };
+  proto.getItem = function (k) {
+    if (!isLocal(this)) return realGet.call(this, k);
+    if (mem.has(k)) return mem.get(k);
+    if (gone.has(k) || String(k).startsWith("iah_")) return null; // the buyer's view starts clean
+    return realGet.call(this, k);
+  };
+  proto.setItem = function (k, val) { if (!isLocal(this)) return realSet.call(this, k, val); mem.set(k, String(val)); gone.delete(k); };
+  proto.removeItem = function (k) { if (!isLocal(this)) return realRemove.call(this, k); mem.delete(k); gone.add(k); };
+  return v;
+})();
+function endViewAs() {
+  try { sessionStorage.removeItem(VIEW_AS_STORAGE_KEY); } catch (e) { /* ignore */ }
+  location.href = location.pathname; // back to the site as Aaron
+}
+
 const GOOGLE_MAPS_API_KEY = "AIzaSyDopPbLVJJXmv5kj8piuRv0W1tZlSDUBG0";
 
 const AARON_PHONE = "6184184180"; // digits only, for sms:/tel: links
@@ -67,6 +109,100 @@ function clearSession() {
     return res;
   };
 })();
+
+// View-as guard (2026-11-21): only reads reach the Worker while viewing as a
+// buyer; anything else is stopped here, before it leaves the browser.
+(function installViewAsGuard() {
+  if (!VIEW_AS) return;
+  const READ_OK = new Set(["/sync-visitor", "/my-appointments", "/my-info", "/id-photo", "/favorite-counts", "/reserve-status"]);
+  const inner = window.fetch.bind(window);
+  window.fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === "string" ? input : input.url, location.href);
+    const method = (init.method || (typeof input === "string" ? "GET" : input.method) || "GET").toUpperCase();
+    const toWorker = url.origin === SESSION_API_ORIGIN;
+    if (toWorker && !READ_OK.has(url.pathname)) {
+      viewAsBlocked();
+      return new Response(JSON.stringify({ error: "view-only", message: "Viewing as a buyer: nothing can be changed." }), { status: 403, headers: { "Content-Type": "application/json" } });
+    }
+    if (!toWorker && method !== "GET") { viewAsBlocked(); return new Response("{}", { status: 403 }); }
+    return inner(input, init);
+  };
+  if (navigator.sendBeacon) navigator.sendBeacon = () => true; // nothing is reported while viewing
+})();
+// The bar across the top while viewing as a buyer, and the "can't change" note.
+document.addEventListener("DOMContentLoaded", () => {
+  if (!VIEW_AS) return;
+  const bar = document.createElement("div");
+  bar.className = "view-as-bar";
+  bar.innerHTML = `<span>👁 Viewing as <strong></strong> · read-only</span><button type="button" class="view-as-exit">Exit</button>`;
+  bar.querySelector("strong").textContent = VIEW_AS.name || VIEW_AS.phone;
+  bar.querySelector(".view-as-exit").addEventListener("click", endViewAs);
+  document.body.prepend(bar);
+  document.body.classList.add("viewing-as");
+  const toast = document.createElement("div");
+  toast.id = "view-as-toast";
+  toast.className = "view-as-toast hidden";
+  toast.textContent = "Viewing as a buyer: changes are turned off.";
+  document.body.appendChild(toast);
+});
+
+// Start viewing as a buyer (admin only). The Worker checks Aaron's sign-in and
+// hands back a 4-hour view-only pass; this tab then reloads as that buyer.
+async function startViewAs(phone) {
+  const token = getStoredAdminToken();
+  if (!token) { alert("Sign in as admin first."); return; }
+  try {
+    const res = await fetch(`${ADMIN_API_URL}/admin/view-as`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { alert(`Couldn't open the site as this buyer: ${(data && (data.error || data.detail)) || res.status}`); return; }
+    sessionStorage.setItem(VIEW_AS_STORAGE_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt, phone: data.phone, email: data.email, name: data.name }));
+    location.href = location.pathname;
+  } catch (err) {
+    alert(`Couldn't open the site as this buyer: ${err}`);
+  }
+}
+
+// "See site as…" picker from the admin menu: type a name or phone, pick one.
+async function openViewAsPicker() {
+  document.getElementById("admin-login-popover").classList.add("hidden");
+  if (!BUYERS_CACHE) { try { await loadBuyers(); } catch (e) { /* list shows empty */ } }
+  const overlay = document.createElement("div");
+  overlay.className = "id-lightbox view-as-picker";
+  overlay.innerHTML = `<div class="id-lightbox-content"><h3 style="margin:0 0 10px">See site as…</h3><input type="text" class="view-as-search" placeholder="Buyer name or phone" autocomplete="off"><div class="view-as-results"></div><div class="id-lightbox-actions"><button type="button" class="btn-outline view-as-cancel">Cancel</button></div></div>`;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector(".view-as-search"), results = overlay.querySelector(".view-as-results");
+  const close = () => overlay.remove();
+  overlay.querySelector(".view-as-cancel").addEventListener("click", close);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  const draw = () => {
+    const q = input.value.trim().toLowerCase(), qd = q.replace(/\D/g, "");
+    const list = (BUYERS_CACHE || []).filter((b) => b.phone && b.loginsMatch && b.loginsMatch.row)
+      .filter((b) => !q || (b.name || "").toLowerCase().includes(q) || (qd && String(b.phone).replace(/\D/g, "").includes(qd)))
+      .slice(0, 12);
+    results.innerHTML = list.length ? "" : `<div class="view-as-empty">${q ? "No signed-in buyer matches." : "Type a name or phone."}</div>`;
+    for (const b of list) {
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "view-as-option";
+      btn.textContent = `${b.name || "(no name)"} · ${b.phone}`;
+      btn.addEventListener("click", () => startViewAs(b.phone));
+      results.appendChild(btn);
+    }
+  };
+  input.addEventListener("input", draw);
+  draw(); input.focus();
+}
+
+function viewAsBlocked() {
+  const t = document.getElementById("view-as-toast");
+  if (!t) return;
+  t.classList.remove("hidden");
+  clearTimeout(viewAsBlocked.timer);
+  viewAsBlocked.timer = setTimeout(() => t.classList.add("hidden"), 2600);
+}
 
 // CSS class tokens can't contain spaces -- "Off Market".toLowerCase() used
 // directly as a class name would silently split into two bogus classes
@@ -623,6 +759,7 @@ function isFavorited(id) {
   return getFavorites().includes(id);
 }
 function toggleFavorite(id) {
+  if (VIEW_AS) { viewAsBlocked(); return; } // viewing as a buyer: hearts can't change
   const favs = getFavorites();
   const i = favs.indexOf(id);
   if (i === -1) favs.push(id); else favs.splice(i, 1);
@@ -3079,6 +3216,8 @@ function updateAdminButtonState() {
   const signedIn = !!getStoredAdminToken();
   btn.classList.toggle("signed-in", signedIn);
   logoutBtn.classList.toggle("hidden", !signedIn);
+  const viewAsMenuBtn = document.getElementById("admin-view-as-btn");
+  if (viewAsMenuBtn) viewAsMenuBtn.classList.toggle("hidden", !signedIn);
   // Buyers/Appointments tabs, added 2026-09-11 -- admin-only, same signedIn check.
   // "-bottom" ids added 2026-09-13 (footer copies, see index.html).
   for (const id of ["nav-buyers-top", "nav-buyers-drawer", "nav-buyers-bottom", "nav-appointments-top", "nav-appointments-drawer", "nav-appointments-bottom", "nav-templates-top", "nav-templates-drawer", "nav-templates-bottom"]) {
@@ -5722,6 +5861,7 @@ function renderBuyerDetail(buyer) {
              per Aaron's direct correction -- the stage dropdown/progress
              bar moved OUT of this row entirely (see stageBlockHtml below,
              now its own section right above the ID photo). -->
+        ${lm && lm.row ? `<button type="button" class="view-as-btn" data-phone="${escapeAttr(buyer.phone)}" title="Browse the site exactly as this buyer sees it, read-only">👁 See site as</button>` : ""}
         <button type="button" class="dnc-toggle-btn${buyer.dnc ? " dnc-toggle-btn-active" : ""}" data-phone="${escapeAttr(buyer.phone)}" title="${buyer.dnc ? "Remove Do Not Contact/Call" : "Mark Do Not Contact/Call -- excludes them from automated texts"}">🚫 ${buyer.dnc ? "DNC" : "Mark DNC"}</button>
       </div>
     </div>
@@ -6025,6 +6165,8 @@ function renderBuyerDetail(buyer) {
       setBuyerStage(e.target.dataset.phone, e.target.value, () => renderBuyerDetail(findBuyer(e.target.dataset.phone)));
     });
   });
+  const viewAsBtn = container.querySelector(".view-as-btn");
+  if (viewAsBtn) viewAsBtn.addEventListener("click", () => startViewAs(viewAsBtn.dataset.phone));
   const dncBtn = container.querySelector(".dnc-toggle-btn");
   if (dncBtn) dncBtn.addEventListener("click", () => {
     const phone = dncBtn.dataset.phone;
