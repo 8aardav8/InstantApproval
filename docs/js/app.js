@@ -309,6 +309,28 @@ function adjustStatsStripPeek() {
 window.addEventListener("resize", adjustStatsStripPeek);
 
 // ---------- filtering ----------
+// Everyone's search covers every public detail of a home, not just the
+// address (Aaron 2026-11-21: "Buyers should be able to search anything in the
+// public cells"): the same fields the card and listing page show, written the
+// way they read there ("3 bed", "$795 a month"), plus the card banners.
+const PUBLIC_SEARCH_CACHE = new WeakMap();
+function publicSearchText(listing) {
+  let t = PUBLIC_SEARCH_CACHE.get(listing);
+  if (t === undefined) {
+    const parts = [
+      listing.address, listing.area, listing.status,
+      listing.down && `${listing.down} down`, listing.monthly && `${listing.monthly} a month`,
+      listing.beds && `${listing.beds} bed`, listing.baths && `${listing.baths} bath`,
+      listing.sqft && `${listing.sqft} sq ft`,
+      listing.onMarketDate, listing.lastUpdate, listing.banner,
+      listing.featured && listing.status === "Available" ? "featured" : "",
+      listing.priceReducedOn ? "price reduced" : "",
+    ];
+    t = parts.filter(Boolean).join(" | ").toLowerCase();
+    PUBLIC_SEARCH_CACHE.set(listing, t);
+  }
+  return t;
+}
 function matchesFilters(listing) {
   if (filterState.status !== "Any" && listing.status !== filterState.status) return false;
   const down = parseMoney(listing.down);
@@ -320,7 +342,7 @@ function matchesFilters(listing) {
   const q = document.getElementById("search-box").value.trim().toLowerCase();
   // Signed in as admin, the search also looks through every Sheet cell of the
   // row (2026-11-21, see refreshAdminSearchIndex).
-  if (q && !listing.address.toLowerCase().includes(q) && !(ADMIN_SEARCH_INDEX && (ADMIN_SEARCH_INDEX[listing.id] || "").includes(q))) return false;
+  if (q && !publicSearchText(listing).includes(q) && !(ADMIN_SEARCH_INDEX && (ADMIN_SEARCH_INDEX[listing.id] || "").includes(q))) return false;
   return true;
 }
 
