@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:20:23.651591+00:00",
+  "generatedAt": "2026-11-23T22:20:48.947050+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -2012,16 +2012,17 @@
       "id": "1444-e-clay-st-decatur-il-62521",
       "address": "1444 E Clay St Decatur, IL 62521",
       "onMarketDate": "9/25/2026",
-      "lastUpdate": "9/25/2026",
+      "lastUpdate": "11/20/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
-      "monthly": "$1,075",
+      "monthly": "$995",
       "picsLink": "https://www.dropbox.com/scl/fo/0776m7r3bapv1zx3dt2ov/AAl2iU0jKrk_VFnmmml9amE?rlkey=flc1s9v47d3pth6w8i28lnsup&st=e60nkeah&dl=0",
       "beds": "2",
       "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-23",
       "lat": 39.8400137,
       "lng": -88.93715209999999
     },
