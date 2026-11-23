@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-23T22:41:30.508899+00:00",
+  "generatedAt": "2026-11-23T22:42:05.802263+00:00",
   "listings": [
+    {
+      "id": "1314-n-maple-ave-decatur-il-62-526",
+      "address": "1314 N Maple Ave Decatur IL 62,526",
+      "onMarketDate": "11/22/2026",
+      "lastUpdate": "11/22/2026",
+      "area": "IL - Decatur",
+      "down": "$2,000",
+      "monthly": "$835",
+      "picsLink": "https://photos.app.goo.gl/zvy8QsZdj6VkvRcf7",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 39.8550824,
+      "lng": -88.966605
+    },
     {
       "id": "1167-e-leafland-ave-decatur-il-62-521",
       "address": "1167 E Leafland Ave. Decatur IL 62,521",
