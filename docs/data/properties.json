@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:19:08.150074+00:00",
+  "generatedAt": "2026-11-23T22:19:43.097214+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -10,9 +10,9 @@
       "down": "$2,000",
       "monthly": "$875",
       "picsLink": "https://photos.app.goo.gl/3XWKSmu8AwHsCtVk7",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "1068",
       "status": "Available",
       "livability": null,
       "lat": 39.7675352,
@@ -17661,7 +17661,7 @@
       "id": "3214-w-proctor-pl-peoria-il-61605-usa",
       "address": "3214 W Proctor Pl, Peoria, IL 61605, USA",
       "onMarketDate": "9/30/2026",
-      "lastUpdate": "9/30/2026",
+      "lastUpdate": "11/20/2026",
       "area": "IL - Peoria",
       "down": "$2,500",
       "monthly": "$895",
@@ -17669,7 +17669,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "720",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.6784799,
       "lng": -89.6443968
