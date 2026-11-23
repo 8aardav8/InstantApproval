@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:45:34.624930+00:00",
+  "generatedAt": "2026-11-23T22:45:52.529523+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$828",
       "picsLink": "https://drive.google.com/drive/folders/11T0T7Vxvt9OCOaIKIRZxztOAMO81oUjU?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "935",
       "status": "Available",
       "livability": null,
       "lat": 43.0480028,
