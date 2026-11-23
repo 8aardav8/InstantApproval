@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:46:57.011730+00:00",
+  "generatedAt": "2026-11-23T22:47:26.828383+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -8707,10 +8707,10 @@
       "id": "2028-e-prairie-ave-saint-louis-mo-63107",
       "address": "2028 E Prairie Ave, Saint Louis, MO 63107",
       "onMarketDate": "3/30/2026",
-      "lastUpdate": "11/4/2026",
+      "lastUpdate": "11/22/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
-      "monthly": "$560",
+      "monthly": "$545",
       "picsLink": "https://drive.google.com/drive/folders/1y3U6ha7rp7O13sJOQ9X-VWqcAcWxsuUj?usp=drive_link",
       "beds": "1",
       "baths": "1",
@@ -8718,6 +8718,7 @@
       "status": "Available",
       "livability": 2,
       "banner": "Cleanout Completed",
+      "priceReducedOn": "2026-11-23",
       "lat": 38.6726451,
       "lng": -90.211823
     },
