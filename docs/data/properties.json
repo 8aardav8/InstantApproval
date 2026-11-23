@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:26:26.118503+00:00",
+  "generatedAt": "2026-11-23T22:26:51.460835+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -22008,7 +22008,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 39.8615349,
       "lng": -88.95741149999999
