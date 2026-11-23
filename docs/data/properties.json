@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:22:38.091515+00:00",
+  "generatedAt": "2026-11-23T22:25:27.330677+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -14145,8 +14145,8 @@
     {
       "id": "2807-w-marquette-st-peoria-il-61605",
       "address": "2807 W. Marquette St, Peoria, IL 61605",
-      "onMarketDate": "9/11/2025",
-      "lastUpdate": "4/3/2026",
+      "onMarketDate": "11/20/2026",
+      "lastUpdate": "11/20/2026",
       "area": "IL - Peoria",
       "down": "$3,500",
       "monthly": "$750",
@@ -14154,7 +14154,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 40.6770502,
       "lng": -89.63715239999999
