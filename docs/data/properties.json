@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:28:17.763038+00:00",
+  "generatedAt": "2026-11-23T22:29:08.012800+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -1078,7 +1078,7 @@
       "id": "1905-n-college-st-decatur-il-62526",
       "address": "1905 N College St Decatur IL 62526",
       "onMarketDate": "10/22/2026",
-      "lastUpdate": "10/22/2026",
+      "lastUpdate": "11/21/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$825",
@@ -1086,7 +1086,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "827",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.8615184,
       "lng": -88.9625102
