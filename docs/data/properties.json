@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:21:19.695377+00:00",
+  "generatedAt": "2026-11-23T22:21:52.964396+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -873,16 +873,17 @@
       "id": "660-e-van-buren-ave-decatur-il-62526",
       "address": "660 E Van Buren Ave Decatur IL 62526",
       "onMarketDate": "10/26/2026",
-      "lastUpdate": "10/30/2026",
+      "lastUpdate": "11/20/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
-      "monthly": "$1,030",
+      "monthly": "$995",
       "picsLink": "https://www.dropbox.com/scl/fo/ikwng7b4smkfq1fjeo9hq/AOKW3XDAyb9tIVhqkTbuWDo?rlkey=66jd70qsoiohzyru2avi2m67z&st=avycx93u&dl=0",
       "beds": "2",
       "baths": "1",
       "sqft": "792",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-23",
       "lat": 39.8744419,
       "lng": -88.94911119999999
     },
