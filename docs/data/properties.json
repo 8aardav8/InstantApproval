@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T01:18:35.780018+00:00",
+  "generatedAt": "2026-11-23T01:19:11.062005+00:00",
   "listings": [
     {
       "id": "69-saint-ambrose-dr-cahokia-il-62-206",
@@ -6317,7 +6317,7 @@
       "lastUpdate": "10/7/2026",
       "area": "IL - East St Louis",
       "down": "$1,400",
-      "monthly": "$695",
+      "monthly": "$672",
       "picsLink": "https://www.dropbox.com/scl/fo/ecyachiqko2gcqprjsih0/AO2fELy5-YQqRDxdqLBjzTs?rlkey=177v5k2mnaslcvuje6m3ez9q1&st=ej0ijm30&dl=0",
       "beds": "2",
       "baths": "1",
@@ -6326,6 +6326,7 @@
       "livability": 3,
       "featured": true,
       "banner": "15-Year Payment",
+      "priceReducedOn": "2026-11-22",
       "lat": 38.6283928,
       "lng": -90.0917846
     },
