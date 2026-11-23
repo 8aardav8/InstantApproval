@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:36:18.156250+00:00",
+  "generatedAt": "2026-11-23T22:36:59.381327+00:00",
   "listings": [
     {
       "id": "1167-e-leafland-ave-decatur-il-62-521",
@@ -16577,7 +16577,7 @@
       "id": "1971-e-cantrell-st-decatur-il-62521",
       "address": "1971 E Cantrell St, Decatur, IL 62521",
       "onMarketDate": "10/29/2026",
-      "lastUpdate": "11/8/2026",
+      "lastUpdate": "11/21/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
       "monthly": "$800",
@@ -16585,7 +16585,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "900",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 0,
       "lat": 39.8334923,
       "lng": -88.9296359
@@ -25740,7 +25740,7 @@
       "id": "7534-blanding-dr-saint-louis-mo-63135",
       "address": "7534 Blanding Dr, Saint Louis, MO 63135",
       "onMarketDate": "11/11/2026",
-      "lastUpdate": "11/11/2026",
+      "lastUpdate": "11/21/2026",
       "area": "MO - St. Louis",
       "down": "$3,500",
       "monthly": "$1,250",
