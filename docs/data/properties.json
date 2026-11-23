@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:20:48.947050+00:00",
+  "generatedAt": "2026-11-23T22:21:19.695377+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -2030,16 +2030,17 @@
       "id": "524-albert-st-nokomis-il-62075",
       "address": "524 Albert St Nokomis, IL 62075",
       "onMarketDate": "9/25/2026",
-      "lastUpdate": "9/25/2026",
+      "lastUpdate": "11/20/2026",
       "area": "IL - Rural",
       "down": "$3,000",
-      "monthly": "$1,030",
+      "monthly": "$995",
       "picsLink": "https://www.dropbox.com/scl/fo/q66ncr72wt9obykxrif0r/ABvAryy9cJzAt-wJArIWD_w?rlkey=4rgrp8kq3it9kmbqc2xj1527z&st=5hv0b32n&dl=0",
       "beds": "2",
       "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-23",
       "lat": 39.3085461,
       "lng": -89.2818485
     },
