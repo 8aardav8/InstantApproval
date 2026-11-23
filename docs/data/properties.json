@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-23T21:37:20.292245+00:00",
+  "generatedAt": "2026-11-23T22:18:29.700438+00:00",
   "listings": [
+    {
+      "id": "1600-e-john-ave-decatur-il-62-521",
+      "address": "1600 E John Ave Decatur IL 62,521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/3XWKSmu8AwHsCtVk7",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 39.7675352,
+      "lng": -89.0487155
+    },
     {
       "id": "69-saint-ambrose-dr-cahokia-il-62-206",
       "address": "69 Saint Ambrose Dr Cahokia IL 62,206",
