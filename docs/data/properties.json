@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:51:30.759606+00:00",
+  "generatedAt": "2026-11-23T22:52:03.851227+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -6303,16 +6303,17 @@
       "id": "422-s-louisa-st-peoria-il-61605",
       "address": "422 S Louisa St, Peoria, IL 61605",
       "onMarketDate": "12/1/2025",
-      "lastUpdate": "11/3/2026",
+      "lastUpdate": "11/22/2026",
       "area": "IL - Peoria",
       "down": "$1,000",
-      "monthly": "$380",
+      "monthly": "$365",
       "picsLink": "https://photos.app.goo.gl/uQ8iNE9QxChUzWRD8",
       "beds": "2",
       "baths": "1.5",
       "sqft": "928",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-23",
       "lat": 40.6839298,
       "lng": -89.6145215
     },
