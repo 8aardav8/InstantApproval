@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-23T22:44:30.872457+00:00",
+  "generatedAt": "2026-11-23T22:45:16.517122+00:00",
   "listings": [
+    {
+      "id": "3609-sterling-st-flint-mi-48-504",
+      "address": "3609 Sterling St Flint MI 48,504",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/11T0T7Vxvt9OCOaIKIRZxztOAMO81oUjU?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 43.0480028,
+      "lng": -83.7207487
+    },
     {
       "id": "459-n-21st-st-east-saint-louis-il-62-205",
       "address": "459 N 21st St East Saint Louis IL 62,205",
