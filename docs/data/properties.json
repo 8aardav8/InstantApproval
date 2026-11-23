@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:49:14.673693+00:00",
+  "generatedAt": "2026-11-23T22:50:07.741324+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -243,16 +243,17 @@
       "id": "210-w-park-st-harrisburg-il-62-946",
       "address": "210 W Park St Harrisburg IL 62,946",
       "onMarketDate": "11/15/2026",
-      "lastUpdate": "11/15/2026",
+      "lastUpdate": "11/22/2026",
       "area": "IL - Rural",
-      "down": "$1,500",
-      "monthly": "$895",
+      "down": "$1,000",
+      "monthly": "$795",
       "picsLink": "https://www.dropbox.com/scl/fo/3mjihbda3ae2rvwta9hrw/AC2BJkKWStvp6pMDukCjgOY?rlkey=p9fplcybtdfbuq0yv77rxmnkk&st=udp8p1b7&dl=0",
       "beds": "2",
       "baths": "1",
       "sqft": "",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-23",
       "lat": 37.7295585,
       "lng": -88.5437366
     },
