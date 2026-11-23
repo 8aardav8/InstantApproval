@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:21:52.964396+00:00",
+  "generatedAt": "2026-11-23T22:22:38.091515+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -175,7 +175,7 @@
       "id": "2832-clement-st-flint-mi-48-504",
       "address": "2832 Clement St. Flint MI 48,504",
       "onMarketDate": "11/15/2026",
-      "lastUpdate": "11/18/2026",
+      "lastUpdate": "11/20/2026",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$1,000",
@@ -183,7 +183,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "930",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 0,
       "lat": 43.03069929999999,
       "lng": -83.72667919999999
@@ -3052,7 +3052,7 @@
       "id": "293-cameron-st-jackson-ms-39212",
       "address": "293 Cameron St Jackson MS 39212",
       "onMarketDate": "9/1/2026",
-      "lastUpdate": "9/15/2026",
+      "lastUpdate": "11/20/2026",
       "area": "MS",
       "down": "$1,500",
       "monthly": "$1,030",
@@ -3060,7 +3060,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.243853,
       "lng": -90.2246677
