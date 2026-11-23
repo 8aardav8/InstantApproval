@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-23T22:34:40.909331+00:00",
+  "generatedAt": "2026-11-23T22:35:56.023424+00:00",
   "listings": [
+    {
+      "id": "1167-e-leafland-ave-decatur-il-62-521",
+      "address": "1167 E Leafland Ave. Decatur IL 62,521",
+      "onMarketDate": "11/21/2026",
+      "lastUpdate": "11/21/2026",
+      "area": "IL - Decatur",
+      "down": "$3,000",
+      "monthly": "$995",
+      "picsLink": "https://photos.app.goo.gl/tvQS8jhfGw32S6587",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 39.853944,
+      "lng": -88.94099299999999
+    },
     {
       "id": "10031-mayfair-dr-st-louis-mo-63136",
       "address": "10031 Mayfair Dr, St. Louis, MO 63136",
