@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:27:30.128779+00:00",
+  "generatedAt": "2026-11-23T22:28:17.763038+00:00",
   "listings": [
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
@@ -651,7 +651,7 @@
       "id": "1947-sir-richard-ct-decatur-il-62-526",
       "address": "1947 Sir Richard Ct Decatur IL 62,526",
       "onMarketDate": "11/3/2026",
-      "lastUpdate": "11/5/2026",
+      "lastUpdate": "11/21/2026",
       "area": "IL - Decatur",
       "down": "$4,000",
       "monthly": "$1,400",
@@ -7974,7 +7974,7 @@
       "id": "3120-lower-wetumpka-road-montgomery-al-36110",
       "address": "3120 Lower Wetumpka Road Montgomery AL 36110",
       "onMarketDate": "6/24/2026",
-      "lastUpdate": "9/25/2026",
+      "lastUpdate": "11/21/2026",
       "area": "AL",
       "down": "$2,000",
       "monthly": "$849",
@@ -7982,7 +7982,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "8210",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 32.4183258,
       "lng": -86.28494409999999
