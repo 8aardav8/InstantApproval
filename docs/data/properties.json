@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:43:54.723176+00:00",
+  "generatedAt": "2026-11-23T22:44:30.872457+00:00",
   "listings": [
     {
       "id": "459-n-21st-st-east-saint-louis-il-62-205",
@@ -10,9 +10,9 @@
       "down": "$2,000",
       "monthly": "$900",
       "picsLink": "https://drive.google.com/drive/folders/1i29Nr2bSXHhYceXX41dZW2i1XsNPcjCL?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "974",
       "status": "Available",
       "livability": null,
       "lat": 38.61419860000001,
