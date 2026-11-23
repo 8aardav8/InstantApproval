@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:36:59.381327+00:00",
+  "generatedAt": "2026-11-23T22:37:48.823047+00:00",
   "listings": [
     {
       "id": "1167-e-leafland-ave-decatur-il-62-521",
@@ -447,7 +447,7 @@
       "id": "19459-harned-street-detroit-mi-48-234",
       "address": "19459 Harned Street Detroit MI 48,234",
       "onMarketDate": "11/7/2026",
-      "lastUpdate": "11/8/2026",
+      "lastUpdate": "11/22/2026",
       "area": "MI",
       "down": "$3,575",
       "monthly": "$1,275",
@@ -455,7 +455,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 42.4377687,
       "lng": -83.07395819999999
@@ -872,7 +872,7 @@
       "id": "825-w-elm-street-decatur-il-62-522",
       "address": "825 W Elm Street Decatur IL 62,522",
       "onMarketDate": "10/27/2026",
-      "lastUpdate": "11/20/2026",
+      "lastUpdate": "11/22/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$995",
@@ -880,7 +880,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "936",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "priceReducedOn": "2026-11-23",
       "lat": 39.8515167,
