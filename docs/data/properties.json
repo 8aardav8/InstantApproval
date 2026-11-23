@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:50:45.045637+00:00",
+  "generatedAt": "2026-11-23T22:51:30.759606+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -7550,9 +7550,9 @@
       "id": "3738-sylvan-place-st-louis-mo-63121",
       "address": "3738 Sylvan Place St. Louis MO 63121",
       "onMarketDate": "5/22/2026",
-      "lastUpdate": "8/28/2026",
+      "lastUpdate": "11/22/2026",
       "area": "MO - St. Louis",
-      "down": "$2,250",
+      "down": "$2,000",
       "monthly": "$875",
       "picsLink": "https://photos.app.goo.gl/jEkWRBwbNkHrLvXY9",
       "beds": "2",
@@ -7560,6 +7560,7 @@
       "sqft": "",
       "status": "Available",
       "livability": 2,
+      "priceReducedOn": "2026-11-23",
       "lat": 38.6961536,
       "lng": -90.27947680000001
     },
@@ -18216,7 +18217,7 @@
       "lastUpdate": "11/22/2026",
       "area": "MO - St. Louis",
       "down": "$1,300",
-      "monthly": "$820",
+      "monthly": "$770",
       "picsLink": "https://drive.google.com/drive/folders/1TgBMHJ9QzxoVypAHUt4_l8UhJBOy3QjC?usp=sharing",
       "beds": "2",
       "baths": "1",
