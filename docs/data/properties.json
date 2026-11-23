@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:42:05.802263+00:00",
+  "generatedAt": "2026-11-23T22:42:52.207115+00:00",
   "listings": [
     {
       "id": "1314-n-maple-ave-decatur-il-62-526",
@@ -10,9 +10,9 @@
       "down": "$2,000",
       "monthly": "$835",
       "picsLink": "https://photos.app.goo.gl/zvy8QsZdj6VkvRcf7",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "776",
       "status": "Available",
       "livability": null,
       "lat": 39.8550824,
