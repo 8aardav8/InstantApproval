@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:37:48.823047+00:00",
+  "generatedAt": "2026-11-23T22:38:29.857476+00:00",
   "listings": [
     {
       "id": "1167-e-leafland-ave-decatur-il-62-521",
@@ -8348,16 +8348,17 @@
       "id": "342-s-dade-ave-saint-louis-mo-63135",
       "address": "342 S Dade Ave, Saint Louis, MO 63135",
       "onMarketDate": "4/23/2026",
-      "lastUpdate": "6/25/2026",
+      "lastUpdate": "11/22/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
-      "monthly": "$929",
+      "monthly": "$895",
       "picsLink": "https://photos.app.goo.gl/ra3uQfho9LoNJLgBA",
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Pending",
+      "status": "Available",
       "livability": 3,
+      "priceReducedOn": "2026-11-23",
       "lat": 38.7371839,
       "lng": -90.3154249
     },
