@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:52:34.434238+00:00",
+  "generatedAt": "2026-11-23T22:53:11.294141+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -6252,16 +6252,17 @@
       "id": "5538-avon-pl-east-st-louis-il-62204",
       "address": "5538 Avon Pl, East St Louis, IL 62204",
       "onMarketDate": "4/8/2026",
-      "lastUpdate": "11/4/2026",
+      "lastUpdate": "11/22/2026",
       "area": "IL - East St Louis",
       "down": "$1,000",
-      "monthly": "$755",
+      "monthly": "$740",
       "picsLink": "https://photos.app.goo.gl/WZzAEvNt9Uz9FtNn6",
       "beds": "3",
       "baths": "1",
       "sqft": "816",
       "status": "Available",
       "livability": 3,
+      "priceReducedOn": "2026-11-23",
       "lat": 38.6253463,
       "lng": -90.08895919999999
     },
