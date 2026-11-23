@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:53:11.294141+00:00",
+  "generatedAt": "2026-11-23T23:22:11.917041+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -6581,7 +6581,7 @@
       "id": "5657-roosevelt-pl-saint-louis-mo-63120",
       "address": "5657 Roosevelt Pl, Saint Louis, MO 63120",
       "onMarketDate": "5/31/2026",
-      "lastUpdate": "10/16/2026",
+      "lastUpdate": "11/23/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$650",
@@ -6589,7 +6589,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 3,
       "lat": 38.6782772,
       "lng": -90.27214389999999
