@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T22:50:07.741324+00:00",
+  "generatedAt": "2026-11-23T22:50:45.045637+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -18213,9 +18213,9 @@
       "id": "2154-68th-st-st-louis-mo-63121",
       "address": "2154 68th St, St Louis, MO 63121",
       "onMarketDate": "10/25/2026",
-      "lastUpdate": "10/25/2026",
+      "lastUpdate": "11/22/2026",
       "area": "MO - St. Louis",
-      "down": "$2,000",
+      "down": "$1,300",
       "monthly": "$820",
       "picsLink": "https://drive.google.com/drive/folders/1TgBMHJ9QzxoVypAHUt4_l8UhJBOy3QjC?usp=sharing",
       "beds": "2",
@@ -18223,6 +18223,7 @@
       "sqft": "720",
       "status": "Available",
       "livability": 3,
+      "priceReducedOn": "2026-11-23",
       "lat": 38.6897163,
       "lng": -90.290584
     },
