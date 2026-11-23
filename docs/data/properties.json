@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-23T22:33:30.026682+00:00",
+  "generatedAt": "2026-11-23T22:34:08.547154+00:00",
   "listings": [
+    {
+      "id": "10031-mayfair-dr-st-louis-mo-63136",
+      "address": "10031 Mayfair Dr, St. Louis, MO 63136",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://share.icloud.com/photos/037vCr-T-LFP_YREECwR39YDQ",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 38.7511944,
+      "lng": -90.26632570000001
+    },
     {
       "id": "1600-e-john-ave-decatur-il-62-521",
       "address": "1600 E John Ave Decatur IL 62,521",
