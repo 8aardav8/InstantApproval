@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T04:28:28.259855+00:00",
+  "generatedAt": "2026-11-23T07:47:03.414044+00:00",
   "listings": [
     {
       "id": "69-saint-ambrose-dr-cahokia-il-62-206",
@@ -6691,16 +6691,17 @@
       "id": "6041-harney-ave-saint-louis-mo-63136",
       "address": "6041 Harney Ave, Saint Louis, MO 63136",
       "onMarketDate": "7/25/2025",
-      "lastUpdate": "10/16/2026",
+      "lastUpdate": "11/21/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
-      "monthly": "$220",
+      "monthly": "$215",
       "picsLink": "https://photos.app.goo.gl/yJHsYbfwnntXbJFu9",
       "beds": "1",
       "baths": "1",
       "sqft": "738",
       "status": "Available",
       "livability": 3,
+      "priceReducedOn": "2026-11-23",
       "lat": 38.7069186,
       "lng": -90.25444569999999
     },
