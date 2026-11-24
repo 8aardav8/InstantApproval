@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:17:09.716630+00:00",
+  "generatedAt": "2026-11-24T22:17:51.274502+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -652,16 +652,17 @@
       "id": "1771-n-union-st-decatur-il-62-526",
       "address": "1771 N Union St Decatur IL 62,526",
       "onMarketDate": "11/3/2026",
-      "lastUpdate": "11/3/2026",
+      "lastUpdate": "11/23/2026",
       "area": "IL - Decatur",
       "down": "$2,500",
-      "monthly": "$875",
+      "monthly": "$850",
       "picsLink": "https://drive.google.com/drive/folders/18esq5d7c5CXuJcCPQGueFyMEI2iVjb6t?usp=sharing",
       "beds": "3",
       "baths": "2",
       "sqft": "1124",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-24",
       "lat": 39.8604886,
       "lng": -88.9595575
     },
@@ -1878,7 +1879,7 @@
       "id": "15344-blackstone-st-detroit-mi-48223",
       "address": "15344 Blackstone St. Detroit MI 48223",
       "onMarketDate": "10/2/2026",
-      "lastUpdate": "10/2/2026",
+      "lastUpdate": "11/23/2026",
       "area": "MI",
       "down": "$3,000",
       "monthly": "$1,199",
