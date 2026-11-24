@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T14:30:34.438834+00:00",
+  "generatedAt": "2026-11-24T17:23:57.291609+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -6547,16 +6547,17 @@
       "id": "5811-helen-ave-st-louis-mo-63136",
       "address": "5811 Helen Ave. St. Louis MO 63136",
       "onMarketDate": "6/8/2026",
-      "lastUpdate": "10/19/2026",
+      "lastUpdate": "11/23/2026",
       "area": "MO - St. Louis",
-      "down": "$3,000",
-      "monthly": "$925",
+      "down": "$2,800",
+      "monthly": "$900",
       "picsLink": "https://lh3.googleusercontent.com/pw/AP1GczPeDTx_xNSUFEFvi-wOpayiek3TXZVrnd6x_Qr0eYji0xrM0udVFY-toDG1Uz7Gio-ymuQZGiLXwaG4hqbRTFW4O1Y4xvTj_pLtE-xzWoKyNgtzvzgt=w600-h315-p-k",
       "beds": "3",
       "baths": "1",
       "sqft": "",
       "status": "Sold",
       "livability": 2,
+      "priceReducedOn": "2026-11-24",
       "lat": 38.71739720000001,
       "lng": -90.2590575
     },
