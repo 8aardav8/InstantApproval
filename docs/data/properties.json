@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-24T22:21:13.925205+00:00",
+  "generatedAt": "2026-11-24T22:21:55.136710+00:00",
   "listings": [
+    {
+      "id": "810-s-franklin-st-decatur-il-62-521",
+      "address": "810 S Franklin St Decatur IL 62,521",
+      "onMarketDate": "11/23/2026",
+      "lastUpdate": "11/23/2026",
+      "area": "IL - Decatur",
+      "down": "$2,000",
+      "monthly": "$450",
+      "picsLink": "https://drive.google.com/drive/folders/1RUHWkYmQHaj3HdlfPSWuStCz9FuPIzjJ",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 39.8328469,
+      "lng": -88.9525453
+    },
     {
       "id": "3609-sterling-st-flint-mi-48-504",
       "address": "3609 Sterling St Flint MI 48,504",
