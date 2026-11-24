@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T17:24:12.366784+00:00",
+  "generatedAt": "2026-11-24T22:17:09.716630+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -1886,7 +1886,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 42.4015047,
       "lng": -83.2491328
@@ -21653,7 +21653,7 @@
       "id": "1004-lanier-ave-jackson-ms-39203",
       "address": "1004 Lanier Ave, Jackson, MS 39203",
       "onMarketDate": "5/13/2025",
-      "lastUpdate": "12/3/2025",
+      "lastUpdate": "11/23/2026",
       "area": "MS",
       "down": "$1,000",
       "monthly": "$695",
@@ -21661,7 +21661,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Off Market",
       "livability": 0,
       "lat": 32.3194619,
       "lng": -90.2049974
