@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-24T22:22:45.877672+00:00",
+  "generatedAt": "2026-11-24T22:23:31.388258+00:00",
   "listings": [
+    {
+      "id": "1523-w-marion-avenue-marion-in-46-952",
+      "address": "1523 W Marion Avenue Marion IN 46,952",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.app.goo.gl/QYmKeXMFsV8TzTyY9",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 40.5651818,
+      "lng": -85.6786001
+    },
     {
       "id": "810-s-franklin-st-decatur-il-62-521",
       "address": "810 S Franklin St Decatur IL 62,521",
