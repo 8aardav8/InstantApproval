@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T02:29:30.112572+00:00",
+  "generatedAt": "2026-11-24T03:00:40.532101+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -23811,16 +23811,17 @@
       "id": "2125-68th-st-saint-louis-mo-63121",
       "address": "2125 68th St, Saint Louis, MO 63121",
       "onMarketDate": "10/1/2026",
-      "lastUpdate": "11/17/2026",
+      "lastUpdate": "11/23/2026",
       "area": "MO - St. Louis",
-      "down": "$2,000",
-      "monthly": "$800",
+      "down": "$1,900",
+      "monthly": "$775",
       "picsLink": "https://share.icloud.com/photos/0a4nmaDyBTNFiPFmprj4Z5rQA",
       "beds": "2",
       "baths": "1",
       "sqft": "1000",
       "status": "Available",
       "livability": 2,
+      "priceReducedOn": "2026-11-23",
       "lat": 38.6886335,
       "lng": -90.29179309999999
     },
