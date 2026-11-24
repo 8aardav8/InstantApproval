@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:24:48.855874+00:00",
+  "generatedAt": "2026-11-24T22:25:39.779582+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -7490,16 +7490,17 @@
       "id": "519-avenue-x-birmingham-al-35214",
       "address": "519 Avenue X Birmingham AL 35214",
       "onMarketDate": "5/17/2026",
-      "lastUpdate": "11/11/2026",
+      "lastUpdate": "11/24/2026",
       "area": "AL",
-      "down": "$2,250",
-      "monthly": "$825",
+      "down": "$2,000",
+      "monthly": "$795",
       "picsLink": "https://drive.google.com/drive/folders/1RvXwC8Upood9Q5s3RKHhPlA5L2Brre9U?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "",
       "status": "Pending",
       "livability": 0,
+      "priceReducedOn": "2026-11-24",
       "lat": 33.5273552,
       "lng": -86.8778403
     },
