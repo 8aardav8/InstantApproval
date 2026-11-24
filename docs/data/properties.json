@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:21:55.136710+00:00",
+  "generatedAt": "2026-11-24T22:22:45.877672+00:00",
   "listings": [
     {
       "id": "810-s-franklin-st-decatur-il-62-521",
@@ -10,9 +10,9 @@
       "down": "$2,000",
       "monthly": "$450",
       "picsLink": "https://drive.google.com/drive/folders/1RUHWkYmQHaj3HdlfPSWuStCz9FuPIzjJ",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "872",
       "status": "Available",
       "livability": null,
       "lat": 39.8328469,
