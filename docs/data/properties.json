@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:27:46.428065+00:00",
+  "generatedAt": "2026-11-24T22:57:08.896178+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -9060,7 +9060,7 @@
       "id": "1546-david-drive-jackson-ms-39209",
       "address": "1546 David Drive Jackson MS 39209",
       "onMarketDate": "5/12/2026",
-      "lastUpdate": "9/18/2026",
+      "lastUpdate": "11/24/2026",
       "area": "MS",
       "down": "$1,700",
       "monthly": "$925",
@@ -9068,7 +9068,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "984",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 32.3059663,
       "lng": -90.27105139999999
