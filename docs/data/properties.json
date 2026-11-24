@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:19:23.401867+00:00",
+  "generatedAt": "2026-11-24T22:20:06.743922+00:00",
   "listings": [
     {
       "id": "3609-sterling-st-flint-mi-48-504",
@@ -7762,8 +7762,8 @@
     {
       "id": "1830-n-lowber-st-decatur-il-62526",
       "address": "1830 N Lowber St, Decatur IL 62526",
-      "onMarketDate": "7/1/2026",
-      "lastUpdate": "9/16/2026",
+      "onMarketDate": "11/23/2026",
+      "lastUpdate": "11/23/2026",
       "area": "IL - Decatur",
       "down": "$1,200",
       "monthly": "$825",
@@ -7771,7 +7771,7 @@
       "beds": "2",
       "baths": "2",
       "sqft": "864",
-      "status": "Off Market",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8608635,
       "lng": -88.9391163
