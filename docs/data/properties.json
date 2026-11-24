@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:25:39.779582+00:00",
+  "generatedAt": "2026-11-24T22:26:17.412939+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -13174,7 +13174,7 @@
       "id": "9145-loganberry-ln-saint-louis-mo-63121",
       "address": "9145 Loganberry Ln, Saint Louis, MO 63121",
       "onMarketDate": "3/23/2026",
-      "lastUpdate": "10/21/2026",
+      "lastUpdate": "11/24/2026",
       "area": "MO - St. Louis",
       "down": "$4,000",
       "monthly": "$1,195",
@@ -13182,7 +13182,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Off Market",
       "livability": 3,
       "lat": 38.7188946,
       "lng": -90.32535279999999
@@ -29208,7 +29208,7 @@
       "id": "2964-iowa-st-granite-city-il-62040",
       "address": "2964 Iowa St, Granite City, IL 62040",
       "onMarketDate": "9/25/2026",
-      "lastUpdate": "11/18/2026",
+      "lastUpdate": "11/24/2026",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$950",
@@ -29216,7 +29216,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1176",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 4,
       "lat": 38.7150437,
       "lng": -90.12507579999999
