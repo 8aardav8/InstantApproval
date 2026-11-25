@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T22:15:26.817610+00:00",
+  "generatedAt": "2026-11-25T22:17:32.102490+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -2153,7 +2153,7 @@
       "id": "524-albert-st-nokomis-il-62075",
       "address": "524 Albert St Nokomis, IL 62075",
       "onMarketDate": "9/25/2026",
-      "lastUpdate": "11/20/2026",
+      "lastUpdate": "11/24/2026",
       "area": "IL - Rural",
       "down": "$3,000",
       "monthly": "$995",
@@ -2161,7 +2161,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "priceReducedOn": "2026-11-23",
       "lat": 39.3085461,
