@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T14:30:41.658122+00:00",
+  "generatedAt": "2026-11-25T16:27:00.734996+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -499,7 +499,7 @@
       "id": "2508-arden-ave-saint-louis-mo-63-121",
       "address": "2508 Arden Ave Saint Louis MO 63,121",
       "onMarketDate": "11/8/2026",
-      "lastUpdate": "11/12/2026",
+      "lastUpdate": "11/25/2026",
       "area": "MO - St. Louis",
       "down": "$2,500",
       "monthly": "$950",
@@ -507,7 +507,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "656",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 5,
       "lat": 38.6886036,
       "lng": -90.2809754
