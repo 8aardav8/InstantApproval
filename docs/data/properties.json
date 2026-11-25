@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T22:20:17.477592+00:00",
+  "generatedAt": "2026-11-25T22:36:00.021701+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -1965,7 +1965,7 @@
       "id": "2421-w-lincoln-peoria-il-61605",
       "address": "2421 W Lincoln Peoria IL 61605",
       "onMarketDate": "9/29/2026",
-      "lastUpdate": "11/2/2026",
+      "lastUpdate": "11/25/2026",
       "area": "IL - Peoria",
       "down": "$1,500",
       "monthly": "$825",
@@ -1973,7 +1973,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.68156690000001,
       "lng": -89.6322252
