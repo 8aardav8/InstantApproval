@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T22:19:44.875097+00:00",
+  "generatedAt": "2026-11-25T22:20:17.477592+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -4178,16 +4178,17 @@
       "id": "1828-e-main-st-decatur-il-62521",
       "address": "1828 E Main St Decatur IL 62521",
       "onMarketDate": "11/8/2026",
-      "lastUpdate": "11/8/2026",
+      "lastUpdate": "11/25/2026",
       "area": "IL - Decatur",
       "down": "$2,000",
-      "monthly": "$895",
+      "monthly": "$750",
       "picsLink": "https://drive.google.com/drive/folders/1g8j5lWv2IIRJbfTMdxmPiHr9mKVoa8Iv",
       "beds": "2",
       "baths": "1",
       "sqft": "1050",
       "status": "Available",
       "livability": 0,
+      "priceReducedOn": "2026-11-25",
       "lat": 39.8423253,
       "lng": -88.9319474
     },
