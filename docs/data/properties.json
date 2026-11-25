@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T22:19:09.717368+00:00",
+  "generatedAt": "2026-11-25T22:19:44.875097+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -5216,7 +5216,7 @@
       "id": "7205-calvin-ave-saint-louis-mo-63136",
       "address": "7205 Calvin Ave, Saint Louis, MO 63136",
       "onMarketDate": "11/8/2026",
-      "lastUpdate": "11/12/2026",
+      "lastUpdate": "11/25/2026",
       "area": "MO - St. Louis",
       "down": "$1,000",
       "monthly": "$750",
@@ -5224,7 +5224,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "832",
-      "status": "Pending",
+      "status": "Sold",
       "livability": 2,
       "lat": 38.7195247,
       "lng": -90.2672238
