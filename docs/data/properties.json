@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T22:57:08.896178+00:00",
+  "generatedAt": "2026-11-25T04:48:30.405633+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -24142,16 +24142,17 @@
       "id": "6109-lillian-ave-saint-louis-mo-63136",
       "address": "6109 Lillian Ave, Saint Louis, MO 63136",
       "onMarketDate": "",
-      "lastUpdate": "10/1/2025",
+      "lastUpdate": "11/24/2026",
       "area": "MO - St. Louis",
-      "down": "$3,000",
-      "monthly": "$900",
+      "down": "$2,500",
+      "monthly": "$895",
       "picsLink": "https://drive.google.com/drive/folders/1Btc6qWdtcd7NIWPzFE9x08a481LteZ0i?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 4,
+      "priceReducedOn": "2026-11-24",
       "lat": 38.7006293,
       "lng": -90.26086869999999
     },
