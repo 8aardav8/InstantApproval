@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T22:17:32.102490+00:00",
+  "generatedAt": "2026-11-25T22:18:23.024661+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -3940,15 +3940,15 @@
       "id": "945-w-packard-st-decatur-il-62522-usa",
       "address": "945 W Packard St, Decatur, IL 62522, USA",
       "onMarketDate": "8/3/2026",
-      "lastUpdate": "11/23/2026",
+      "lastUpdate": "11/24/2026",
       "area": "IL - Decatur",
-      "down": "$2,000",
-      "monthly": "$950",
+      "down": "$3,000",
+      "monthly": "$1,050",
       "picsLink": "https://drive.google.com/drive/folders/1yER30U2UEgvHdLr5hRX5FwPDUeP5Ow55",
       "beds": "3",
       "baths": "1",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.8520681,
       "lng": -88.969365
