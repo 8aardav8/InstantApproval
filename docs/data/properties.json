@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T21:47:10.682604+00:00",
+  "generatedAt": "2026-11-26T21:47:50.612915+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -329,7 +329,7 @@
       "id": "1042-n-pine-st-decatur-il-62522",
       "address": "1042 N Pine St Decatur IL 62522",
       "onMarketDate": "11/13/2026",
-      "lastUpdate": "11/13/2026",
+      "lastUpdate": "11/25/2026",
       "area": "IL - Decatur",
       "down": "$3,000",
       "monthly": "$1,100",
@@ -337,7 +337,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.851773,
       "lng": -88.9658274
