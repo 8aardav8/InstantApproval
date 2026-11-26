@@ -38,4 +38,5 @@ node tests/appointment-texts-test.mjs >/dev/null 2>&1 || { echo "REFUSING: showi
 node tests/featured-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Featured tick box test failed. Run: node tests/featured-test.mjs" >&2; exit 1; }
 node tests/admin-search-test.mjs >/dev/null 2>&1 || { echo "REFUSING: admin search test failed. Run: node tests/admin-search-test.mjs" >&2; exit 1; }
 node tests/view-as-test.mjs >/dev/null 2>&1 || { echo "REFUSING: See-site-as (view-only) test failed. Run: node tests/view-as-test.mjs" >&2; exit 1; }
+node tests/quo-webhook-fast-ack-test.mjs >/dev/null 2>&1 || { echo "REFUSING: Quo webhook must answer at once (Quo disables it after 10s timeouts, 2026-11-26). Run: node tests/quo-webhook-fast-ack-test.mjs" >&2; exit 1; }
 npx wrangler deploy -c wrangler-admin.toml

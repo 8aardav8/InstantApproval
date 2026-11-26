@@ -6020,7 +6020,7 @@ async function handleAdminRefreshQuoName(request, env) {
 // check passes -- an unmatched or non-affirmative text is a normal, expected
 // case (Quo delivers every inbound message to this number, not just replies
 // to a pending request), not an error.
-async function handleQuoMessageWebhook(request, env) {
+async function handleQuoMessageWebhook(request, env, ctx) {
   const rawBody = await request.text();
 
   if (!env.QUO_WEBHOOK_SECRET) {
@@ -6046,6 +6046,23 @@ async function handleQuoMessageWebhook(request, env) {
     return jsonResponse({ ok: true }); // not the event we care about, ack and ignore
   }
 
+  // Answer Quo at once, do the work after (2026-11-26). Quo gives a delivery
+  // 10 seconds; a text from a number with no Quo contact made
+  // syncBuyerToSheet page through every contact (~10s), so all 8 retries of
+  // one 11/25 text timed out and Quo disabled this webhook ("Action needed:
+  // your Quo webhook was disabled"). ctx.waitUntil keeps the work alive after
+  // the reply; failures go to the Workers log and, for a confirmation, Telegram.
+  const work = processQuoMessage(env, payload).catch((e) => console.error("quo-webhook work failed", String(e)));
+  if (ctx && typeof ctx.waitUntil === "function") {
+    ctx.waitUntil(work);
+    return jsonResponse({ ok: true, queued: true });
+  }
+  await work;
+  return jsonResponse({ ok: true });
+}
+
+async function processQuoMessage(env, payload) {
+  await ensureLayout(env);
   const resource = (payload.data && payload.data.object) || {};
   const fromRaw = resource.from || (payload.data && payload.data.context && payload.data.context.from) || "";
   const text = (resource.text || resource.content || resource.body || "").trim();
@@ -6053,13 +6070,12 @@ async function handleQuoMessageWebhook(request, env) {
 
   // Runs for EVERY real inbound message, not just phone/email-confirmation
   // replies -- see ensureBuyerInCache's own comment above for why this
-  // lives here. ctx.waitUntil isn't available in this handler's own scope
-  // (it's called from the main fetch() below, not given ctx directly), so
-  // this is awaited inline; best-effort/swallows its own errors either way.
-  if (fromE164) await syncBuyerToSheet(env, fromE164, undefined, true);
+  // lives here. Runs after Quo already has its 200 (ctx.waitUntil above);
+  // best-effort, its errors go to the Workers log.
+  if (fromE164) await syncBuyerToSheet(env, fromE164, undefined, true).catch((e) => console.error("quo-webhook buyer sync failed", fromE164, String(e)));
 
   if (!fromE164 || !/^(yes|y|confirm|ok)\b/i.test(text)) {
-    return jsonResponse({ ok: true }); // not an affirmative reply, nothing to do
+    return;
   }
 
   try {
@@ -6101,7 +6117,7 @@ async function handleQuoMessageWebhook(request, env) {
 
       await sendQuoText(env, fromE164, "Thanks! Your phone number has been updated.").catch(() => {});
 
-      return jsonResponse({ ok: true });
+      return;
     }
 
     // No matching pending PHONE change -- check pending EMAIL changes next.
@@ -6110,7 +6126,7 @@ async function handleQuoMessageWebhook(request, env) {
     // email itself can't receive a text reply.
     const pendingEmail = await findPendingEmailChangeByPhone(accessToken, fromE164);
     if (!pendingEmail) {
-      return jsonResponse({ ok: true }); // no matching/still-valid pending request of either kind
+      return;
     }
 
     const [oldEmail, newEmail, onFilePhone, , , , targetRowStr2] = pendingEmail.values;
@@ -6138,9 +6154,17 @@ async function handleQuoMessageWebhook(request, env) {
 
     await sendQuoText(env, fromE164, "Thanks! Your email has been updated.").catch(() => {});
 
-    return jsonResponse({ ok: true });
+    return;
   } catch (e) {
-    return jsonResponse({ error: "server error", detail: String(e) }, 500);
+    // No retry from Quo any more (it already got its 200), so say it out loud.
+    console.error("quo-webhook confirmation failed", fromE164, String(e));
+    if (env.TELEGRAM_BOT_TOKEN) {
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: AARON_TELEGRAM_CHAT_ID, text: `Phone/email change confirmation FAILED for ${fromE164} (they replied YES): ${String(e).slice(0, 300)}` }),
+      }).catch(() => {});
+    }
   }
 }
 
@@ -6580,7 +6604,7 @@ async function route(request, env, ctx) {
   // Called by Quo itself, not the site -- no CORS-origin concern here, this
   // is a server-to-server webhook.
   if (url.pathname === "/quo-webhook" && request.method === "POST") {
-    return handleQuoMessageWebhook(request, env);
+    return handleQuoMessageWebhook(request, env, ctx);
   }
 
   // Separate Quo webhook route for Triage notifications (missed calls /
@@ -6627,7 +6651,9 @@ export default {
       .then((r) => env.BUYERS_KV && env.BUYERS_KV.put("reserve_health_last", JSON.stringify({ at: new Date(event.scheduledTime).toISOString(), ...r }))));
   },
   async fetch(request, env, ctx) {
-    if (request.method !== "OPTIONS") await ensureLayout(env);
+    // The Quo webhook replies before any Sheet call; its work loads the layout itself (2026-11-26).
+    const quoHook = new URL(request.url).pathname === "/quo-webhook";
+    if (request.method !== "OPTIONS" && !quoHook) await ensureLayout(env);
     const response = await route(request, env, ctx);
     const origin = request.headers.get("Origin");
     if (origin && ALLOWED_ORIGINS.includes(origin)) {

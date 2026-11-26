@@ -21,7 +21,7 @@ if (!def || def[1] !== 'false') { fail++; console.log('FAIL touchActivity must d
 for (const c of calls) {
   const args = c.text.slice(c.text.indexOf('syncBuyerToSheet(') + 17);
   const touches = /^[^,]+,[^,]+,[^,]+,\s*true\b/.test(args);
-  const allowed = c.fn === 'handleQuoMessageWebhook';
+  const allowed = c.fn === 'handleQuoMessageWebhook' || c.fn === 'processQuoMessage'; // processQuoMessage: the webhook's work after its reply (2026-11-26)
   if (touches && !allowed) { fail++; console.log(`FAIL line ${c.line} (${c.fn}) stamps activity but isn't a Quo message`); }
   else if (allowed && !touches) { fail++; console.log(`FAIL line ${c.line} the Quo message webhook must stamp activity`); }
   else console.log(`PASS line ${c.line} (${c.fn})`);
