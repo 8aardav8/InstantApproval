@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T14:30:36.596221+00:00",
+  "generatedAt": "2026-11-26T21:45:41.837553+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -15385,7 +15385,7 @@
       "id": "2315-w-ann-st-peoria-il-61605",
       "address": "2315 W Ann St, Peoria, IL 61605",
       "onMarketDate": "9/17/2026",
-      "lastUpdate": "11/18/2026",
+      "lastUpdate": "11/25/2026",
       "area": "IL - Peoria",
       "down": "$1,000",
       "monthly": "$715",
@@ -15393,7 +15393,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1120",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.67974299999999,
       "lng": -89.62988810000002
