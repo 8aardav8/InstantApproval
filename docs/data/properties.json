@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T21:57:19.590817+00:00",
+  "generatedAt": "2026-11-26T21:57:53.379258+00:00",
   "listings": [
     {
       "id": "3229-fulton-st-saginaw-mi-48-601",
@@ -8412,7 +8412,7 @@
       "id": "805-s-hickory-st-centralia-il-62801",
       "address": "805 S Hickory St Centralia, IL 62801",
       "onMarketDate": "4/15/2026",
-      "lastUpdate": "10/22/2026",
+      "lastUpdate": "11/25/2026",
       "area": "IL - Rural",
       "down": "$2,500",
       "monthly": "$780",
@@ -8420,7 +8420,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1690",
-      "status": "Available",
+      "status": "Sold",
       "livability": 0,
       "lat": 38.5195657,
       "lng": -89.1419509
