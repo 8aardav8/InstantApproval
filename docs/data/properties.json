@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-26T21:52:30.630174+00:00",
+  "generatedAt": "2026-11-26T21:53:17.670311+00:00",
   "listings": [
+    {
+      "id": "4306-berger-dr-flint-mi-48-504",
+      "address": "4306 Berger Dr Flint MI 48,504",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1vLN4k2g8kQyXY1nut-ynP-hrz2ddrP6J?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 43.0542435,
+      "lng": -83.71957619999999
+    },
     {
       "id": "1817-nebraska-ave-flint-mi-48-506",
       "address": "1817 Nebraska Ave Flint MI 48,506",
