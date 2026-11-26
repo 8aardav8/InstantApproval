@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T21:49:30.061313+00:00",
+  "generatedAt": "2026-11-26T21:50:23.606328+00:00",
   "listings": [
     {
       "id": "2109-e-prairie-decatur-il-62-521",
@@ -10,9 +10,9 @@
       "down": "$3,000",
       "monthly": "$995",
       "picsLink": "https://drive.google.com/drive/folders/1HhUmDWW5mMAhoIGWOHoc3hh1ueQqxFFQ?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "3",
+      "baths": "1",
+      "sqft": "1022",
       "status": "Available",
       "livability": null,
       "lat": 39.8430414,
