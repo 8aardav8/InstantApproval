@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-26T21:54:24.882920+00:00",
+  "generatedAt": "2026-11-26T21:55:10.995540+00:00",
   "listings": [
+    {
+      "id": "3229-fulton-st-saginaw-mi-48-601",
+      "address": "3229 Fulton St Saginaw MI 48,601",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1YiV2P2aaPUbojSC1cIePQwJ8nwJfNM5y?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 43.4085275,
+      "lng": -83.9229852
+    },
     {
       "id": "4306-berger-dr-flint-mi-48-504",
       "address": "4306 Berger Dr Flint MI 48,504",
