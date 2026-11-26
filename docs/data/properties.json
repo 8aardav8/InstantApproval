@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T21:45:41.837553+00:00",
+  "generatedAt": "2026-11-26T21:46:31.096673+00:00",
   "listings": [
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
@@ -25521,16 +25521,17 @@
       "id": "1174-w-king-st-decatur-il-62522",
       "address": "1174 W King St, Decatur, IL 62522",
       "onMarketDate": "10/17/2026",
-      "lastUpdate": "10/25/2026",
+      "lastUpdate": "11/25/2026",
       "area": "IL - Decatur",
-      "down": "$3,000",
-      "monthly": "$1,050",
+      "down": "$2,500",
+      "monthly": "$985",
       "picsLink": "https://drive.google.com/drive/folders/1YMUXfZt-AI7b-LVWj_rzpehDW70HkfIb?usp=drive_link",
       "beds": "3",
       "baths": "2",
       "sqft": "1296",
       "status": "Available",
       "livability": 5,
+      "priceReducedOn": "2026-11-26",
       "lat": 39.8494153,
       "lng": -88.9747923
     },
