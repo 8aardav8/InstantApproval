@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-26T21:48:59.780244+00:00",
+  "generatedAt": "2026-11-26T21:49:13.752893+00:00",
   "listings": [
+    {
+      "id": "2109-e-prairie-decatur-il-62-521",
+      "address": "2109 E Prairie Decatur IL 62,521",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1HhUmDWW5mMAhoIGWOHoc3hh1ueQqxFFQ?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 39.8430414,
+      "lng": -88.9277405
+    },
     {
       "id": "1523-w-marion-avenue-marion-in-46-952",
       "address": "1523 W Marion Avenue Marion IN 46,952",
