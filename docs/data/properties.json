@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T21:55:45.848801+00:00",
+  "generatedAt": "2026-11-26T21:56:44.601324+00:00",
   "listings": [
     {
       "id": "3229-fulton-st-saginaw-mi-48-601",
@@ -12,7 +12,7 @@
       "picsLink": "https://drive.google.com/drive/folders/1YiV2P2aaPUbojSC1cIePQwJ8nwJfNM5y?usp=sharing",
       "beds": "2",
       "baths": "1",
-      "sqft": "",
+      "sqft": "695",
       "status": "Available",
       "livability": null,
       "lat": 43.4085275,
@@ -5714,11 +5714,11 @@
       "area": "IL - Rural",
       "down": "$1,000",
       "monthly": "$709",
-      "picsLink": "https://www.dropbox.com/scl/fo/0r75yehq28ppq35itcyxg/AEnOgJvb-qMjYB_wDAqPZoQ?rlkey=j0bdnt0dn86ut0eyeauqbzx96&st=wp939jqz&dl=0",
+      "picsLink": "https://drive.google.com/drive/folders/0ADQ1R_L4IJm4Uk9PVA",
       "beds": "2",
       "baths": "1",
       "sqft": "962",
-      "status": "Sold",
+      "status": "Available",
       "livability": 0,
       "lat": 39.2965501,
       "lng": -89.2836787
