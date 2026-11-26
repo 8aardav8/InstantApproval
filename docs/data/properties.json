@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-26T21:50:23.606328+00:00",
+  "generatedAt": "2026-11-26T21:51:09.555779+00:00",
   "listings": [
+    {
+      "id": "1817-nebraska-ave-flint-mi-48-506",
+      "address": "1817 Nebraska Ave Flint MI 48,506",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://photos.icloud.com/shared/album/0a5mUWc2Uq80cjGnf0fSUl81g/",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 43.02739589999999,
+      "lng": -83.6652483
+    },
     {
       "id": "2109-e-prairie-decatur-il-62-521",
       "address": "2109 E Prairie Decatur IL 62,521",
