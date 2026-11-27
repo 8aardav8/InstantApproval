@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:41:34.626506+00:00",
+  "generatedAt": "2026-11-27T22:42:09.036497+00:00",
   "listings": [
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
@@ -1352,7 +1352,7 @@
       "id": "2807-w-nevada-st-peoria-il-61605",
       "address": "2807 W Nevada St Peoria IL 61605",
       "onMarketDate": "10/21/2026",
-      "lastUpdate": "10/21/2026",
+      "lastUpdate": "11/27/2026",
       "area": "IL - Peoria",
       "down": "$2,000",
       "monthly": "$950",
@@ -1360,7 +1360,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "540",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.6616311,
       "lng": -89.6381746
