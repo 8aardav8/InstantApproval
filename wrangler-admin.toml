@@ -16,3 +16,10 @@ crons = ["0 * * * *"]  # hourly, Aaron 2026-11-13
 [[kv_namespaces]]
 binding = "BUYERS_KV"
 id = "13fb166935504b7abf7bfc860bb03fae"
+
+# Workers Logs (L152, 2026-11-27): without this block a deploy can leave logs
+# off, and then a Quo webhook failure can't be diagnosed. deploy-worker.sh
+# refuses to deploy if this block is missing.
+[observability]
+enabled = true
+head_sampling_rate = 1
