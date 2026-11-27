@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T22:11:29.123766+00:00",
+  "generatedAt": "2026-11-27T00:11:04.508275+00:00",
   "listings": [
     {
       "id": "3229-fulton-st-saginaw-mi-48-601",
@@ -31949,16 +31949,17 @@
       "id": "5445-robin-ave-saint-louis-mo-63120",
       "address": "5445 Robin Ave, Saint Louis, MO 63120",
       "onMarketDate": "",
-      "lastUpdate": "",
+      "lastUpdate": "11/26/2026",
       "area": "MO - St. Louis",
-      "down": "$2,500",
-      "monthly": "$925",
-      "picsLink": "https://drive.google.com/drive/folders/1OXJ5wOaZMCoszpbQo2i89C-TFw7ZmZMQ?usp=drive_link",
+      "down": "$2,000",
+      "monthly": "$895",
+      "picsLink": "https://drive.google.com/drive/folders/1RFNb5rRdQpmOh57eEIHWOtzlk2-t-jWi?usp=sharing",
       "beds": "3",
       "baths": "2",
       "sqft": "",
-      "status": "Sold",
+      "status": "Available",
       "livability": 3,
+      "priceReducedOn": "2026-11-26",
       "lat": 38.701756,
       "lng": -90.2494164
     },
