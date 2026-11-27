@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:42:09.036497+00:00",
+  "generatedAt": "2026-11-27T22:42:36.767163+00:00",
   "listings": [
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
@@ -16423,7 +16423,7 @@
       "id": "1509-e-william-st-decatur-il-62521",
       "address": "1509 E William St, Decatur IL 62521",
       "onMarketDate": "10/28/2026",
-      "lastUpdate": "10/28/2026",
+      "lastUpdate": "11/27/2026",
       "area": "IL - Decatur",
       "down": "$1,500",
       "monthly": "$625",
@@ -16431,7 +16431,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 39.843885,
       "lng": -88.9361352
