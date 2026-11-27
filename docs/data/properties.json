@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:40:27.889085+00:00",
+  "generatedAt": "2026-11-27T22:41:34.626506+00:00",
   "listings": [
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
@@ -10,9 +10,9 @@
       "down": "$2,500",
       "monthly": "$925",
       "picsLink": "https://drive.google.com/drive/folders/1WLxzh9V2baOB10BPDHw8Rikq_-9JoJVE?usp=sharing",
-      "beds": "",
-      "baths": "",
-      "sqft": "",
+      "beds": "2",
+      "baths": "1",
+      "sqft": "864",
       "status": "Available",
       "livability": null,
       "lat": 42.38345109999999,
@@ -7166,7 +7166,7 @@
       "id": "304-gilbert-st-rossville-il-60963",
       "address": "304 Gilbert St. Rossville IL 60963",
       "onMarketDate": "3/19/1900",
-      "lastUpdate": "9/28/2026",
+      "lastUpdate": "11/26/2026",
       "area": "IL - Rural",
       "down": "$1,500",
       "monthly": "$875",
@@ -7174,7 +7174,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "950",
-      "status": "Available",
+      "status": "Pending",
       "livability": 0,
       "lat": 40.3772649,
       "lng": -87.66319
