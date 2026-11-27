@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:44:23.457415+00:00",
+  "generatedAt": "2026-11-27T22:45:01.291848+00:00",
   "listings": [
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
@@ -192,7 +192,7 @@
       "id": "10031-mayfair-dr-st-louis-mo-63136",
       "address": "10031 Mayfair Dr, St. Louis, MO 63136",
       "onMarketDate": "11/21/2026",
-      "lastUpdate": "11/21/2026",
+      "lastUpdate": "11/27/2026",
       "area": "MO - St. Louis",
       "down": "$1,500",
       "monthly": "$650",
@@ -200,7 +200,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Sold",
       "livability": null,
       "lat": 38.7511944,
       "lng": -90.26632570000001
@@ -8326,12 +8326,12 @@
     {
       "id": "1505-e-walnut-st-decatur-il-62526",
       "address": "1505 E Walnut St, Decatur, IL 62526",
-      "onMarketDate": "5/19/2026",
+      "onMarketDate": "11/27/2026",
       "lastUpdate": "11/27/2026",
       "area": "IL - Decatur",
       "down": "$1,000",
       "monthly": "$850",
-      "picsLink": "https://drive.google.com/drive/folders/1un4OlafD_DKdNtIac7R7o0HbPZETADpk?usp=sharing",
+      "picsLink": "https://photos.app.goo.gl/zTcLdSLMUMRCV72T8",
       "beds": "2",
       "baths": "1",
       "sqft": "768",
