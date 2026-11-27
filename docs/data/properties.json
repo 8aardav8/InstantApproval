@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:43:29.698805+00:00",
+  "generatedAt": "2026-11-27T22:43:44.119330+00:00",
   "listings": [
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
@@ -8309,11 +8309,11 @@
     {
       "id": "2618-e-garfield-ave-decatur-il-62526",
       "address": "2618 E Garfield Ave Decatur IL 62526",
-      "onMarketDate": "6/1/2026",
+      "onMarketDate": "11/27/2026",
       "lastUpdate": "11/27/2026",
       "area": "IL - Decatur",
-      "down": "$1,250",
-      "monthly": "$600",
+      "down": "$1,000",
+      "monthly": "$850",
       "picsLink": "https://photos.app.goo.gl/VZBWRZQB6wBgQN327",
       "beds": "2",
       "baths": "1.5",
