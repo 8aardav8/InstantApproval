@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:51:15.152608+00:00",
+  "generatedAt": "2026-11-27T22:52:58.506120+00:00",
   "listings": [
     {
       "id": "6401-church-road-east-saint-louis-il-62-207",
@@ -14,7 +14,7 @@
       "baths": "1",
       "sqft": "1000",
       "status": "Available",
-      "livability": null,
+      "livability": 3,
       "lat": 38.5593645,
       "lng": -90.1095036
     },
