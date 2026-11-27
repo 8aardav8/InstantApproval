@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T23:02:13.970684+00:00",
+  "generatedAt": "2026-11-27T23:02:49.247234+00:00",
   "listings": [
     {
       "id": "6401-church-road-east-saint-louis-il-62-207",
@@ -14451,16 +14451,17 @@
       "id": "5515-alcott-avenue-st-louis-mo-63120",
       "address": "5515 Alcott Avenue, St. Louis, MO 63120",
       "onMarketDate": "10/28/2026",
-      "lastUpdate": "10/28/2026",
+      "lastUpdate": "11/27/2026",
       "area": "MO - St. Louis",
       "down": "$2,000",
-      "monthly": "$770",
+      "monthly": "$745",
       "picsLink": "https://photos.app.goo.gl/SvVrnjZCfvq2BrEA9",
       "beds": "2",
       "baths": "1",
       "sqft": "1008",
       "status": "Available",
       "livability": 4,
+      "priceReducedOn": "2026-11-27",
       "lat": 38.6972981,
       "lng": -90.24321300000001
     },
