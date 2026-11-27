@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-27T22:47:44.594199+00:00",
+  "generatedAt": "2026-11-27T22:48:15.813607+00:00",
   "listings": [
+    {
+      "id": "6401-church-road-east-saint-louis-il-62-207",
+      "address": "6401 Church Road East Saint Louis IL 62,207",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1HGyY0iIeIifwH3xUeP9N9GMdrxUAu5-B",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 38.5593645,
+      "lng": -90.1095036
+    },
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
       "address": "4510 Fairview Street Detroit MI 48,214",
