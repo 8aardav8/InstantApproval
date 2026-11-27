@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T23:02:49.247234+00:00",
+  "generatedAt": "2026-11-27T23:03:21.248631+00:00",
   "listings": [
     {
       "id": "6401-church-road-east-saint-louis-il-62-207",
@@ -16832,16 +16832,17 @@
       "id": "5532-robin-ave-saint-louis-mo-63120",
       "address": "5532 Robin Ave, Saint Louis, MO 63120",
       "onMarketDate": "10/5/2026",
-      "lastUpdate": "10/5/2026",
+      "lastUpdate": "11/27/2026",
       "area": "MO - St. Louis",
       "down": "$2,500",
-      "monthly": "$950",
+      "monthly": "$925",
       "picsLink": "https://drive.google.com/drive/mobile/folders/1sGmrf4s0Wt4BRFKJPBT4rjo8HAE9oF79?usp=sharing",
       "beds": "2",
       "baths": "1",
       "sqft": "700",
       "status": "Available",
       "livability": 4,
+      "priceReducedOn": "2026-11-27",
       "lat": 38.7026127,
       "lng": -90.2470697
     },
