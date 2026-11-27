@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T22:45:01.291848+00:00",
+  "generatedAt": "2026-11-27T22:47:02.335681+00:00",
   "listings": [
     {
       "id": "4510-fairview-street-detroit-mi-48-214",
@@ -533,7 +533,7 @@
       "id": "621-bernard-dr-belleville-il-62223",
       "address": "621 Bernard Dr, Belleville, IL 62223",
       "onMarketDate": "11/10/2026",
-      "lastUpdate": "11/10/2026",
+      "lastUpdate": "11/27/2026",
       "area": "IL - East St Louis",
       "down": "$3,000",
       "monthly": "$1,675",
@@ -541,7 +541,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "",
-      "status": "Available",
+      "status": "Pending",
       "livability": 4,
       "lat": 38.5425376,
       "lng": -90.08105979999999
