@@ -1,6 +1,23 @@
 {
-  "generatedAt": "2026-11-27T22:39:14.582995+00:00",
+  "generatedAt": "2026-11-27T22:39:59.450811+00:00",
   "listings": [
+    {
+      "id": "4510-fairview-street-detroit-mi-48-214",
+      "address": "4510 Fairview Street Detroit MI 48,214",
+      "onMarketDate": "",
+      "lastUpdate": "",
+      "area": "",
+      "down": "",
+      "monthly": "",
+      "picsLink": "https://drive.google.com/drive/folders/1WLxzh9V2baOB10BPDHw8Rikq_-9JoJVE?usp=sharing",
+      "beds": "",
+      "baths": "",
+      "sqft": "",
+      "status": "Available",
+      "livability": null,
+      "lat": 42.38345109999999,
+      "lng": -82.9852602
+    },
     {
       "id": "3229-fulton-st-saginaw-mi-48-601",
       "address": "3229 Fulton St Saginaw MI 48,601",
