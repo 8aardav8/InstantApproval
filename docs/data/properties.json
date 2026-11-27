@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T23:03:21.248631+00:00",
+  "generatedAt": "2026-11-27T23:03:52.719043+00:00",
   "listings": [
     {
       "id": "6401-church-road-east-saint-louis-il-62-207",
@@ -21391,16 +21391,17 @@
       "id": "8401-n-broadway-st-louis-mo-63147",
       "address": "8401 N Broadway, St. Louis, MO 63147",
       "onMarketDate": "11/9/2025",
-      "lastUpdate": "10/30/2026",
+      "lastUpdate": "11/27/2026",
       "area": "MO - St. Louis",
       "down": "$3,000",
-      "monthly": "$1,100",
+      "monthly": "$1,075",
       "picsLink": "https://photos.app.goo.gl/1aLFMnXRDJuSKFyf8",
       "beds": "3",
       "baths": "1",
       "sqft": "1870",
       "status": "Available",
       "livability": 4,
+      "priceReducedOn": "2026-11-27",
       "lat": 38.7150544,
       "lng": -90.2301641
     },
